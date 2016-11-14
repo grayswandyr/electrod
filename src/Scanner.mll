@@ -57,8 +57,8 @@ rule main infile = parse
 @@ fun args -> args infile lexbuf (Printf.sprintf "reserved keyword: 'unsat'")}
 | "sat"
     { SAT }
-| "int"
-    { INT }
+(*| "int"
+      { INT }*)
 | "true"
 		{ TRUE }
 | "false"
