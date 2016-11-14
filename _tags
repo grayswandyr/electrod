@@ -1,0 +1,29 @@
+true: package(cmdliner)
+true: package(containers)
+true: package(gen)
+true: package(sequence)
+true: package(mtime.os)
+true: package(logs)
+true: package(logs.cli)
+true: package(logs.fmt)
+true: package(fmt)
+true: package(fmt.cli)
+true: package(fmt.tty)
+true: package(ppx_deriving.std)
+
+".git": -traverse
+".git": not_hygienic
+
+true: annot, bin_annot
+true: strict_formats
+true: safe_string
+true: short_paths
+true: debug
+true: color(always)
+true: linkpkg
+
+true: use_menhir
+true: infer
+true: explain
+
+<src/**>: include

@@ -1,0 +1,12 @@
+S src/**
+B _build/**
+FLG -w -4-33-40-41-42-43-34-44
+FLG -short-paths
+PKG menhirLib
+PKG containers
+PKG cmdliner
+PKG gen
+PKG sequence
+PKG logs
+PKG fmt
+PKG mtime.os
