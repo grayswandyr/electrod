@@ -1,10 +1,12 @@
 (** Type for "raw" ASTs yielded by the Electrod parser. *)
-                  
-type ('v, 'n) raw_problem = {
+
+type raw_goal = (Raw_ident.t, Raw_ident.t) GenGoal.t
+
+type raw_problem = {
   file : string option;
   raw_univ : raw_urelements list;
   raw_decls : raw_declaration list;     (** does not contain 'univ'  *)
-  raw_goals : ('v, 'n) Raw_goal.t list;    (** nonempty *)
+  raw_goals : raw_goal list;    (** nonempty *)
 }
 
 and raw_urelements = private
@@ -64,7 +66,7 @@ val uintvl : raw_interval -> raw_urelements
 val uplain : Raw_ident.t -> raw_urelements
 
 val problem : string option -> raw_urelements list ->
-  raw_declaration list -> ('v, 'n) Raw_goal.t list -> ('v, 'n) raw_problem
+  raw_declaration list -> raw_goal list -> raw_problem
 
 (** {1 Accessors} *)
 

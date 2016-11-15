@@ -3,12 +3,12 @@
   
 module R = Raw
 
-module G = Raw_goal  
+module G = GenGoal  
 %}
   
 %start <Raw.raw_urelements list
  * Raw.raw_declaration list
- * (Raw_ident.t, Raw_ident.t) Raw_goal.t list> parse_problem
+ * Raw.raw_goal list> parse_problem
 
 %token UNIV NONE VAR COLON SEMI EOF EQ IN NEQ AND OR HISTORICALLY
 %token IMPLIES IFF UNTIL RELEASE SINCE NEXT ONCE PREVIOUS LET
@@ -22,8 +22,6 @@ module G = Raw_goal
 %token NEG ADD SUB HASH //INT
 
 %token <string> FBUILTIN        (* for formulas *)
-%token <string> RBUILTIN        (* for plain relations *)
-%token <string> IBUILTIN        (* for integer relations *)
 
 
 /* plain ID */
@@ -169,11 +167,11 @@ formula :
   
 	| e1 = expr op = comp_op e2 = expr
 	{ G.fml (Location.from_positions $startpos $endpos)
-    @@ G.comp e1 op e2 }
+    @@ G.rcomp e1 op e2 }
   
 	| e1 = iexpr op = icomp_op e2 = iexpr
 	{ G.fml (Location.from_positions $startpos $endpos)
-    @@ G.true_ } // TODO
+    @@ G.icomp e1 op e2 }
 
 	| op = lunop f = formula
 	{ G.fml (Location.from_positions $startpos $endpos)
@@ -278,15 +276,7 @@ formula :
 (* RELATIONAL EXPRESSIONS *)
 
 expr:
-  op = RBUILTIN e = brackets(expr+)
-	{ G.exp (Location.from_positions $startpos $endpos)
-    @@ G.rbuiltin op e }
-  
-  | op = IBUILTIN e = brackets(expr+)
-	{ G.exp (Location.from_positions $startpos $endpos)
-    @@ G.ibuiltin op e } 
-      
-  | NONE 
+  NONE 
 	{ G.exp (Location.from_positions $startpos $endpos)
     @@ G.none }
   
@@ -341,9 +331,9 @@ expr:
   | IN
 	{ G.in_ }
   | EQ
-	{ G.eq } 
+	{ G.req } 
   | NEQ
- 	{ G.neq }
+ 	{ G.rneq }
 
 %inline rqualify:
  	ONE
@@ -395,18 +385,22 @@ iexpr:
   n = NUMBER
   { G.exp (Location.from_positions $startpos $endpos)
     @@ G.num n  }
-  | HASH expr
+  | HASH e = expr
   { G.exp (Location.from_positions $startpos $endpos)
-    @@ G.num 0  } // TODO
-  | NEG brackets(iexpr)
+    @@ G.card e  }
+  | NEG e = brackets(iexpr)
   { G.exp (Location.from_positions $startpos $endpos)
-    @@ G.num 0  } // TODO
-  | ADD brackets(two_iexprs)
-  { G.exp (Location.from_positions $startpos $endpos)
-    @@ G.num 0  } // TODO
-  | SUB brackets(two_iexprs)
-  { G.exp (Location.from_positions $startpos $endpos)
-    @@ G.num 0  } // TODO
+    @@ G.(iunary neg e) } 
+  | ADD e = brackets(two_iexprs)
+      {
+        let (e1, e2) = e in
+        G.exp (Location.from_positions $startpos $endpos)
+    @@ G.(ibinary e1 add e2)  }
+  | SUB e = brackets(two_iexprs)
+  { 
+    let (e1, e2) = e in
+    G.exp (Location.from_positions $startpos $endpos)
+    @@ G.(ibinary e1 sub e2)  } 
 
 %inline two_iexprs:
   e1 = iexpr COMMA e2 = iexpr
@@ -422,9 +416,9 @@ iexpr:
 	| GTE
 	{ G.gte }
   | EQ
-	{ G.gte } // TODO 
+	{ G.ieq } // TODO 
   | NEQ
- 	{ G.gte } // TODO
+ 	{ G.ineq } // TODO
  
 (* Given by François Pottier on 2015-01-21
    at http://gallium.inria.fr/blog/lr-lists/ *)

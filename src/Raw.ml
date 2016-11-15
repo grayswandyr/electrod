@@ -2,11 +2,13 @@
 open Containers
 
               
-type ('v, 'n) raw_problem = {
+type raw_goal = (Raw_ident.t, Raw_ident.t) GenGoal.t
+
+type raw_problem = {
   file : string option;
   raw_univ : raw_urelements list;
-  raw_decls : raw_declaration list;
-  raw_goals : ('v, 'n) Raw_goal.t list;    (** nonempty *)
+  raw_decls : raw_declaration list;     (** does not contain 'univ'  *)
+  raw_goals : raw_goal list;    (** nonempty *)
 }
 
 and raw_urelements = 
@@ -76,3 +78,4 @@ let decl_id = function
   | DVar (id, _, _) -> id
 
 let raw_bound_location = Location.span 
+

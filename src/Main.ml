@@ -53,6 +53,14 @@ let main style_renderer verbosity infile =
 
   Fmt_tty.setup_std_outputs ?style_renderer ();
 
+  (try
+     let cols = int_of_string @@ Sys.getenv "COLUMNS" in
+     Format.(pp_set_margin stdout) cols;
+     Format.(pp_set_margin stderr) cols
+   with Not_found ->
+     Msg.debug
+       (fun m -> m "Unfound environment variable: COLUMNS"));
+
   Logs.set_reporter (Logs_fmt.reporter ~pp_header ());
   Logs.set_level ~all:true verbosity;
 
@@ -61,7 +69,7 @@ let main style_renderer verbosity infile =
   (* begin work *)
   try
     let raw_to_elo_t = Transfo.tlist [ Raw_to_elo.transfo ] in
-    
+
     let elo =
       Parser_main.parse_file infile
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
@@ -69,8 +77,8 @@ let main style_renderer verbosity infile =
     in
 
     Msg.debug
-      (fun m -> m "Refined raw AST=@;%a" (Fmtc.box2 @@ Elo.pp) elo);
-    
+      (fun m -> m "Elo AST =@;%a" (Elo.pp) elo);
+
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
                          Mtime.pp_span (Mtime.elapsed ()))
   with Exit ->

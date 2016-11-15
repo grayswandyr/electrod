@@ -50,11 +50,11 @@ rule main infile = parse
         (NUMBER (int_of_string i))
       with Failure _ ->
         Msg.Fatal.lexical
-@@ fun args -> args infile lexbuf ("invalid integer constant '" ^ i ^ "'")
+        @@ fun args -> args infile lexbuf ("invalid integer constant '" ^ i ^ "'")
     }   
 | "unsat" 
     { Msg.Fatal.lexical
-@@ fun args -> args infile lexbuf (Printf.sprintf "reserved keyword: 'unsat'")}
+      @@ fun args -> args infile lexbuf (Printf.sprintf "reserved keyword: 'unsat'")}
 | "sat"
     { SAT }
 (*| "int"
@@ -113,7 +113,7 @@ rule main infile = parse
 | "in"
     { IN }
 | "not" (whitespace | newline)+ "in" (* TODO: take comments into account *)
-                                  { NOT_IN}
+    { NOT_IN}
 | "in"
     { IN }
 | ("not")
@@ -130,14 +130,12 @@ rule main infile = parse
     { NONE }
 | builtin_pred as b
   { FBUILTIN b }
-| builtin_rop as b
-  { RBUILTIN b }
-| builtin_iop as b
-  { IBUILTIN b }
 | idx_id as id
     { (IDX_ID id) }
 | plain_id as id
-    { (PLAIN_ID id) }
+  { (PLAIN_ID id) }
+| "#"
+  { HASH }
 | "!="
     { NEQ }
 | "'"
