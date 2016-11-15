@@ -147,6 +147,6 @@ let tuple3 ?sep1:(pp_sep1 = cut) ?sep2:(pp_sep2 = cut)
 
 
 let box2 out v = box ~indent:2 out v
-let hbox2 out v = box ~indent:2 out v
-let vbox2 out v = box ~indent:2 out v
-let hvbox2 out v = box ~indent:2 out v
+let hbox2 out v = hbox out v
+let vbox2 out v = vbox ~indent:2 out v
+let hvbox2 out v = hvbox ~indent:2 out v
