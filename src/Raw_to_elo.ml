@@ -206,7 +206,7 @@ let compute_decl infile domain = function
       Relation.const (Name.of_raw_ident id) scope
 
 
-let compute_domain (pb : (Raw_ident.t, Raw_ident.t) Raw.raw_problem) =
+let compute_domain (pb : Raw.raw_problem) =
   let univ = compute_univ pb.file pb.raw_univ in
   let init = Domain.add Name.univ univ Domain.empty in
   (* updating the domain, given a previous domain and a raw_decl *)
@@ -227,62 +227,71 @@ let compute_domain (pb : (Raw_ident.t, Raw_ident.t) Raw.raw_problem) =
  *******************************************************************************)
 
 let refine_identifiers raw_pb =
-  let open Raw_goal in
+  let open GenGoal in
   let rec walk_fml ctx fml =
     let ctx2, f = walk_prim_fml ctx fml.data in
     (ctx2, { fml with data = f })
 
   and walk_prim_fml ctx = function
     | QLO (q, bindings, blk) ->
-       let ctx2, bindings2 = walk_bindings ctx bindings in
-       let _, blk2 = walk_block ctx2 blk in
-       (ctx, qlo q bindings2 blk2)
+        let ctx2, bindings2 = walk_bindings ctx bindings in
+        let _, blk2 = walk_block ctx2 blk in
+        (ctx, qlo q bindings2 blk2)
     | QAEN (q, sim_bindings, blk) ->
-       let ctx2, sim_bindings2 = walk_sim_bindings ctx sim_bindings in
-       let _, blk2 = walk_block ctx2 blk in
-       (ctx, qaen q sim_bindings2 blk2) 
+        let ctx2, sim_bindings2 = walk_sim_bindings ctx sim_bindings in
+        let _, blk2 = walk_block ctx2 blk in
+        (ctx, qaen q sim_bindings2 blk2) 
     | True -> (ctx, true_)
     | False -> (ctx, false_)
     | Block b -> (ctx, Pair.map_snd block (walk_block ctx b))
     | LUn (op, fml) -> (ctx, Pair.map_snd (lunary op) (walk_fml ctx fml))
     | LBin (f1, op, f2) ->
-       (ctx, lbinary (snd @@ walk_fml ctx f1) op (snd @@ walk_fml ctx f2))
+        (ctx, lbinary (snd @@ walk_fml ctx f1) op (snd @@ walk_fml ctx f2))
     | FBuiltin (str, args) ->
-       (ctx, fbuiltin str @@ List.map (walk_exp ctx) args)
-    | Qual (q, r) -> (ctx, qual rsome @@ walk_exp ctx r)
-    | Comp (e1, op, e2) -> (ctx, comp (walk_exp ctx e1) op (walk_exp ctx e2))
+        (ctx, fbuiltin str @@ List.map (walk_exp ctx) args)
+    | Qual (q, r) -> (ctx, qual q @@ walk_exp ctx r)
+    | RComp (e1, op, e2) -> (ctx, rcomp (walk_exp ctx e1) op (walk_exp ctx e2))
+    | IComp (e1, op, e2) -> (ctx, icomp (walk_iexp ctx e1) op (walk_iexp ctx e2))
     | FIte (c, t, e) ->
-       (ctx, fite (snd @@ walk_fml ctx c) (snd @@ walk_fml ctx t) (snd @@ walk_fml ctx e))
+        (ctx, fite (snd @@ walk_fml ctx c) (snd @@ walk_fml ctx t) (snd @@ walk_fml ctx e))
     | Let (bindings, blk) -> 
-       let ctx2, bindings2 = walk_bindings ctx bindings in
-       let _, blk2 = walk_block ctx2 blk in
-       (ctx, let_ bindings2 blk2)
+        let ctx2, bindings2 = walk_bindings ctx bindings in
+        let _, blk2 = walk_block ctx2 blk in
+        (ctx, let_ bindings2 blk2)
 
   and walk_bindings ctx = function
     | [] -> (ctx, [])
     | b :: bs ->
-       let ctx2, b2 = walk_binding ctx b in
-       let ctx3, bs2 = walk_bindings ctx2 bs in
-       (ctx3, b2 :: bs2)
+        let ctx2, b2 = walk_binding ctx b in
+        let ctx3, bs2 = walk_bindings ctx2 bs in
+        (ctx3, b2 :: bs2)
 
   and walk_binding ctx (v, exp) =
     let exp2 = walk_exp ctx exp in
-    let var = `Var (Var.fresh (Raw_ident.basename v)) in
+    let var = `Var (Var.fresh_of_raw_ident v) in
     ((v, var) :: ctx, (var, exp2))
 
   and walk_sim_bindings ctx = function
     | [] -> (ctx, [])
     | sb :: sbs ->
-       let ctx2, sb2 = walk_sim_binding ctx sb in
-       let ctx3, sbs2 = walk_sim_bindings ctx2 sbs in 
-       (ctx3, sb2 :: sbs2)
+        let ctx2, sb2 = walk_sim_binding ctx sb in
+        let ctx3, sbs2 = walk_sim_bindings ctx2 sbs in 
+        (ctx3, sb2 :: sbs2)
 
-  and walk_sim_binding ctx (disj, vs, exp) = 
-    (if disj && List.length vs = 1 then
-        Msg.Warn.disj_with_only_one_variable @@ fun args -> args raw_pb.file (List.hd vs));
+  and walk_sim_binding ctx (disj, vs, exp) =
+    let disj2 = 
+      if disj && List.length vs = 1 then
+        begin
+          Msg.Warn.disj_with_only_one_variable
+            (fun args -> args raw_pb.file (List.hd vs));
+          false
+        end
+      else
+        disj
+    in
     let exp2 = walk_exp ctx exp in
     let vars = List.map (fun v -> `Var (Var.fresh (Raw_ident.basename v))) vs in
-    (List.(combine vs vars |> rev) @ ctx, (disj, vars, exp2))      
+    (List.(combine vs vars |> rev) @ ctx, (disj2, vars, exp2))      
 
   and walk_block ctx blk =
     (ctx, List.map (fun fml -> snd @@ walk_fml ctx fml) blk)
@@ -292,34 +301,39 @@ let refine_identifiers raw_pb =
 
   and walk_prim_exp ctx = function
     | Ident id ->
-       (try
-          ident @@ CCList.Assoc.get_exn ~eq:Raw_ident.eq_name ctx id
-        with Not_found ->
-          Msg.Fatal.undeclared_id @@ fun args -> args raw_pb.file id)
-    | RBuiltin (str, args) -> rbuiltin str @@ List.map (walk_exp ctx) args
-    | IBuiltin (str, args) -> ibuiltin str @@ List.map (walk_exp ctx) args
-    | Num n -> num n
+        (try
+           ident @@ CCList.Assoc.get_exn ~eq:Raw_ident.eq_name ctx id
+         with Not_found ->
+           Msg.Fatal.undeclared_id @@ fun args -> args raw_pb.file id)
     | None_ -> none
     | Univ -> univ
     | Iden -> iden
-    | Int -> int
     | RUn (op, e) -> runary op @@ walk_exp ctx e
     | RBin (e1, op, e2) -> rbinary (walk_exp ctx e1) op (walk_exp ctx e2)
     | RIte (c, t, e) -> rite (snd @@ walk_fml ctx c) (walk_exp ctx t) (walk_exp ctx e)
     | BoxJoin (e, args) -> boxjoin (walk_exp ctx e) @@ List.map (walk_exp ctx) args
     | Prime e -> prime (walk_exp ctx e) 
     | Compr (sim_binding, blk) ->
-       let ctx2, sim_binding2 = walk_sim_binding ctx sim_binding in
-       let _, blk2 = walk_block ctx2 blk in
-       compr sim_binding2 blk2
+        let ctx2, sim_binding2 = walk_sim_binding ctx sim_binding in
+        let _, blk2 = walk_block ctx2 blk in
+        compr sim_binding2 blk2
+
+  and walk_iexp ctx exp =
+    { exp with data = walk_prim_iexp ctx exp.data }
+
+  and walk_prim_iexp ctx = function
+    | Num n -> num n
+    | Card e -> card @@ walk_exp ctx e
+    | IUn (op, e) -> iunary op @@ walk_iexp ctx e
+    | IBin (e1, op, e2) -> ibinary (walk_iexp ctx e1) op (walk_iexp ctx e2)
 
   in
   (* initial context is made of relation names declared in the domain (+ univ) *)
   let init_ctx =
     List.map
       (fun decl ->
-        Pair.dup_map (fun id -> `Name (Name.of_raw_ident id))
-        @@ Raw.decl_id decl)
+         Pair.dup_map (fun id -> `Name (Name.of_raw_ident id))
+         @@ Raw.decl_id decl)
       raw_pb.raw_decls
     @ [ (Raw_ident.ident "univ" Lexing.dummy_pos Lexing.dummy_pos,
          `Name Name.univ) ]

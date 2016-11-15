@@ -4,6 +4,7 @@ Domain
 Electrod
 Elo
 Fmtc
+GenGoal
 Intf
 Location
 Main
@@ -12,7 +13,6 @@ Name
 Parser
 Parser_main
 Raw
-Raw_goal
 Raw_ident
 Raw_to_elo
 Relation

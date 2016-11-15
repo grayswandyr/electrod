@@ -40,7 +40,7 @@ let slash = const string "/"
 
 let backslash = const string "\\"
 
-let equals = const string "="
+let equal = const string "="
 
 let qmark = const string "?"
 
@@ -103,16 +103,16 @@ let surround_ bef aft pp_v out v =
   aft out ()
 
 let braces_ ppv_v out v =
-  surround lbrace rbrace ppv_v out v
+  surround_ lbrace rbrace ppv_v out v
 
 let brackets_ ppv_v out v =
-  surround lbracket rbracket ppv_v out v
+  surround_ lbracket rbracket ppv_v out v
 
 let parens_ ppv_v out v =
-  surround lparen rparen ppv_v out v
+  surround_ lparen rparen ppv_v out v
 
 let angles_ ppv_v out v =
-  surround langle rangle ppv_v out v
+  surround_ langle rangle ppv_v out v
 
 
 
