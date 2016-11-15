@@ -2,7 +2,7 @@
 
 
 (** Set of tuples. Invariant: all tuples in the bound have the same arity *)
-type t = private {
+type t = {
   tuples : Tuple.Set.t;
   arity : int;
 }

@@ -1,14 +1,11 @@
 
-type 'a typed = {
+type 'a located = {
   data : 'a;
   loc : Location.t;
-  mutable typ : Type.t option;
 }
 
-let pp_typed pp_data out { data; typ; _ } =
-  Fmtc.(pf out "%a%a" pp_data data
-          (option @@ sp **< (surround (const string "«")
-                               (const string "»") Type.pp)) typ)
+let pp_located pp_data out { data; _ } =
+  Fmtc.pf out "%a" pp_data data
 
 (* ['v] is the type of variables introduced in quantifiers, ['i] is the type of
    any identifier (a variable like in the former case or a relation name) *)
@@ -17,7 +14,7 @@ type ('v, 'i) t =
 
 (** Formulas and expressions *)
 
-and ('v, 'i) fml = ('v, 'i) prim_fml typed
+and ('v, 'i) fml = ('v, 'i) prim_fml located
 
 and ('v, 'i) prim_fml =
   | FBuiltin of string * ('v, 'i) exp list (** nonempty *)
@@ -87,7 +84,7 @@ and icomp_op =
   | Gt 
   | Gte 
 
-and ('v, 'i) exp = ('v, 'i) prim_exp typed
+and ('v, 'i) exp = ('v, 'i) prim_exp located
 
 and ('v, 'i) prim_exp =
   | None_ 
@@ -124,7 +121,7 @@ and rbinop =
   | Diff 
   | Join
 
-and ('v, 'i) iexp = ('v, 'i) prim_iexp typed
+and ('v, 'i) iexp = ('v, 'i) prim_iexp located
 
 and ('v, 'i) prim_iexp =
   | Num of int
@@ -138,7 +135,6 @@ and iunop =
 and ibinop =
   | Add
   | Sub
-      [@@deriving show]
 
 let fbuiltin str args = FBuiltin (str, args)
 
@@ -295,11 +291,11 @@ let add = Add
 let sub = Sub
 
 
-let fml ?(typ = None) loc data = { data; loc; typ }
+let fml loc data = { data; loc }
 
-let exp ?(typ = None) loc data = { data; loc; typ }
+let exp loc data = { data; loc }
 
-let iexp ?(typ = None) loc data = { data; loc; typ }
+let iexp loc data = { data; loc }
 
 let sat fs = Sat fs
 

@@ -1,6 +1,6 @@
 (** Tuples of atoms. *)
 
-type t = private Atom.t CCArray.t (** invariant: atoms <> empty *)
+type t (** invariant: atoms <> empty *)
 
 (** Builds a tuple out of a non-empty list of atoms. *)
 val of_list1 : Atom.t list -> t
