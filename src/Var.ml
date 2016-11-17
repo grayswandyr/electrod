@@ -24,6 +24,8 @@ let fresh_of_raw_ident ?(sep = "$") v =
 let compare id1 id2 =
   CCInt.compare id1.id id2.id
 
+let equal { id = id1; _ } { id = id2; _ } =
+  id1 = id2
 
 let pp out { id; name; sep } =
   Fmtc.(pf out "%s%s%d" name sep id)

@@ -3,11 +3,15 @@
 open Containers
 
 
-(* variables introduced by a binder *)
+(** variables introduced by a binder *)
 type var = [ `Var of Var.t ]
 
-(* any identifier: a binder-introduced variable or a set/relation name *)
+val equal_var : var -> var -> bool
+
+(** any identifier: a binder-introduced variable or a set/relation name *)
 type ident = [ var | `Name of Name.t ]
+
+val equal_ident : ident -> ident -> bool 
 
 type goal = (var, ident) GenGoal.t
 
