@@ -45,7 +45,7 @@ and ('v, 'i) block = ('v, 'i) fml list (** nonempty *)
 
 and ae_quant = 
   | All 
-  | Some 
+  | Some_ 
   | No 
 
 and lo_quant = 
@@ -168,7 +168,7 @@ let let_ decls block = Let (decls, block)
 
 let all = All
 
-let some = Some
+let some = Some_
 
 let no_ = No
 
@@ -431,7 +431,7 @@ and pp_ae_quant out =
   let open Fmtc in
   function
     | All -> pf out "all"
-    | Some -> pf out "some"
+    | Some_ -> pf out "some"
     | No -> pf out "no"
 
 and pp_binding ~sep pp_v pp_i out (v, e) =
