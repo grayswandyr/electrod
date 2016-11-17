@@ -4,7 +4,7 @@
 (** Set of tuples. Invariant: all tuples in the bound have the same arity *)
 type t = {
   tuples : Tuple.Set.t;
-  arity : int;
+  arity : int option;           (** None = arity of empty set or 'none' *)
 }
 
 (** The empty bound. *)
@@ -14,10 +14,10 @@ val empty : t
 val of_tuples : Tuple.t list -> t
 
 (** Arity of a bound. *)
-val arity : t -> int
+val arity : t -> int option
 
 (** Arity of the empty bound. Meant to be compatible with any positive arity *)
-val empty_arity : int
+val empty_arity : int option
 
 (** Tells whether the bound denotes the empty set. *)
 val is_empty : t -> bool
