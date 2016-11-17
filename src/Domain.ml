@@ -19,7 +19,7 @@ let get_exn = Map.find
 
 let get = Map.get
 
-
+let to_list = Map.to_list
 
 let univ_atoms domain =
   let open Relation in

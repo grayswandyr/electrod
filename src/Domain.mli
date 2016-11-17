@@ -25,5 +25,8 @@ val get : Name.t -> t -> Relation.t option
 (** Returns the set of atoms in univ, represented as a {!type:Bound.t} *)
 val univ_atoms : t -> Bound.t
 
+(** Returns the map as an association list *)
+val to_list : t -> (Name.t * Relation.t) list
+
 include Intf.Print.S with type t := t
 

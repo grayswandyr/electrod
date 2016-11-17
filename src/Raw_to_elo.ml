@@ -345,6 +345,171 @@ let refine_identifiers raw_pb =
 
 
 (*******************************************************************************
+ *  Check arities #708
+ *******************************************************************************)
+
+let check_arities elo =
+  let open Elo in
+  let open GenGoal in
+  (* ctx is a map from identifiers to their arity  *)
+  let rec walk_fml ctx { data; _ } =
+    walk_prim_fml ctx data
+
+  and walk_prim_fml ctx = function
+    | FBuiltin (_, args) ->
+        List.iter (fun arg ->
+              let ar = arity_exp ctx arg in
+              if ar <> 1 && ar <> Bound.empty_arity then
+                Msg.Fatal.arity_error (fun args -> args elo.file arg)) args
+    | True | False -> ()
+    | Qual (_, exp) -> ignore @@ arity_exp ctx exp
+    | RComp (e1, _, e2) -> 
+        let ar1 = arity_exp ctx e1 in
+        let ar2 = arity_exp ctx e2 in
+        (if ar1 <> ar2 &&
+            ar1 <> Bound.empty_arity &&
+            ar2 <> Bound.empty_arity then
+           Msg.Fatal.arity_error (fun args -> args elo.file e2))
+    | IComp (e1, op, e2) ->
+        begin
+          arity_iexp ctx e1;
+          arity_iexp ctx e2
+        end
+    | LUn (_, fml) -> walk_fml ctx fml
+    | LBin (f1, _, f2) -> 
+        begin
+          walk_fml ctx f1;
+          walk_fml ctx f2
+        end
+    | QAEN (_, sim_bindings, blk) -> 
+        let ctx = walk_sim_bindings ctx sim_bindings in
+        walk_block ctx blk
+    | QLO (_, bindings, blk) ->
+        let ctx = walk_bindings ctx true bindings in
+        walk_block ctx blk
+    | Let (bindings, blk) -> 
+        let ctx = walk_bindings ctx false bindings in
+        walk_block ctx blk
+    | FIte (c, t, e) ->
+        walk_fml ctx c;
+        walk_fml ctx t;
+        walk_fml ctx e 
+    | Block blk ->
+        walk_block ctx blk
+
+  and walk_block ctx blk =
+    List.iter (walk_fml ctx) blk
+
+  and walk_bindings ctx in_q = function
+    | [] -> ctx
+    | (`Var v, exp) :: bs ->
+        let ar = arity_exp ctx exp in
+        if in_q && ar <> 1 then  (* under a quantification, range arity must be 1 *)
+          Msg.Fatal.arity_error (fun args -> args elo.file exp)
+        else
+          walk_bindings ((`Var v, ar) :: ctx) in_q bs
+
+  and walk_sim_bindings ctx = function
+    | [] -> ctx
+    | sb :: sbs ->
+        let ctx = walk_sim_binding ctx sb in
+        walk_sim_bindings ctx sbs
+
+  and walk_sim_binding ctx (_, vs, exp) =
+    let ar = arity_exp ctx exp in
+    if ar <> 1 then
+      Msg.Fatal.arity_error (fun args -> args elo.file exp)
+    else
+      List.map (CCPair.dup_map (fun _ -> 1)) (vs :> Elo.ident list) @ ctx
+
+  and arity_exp ctx { data; _ } =
+    arity_prim_exp ctx data
+
+  and arity_prim_exp ctx exp = match exp with
+    | None_ -> Bound.empty_arity
+    | Univ -> 1
+    | Iden -> 2
+    | Ident id -> List.Assoc.get_exn ~eq:Elo.equal_ident ctx id
+    | RUn (op, exp) ->
+        let ar = arity_exp ctx exp in
+        if ar <> 2 then
+          Msg.Fatal.arity_error (fun args -> args elo.file exp)
+        else ar
+    | RBin (e1, op, e2) ->
+        let ar1 = arity_exp ctx e1 in
+        let ar2 = arity_exp ctx e2 in
+        (match op with
+          | Union
+          | Inter
+          | Over
+          | Diff ->
+              if ar1 <> ar2 &&
+                 ar1 <> Bound.empty_arity &&
+                 ar2 <> Bound.empty_arity then
+                Msg.Fatal.arity_error (fun args -> args elo.file e2)
+              else ar1
+          | LProj when ar1 <> 1 && ar1 <> Bound.empty_arity ->
+              Msg.Fatal.arity_error (fun args -> args elo.file e1)
+          | LProj -> ar2
+          | RProj when ar2 <> 1 && ar2 <> Bound.empty_arity ->
+              Msg.Fatal.arity_error (fun args -> args elo.file e2)
+          | RProj -> ar1
+          | Prod -> ar1 + ar2
+          | Join when ar1 + ar2 <= 2 ->
+              Msg.Fatal.arity_error (fun args -> args elo.file e2)
+          | Join -> ar1 + ar2 - 2)
+    | RIte (c, t, e) -> 
+        begin
+          walk_fml ctx c;
+          let a_t = arity_exp ctx t in
+          let a_e = arity_exp ctx e in
+          if a_t <> a_e &&
+             a_t <> Bound.empty_arity &&
+             a_e <> Bound.empty_arity then
+            Msg.Fatal.arity_error (fun args -> args elo.file e)
+          else
+            a_t
+        end
+    | BoxJoin (exp, args) ->
+        let ar_e = arity_exp ctx exp in
+        let ar_args =
+          List.fold_left (fun acc arg -> acc + arity_exp ctx arg) 0 args in
+        let ar = ar_e + ar_args - 2 * List.length args in
+        if ar <= 0 then
+          Msg.Fatal.arity_error (fun args -> args elo.file exp)
+        else
+          ar
+    | Compr ((_, vs, _) as sim_binding, blk) ->
+        let ctx2 = walk_sim_binding ctx sim_binding in
+        begin
+          walk_block ctx2 blk;
+          List.length vs
+        end
+    | Prime e -> arity_exp ctx e
+
+  and arity_iexp ctx { data; _ } =
+    arity_prim_iexp ctx data
+
+  and arity_prim_iexp ctx = function
+    | Num _ -> ()
+    | Card exp -> ignore @@ arity_exp ctx exp
+    | IUn (_, iexp) -> arity_iexp ctx iexp
+    | IBin (iexp1, _, iexp2) -> 
+        begin
+          arity_iexp ctx iexp1;
+          arity_iexp ctx iexp2
+        end
+  in
+  let init_ctx =
+    Domain.to_list elo.domain
+    |> List.map (fun (name, rel) -> (`Name name, Relation.arity rel))
+  in
+  let walk_goal (Sat blk) =
+    walk_block (init_ctx :> (Elo.ident * int) list) blk
+  in
+  List.iter walk_goal elo.goals
+
+(*******************************************************************************
  *  Declaration of the whole transformation
  *******************************************************************************)
 
@@ -352,5 +517,6 @@ let whole raw_pb =
   let domain = compute_domain raw_pb in
   let goals = refine_identifiers raw_pb in
   Elo.make raw_pb.file domain goals
+  |> CCFun.tap check_arities
 
 let transfo = Transfo.make "raw_to_elo" whole (* temporary *)

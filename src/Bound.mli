@@ -17,7 +17,7 @@ val of_tuples : Tuple.t list -> t
 val arity : t -> int
 
 (** Arity of the empty bound. Meant to be compatible with any positive arity *)
-(* val empty_arity : int *)
+val empty_arity : int
 
 (** Tells whether the bound denotes the empty set. *)
 val is_empty : t -> bool
