@@ -18,10 +18,10 @@ let arity = function
 
 
 let is_set rel =
-  arity rel = 1
+  CCOpt.compare CCInt.compare (arity rel) (Some 1) = 0 
   
 let is_nary rel =
-  arity rel > 1
+  CCOpt.compare CCInt.compare (arity rel) (Some 1) > 0 
 
 let is_const = function
   | Const _ -> true

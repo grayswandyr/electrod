@@ -23,4 +23,7 @@ type t = {
 
 val make : string option -> Domain.t -> goal list -> t
 
+val pp_var : Format.formatter -> var -> unit
+val pp_ident : Format.formatter -> ident -> unit
+
 include Intf.Print.S with type t := t

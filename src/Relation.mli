@@ -13,8 +13,8 @@ val const : Name.t -> Scope.t -> t
 val var : Name.t -> Scope.t -> Scope.t option -> t
 
   
-(** Arity of the relation. *)
-val arity : t -> int
+(** Arity of the relation. Recall remark for {!Bound.arity} *)
+val arity : t -> int option
 
 (** Tells whether the relation is a set or a relation of arity > 1. *)
 val is_set : t -> bool
