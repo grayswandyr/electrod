@@ -2,55 +2,43 @@ open Containers
     
 module TS = Tuple.Set
 
-type t = {
-  tuples : TS.t;
-  arity : int
-}
+type t = TS.t
 
-let empty_arity = 0
 
-let empty = {
-  tuples = TS.empty;
-  arity = empty_arity
-}
+let empty = TS.empty
 
 let of_tuples tuples = match tuples with
   | [] -> empty
   | t :: ts ->
       let ar = Tuple.arity t in
       assert (List.for_all (fun t2 -> Tuple.arity t2 = ar) ts);
-      {
-        arity = ar;
-        tuples = TS.of_list tuples 
-      }
+      TS.of_list tuples 
 
-let arity { arity; _ } = arity
+let arity b =
+  CCOpt.if_ (fun ar -> ar > 0)
+  @@
+  if TS.is_empty b then 0
+  else Tuple.arity @@ TS.choose b 
 
-let tuples { tuples; _ } = tuples
+let tuples t = t
 
 let is_empty b =
-  arity b = empty_arity
+  CCOpt.is_none @@ arity b
 
 let inter b1 b2 =
-  assert (b1.arity = b2.arity);
-  {
-    tuples = TS.inter b1.tuples b2.tuples;
-    arity = b1.arity
-  }
+  TS.inter b1 b2
 
 let size bnd =
-  TS.cardinal bnd.tuples
+  TS.cardinal bnd
 
 let subset b1 b2 =
-  assert (b1.arity = b2.arity || b1.arity = empty_arity);
-  TS.subset b1.tuples b2.tuples
+  TS.subset b1 b2
 
 let equal b1 b2 =
-  assert (b1.arity = b2.arity || b1.arity = empty_arity);
-  TS.equal b1.tuples b2.tuples
+  TS.equal b1 b2
 
 let compare b1 b2 =
-  TS.compare b1.tuples b2.tuples
+  TS.compare b1 b2
     
 let product b1 b2 =
   if is_empty b1 then
@@ -58,25 +46,20 @@ let product b1 b2 =
   else if is_empty b2 then
     b1
   else
-    {
-      arity = arity b1 + arity b2;
-      tuples = Sequence.product (TS.to_seq @@ tuples b1) (TS.to_seq @@ tuples b2)
-               |> Sequence.map Tuple.append
-               |> TS.of_seq
-    }
+    Sequence.product (TS.to_seq @@ tuples b1) (TS.to_seq @@ tuples b2)
+    |> Sequence.map Tuple.append
+    |> TS.of_seq
 
 
-
-
-  let union b1 b2 =
-    assert (b1.arity = b2.arity);
-    { b1 with tuples = TS.union b1.tuples b2.tuples }
+let union b1 b2 =
+  assert (arity b1 = arity b2);
+  TS.union b1 b2 
  
 
-let mem t bnd = TS.mem t bnd.tuples
+let mem t bnd = TS.mem t bnd
 
-let pp out { tuples; _ } =
-  TS.print ~start:"{" ~stop:"}" ~sep:" " Tuple.pp out tuples
+let pp out b =
+  TS.print ~start:"{" ~stop:"}" ~sep:" " Tuple.pp out b
   
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 
