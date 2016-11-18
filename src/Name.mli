@@ -14,7 +14,8 @@ val of_raw_ident : Raw_ident.t -> t
 (** Reserved name for 'univ'. *)
 val univ : t
 
-
+(** Tells whether two names are the same *)
+val equal : t -> t -> bool
   
 include Intf.Print.S with type t := t
 

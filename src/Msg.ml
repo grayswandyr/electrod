@@ -265,6 +265,15 @@ module Fatal = struct
       (Raw_ident.basename id)
       (Raw_ident.basename ref_id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
+  let arity_error args = err @@ fun m -> args @@
+    fun infile exp msg ->
+    let loc = exp.GenGoal.loc in
+    m ~header:(code 13)
+      "%a%a: %s%a"
+      (option @@ colon **> string) infile
+      Loc.pp loc
+      msg
+      (hardline **< Extract.pp) (Extract.extract infile loc)
 end
 
   

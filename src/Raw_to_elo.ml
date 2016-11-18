@@ -117,9 +117,9 @@ let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
             | None -> Msg.Fatal.undeclared_id (fun args -> args infile ref_id)
             | Some rel ->
                 match rel with
-                  | Const { scope = Exact b } when Bound.arity b = 1 -> b
+                  | Const { scope = Exact b } when Bound.arity b = Some 1 -> b
                   | Const { scope = Inexact (inf, sup) }
-                    when Bound.arity sup = 1 ->
+                    when Bound.arity sup = Some 1 ->
                       (match which with
                         | Some `Inf -> inf
                         | Some `Sup -> sup
@@ -343,6 +343,259 @@ let refine_identifiers raw_pb =
   in
   List.map walk_goal raw_pb.raw_goals
 
+(*******************************************************************************
+ *  Check arities #708
+ *******************************************************************************)
+
+(* computes the arity of a join *)
+let join_arity ar1 ar2 = match ar1, ar2 with
+  | Some a1, Some a2 ->
+      let res = a1 + a2 - 2 in
+      if res > 0 then Some res
+      else None
+  | Some _, None
+  | None, Some _
+  | None, None -> None
+
+let str_exp =
+  Fmtc.to_to_string (Fmtc.hbox2 @@ GenGoal.pp_exp Elo.pp_var Elo.pp_ident)
+
+let check_arities elo =
+  let open Elo in
+  let open GenGoal in
+  (* ctx is a map from identifiers to their arity  *)
+  let rec walk_fml ctx { data; _ } =
+    walk_prim_fml ctx data
+
+  and walk_prim_fml ctx = function
+    | FBuiltin (_, args) ->
+        List.iter (fun arg ->
+              let ar = arity_exp ctx arg in
+              if ar <> Some 1 && ar <> None then
+                Msg.Fatal.arity_error
+                  (fun args -> args elo.file arg "arity should be 1")) args
+    | True | False -> ()
+    | Qual (ROne, exp)
+    | Qual (RSome, exp) ->
+        if arity_exp ctx exp = None then
+          Msg.Fatal.arity_error
+            (fun args -> args elo.file exp
+              @@ Fmtc.strf
+                   "enclosing formula is false as %s is always empty"
+                   (str_exp exp))
+    | Qual (_, exp) -> ignore @@ arity_exp ctx exp
+    | RComp (e1, _, e2) -> 
+        let ar1 = arity_exp ctx e1 in
+        let ar2 = arity_exp ctx e2 in
+        (if ar1 <> ar2 &&
+            ar1 <> None &&
+            ar2 <> None then
+           Msg.Fatal.arity_error
+             (fun args ->
+                args elo.file e2
+                  (Fmtc.strf "arity incompatible with that of %s" (str_exp e1))))
+    | IComp (e1, op, e2) ->
+        begin
+          arity_iexp ctx e1;
+          arity_iexp ctx e2
+        end
+    | LUn (_, fml) -> walk_fml ctx fml
+    | LBin (f1, _, f2) -> 
+        begin
+          walk_fml ctx f1;
+          walk_fml ctx f2
+        end
+    | QAEN (_, sim_bindings, blk) -> 
+        let ctx = walk_sim_bindings ctx sim_bindings in
+        walk_block ctx blk
+    | QLO (_, bindings, blk) ->
+        let ctx = walk_bindings ctx true bindings in
+        walk_block ctx blk
+    | Let (bindings, blk) -> 
+        let ctx = walk_bindings ctx false bindings in
+        walk_block ctx blk
+    | FIte (c, t, e) ->
+        walk_fml ctx c;
+        walk_fml ctx t;
+        walk_fml ctx e 
+    | Block blk ->
+        walk_block ctx blk
+
+  and walk_block ctx blk =
+    List.iter (walk_fml ctx) blk
+
+  and walk_bindings ctx in_q = function
+    | [] -> ctx
+    | (`Var v, exp) :: bs ->
+        let ar = arity_exp ctx exp in
+        if in_q && ar <> Some 1 then (* under a quantification, range arity must be 1 *)
+          Msg.Fatal.arity_error
+            (fun args -> args elo.file exp "arity should be 1")
+        else
+          walk_bindings ((`Var v, ar) :: ctx) in_q bs
+
+  and walk_sim_bindings ctx = function
+    | [] -> ctx
+    | sb :: sbs ->
+        let ctx = walk_sim_binding ctx sb in
+        walk_sim_bindings ctx sbs
+
+  and walk_sim_binding ctx (_, vs, exp) =
+    let ar = arity_exp ctx exp in
+    if ar <> Some 1 then
+      Msg.Fatal.arity_error (fun args -> args elo.file exp "arity should be 1")
+    else
+      List.map (CCPair.dup_map (fun _ -> Some 1)) (vs :> Elo.ident list) @ ctx
+
+  and arity_exp ctx exp =
+    match arity_prim_exp ctx exp.data with
+      | Ok ar -> ar
+      | Error msg -> Msg.Fatal.arity_error (fun args -> args elo.file exp msg)
+
+  (* this function returns a [result] to factor the error messages out and also
+     to enable to display the expression (i.e [exp], not [prim_exp]) concerned
+     by the error*)
+  and arity_prim_exp ctx exp = match exp with
+    | None_ -> Result.return None
+    | Univ -> Result.return @@ Some 1
+    | Iden -> Result.return @@ Some 2
+    | Ident id -> Result.return @@ List.Assoc.get_exn ~eq:Elo.equal_ident ctx id
+    | RUn (op, exp) ->
+        let ar = arity_exp ctx exp in
+        if ar <> Some 2 then
+          Result.fail "arity should be 2"
+        else
+          Result.return ar
+    | RBin (e1, op, e2) ->
+        let ar1 = arity_exp ctx e1 in
+        let ar2 = arity_exp ctx e2 in
+        (match op with
+          | Union when ar1 = ar2 || ar2 = None ->
+              Result.return ar1
+          | Union when ar1 = None ->
+              Result.return ar2
+          | Union ->
+              Result.fail
+                (Fmtc.strf "incompatible arities between %s and %s"
+                   (str_exp e1)
+                   (str_exp e2))
+          | Inter when ar1 = None || ar2 = None ->
+              Result.return None
+          | Inter when ar1 = ar2 -> 
+              Result.return ar1
+          | Inter ->
+              Result.fail
+                (Fmtc.strf "incompatible arities between %s and %s"
+                   (str_exp e1)
+                   (str_exp e2))
+          | Over when ar1 = ar2 ->
+              if CCOpt.compare CCInt.compare ar1 (Some 1) <= 0 then
+                Result.fail
+                  (Fmtc.strf "arity of %s is < 2" (str_exp e1))
+              else if CCOpt.compare CCInt.compare ar2 (Some 1) <= 0 then
+                Result.fail
+                  (Fmtc.strf "arity of %s is < 2" (str_exp e2))
+              else
+                Result.return ar1
+          | Over when ar1 = None ->
+              Result.return None
+          | Over when ar2 = None ->
+              if CCOpt.compare CCInt.compare ar1 (Some 1) <= 0 then
+                Result.fail
+                  (Fmtc.strf "arity of %s is < 2" (str_exp e1))
+              else
+                Result.return ar1
+          | Over ->
+              Result.fail
+                (Fmtc.strf "incompatible arities between %s and %s"
+                   (str_exp e1)
+                   (str_exp e2))
+          | Diff when ar1 = None -> 
+              Result.return None
+          | Diff when ar1 = ar2 || ar2 = None ->
+              Result.return ar1
+          | Diff ->
+              Result.fail
+                (Fmtc.strf "incompatible arities between %s and %s"
+                   (str_exp e1)
+                   (str_exp e2))
+          | RProj when ar1 = None ->
+              Result.return None
+          | LProj when ar1 = Some 1 ->
+              Result.return ar2
+          | LProj ->
+              Result.fail "left projection should be on a set"
+          | RProj when ar2 = None ->
+              Result.return None
+          | RProj when ar2 = Some 1 ->
+              Result.return ar1
+          | RProj -> 
+              Result.fail "right projection should be on a set"
+          | Prod ->
+              (match ar1, ar2 with
+                | Some a1, Some a2 -> Result.return @@ Some (a1 + a2)
+                | Some _, _ -> Result.return @@ ar1
+                | _, Some _ -> Result.return @@ ar2
+                | None, None -> Result.return None)
+          | Join ->
+              let ar_join = join_arity ar1 ar2 in
+              if ar_join = None then
+                Result.fail @@
+                Fmtc.strf "wrong arities for the dot join of %s and %s"
+                  (str_exp e1) (str_exp e2)
+              else
+                Result.return ar_join)
+    | RIte (c, t, e) -> 
+        begin
+          walk_fml ctx c;
+          let a_t = arity_exp ctx t in
+          let a_e = arity_exp ctx e in
+          if a_t <> a_e &&
+             a_t <> None &&
+             a_e <> None then
+            Result.fail "incompatible arities in the bodies of 'then' and 'else'" 
+          else
+            Result.return a_t
+        end
+    | BoxJoin (exp, args) ->
+        let ar_exp = arity_exp ctx exp in
+        let ar_join =
+          List.fold_left
+            (fun acc arg -> join_arity acc @@ arity_exp ctx arg) ar_exp args
+        in
+        if ar_join = None then
+          Result.fail "wrong arities for the box join" 
+        else
+          Result.return ar_join
+    | Compr ((_, vs, _) as sim_binding, blk) ->
+        let ctx2 = walk_sim_binding ctx sim_binding in
+        begin
+          walk_block ctx2 blk;
+          Result.return @@ Some (List.length vs)
+        end
+    | Prime e -> Result.return @@ arity_exp ctx e
+
+  and arity_iexp ctx { data; _ } =
+    arity_prim_iexp ctx data
+
+  and arity_prim_iexp ctx = function
+    | Num _ -> ()
+    | Card exp -> ignore @@ arity_exp ctx exp
+    | IUn (_, iexp) -> arity_iexp ctx iexp
+    | IBin (iexp1, _, iexp2) -> 
+        begin
+          arity_iexp ctx iexp1;
+          arity_iexp ctx iexp2
+        end
+  in
+  let init_ctx =
+    Domain.to_list elo.domain
+    |> List.map (fun (name, rel) -> (`Name name, Relation.arity rel))
+  in
+  let walk_goal (Sat blk) =
+    walk_block (init_ctx) blk
+  in
+  List.iter walk_goal elo.goals
 
 (*******************************************************************************
  *  Declaration of the whole transformation
@@ -352,5 +605,6 @@ let whole raw_pb =
   let domain = compute_domain raw_pb in
   let goals = refine_identifiers raw_pb in
   Elo.make raw_pb.file domain goals
+  |> CCFun.tap check_arities
 
 let transfo = Transfo.make "raw_to_elo" whole (* temporary *)

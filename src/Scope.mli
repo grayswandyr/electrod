@@ -13,6 +13,6 @@ type t = private
 val exact : Bound.t -> t
 val inexact : Bound.t -> Bound.t -> t
 
-val arity : t -> int
+val arity : t -> int option
 
 include Intf.Print.S with type t := t

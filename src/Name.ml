@@ -14,6 +14,8 @@ let of_raw_ident id = Raw_ident.basename id
 
 let univ = "univ"
 
+let equal = String.equal
+
 let pp out name =
   Fmtc.string out name
 
