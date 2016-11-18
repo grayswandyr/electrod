@@ -33,8 +33,8 @@ let pp_var out (`Var v) =
   Var.pp out v
 
 let pp_ident out = function
-  | `Name n -> Name.pp out n
-  | `Var v as var -> pp_var out var
+  | `Name n -> Fmtc.(styled `Cyan Name.pp) out n
+  | `Var v as var -> Fmtc.(styled `Yellow pp_var) out var
 
 let pp out { file; domain; goals } =
   let open Fmtc in

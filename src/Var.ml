@@ -27,8 +27,13 @@ let compare id1 id2 =
 let equal { id = id1; _ } { id = id2; _ } =
   id1 = id2
 
+let style = `Yellow
+
 let pp out { id; name; sep } =
-  Fmtc.(pf out "%s%s%d" name sep id)
+  Fmtc.(pf out "%a%a%a"
+          (styled style string) name
+          (styled style string) sep
+          (styled style int) id)
 
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 

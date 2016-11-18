@@ -16,8 +16,10 @@ let univ = "univ"
 
 let equal = String.equal
 
+let style = `Cyan
+
 let pp out name =
-  Fmtc.string out name
+  Fmtc.(styled style string) out name
 
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 

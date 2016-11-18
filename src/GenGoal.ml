@@ -305,12 +305,18 @@ let sat fs = Sat fs
  *  Pretty-printing
  ****************************************************************************************)
 
+let kwd_styled pf = Fmtc.(styled `Bold) pf
+
 let rec pp pp_v pp_i out (Sat fmls) =
   let open Fmtc in
-  pf out "sat %a" (vbox
-                   @@ list ~sep:(sp **> semi)
-                   @@ hvbox2
-                   @@ pp_fml pp_v pp_i) fmls
+  begin
+    (kwd_styled pf) out "sat@ ";
+    pf out "  %a"
+    (vbox
+     @@ list ~sep:(sp **> semi)
+     @@ hvbox2
+     @@ pp_fml pp_v pp_i) fmls
+  end
 
 and pp_fml pp_v pp_i out fml =
   pp_prim_fml pp_v pp_i out fml.data
@@ -321,9 +327,9 @@ and pp_prim_fml pp_v pp_i out =
     | FBuiltin (str, args) ->
         pf out "%s%a" str (brackets @@ list @@ pp_exp pp_v pp_i) args
     | True ->
-        pf out "true"
+        (kwd_styled pf) out "true"
     | False ->
-        pf out "false"
+        (kwd_styled pf) out "false"
     | Qual (q, exp) ->
         pf out "(%a %a)" pp_rqualify q (pp_exp pp_v pp_i) exp
     | RComp (e1, op, e2) ->
@@ -354,7 +360,8 @@ and pp_prim_fml pp_v pp_i out =
           (list ~sep:(sp **> comma) @@ pp_binding ~sep:colon pp_v pp_i) bindings
           (pp_block pp_v pp_i) blk
     | Let (bindings, blk) ->
-        pf out "let %a@ %a"
+        pf out "%a %a@ %a"
+          (kwd_styled string) "let"
           (list ~sep:(sp **> comma) @@ pp_binding ~sep:equal pp_v pp_i) bindings
           (pp_block pp_v pp_i) blk
     | FIte (c, t, e) ->
@@ -373,23 +380,23 @@ and pp_block pp_v pp_i out fmls =
                @@ box2
                @@ pp_fml pp_v pp_i) fmls
   
-and pp_rqualify out = 
-  let open Fmtc in
-  function
-  | ROne -> pf out "one"
-  | RLone -> pf out "lone"
-  | RSome -> pf out "some"
-  | RNo -> pf out "no"
+and pp_rqualify out x =
+  Fmtc.(kwd_styled pf) out
+  @@ match x with
+  | ROne -> "one"
+  | RLone -> "lone"
+  | RSome -> "some"
+  | RNo -> "no"
 
 and pp_comp_op out =
   let open Fmtc in
   function
-    | In -> pf out "in"
-    | NotIn -> pf out "not in"
+    | In -> (kwd_styled pf) out "in"
+    | NotIn -> (kwd_styled pf) out "not in"
     | REq -> pf out "="
     | RNEq -> pf out "!="
 
-and pp_icomp_op out =
+and pp_icomp_op out = 
   let open Fmtc in
   function
     | Lt -> pf out "<"
@@ -399,40 +406,40 @@ and pp_icomp_op out =
     | Gt -> pf out ">"
     | Gte -> pf out ">="
 
-and pp_lunop out =
-  let open Fmtc in
-  function
-    | Not -> pf out "not"
-    | F -> pf out "sometime"
-    | G -> pf out "always"
-    | O -> pf out "once"
-    | X -> pf out "next"
-    | H -> pf out "historically"
-    | P -> pf out "previous"
+and pp_lunop out x =
+  Fmtc.(kwd_styled pf) out
+  @@ match x with
+  | Not -> "not"
+  | F -> "sometime"
+  | G -> "always"
+  | O -> "once"
+  | X -> "next"
+  | H -> "historically"
+  | P -> "previous"
 
-and pp_lbinop out =
-  let open Fmtc in
-  function
-    | And -> pf out "and"
-    | Or -> pf out "or"
-    | Imp -> pf out "implies"
-    | Iff -> pf out "iff"
-    | U -> pf out "until"
-    | R -> pf out "release"
-    | S -> pf out "since"
+and pp_lbinop out x =
+  Fmtc.(kwd_styled pf) out
+  @@ match x with
+  | And -> "and"
+  | Or -> "or"
+  | Imp -> "implies"
+  | Iff -> "iff"
+  | U -> "until"
+  | R -> "release"
+  | S -> "since"
 
-and pp_lo_quant out =
-  let open Fmtc in
-  function
-    | Lone -> pf out "lone"
-    | One -> pf out "one"
+and pp_lo_quant out x =
+  Fmtc.(kwd_styled pf) out
+  @@ match x with
+  | Lone -> "lone"
+  | One -> "one"
 
-and pp_ae_quant out =
-  let open Fmtc in
-  function
-    | All -> pf out "all"
-    | Some_ -> pf out "some"
-    | No -> pf out "no"
+and pp_ae_quant out x =
+  Fmtc.(kwd_styled pf) out
+  @@ match x with
+  | All -> "all"
+  | Some_ -> "some"
+  | No -> "no"
 
 and pp_binding ~sep pp_v pp_i out (v, e) =
   let open Fmtc in
@@ -444,7 +451,7 @@ and pp_binding ~sep pp_v pp_i out (v, e) =
 and pp_sim_binding pp_v pp_i out (disj, vars, exp) =
   let open Fmtc in
   pf out "%a%a : %a"
-    (if disj then string else nop) "disj "
+    (if disj then kwd_styled string else nop) "disj "
     (list ~sep:(sp **> comma) pp_v) vars
     (pp_exp pp_v pp_i) exp
 
@@ -455,11 +462,11 @@ and pp_prim_exp pp_v pp_i out =
   let open Fmtc in
   function
     | None_ ->
-        pf out "none"
+        (styled Name.style pf) out "none"
     | Univ ->
-        pf out "univ"
+        (styled Name.style pf) out "univ"
     | Iden ->
-        pf out "iden"
+        (styled Name.style pf) out "iden"
     | Ident id ->
         pf out "%a" pp_i id
     | RUn (op, e) ->
@@ -476,9 +483,11 @@ and pp_prim_exp pp_v pp_i out =
           pp_rbinop op
           (pp_exp pp_v pp_i) e2
     | RIte (c, t, e) ->
-        pf out "(%a@ @[implies %a@]@ @[else %a@])"
+        pf out "(%a@ @[%a %a@]@ @[%a %a@])"
           (pp_fml pp_v pp_i) c
+          (kwd_styled string) "implies"
           (pp_exp pp_v pp_i) t
+          (kwd_styled string) "else"
           (pp_exp pp_v pp_i) e
     | BoxJoin (exp, args) ->
         pf out "(%a%a)"

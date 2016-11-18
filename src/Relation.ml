@@ -40,13 +40,13 @@ let pp ?(print_name = true) out rel =
   match rel with
     | Const { name; scope } ->
         pp_name out name;
-        (sp **> string) out "const";
+        (styled `Bold @@ sp **> string) out "const";
         Scope.pp out scope
     | Var { name; scope; fby } ->
         pp_name out name;
-        (sp **> string) out "var";
+        (styled `Bold @@ sp **> string) out "var";
         Scope.pp out scope;
-        option (sp **< const string "then" **< sp **< Scope.pp) out fby
+        option ((styled `Bold @@ sp **< const string "then") **< sp **< Scope.pp) out fby
 
 
 let to_string  ?(print_name = true) rel =
