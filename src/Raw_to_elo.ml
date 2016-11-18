@@ -313,10 +313,10 @@ let refine_identifiers raw_pb =
     | RIte (c, t, e) -> rite (snd @@ walk_fml ctx c) (walk_exp ctx t) (walk_exp ctx e)
     | BoxJoin (e, args) -> boxjoin (walk_exp ctx e) @@ List.map (walk_exp ctx) args
     | Prime e -> prime (walk_exp ctx e) 
-    | Compr (sim_binding, blk) ->
-        let ctx2, sim_binding2 = walk_sim_binding ctx sim_binding in
+    | Compr (sim_bindings, blk) ->
+        let ctx2, sim_bindings2 = walk_sim_bindings ctx sim_bindings in
         let _, blk2 = walk_block ctx2 blk in
-        compr sim_binding2 blk2
+        compr sim_bindings2 blk2
 
   and walk_iexp ctx exp =
     { exp with data = walk_prim_iexp ctx exp.data }
@@ -567,11 +567,11 @@ let check_arities elo =
           Result.fail "wrong arities for the box join" 
         else
           Result.return ar_join
-    | Compr ((_, vs, _) as sim_binding, blk) ->
-        let ctx2 = walk_sim_binding ctx sim_binding in
+    | Compr (sim_bindings, blk) ->
+        let ctx2 = walk_sim_bindings ctx sim_bindings in
         begin
           walk_block ctx2 blk;
-          Result.return @@ Some (List.length vs)
+          Result.return @@ Some (List.length sim_bindings)
         end
     | Prime e -> Result.return @@ arity_exp ctx e
 

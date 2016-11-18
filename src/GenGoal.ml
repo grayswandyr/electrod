@@ -97,7 +97,7 @@ and ('v, 'i) prim_exp =
       
   | RIte of ('v, 'i) fml * ('v, 'i) exp * ('v, 'i) exp
   | BoxJoin of ('v, 'i) exp * ('v, 'i) exp list (** <> []  *)
-  | Compr of ('v, 'i) sim_binding * ('v, 'i) block
+  | Compr of ('v, 'i) sim_binding list * ('v, 'i) block
   | Prime of ('v, 'i) exp
 
 and rqualify = 
@@ -222,9 +222,9 @@ let rite cdt then_ else_ = RIte (cdt, then_, else_)
 
 let boxjoin caller callee = BoxJoin (caller, callee)
 
-let compr (disj, vs, exp) block =
-  assert (vs <> [] && block <> []);
-  Compr ((disj, vs, exp), block)
+let compr decls block =
+  assert (decls <> [] && block <> []);
+  Compr (decls, block)
 
 let prime exp = Prime exp
 
@@ -480,13 +480,13 @@ and pp_prim_exp pp_v pp_i out =
         pf out "%a%a"
           (pp_exp pp_v pp_i) exp
           (brackets @@ list ~sep:(sp **> comma) @@ pp_exp pp_v pp_i) args          
-    | Compr (sim_binding, blk) ->
+    | Compr (sim_bindings, blk) ->
         pf out "%a"
           (braces_ @@
            pair ~sep:sp
-             (pp_sim_binding pp_v pp_i) 
+             (list ~sep:(sp **> comma) @@ pp_sim_binding pp_v pp_i) 
              (pp_block pp_v pp_i))
-          (sim_binding, blk)
+          (sim_bindings, blk)
     | Prime e ->
         pf out "%a'" (pp_exp pp_v pp_i) e
 and pp_runop out = 

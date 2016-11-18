@@ -372,9 +372,8 @@ expr:
 	{ G.join }
 
 %inline compr_body:
-	decl = ae_decl block = f_block_or_bar
-	    { let (disj, ids, range) = decl in
-        G.compr (disj, ids, range) block }
+	decls = comma_sep1(ae_decl) block = f_block_or_bar
+	    { G.compr decls block }
 
 %inline let_decl:
 	id = PLAIN_ID EQ e = expr

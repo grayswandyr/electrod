@@ -35,7 +35,7 @@ and ('v, 'i) prim_exp = private
   | RBin of ('v, 'i) exp * rbinop * ('v, 'i) exp
   | RIte of ('v, 'i) fml * ('v, 'i) exp * ('v, 'i) exp
   | BoxJoin of ('v, 'i) exp * ('v, 'i) exp list
-  | Compr of ('v, 'i) sim_binding * ('v, 'i) block
+  | Compr of ('v, 'i) sim_binding list * ('v, 'i) block
   | Prime of ('v, 'i) exp
 and rqualify = private ROne | RLone | RSome | RNo
 and runop = private Transpose | TClos | RTClos
@@ -96,7 +96,7 @@ val rbinary : ('v, 'i) exp -> rbinop -> ('v, 'i) exp -> ('v, 'i) prim_exp
 val rite : ('v, 'i) fml -> ('v, 'i) exp -> ('v, 'i) exp -> ('v, 'i) prim_exp
 val boxjoin : ('v, 'i) exp -> ('v, 'i) exp list -> ('v, 'i) prim_exp
 val compr :
-  disj * 'v list * ('v, 'i) exp -> ('v, 'i) block -> ('v, 'i) prim_exp
+  ('v, 'i) sim_binding list -> ('v, 'i) block -> ('v, 'i) prim_exp
 val prime : ('v, 'i) exp -> ('v, 'i) prim_exp
 val in_ : comp_op
 val not_in : comp_op
