@@ -69,10 +69,12 @@ let main style_renderer verbosity infile =
   (* begin work *)
   try
     let raw_to_elo_t = Transfo.tlist [ Raw_to_elo.transfo ] in
+    let elo_cleanup_t = Transfo.tlist [ Elo_cleanup.transfo ] in
 
     let elo =
       Parser_main.parse_file infile
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
+      |> Transfo.(get_exn elo_cleanup_t "elo_cleanup" |> run)
 
     in
 
