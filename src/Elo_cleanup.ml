@@ -86,12 +86,12 @@ and handle_let_in_sim_bindings bind (a, b, c) =
   (a, b, handle_let_in_exp bind c)
 
 let rec handle_qtf_in_fml fml =
-  { fml with data = handle_qtf_in_prim_fml fml.data }
+  { fml with data = handle_qtf_in_prim_fml fml.loc fml.data }
 and handle_qtf_in_exp exp =
   { exp with data = handle_qtf_in_prim_exp exp.data }
 and handle_qtf_in_iexp iexp =
   { iexp with data = handle_qtf_in_prim_iexp iexp.data }
-and handle_qtf_in_prim_fml p =
+and handle_qtf_in_prim_fml loc p =
   match p with
     | Let (a, b) -> let_ a (List.map handle_qtf_in_fml b)
     | Block a -> block (List.map handle_qtf_in_fml a)
@@ -106,7 +106,11 @@ and handle_qtf_in_prim_fml p =
         lbinary (handle_qtf_in_fml  p1) op (handle_qtf_in_fml p2)
     | QAEN(a, b, c) ->
         let b = (CCList.flat_map handle_qtf_in_sim_bindings b) in
-        qaen a b (List.map handle_qtf_in_fml c)
+        let rec flatten = function
+            [] -> assert false
+          | [h] -> qaen a [h] (List.map handle_qtf_in_fml c)
+          | h::t -> qaen a [h] [{ data = flatten t; loc = loc }] in
+        flatten b
     | QLO (a, b, c) ->
         let b = (List.map handle_qtf_in_bindings b) in
         qlo a b (List.map handle_qtf_in_fml c)
