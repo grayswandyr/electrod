@@ -113,7 +113,11 @@ and handle_qtf_in_prim_fml loc p =
         flatten b
     | QLO (a, b, c) ->
         let b = (List.map handle_qtf_in_bindings b) in
-        qlo a b (List.map handle_qtf_in_fml c)
+        let rec flatten = function
+            [] -> assert false
+          | [h] -> qlo a [h] (List.map handle_qtf_in_fml c)
+          | h::t -> qlo a [h] [{ data = flatten t; loc = loc }] in
+        flatten b
     | FIte (p1, p2, p3) ->
         fite (handle_qtf_in_fml p1) (handle_qtf_in_fml p2)
           (handle_qtf_in_fml p3)
