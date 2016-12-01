@@ -571,7 +571,9 @@ let check_arities elo =
         let ctx2 = walk_sim_bindings ctx sim_bindings in
         begin
           walk_block ctx2 blk;
-          Result.return @@ Some (List.length sim_bindings)
+          Result.return (* accumulate lengths of variables in various bindings *)
+          @@ Some List.(
+                fold_left (fun acc (_, vs, _) -> acc + length vs) 0 sim_bindings)
         end
     | Prime e -> Result.return @@ arity_exp ctx e
 
