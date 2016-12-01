@@ -12,13 +12,13 @@ type t = {
 
 let fresh =
   let c = ref 0 in
-  fun ?(sep = "$") ?loc s ->
+  fun ?(sep = "/") ?loc s ->
     assert (!c < max_int);
     let res = { id = !c; name = s; sep; loc } in
     incr c;
     res
 
-let fresh_of_raw_ident ?(sep = "$") v =
+let fresh_of_raw_ident ?(sep = "/") v =
   fresh ~sep ~loc:(Raw_ident.location v) (Raw_ident.basename v)
 
 let compare id1 id2 =
