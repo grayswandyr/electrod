@@ -30,6 +30,7 @@ let univ_atoms domain =
           | Exact b -> b
           | Inexact _ -> assert false)
     | Var _ -> assert false
+    | exception Not_found -> assert false
 
 let pp out rels =
   let open Fmtc in
