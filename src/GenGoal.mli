@@ -1,3 +1,5 @@
+(** A generic type for goals (used in {!Raw} and {!Elo}) *)
+
 type 'a located = { data : 'a; loc : Location.t; }
 type ('v, 'i) t = Sat of ('v, 'i) fml list
 and ('v, 'i) fml = ('v, 'i) prim_fml located

@@ -20,7 +20,7 @@ let letter = [ 'A'-'Z' 'a'-'z' ]
 
 let dollar = '$'
 
-let plain_id = letter (letter | digit | '_')*
+let plain_id = dollar? letter (letter | digit | '_' | '#')*
 
 let idx_id = plain_id dollar number
 
@@ -114,9 +114,11 @@ rule main infile = parse
     { IN }
 | "not" (whitespace | newline)+ "in" (* TODO: take comments into account *)
     { NOT_IN}
-| "in"
-    { IN }
-| ("not")
+| "inst"
+    { INST }
+| "sym"
+    { SYM }
+| ("!")
     { NOT }
 | "var"
     { VAR }
@@ -131,9 +133,11 @@ rule main infile = parse
 | builtin_pred as b
   { FBUILTIN b }
 | idx_id as id
-    { (IDX_ID id) }
+  { (IDX_ID id) }
 | plain_id as id
   { (PLAIN_ID id) }
+| ("not")
+    { NOT }
 | "#"
   { HASH }
 | "!="
@@ -192,6 +196,14 @@ rule main infile = parse
     { LT }
 | ">"
     { GT }
+| "&&"
+    { AND }
+| "||"
+    { OR }
+| "=>"
+    { IMPLIES }
+| "<=>"
+    { IFF }
 | "|"
     { BAR }
 | comment_line (* [^newline]* newline *)

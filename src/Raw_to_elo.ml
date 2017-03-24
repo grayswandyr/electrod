@@ -50,7 +50,7 @@ let compute_univ infile raw_univ =
                 | UPlain id -> [ Atom.of_raw_ident id ]) raw_univ
   in
   let dedup = check_duplicate_atoms infile atoms in
-  let bound = List.map Tuple.tuple1 dedup |> Bound.of_tuples in
+  let bound = List.map Tuple.tuple1 dedup |> TupleSet.of_tuples in
   Relation.(const Name.univ @@ Scope.exact bound)
        
 (* returns a list of tuples (possibly 1-tuples corresponding to plain atoms) *)
@@ -62,7 +62,7 @@ let compute_tuples infile domain = function
       let absent =   (* compute 1-tuples/atoms absent from univ, if there are *)
         List.flat_map
           (fun t ->
-             if not @@ Bound.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain
+             if not @@ TupleSet.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain
              then [t] else []) atoms in
       (if absent <> [] then
          Msg.Fatal.undeclared_atoms
@@ -83,7 +83,7 @@ let compute_tuples infile domain = function
       let absent =   (* compute 1-tuples/atoms absent from univ, if there are *)
         List.flat_map
           (fun t ->
-             if not @@ Bound.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain
+             if not @@ TupleSet.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain
              then [t] else []) atoms in
       (if absent <> [] then
          Msg.Fatal.undeclared_atoms
@@ -117,9 +117,9 @@ let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
             | None -> Msg.Fatal.undeclared_id (fun args -> args infile ref_id)
             | Some rel ->
                 match rel with
-                  | Const { scope = Exact b } when Bound.arity b = Some 1 -> b
+                  | Const { scope = Exact b } when TupleSet.arity b = Some 1 -> b
                   | Const { scope = Inexact (inf, sup) }
-                    when Bound.arity sup = Some 1 ->
+                    when TupleSet.arity sup = Some 1 ->
                       (match which with
                         | Some `Inf -> inf
                         | Some `Sup -> sup
@@ -135,26 +135,27 @@ let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
         (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BProd"); *)
         let b1 = walk rb1 in
         let b2 = walk rb2 in
-        Bound.product b1 b2
+        TupleSet.product b1 b2
     | BUnion (rb1, rb2) ->
         (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BUnion"); *)
         let b1 = walk rb1 in
         let b2 = walk rb2 in
-        if Bound.(arity b1 = arity b2) then
-          Bound.union b1 b2
+        if TupleSet.(arity b1 = arity b2) then
+          TupleSet.union b1 b2
         else
           Msg.Fatal.incompatible_arities @@ fun args -> args infile id
     | BElts elts ->
         (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BElts"); *)
         let tuples = List.flat_map (compute_tuples infile domain) elts in 
         match tuples with
-          | [] -> Bound.empty
+          | [] -> TupleSet.empty
           | t::ts -> 
               let ar = Tuple.arity t in
+              (* List.iter (fun t -> Msg.debug (fun m -> m "ar(%a) = %d" Tuple.pp t ar)) tuples; *)
               if List.exists (fun t2 -> Tuple.arity t2 <> ar) ts then
                 Msg.Fatal.incompatible_arities (fun args -> args infile id);
-              let bnd = Bound.of_tuples tuples in
-              if Bound.size bnd <> List.length tuples then
+              let bnd = TupleSet.of_tuples tuples in
+              if TupleSet.size bnd <> List.length tuples then
                 Msg.Warn.duplicate_elements
                   (fun args -> args infile id which bnd);
               bnd
@@ -171,15 +172,15 @@ let compute_scope infile domain id = function
       (* Msg.debug (fun m -> m "Raw_to_elo.compute_scope:SInexact"); *)
       let inf = compute_bound infile domain (Some `Inf) id raw_inf in
       let sup = compute_bound infile domain (Some `Sup) id raw_sup in
-      let ar_inf = Bound.arity inf in
-      let ar_sup = Bound.arity sup in
-      if ar_inf <> ar_sup && not (Bound.is_empty inf) then
+      let ar_inf = TupleSet.arity inf in
+      let ar_sup = TupleSet.arity sup in
+      if ar_inf <> ar_sup && not (TupleSet.is_empty inf) then
         Msg.Fatal.incompatible_arities (fun args -> args infile id);
-      if not @@ Bound.subset inf sup then
+      if not @@ TupleSet.subset inf sup then
         Msg.Fatal.inf_not_in_sup (fun args -> args infile id inf sup);
-      if Bound.is_empty sup then
+      if TupleSet.is_empty sup then
         Msg.Warn.empty_scope_declared (fun args -> args infile id);
-      if Bound.equal inf sup then
+      if TupleSet.equal inf sup then
         Scope.exact sup
       else
         Scope.inexact inf sup
@@ -592,10 +593,13 @@ let check_arities elo =
   in
   let init_ctx =
     Domain.to_list elo.domain
-    |> List.map (fun (name, rel) -> (`Name name, Relation.arity rel))
+    |> List.map (fun (name, rel) ->
+          Msg.debug
+            (fun m -> m "Raw_to_elo: ar(%a) = %a" Name.pp name Fmtc.(option ~none:(const string "any") int) (Relation.arity rel));
+          (`Name name, Relation.arity rel))
   in
   let walk_goal (Sat blk) =
-    walk_block (init_ctx) blk
+    walk_block init_ctx blk
   in
   List.iter walk_goal elo.goals
 

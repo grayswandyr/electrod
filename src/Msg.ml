@@ -251,8 +251,8 @@ module Fatal = struct
       Loc.pp loc
       (Raw_ident.basename id)
       (Extract.pp) (Extract.extract infile loc)
-      (box2 @@ Bound.pp) inf
-      (box2 @@ Bound.pp) sup
+      (box2 @@ TupleSet.pp) inf
+      (box2 @@ TupleSet.pp) sup
 
   let inexact_ref_used_in_exact_scope args = err @@ fun m -> args @@
     fun infile id ref_id ->
@@ -316,7 +316,7 @@ module Warn = struct
       (pp_inf_sup bound_kind)
       (Raw_ident.basename id)
       Extract.pp (Extract.extract infile loc)
-      (box2 @@ Bound.pp) bound
+      (box2 @@ TupleSet.pp) bound
 
   let disj_with_only_one_variable args = warn @@ fun m -> args @@
     fun infile id ->

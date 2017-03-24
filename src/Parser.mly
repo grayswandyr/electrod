@@ -23,6 +23,7 @@ module G = GenGoal
 
 %token <string> FBUILTIN        (* for formulas *)
 
+%token SYM INST
 
 /* plain ID */
 %token <string> PLAIN_ID
@@ -58,10 +59,17 @@ module G = GenGoal
 %%
 
 %public parse_problem:
-	urelts_list = universe decls = possible_declarations gs = goal+ EOF
+  urelts_list = universe decls = possible_declarations
+    insts? syms? 
+    gs = goal+ EOF
 	  { (urelts_list, decls, gs) }
 
-  
+
+
+  ////////////////////////////////////////////////////////////////////////
+  // universe
+  ////////////////////////////////////////////////////////////////////////
+
 universe:
 	UNIV COLON urelts_list = braces(urelements*)
 	{ urelts_list }
@@ -139,7 +147,46 @@ atom:
   at = PLAIN_ID
  | at = IDX_ID
  { Raw_ident.ident at $startpos $endpos } 
-  
+
+
+
+
+  ////////////////////////////////////////////////////////////////////////
+  // instances
+  ////////////////////////////////////////////////////////////////////////
+
+insts:
+ INST
+ right_flexible_list(SEMI, inst)
+ {}
+
+inst:
+ PLAIN_ID EQ braces(tuple*) 
+ {}
+
+ 
+
+
+  ////////////////////////////////////////////////////////////////////////
+  // symmetries
+  ////////////////////////////////////////////////////////////////////////
+
+syms:
+  SYM right_flexible_list(SEMI, sym)
+  {}
+
+sym:
+  sym_element+ LTE sym_element+ 
+  {}
+
+sym_element:
+  brackets(atom+)
+  {}
+    
+  ////////////////////////////////////////////////////////////////////////
+  // goal
+  ////////////////////////////////////////////////////////////////////////
+ 
 %inline goal:
 	SAT fs = specification
 	{ G.sat fs }
@@ -149,11 +196,12 @@ specification:
 	{ fs }
 
 formula :
-  exp = FBUILTIN args = brackets(comma_sep1(expr))
+/*  exp = FBUILTIN args = brackets(comma_sep1(expr))
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.fbuiltin exp args} 
   
-  | TRUE
+ |*/
+     TRUE
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.true_ }
   
@@ -273,8 +321,11 @@ formula :
 	| HISTORICALLY
 	{ G.historically }
     
-(* RELATIONAL EXPRESSIONS *)
 
+    ////////////////////////////////////////////////////////////////////////
+    // RELATIONAL EXPRESSIONS
+    ////////////////////////////////////////////////////////////////////////
+  
 expr:
   NONE 
 	{ G.exp (Location.from_positions $startpos $endpos)
@@ -380,6 +431,10 @@ expr:
 	{ (Raw_ident.ident id $startpos(id) $endpos(id), e) }
  
  
+    ////////////////////////////////////////////////////////////////////////
+    // INTEGER EXPRESSIONS
+     ////////////////////////////////////////////////////////////////////////
+  
 iexpr:
   n = NUMBER
   { G.exp (Location.from_positions $startpos $endpos)
@@ -418,7 +473,12 @@ iexpr:
 	{ G.ieq } // TODO 
   | NEQ
  	{ G.ineq } // TODO
- 
+
+
+    ////////////////////////////////////////////////////////////////////////
+    // MENHIR MACROS
+    ////////////////////////////////////////////////////////////////////////
+  
 (* Given by François Pottier on 2015-01-21
    at http://gallium.inria.fr/blog/lr-lists/ *)
 %public right_flexible_list(delim, X):

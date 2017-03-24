@@ -24,7 +24,8 @@ let parse_file infile =
 *)
 let parse_string s = 
   let lexbuf = Lexing.from_string s in
-  let raw_univ, raw_decls, raw_goals = Parser.parse_problem (Scanner.main None) lexbuf in
+  let raw_univ, raw_decls, raw_goals =
+    Parser.parse_problem (Scanner.main None) lexbuf in
   Raw.problem None raw_univ raw_decls raw_goals
 
 

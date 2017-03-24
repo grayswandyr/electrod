@@ -219,26 +219,22 @@ and handle_boxjoin_in_sim_bindings (a, b, c) =
   (a, b, handle_boxjoin_in_exp c)
 
 let whole elo_pb =
-  Msg.debug (fun m -> m "Elo AST =@;%a" (Elo.pp) elo_pb);
+  (* Msg.debug (fun m -> m "Elo AST =@;%a" (Elo.pp) elo_pb); *)
 
   let substitute m (Sat b) = sat (List.map m b) in
 
   (* let substitution *)
-  Msg.debug (fun m -> m "Elo_cleanup: let substitution");
   let elo_goals_no_let =
     List.map (substitute (handle_let_in_fml [])) elo_pb.goals in
 
   (* split sim_bindings *)
-  Msg.debug (fun m -> m "Elo_cleanup: split sim_bindings");
   let elo_goals_split_qtf_vars =
     List.map (substitute handle_qtf_in_fml) elo_goals_no_let in
 
-  Msg.debug (fun m -> m "Elo_cleanup: transform box joins");
   let elo_goals_no_boxjoin =
     List.map (substitute handle_boxjoin_in_fml) elo_goals_split_qtf_vars in
 
   (* return *)
-  Msg.debug (fun m -> m "Elo_cleanup: step completed");
   make elo_pb.file elo_pb.domain elo_goals_no_boxjoin
 
 let transfo = Transfo.make "elo_cleanup" whole
