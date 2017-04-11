@@ -28,6 +28,8 @@ let pragma = "##" plain_id
 
 let comment_line = ("--")
 
+let colon_arity = ':' number
+
 let reserved_symbol = [ '$' '%' '\\' '`' '@' ]
 
 let builtin_iop = ( "add" | "neg" | "minus" | "card" )
@@ -133,6 +135,8 @@ rule main infile = parse
   { (PLAIN_ID id) }
 | ("not")
     { NOT }
+| colon_arity as ca
+  { (COLON_ARITY (int_of_string ca)) }
 | "#"
   { HASH }
 | "!="
