@@ -22,7 +22,6 @@ and handle_let_in_prim_fml bind p =
         let a = List.map (handle_let_in_bindings bind) a in
         handle_let_in_prim_fml (a@bind) (block b)
     | Block a -> block (List.map (handle_let_in_fml bind) a)
-    | FBuiltin (s, l) -> fbuiltin s (List.map (handle_let_in_exp bind) l)
     | Qual (q, p) -> qual q (handle_let_in_exp bind p)
     | RComp (p1, c, p2) ->
         rcomp (handle_let_in_exp bind p1) c (handle_let_in_exp bind p2)
@@ -95,7 +94,6 @@ and handle_qtf_in_prim_fml loc p =
   match p with
     | Let (a, b) -> let_ a (List.map handle_qtf_in_fml b)
     | Block a -> block (List.map handle_qtf_in_fml a)
-    | FBuiltin (s, l) -> fbuiltin s (List.map handle_qtf_in_exp l)
     | Qual (q, p) -> qual q (handle_qtf_in_exp p)
     | RComp (p1, c, p2) ->
         rcomp (handle_qtf_in_exp p1) c (handle_qtf_in_exp p2)
@@ -165,7 +163,6 @@ and handle_boxjoin_in_prim_fml p =
   match p with
     | Let (a, b) -> let_ a (List.map handle_boxjoin_in_fml b)
     | Block a -> block (List.map handle_boxjoin_in_fml a)
-    | FBuiltin (s, l) -> fbuiltin s (List.map handle_boxjoin_in_exp l)
     | Qual (q, p) -> qual q (handle_boxjoin_in_exp p)
     | RComp (p1, c, p2) ->
         rcomp (handle_boxjoin_in_exp p1) c (handle_boxjoin_in_exp p2)

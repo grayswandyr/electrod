@@ -248,8 +248,6 @@ let refine_identifiers raw_pb =
     | LUn (op, fml) -> (ctx, Pair.map_snd (lunary op) (walk_fml ctx fml))
     | LBin (f1, op, f2) ->
         (ctx, lbinary (snd @@ walk_fml ctx f1) op (snd @@ walk_fml ctx f2))
-    | FBuiltin (str, args) ->
-        (ctx, fbuiltin str @@ List.map (walk_exp ctx) args)
     | Qual (q, r) -> (ctx, qual q @@ walk_exp ctx r)
     | RComp (e1, op, e2) -> (ctx, rcomp (walk_exp ctx e1) op (walk_exp ctx e2))
     | IComp (e1, op, e2) -> (ctx, icomp (walk_iexp ctx e1) op (walk_iexp ctx e2))
@@ -369,12 +367,6 @@ let check_arities elo =
     walk_prim_fml ctx data
 
   and walk_prim_fml ctx = function
-    | FBuiltin (_, args) ->
-        List.iter (fun arg ->
-              let ar = arity_exp ctx arg in
-              if ar <> Some 1 && ar <> None then
-                Msg.Fatal.arity_error
-                  (fun args -> args elo.file arg "arity should be 1")) args
     | True | False -> ()
     | Qual (ROne, exp)
     | Qual (RSome, exp) ->

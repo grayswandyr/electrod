@@ -17,7 +17,6 @@ type ('v, 'i) t =
 and ('v, 'i) fml = ('v, 'i) prim_fml located
 
 and ('v, 'i) prim_fml =
-  | FBuiltin of string * ('v, 'i) exp list (** nonempty *)
   | True 
   | False
   | Qual of rqualify * ('v, 'i) exp
@@ -136,7 +135,6 @@ and ibinop =
   | Add
   | Sub
 
-let fbuiltin str args = FBuiltin (str, args)
 
 let true_ = True
 
@@ -324,8 +322,6 @@ and pp_fml pp_v pp_i out fml =
 and pp_prim_fml pp_v pp_i out = 
   let open Fmtc in
   function
-    | FBuiltin (str, args) ->
-        pf out "%s%a" str (brackets @@ list @@ pp_exp pp_v pp_i) args
     | True ->
         (kwd_styled pf) out "true"
     | False ->

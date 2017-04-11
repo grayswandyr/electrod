@@ -32,9 +32,6 @@ let reserved_symbol = [ '$' '%' '\\' '`' '@' ]
 
 let builtin_iop = ( "add" | "neg" | "minus" | "card" )
                   
-let builtin_rop = ( "")
-                  
-let builtin_pred = ( "totalOrder" )
                  
 rule main infile = parse
 | reserved_symbol as c
@@ -130,8 +127,6 @@ rule main infile = parse
     { IDEN }
 | "none"
     { NONE }
-| builtin_pred as b
-  { FBUILTIN b }
 | idx_id as id
   { (IDX_ID id) }
 | plain_id as id

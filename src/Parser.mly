@@ -21,7 +21,6 @@ module G = GenGoal
 // for integer expressions
 %token NEG ADD SUB HASH //INT
 
-%token <string> FBUILTIN        (* for formulas *)
 
 %token SYM INST
 
@@ -196,11 +195,6 @@ specification:
 	{ fs }
 
 formula :
-/*  exp = FBUILTIN args = brackets(comma_sep1(expr))
-	{ G.fml (Location.from_positions $startpos $endpos)
-    @@ G.fbuiltin exp args} 
-  
- |*/
      TRUE
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.true_ }

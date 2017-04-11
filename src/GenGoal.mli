@@ -4,8 +4,7 @@ type 'a located = { data : 'a; loc : Location.t; }
 type ('v, 'i) t = Sat of ('v, 'i) fml list
 and ('v, 'i) fml = ('v, 'i) prim_fml located
 and ('v, 'i) prim_fml = private
-    FBuiltin of string * ('v, 'i) exp list
-  | True
+    True
   | False
   | Qual of rqualify * ('v, 'i) exp
   | RComp of ('v, 'i) exp * comp_op * ('v, 'i) exp
@@ -53,7 +52,6 @@ and ibinop = private Add | Sub
 
 (** {1 Constructors} *)
 
-val fbuiltin : string -> ('v, 'i) exp list -> ('v, 'i) prim_fml
 val true_ : ('v, 'i) prim_fml
 val false_ : ('v, 'i) prim_fml
 val qual : rqualify -> ('v, 'i) exp -> ('v, 'i) prim_fml
