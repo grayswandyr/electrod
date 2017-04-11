@@ -53,7 +53,7 @@ and handle_let_in_prim_exp bind expr =
           pp_binding ~sep:colon pp_var pp_ident) bind);*)
         begin
           match CCList.Assoc.get ~eq:(fun (`Var a) (`Var b) -> Var.equal a b)
-                  bind (`Var v) with
+                  (`Var v) bind with
               None -> expr
             | Some exp -> exp.data
         end

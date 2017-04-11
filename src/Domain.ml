@@ -34,7 +34,7 @@ let univ_atoms domain =
 
 let pp out rels =
   let open Fmtc in
-  (vbox @@ Map.print ~sep:" " ~arrow:" : " ~start:"" ~stop:""
+  (vbox @@ Map.pp ~sep:" " ~arrow:" : " ~start:"" ~stop:""
              (styled `Cyan Name.pp) (hbox2 @@ Relation.pp ~print_name:false)) out rels
 
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)

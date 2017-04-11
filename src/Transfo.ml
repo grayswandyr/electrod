@@ -33,9 +33,9 @@ let tlist ts =
   assert (ts <> []);
   let open List in
   let add transfos t =
-    assert (not @@ Assoc.mem ~eq:String.equal transfos t.name);
-    Assoc.set ~eq:String.equal transfos t.name t
+    assert (not @@ Assoc.mem ~eq:String.equal t.name transfos);
+    Assoc.set ~eq:String.equal t.name t transfos
   in
   fold_left add [] ts
 
-let get_exn ts t = List.Assoc.get_exn ~eq:String.equal ts t
+let get_exn ts t = List.Assoc.get_exn ~eq:String.equal t ts 

@@ -303,7 +303,7 @@ let refine_identifiers raw_pb =
   and walk_prim_exp ctx = function
     | Ident id ->
         (try
-           ident @@ CCList.Assoc.get_exn ~eq:Raw_ident.eq_name ctx id
+           ident @@ CCList.Assoc.get_exn ~eq:Raw_ident.eq_name id ctx
          with Not_found ->
            Msg.Fatal.undeclared_id @@ fun args -> args raw_pb.file id)
     | None_ -> none
@@ -460,7 +460,7 @@ let check_arities elo =
     | None_ -> Result.return None
     | Univ -> Result.return @@ Some 1
     | Iden -> Result.return @@ Some 2
-    | Ident id -> Result.return @@ List.Assoc.get_exn ~eq:Elo.equal_ident ctx id
+    | Ident id -> Result.return @@ List.Assoc.get_exn ~eq:Elo.equal_ident id ctx
     | RUn (op, exp) ->
         let ar = arity_exp ctx exp in
         if ar <> Some 2 then

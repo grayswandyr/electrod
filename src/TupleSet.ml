@@ -59,7 +59,7 @@ let union b1 b2 =
 let mem t bnd = TS.mem t bnd
 
 let pp out b =
-  TS.print ~start:"{" ~stop:"}" ~sep:" " Tuple.pp out b
+  TS.pp ~start:"{" ~stop:"}" ~sep:" " Tuple.pp out b
   
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 
