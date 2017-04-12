@@ -17,7 +17,7 @@ let inferred_arity = function
 let pp out = function
   | Exact bound -> TupleSet.pp out bound
   | Inexact (inf, sup) ->
-      Fmtc.(pair ~sep:sp (box2 TupleSet.pp) (box2 TupleSet.pp)) out (inf, sup)
+      Fmtc.(box @@ pair ~sep:sp (box2 TupleSet.pp) (box2 TupleSet.pp)) out (inf, sup)
         
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 

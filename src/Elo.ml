@@ -23,11 +23,12 @@ type t = {
   file : string option;
   (* table of relations indexed by names (remark: a {!Relation.t} also knows its name) *)
   domain : Domain.t;
+  instance : Instance.t;
   goals : goal list;            (** nonempty  *)
 }
 
-let make file domain goals =
-  { file; domain; goals }
+let make file domain instance goals =
+  { file; domain; instance; goals }
 
 let pp_var out (`Var v) =
   Var.pp out v
@@ -36,10 +37,11 @@ let pp_ident out = function
   | `Name n -> Fmtc.(styled `Cyan Name.pp) out n
   | `Var v as var -> Fmtc.(styled `Yellow pp_var) out var
 
-let pp out { file; domain; goals } =
+let pp out { file; domain; instance; goals } =
   let open Fmtc in
-  pf out "%a@\n%a"
+  pf out "%a@\n%a@\n%a"
     Domain.pp domain
+    Instance.pp instance
     (vbox @@ list @@ GenGoal.pp pp_var pp_ident) goals
 
 

@@ -8,7 +8,8 @@ type raw_problem = {
   file : string option;
   raw_univ : raw_urelements list;
   raw_decls : raw_declaration list;     (** does not contain 'univ'  *)
-  raw_goals : raw_goal list;    (** nonempty *)
+  raw_goals : raw_goal list;            (** nonempty *)
+  raw_inst : raw_assignment list;       (** may be empty *)
 }
 
 and raw_urelements = 
@@ -32,11 +33,13 @@ and raw_bound =
 
 and raw_element = 
   | EIntvl of raw_interval     (** 1-tuples *)
-  | ETuple of Raw_ident.t list (** A n-tuple (incl. n = 1). inv: nonempty list *)
+  | ETuple of raw_tuple
+
+and raw_tuple = Raw_ident.t list (** A n-tuple (incl. n = 1). inv: nonempty list *)
 
 and raw_interval = Raw_ident.t * Raw_ident.t
 
-
+and raw_assignment = Raw_ident.t * raw_tuple list
 
 
 let interval id1 id2 = (id1, id2)
@@ -69,8 +72,8 @@ let uintvl intvl = UIntvl intvl
 
 let uplain atom = UPlain atom
 
-let problem file raw_univ raw_decls raw_goals =
-  { file; raw_univ; raw_decls; raw_goals }
+let problem file raw_univ raw_decls raw_goals raw_inst =
+  { file; raw_univ; raw_decls; raw_goals; raw_inst }
 
 
 let decl_id = function

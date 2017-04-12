@@ -124,15 +124,19 @@ let repeat n pp =
   in walk n pp
 
 
-let infix ?(indent = 0) middle left right out (l, r) =
+let infix ?(indent = 2) ?(par = true) middle left right out (m, l, r) =
   Format.pp_open_hovbox out indent;
   Format.pp_open_hovbox out indent;
+  if par then string out "(";
   left out l;
   sp out ();
-  middle out ();
+  middle out m;
   Format.pp_close_box out ();
+  Format.pp_open_hovbox out indent;
   sp out ();
   right out r;
+  if par then string out ")";
+  Format.pp_close_box out ();
   Format.pp_close_box out ()
   
 let tuple2 = pair

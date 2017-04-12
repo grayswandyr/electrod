@@ -312,7 +312,7 @@ let rec pp pp_v pp_i out (Sat fmls) =
     pf out "  %a"
     (vbox
      @@ list ~sep:(sp **> semi)
-     @@ hvbox2
+     @@ box2
      @@ pp_fml pp_v pp_i) fmls
   end
 

@@ -6,7 +6,8 @@ type raw_problem = {
   file : string option;
   raw_univ : raw_urelements list;
   raw_decls : raw_declaration list;     (** does not contain 'univ'  *)
-  raw_goals : raw_goal list;    (** nonempty *)
+  raw_goals : raw_goal list;            (** nonempty *)
+  raw_inst : raw_assignment list;       (** may be empty *)
 }
 
 and raw_urelements = private
@@ -32,9 +33,14 @@ and raw_bound = private
 
 and raw_element = private
   | EIntvl of raw_interval    (** 1-tuples *)
-  | ETuple of Raw_ident.t list  (** A n-tuple (incl. n = 1). inv: nonempty list *)
+  | ETuple of raw_tuple
+
+and raw_tuple = Raw_ident.t list (** A n-tuple (incl. n = 1). inv: nonempty list *)
 
 and raw_interval = Raw_ident.t * Raw_ident.t
+
+(** asignemnt of tuples to a relation *)
+and raw_assignment = Raw_ident.t * raw_tuple list (** may be empty  *)
 
 (** {1 Constructors} *)
 
@@ -69,7 +75,7 @@ val uintvl : raw_interval -> raw_urelements
 val uplain : Raw_ident.t -> raw_urelements
 
 val problem : string option -> raw_urelements list ->
-  raw_declaration list -> raw_goal list -> raw_problem
+  raw_declaration list -> raw_goal list -> raw_assignment list -> raw_problem
 
 (** {1 Accessors} *)
 

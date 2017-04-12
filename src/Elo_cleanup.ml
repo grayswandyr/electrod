@@ -232,7 +232,7 @@ let whole elo_pb =
     List.map (substitute handle_boxjoin_in_fml) elo_goals_split_qtf_vars in
 
   (* return *)
-  make elo_pb.file elo_pb.domain elo_goals_no_boxjoin
+  make elo_pb.file elo_pb.domain elo_pb.instance elo_goals_no_boxjoin
 
 let transfo = Transfo.make "elo_cleanup" whole
 

@@ -117,7 +117,8 @@ let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
             | None -> Msg.Fatal.undeclared_id (fun args -> args infile ref_id)
             | Some rel ->
                 match rel with
-                  | Const { scope = Exact b } when TupleSet.inferred_arity b = 1 -> b
+                  | Const { scope = Exact b }
+                    when TupleSet.inferred_arity b = 1 -> b
                   | Const { scope = Inexact (inf, sup) }
                     when TupleSet.inferred_arity sup = 1 ->
                       (match which with
@@ -621,8 +622,9 @@ let check_arities elo =
 
 let whole raw_pb =
   let domain = compute_domain raw_pb in
+  let instance = Instance.empty in
   let goals = refine_identifiers raw_pb in
-  Elo.make raw_pb.file domain goals
+  Elo.make raw_pb.file domain instance goals
   |> CCFun.tap check_arities
 
 let transfo = Transfo.make "raw_to_elo" whole (* temporary *)
