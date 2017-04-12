@@ -13,9 +13,11 @@ and raw_urelements = private
   | UIntvl of raw_interval
   | UPlain of Raw_ident.t
 
+(** The [int option] is the optionally-declared arity (compulsory for an empty
+    scope). *)
 and raw_declaration = private
-  | DConst of Raw_ident.t * raw_scope
-  | DVar of Raw_ident.t * raw_scope * raw_scope option
+  | DConst of Raw_ident.t * int option * raw_scope
+  | DVar of Raw_ident.t * int option * raw_scope * raw_scope option
 
 and raw_scope = private
   | SExact of raw_bound
@@ -57,9 +59,10 @@ val sexact : raw_bound -> raw_scope
 
 val sinexact : raw_bound -> raw_bound -> raw_scope
 
-val dconst : Raw_ident.t -> raw_scope -> raw_declaration
+val dconst : Raw_ident.t -> int option -> raw_scope -> raw_declaration
 
-val dvar : Raw_ident.t -> raw_scope -> raw_scope option -> raw_declaration
+val dvar : Raw_ident.t -> int option -> raw_scope
+  -> raw_scope option -> raw_declaration
 
 val uintvl : raw_interval -> raw_urelements
 

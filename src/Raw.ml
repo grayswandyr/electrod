@@ -16,8 +16,8 @@ and raw_urelements =
   | UPlain of Raw_ident.t
 
 and raw_declaration = 
-  | DConst of Raw_ident.t * raw_scope
-  | DVar of Raw_ident.t * raw_scope * raw_scope option
+  | DConst of Raw_ident.t * int option * raw_scope
+  | DVar of Raw_ident.t * int option * raw_scope * raw_scope option
 
 and raw_scope = 
   | SExact of raw_bound
@@ -61,9 +61,9 @@ let sexact b = SExact b
 
 let sinexact b1 b2 = SInexact (b1, b2)
 
-let dconst atom scope = DConst (atom, scope)
+let dconst atom arity scope = DConst (atom, arity, scope)
 
-let dvar atom scope fby = DVar (atom, scope, fby)
+let dvar atom arity scope fby = DVar (atom, arity, scope, fby)
 
 let uintvl intvl = UIntvl intvl
 
@@ -74,8 +74,8 @@ let problem file raw_univ raw_decls raw_goals =
 
 
 let decl_id = function
-  | DConst (id, _)
-  | DVar (id, _, _) -> id
+  | DConst (id, _, _)
+  | DVar (id, _, _, _) -> id
 
 let raw_bound_location = Location.span 
 

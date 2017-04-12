@@ -14,16 +14,14 @@ let of_tuples tuples = match tuples with
       assert (List.for_all (fun t2 -> Tuple.arity t2 = ar) ts);
       TS.of_list tuples 
 
-let arity b =
-  CCOpt.if_ (fun ar -> ar > 0)
-  @@
+let inferred_arity b =
   if TS.is_empty b then 0
-  else Tuple.arity @@ TS.choose b 
+  else Tuple.arity @@ TS.choose b
 
 let tuples t = t
 
 let is_empty b =
-  CCOpt.is_none @@ arity b
+  TS.is_empty b
 
 let inter b1 b2 =
   TS.inter b1 b2
@@ -52,7 +50,7 @@ let product b1 b2 =
 
 
 let union b1 b2 =
-  assert (arity b1 = arity b2);
+  assert (inferred_arity b1 = inferred_arity b2);
   TS.union b1 b2 
  
 

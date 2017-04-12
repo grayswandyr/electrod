@@ -51,7 +51,7 @@ let compute_univ infile raw_univ =
   in
   let dedup = check_duplicate_atoms infile atoms in
   let bound = List.map Tuple.tuple1 dedup |> TupleSet.of_tuples in
-  Relation.(const Name.univ @@ Scope.exact bound)
+  Relation.(const Name.univ 1 @@ Scope.exact bound) (* 1 = arity *)
        
 (* returns a list of tuples (possibly 1-tuples corresponding to plain atoms) *)
 let compute_tuples infile domain = function
@@ -117,9 +117,9 @@ let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
             | None -> Msg.Fatal.undeclared_id (fun args -> args infile ref_id)
             | Some rel ->
                 match rel with
-                  | Const { scope = Exact b } when TupleSet.arity b = Some 1 -> b
+                  | Const { scope = Exact b } when TupleSet.inferred_arity b = 1 -> b
                   | Const { scope = Inexact (inf, sup) }
-                    when TupleSet.arity sup = Some 1 ->
+                    when TupleSet.inferred_arity sup = 1 ->
                       (match which with
                         | Some `Inf -> inf
                         | Some `Sup -> sup
@@ -140,7 +140,7 @@ let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
         (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BUnion"); *)
         let b1 = walk rb1 in
         let b2 = walk rb2 in
-        if TupleSet.(arity b1 = arity b2) then
+        if TupleSet.(inferred_arity b1 = inferred_arity b2) then
           TupleSet.union b1 b2
         else
           Msg.Fatal.incompatible_arities @@ fun args -> args infile id
@@ -172,8 +172,8 @@ let compute_scope infile domain id = function
       (* Msg.debug (fun m -> m "Raw_to_elo.compute_scope:SInexact"); *)
       let inf = compute_bound infile domain (Some `Inf) id raw_inf in
       let sup = compute_bound infile domain (Some `Sup) id raw_sup in
-      let ar_inf = TupleSet.arity inf in
-      let ar_sup = TupleSet.arity sup in
+      let ar_inf = TupleSet.inferred_arity inf in
+      let ar_sup = TupleSet.inferred_arity sup in
       if ar_inf <> ar_sup && not (TupleSet.is_empty inf) then
         Msg.Fatal.incompatible_arities (fun args -> args infile id);
       if not @@ TupleSet.subset inf sup then
@@ -190,21 +190,42 @@ let check_name infile id domain =
   let name = Name.of_raw_ident id in
   (if Domain.mem name domain then
      Msg.Fatal.rel_name_already_used @@ fun args -> args infile id)
-                       
-let compute_decl infile domain = function
-  | DVar (id, init, fby) ->
-      (* Msg.debug (fun m -> m "Raw_to_elo.compute_decl:DVar"); *)
-      check_name infile id domain;
-      let init = compute_scope infile domain id init in
-      Relation.var (Name.of_raw_ident id)
-        init
-        (CCOpt.map (compute_scope infile domain id) fby)
-      
-  | DConst (id, raw_scope) ->
+
+let decide_arity infile id specified_arity computed_arity =
+  match specified_arity with
+    | None when computed_arity < 1 ->
+        Msg.Fatal.cannot_decide_arity (fun args -> args infile id)
+    | Some ar when ar <> computed_arity && computed_arity <> 0 ->
+        Msg.Fatal.specified_computed_arities_discrepancy
+          (fun args -> args infile id ar computed_arity)
+    | None -> computed_arity
+    | Some ar -> ar
+
+let compute_decl infile domain = function      
+  | DConst (id, specified_arity, raw_scope) ->
       (* Msg.debug (fun m -> m "Raw_to_elo.compute_decl:DConst"); *)
       check_name infile id domain;
       let scope = compute_scope infile domain id raw_scope in
-      Relation.const (Name.of_raw_ident id) scope
+      (* deal with posisble mismatch btw the computed arity and that declared *)
+      let computed_arity = Scope.inferred_arity scope in
+      let arity = decide_arity infile id specified_arity computed_arity in
+      Relation.const (Name.of_raw_ident id) arity scope
+        
+  | DVar (id, specified_arity, init, fby) ->
+      (* Msg.debug (fun m -> m "Raw_to_elo.compute_decl:DVar"); *)
+      check_name infile id domain;
+      let init_scope = compute_scope infile domain id init in
+      let fby_scope = CCOpt.map (compute_scope infile domain id) fby in
+      let init_arity = Scope.inferred_arity init_scope in
+      let computed_arity = match CCOpt.map Scope.inferred_arity fby_scope with
+        | None | Some 0 -> init_arity (* 0 : arity cannot be inferred *)
+        | Some ar when ar <> init_arity && init_arity <> 0 ->
+            Msg.Fatal.init_and_fby_incompatible_arities
+              (fun args -> args infile id init_arity ar)
+        | Some ar -> ar
+      in
+      let arity = decide_arity infile id specified_arity computed_arity in
+      Relation.var (Name.of_raw_ident id) arity init_scope fby_scope
 
 
 let compute_domain (pb : Raw.raw_problem) =
@@ -214,11 +235,10 @@ let compute_domain (pb : Raw.raw_problem) =
   let update dom decl =
     let name = Name.of_raw_ident @@ Raw.decl_id decl in
     let rel = compute_decl pb.file dom decl in
-    let newdom = Domain.add name rel dom in
-    (* Msg.debug *)
+    Domain.add name rel dom 
+    (* |> tap Msg.debug *)
     (*   (fun m -> m "Raw_to_elo.compute_domain:update add %a ⇒ %a" *)
-    (*               Name.pp name (Fmtc.hbox @@ Domain.pp) newdom); *)
-    newdom
+    (*               Name.pp name (Fmtc.hbox @@ Domain.pp) newdom) *)
   in
   List.fold_left update init pb.raw_decls
 
@@ -586,9 +606,9 @@ let check_arities elo =
   let init_ctx =
     Domain.to_list elo.domain
     |> List.map (fun (name, rel) ->
-          Msg.debug
-            (fun m -> m "Raw_to_elo: ar(%a) = %a" Name.pp name Fmtc.(option ~none:(const string "any") int) (Relation.arity rel));
-          (`Name name, Relation.arity rel))
+          (* Msg.debug *)
+          (*   (fun m -> m "Raw_to_elo: ar(%a) = %a" Name.pp name Fmtc.int (Relation.arity rel)); *)
+          (`Name name, Some (Relation.arity rel)))
   in
   let walk_goal (Sat blk) =
     walk_block init_ctx blk

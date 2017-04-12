@@ -265,6 +265,7 @@ module Fatal = struct
       (Raw_ident.basename id)
       (Raw_ident.basename ref_id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
+      
   let arity_error args = err @@ fun m -> args @@
     fun infile exp msg ->
     let loc = exp.GenGoal.loc in
@@ -273,6 +274,42 @@ module Fatal = struct
       (option @@ colon **> string) infile
       Loc.pp loc
       msg
+      (hardline **< Extract.pp) (Extract.extract infile loc)
+      
+  let init_and_fby_incompatible_arities args = err @@ fun m -> args @@
+    fun infile id init fby ->
+    let loc = Raw_ident.location id in
+    m ~header:(code 14)
+      "%a%a: inconsistent arities used in the 'init' (%d) and \
+       'then' (%d) parts for %S%a"
+      (option @@ colon **> string) infile
+      Loc.pp loc
+      init
+      fby
+      (Raw_ident.basename id)
+      (hardline **< Extract.pp) (Extract.extract infile loc)
+     
+  let cannot_decide_arity args = err @@ fun m -> args @@
+    fun infile id ->
+    let loc = Raw_ident.location id in
+    m ~header:(code 15)
+      "%a%a: the arity of %S cannot be inferred, please specify it explicitly%a"
+      (option @@ colon **> string) infile
+      Loc.pp loc
+      (Raw_ident.basename id)
+      (hardline **< Extract.pp) (Extract.extract infile loc)
+      
+  let specified_computed_arities_discrepancy args = err @@ fun m -> args @@
+    fun infile id specified_arity computed_arity ->
+    let loc = Raw_ident.location id in
+    m ~header:(code 16)
+      "%a%a: discrepancy between the specified (%d) and \
+       inferred (%d) arities for %S%a"
+      (option @@ colon **> string) infile
+      Loc.pp loc
+      specified_arity
+      computed_arity
+      (Raw_ident.basename id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
 end
 

@@ -33,9 +33,10 @@ let univ_atoms domain =
     | exception Not_found -> assert false
 
 let pp out rels =
-  let open Fmtc in
-  (vbox @@ Map.pp ~sep:" " ~arrow:" : " ~start:"" ~stop:""
-             (styled `Cyan Name.pp) (hbox2 @@ Relation.pp ~print_name:false)) out rels
+  Fmtc.(vbox @@
+        Map.pp ~sep:" " ~arrow:" : " ~start:"" ~stop:""
+          (styled `Cyan Name.pp) (hbox2 @@ Relation.pp ~print_name:false))
+    out rels
 
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 

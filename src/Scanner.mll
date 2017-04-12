@@ -14,7 +14,9 @@ let whitespace = [ ' ' '\t' ]
 
 let digit = [ '0'-'9' ]
 
-let number = (digit | [ '1'-'9'] digit*)
+let positive = ([ '1'-'9'] digit*)
+
+let number = (digit | positive)
                            
 let letter = [ 'A'-'Z' 'a'-'z' ]
 
@@ -27,8 +29,6 @@ let idx_id = plain_id dollar number
 let pragma = "##" plain_id
 
 let comment_line = ("--")
-
-let colon_arity = ':' number
 
 let reserved_symbol = [ '$' '%' '\\' '`' '@' ]
 
@@ -135,7 +135,7 @@ rule main infile = parse
   { (PLAIN_ID id) }
 | ("not")
     { NOT }
-| colon_arity as ca
+| ":" (positive as ca)
   { (COLON_ARITY (int_of_string ca)) }
 | "#"
   { HASH }

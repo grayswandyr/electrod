@@ -10,9 +10,8 @@ val empty : t
 (** Requires: [tuples] is a nonempty list for tuples of the same arity. *)
 val of_tuples : Tuple.t list -> t
 
-(** Arity of a tuple set. [None] is the arity of the empty set (not 0!),
-    [Some a] is the arity of a nonempty set (so [b > 0]!). *)
-val arity : t -> int option
+(** Arity of a tuple set. 0 if the set is empty, [n > 0] otherwise. *)
+val inferred_arity : t -> int
 
 (** Tells whether the tuple set denotes the empty set. *)
 val is_empty : t -> bool

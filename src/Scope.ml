@@ -6,13 +6,13 @@ type t =
 let exact bound = Exact bound
 
 let inexact inf sup =
-  assert TupleSet.(arity inf = arity sup
+  assert TupleSet.(inferred_arity inf = inferred_arity sup
                 || TupleSet.is_empty inf);
   Inexact (inf, sup)
 
-let arity = function
+let inferred_arity = function
   | Exact b
-  | Inexact (_, b) -> TupleSet.arity b
+  | Inexact (_, b) -> TupleSet.inferred_arity b
 
 let pp out = function
   | Exact bound -> TupleSet.pp out bound

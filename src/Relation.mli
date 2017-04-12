@@ -2,19 +2,20 @@
 
 (** A relation is either static (const) or dynamic (var). In the latter case, it
     may either be specified in a unique scope or with a scope for the initial
-    instant and then a scope for all other instants. *)
+    instant and then a scope for all other instants. The arity is compulsorily
+    specified by the user for empty bounds and optionally otherwise.*)
 type t =
-  | Const of { name : Name.t; scope : Scope.t }
-  | Var of { name : Name.t; scope : Scope.t; fby : Scope.t option }
+  | Const of { name : Name.t; arity : int; scope : Scope.t }
+  | Var of { name : Name.t; arity : int; scope : Scope.t; fby : Scope.t option }
 
 
 (** {1 Constructors} *)
-val const : Name.t -> Scope.t -> t
-val var : Name.t -> Scope.t -> Scope.t option -> t
+val const : Name.t -> int -> Scope.t -> t
+val var : Name.t -> int -> Scope.t -> Scope.t option -> t
 
   
 (** Arity of the relation. Recall remark for {!Bound.arity} *)
-val arity : t -> int option
+val arity : t -> int
 
 (** Tells whether the relation is a set or a relation of arity > 1. *)
 val is_set : t -> bool

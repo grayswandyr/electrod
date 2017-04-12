@@ -67,7 +67,7 @@ module G = GenGoal
 	  { (urelts_list, decls, gs) }
 
 
-
+ 
   ////////////////////////////////////////////////////////////////////////
   // universe
   ////////////////////////////////////////////////////////////////////////
@@ -94,11 +94,11 @@ possible_declarations:
   { decls }
   
 declaration:
-	CONST? id = PLAIN_ID colon_w_or_wo_arity sc = scope 
-	{ R.dconst (Raw_ident.ident id $startpos(id) $endpos(id)) sc }
+	CONST? id = PLAIN_ID ar = colon_w_or_wo_arity sc = scope 
+	{ R.dconst (Raw_ident.ident id $startpos(id) $endpos(id)) ar sc }
   |
-	VAR id = PLAIN_ID COLON sc = scope fby = next_scope? 
-	{ R.dvar (Raw_ident.ident id $startpos(id) $endpos(id)) sc fby }
+	VAR id = PLAIN_ID ar = colon_w_or_wo_arity sc = scope fby = next_scope? 
+	{ R.dvar (Raw_ident.ident id $startpos(id) $endpos(id)) ar sc fby }
 
 colon_w_or_wo_arity:
   COLON
