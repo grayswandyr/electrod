@@ -95,14 +95,23 @@ let compute_tuples infile domain = function
       [Tuple.of_list1 atoms]
 
 
-(* [`Inf] and [`Sup] tell whether we are computing a lower of upper bound:
-   this is important as a bound may be defined out of other ones, so we
-   should know whether we need the lower or upper bound of the relations
-   referred to. The variants are in an [option] which is set to [None] if
-   the scope is exact (in which case, the variants are of no use); [Some]
-   otherwise.
+let check_tuples_arities_and_duplicates infile id = function
+  | [] -> TupleSet.empty
+  | t::ts as tuples ->
+      let ar = Tuple.arity t in
+      (* List.iter (fun t -> Msg.debug (fun m -> m "ar(%a) = %d" Tuple.pp t ar)) tuples; *)
+      if List.exists (fun t2 -> Tuple.arity t2 <> ar) ts then
+        Msg.Fatal.incompatible_arities (fun args -> args infile id);
+      TupleSet.of_tuples tuples
 
-   We also pass the [id] of the concerned relation (useful for error message). *)
+      (* [`Inf] and [`Sup] tell whether we are computing a lower of upper bound:
+         this is important as a bound may be defined out of other ones, so we
+         should know whether we need the lower or upper bound of the relations
+         referred to. The variants are in an [option] which is set to [None] if
+         the scope is exact (in which case, the variants are of no use); [Some]
+         otherwise.
+
+         We also pass the [id] of the concerned relation (useful for error message). *)
 let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
   let open Relation in
   let open Scope in
@@ -148,18 +157,11 @@ let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
     | BElts elts ->
         (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BElts"); *)
         let tuples = List.flat_map (compute_tuples infile domain) elts in 
-        match tuples with
-          | [] -> TupleSet.empty
-          | t::ts -> 
-              let ar = Tuple.arity t in
-              (* List.iter (fun t -> Msg.debug (fun m -> m "ar(%a) = %d" Tuple.pp t ar)) tuples; *)
-              if List.exists (fun t2 -> Tuple.arity t2 <> ar) ts then
-                Msg.Fatal.incompatible_arities (fun args -> args infile id);
-              let bnd = TupleSet.of_tuples tuples in
-              if TupleSet.size bnd <> List.length tuples then
-                Msg.Warn.duplicate_elements
-                  (fun args -> args infile id which bnd);
-              bnd
+        let bnd = check_tuples_arities_and_duplicates infile id tuples in
+        if TupleSet.size bnd <> List.length tuples then
+          Msg.Warn.duplicate_elements
+            (fun args -> args infile id which bnd);
+        bnd
   in
   walk raw_bound 
   
@@ -243,6 +245,39 @@ let compute_domain (pb : Raw.raw_problem) =
   in
   List.fold_left update init pb.raw_decls
 
+(*******************************************************************************
+ *  Compute instances and check they comply with the respective relations.
+ *******************************************************************************)
+
+let check_assignment_in_scope infile domain id tupleset =
+  let name = Name.of_raw_ident id in
+  match Domain.get name domain with
+    | None -> Msg.Fatal.undeclared_id (fun args -> args infile id)
+    | Some Relation.Var _ ->
+        Msg.Fatal.instance_is_var (fun args -> args infile id)
+    | Some Relation.Const { scope; _ } when not @@ Scope.mem tupleset scope ->
+        Msg.Fatal.instance_not_in_scope (fun args -> args infile id)
+    | Some _ -> ()
+        
+
+
+(* [domain]: already-computed domain *)
+let compute_instances domain (pb : Raw.raw_problem) =
+  let compute_assignment (id, raw_tuples) =
+    let name = Name.of_raw_ident id in
+    let tupleset =
+      raw_tuples
+      |> List.map CCFun.(List.map Atom.of_raw_ident %> Tuple.of_list1)
+      |> CCFun.tap (check_tuples_arities_and_duplicates pb.file id)
+      |> TupleSet.of_tuples
+      |> CCFun.tap (check_assignment_in_scope pb.file domain id)
+    in
+    (name, tupleset)
+  in
+  List.fold_left
+    (fun acc asgn -> (compute_assignment asgn)
+                     |> fun (n, ts) -> Instance.add n ts acc)
+    Instance.empty pb.raw_inst
 
 (*******************************************************************************
  *  Walking along raw goals to get variables and relation names out of raw_idents
@@ -622,7 +657,7 @@ let check_arities elo =
 
 let whole raw_pb =
   let domain = compute_domain raw_pb in
-  let instance = Instance.empty in
+  let instance = compute_instances domain raw_pb in
   let goals = refine_identifiers raw_pb in
   Elo.make raw_pb.file domain instance goals
   |> CCFun.tap check_arities

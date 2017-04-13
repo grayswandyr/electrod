@@ -57,7 +57,9 @@ let union b1 b2 =
 let mem t bnd = TS.mem t bnd
 
 let pp out b =
-  TS.pp ~start:"{" ~stop:"}" ~sep:" " Tuple.pp out b
+  Fmtc.pf out "@[<2>{";
+  TS.pp ~start:"" ~stop:"" ~sep:" " Tuple.pp out b;
+  Fmtc.pf out "}@]"
   
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 

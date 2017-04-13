@@ -226,7 +226,7 @@ module Fatal = struct
     fun infile id ->
     let loc = Raw_ident.location id in
     m ~header:(code 9)
-      "%a%a: inconsistent arities used for bounds in the scope of %S%a"
+      "%a%a: inconsistent arities used in some tuples for %S%a"
       (option @@ colon **> string) infile
       Loc.pp loc
       (Raw_ident.basename id)
@@ -309,6 +309,28 @@ module Fatal = struct
       Loc.pp loc
       specified_arity
       computed_arity
+      (Raw_ident.basename id)
+      (hardline **< Extract.pp) (Extract.extract infile loc)
+      
+  let instance_is_var args = err @@ fun m -> args @@
+    fun infile id ->
+    let loc = Raw_ident.location id in
+    m ~header:(code 17)
+      "%a%a: %S refers to a variable relation, its value cannot be fixed in \
+       an instance%a"
+      (option @@ colon **> string) infile
+      Loc.pp loc
+      (Raw_ident.basename id)
+      (hardline **< Extract.pp) (Extract.extract infile loc)
+      
+  let instance_not_in_scope args = err @@ fun m -> args @@
+    fun infile id ->
+    let loc = Raw_ident.location id in
+    m ~header:(code 18)
+      "%a%a: the value given for %S in the instance does not comply with \
+       the declared scope%a"
+      (option @@ colon **> string) infile
+      Loc.pp loc
       (Raw_ident.basename id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
 end

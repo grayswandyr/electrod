@@ -14,6 +14,15 @@ let inferred_arity = function
   | Exact b
   | Inexact (_, b) -> TupleSet.inferred_arity b
 
+
+let mem tupleset = function
+  | Exact exact ->
+      TupleSet.compare tupleset exact <= 0
+  | Inexact (inf, sup) -> 
+      TupleSet.compare inf tupleset <= 0
+      && TupleSet.compare tupleset sup <= 0
+
+
 let pp out = function
   | Exact bound -> TupleSet.pp out bound
   | Inexact (inf, sup) ->
