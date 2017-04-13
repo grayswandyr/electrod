@@ -327,31 +327,31 @@ and pp_prim_fml pp_v pp_i out =
     | False ->
         (kwd_styled pf) out "false"
     | Qual (q, exp) ->
-        pf out "(%a %a)" pp_rqualify q (pp_exp pp_v pp_i) exp
+        pf out "@[<2>(%a@ %a)@]" pp_rqualify q (pp_exp pp_v pp_i) exp
     | RComp (e1, op, e2) ->
-        pf out "(%a %a %a)"
+        pf out "@[<2>(%a@ %a@ %a)@]"
           (pp_exp pp_v pp_i) e1
           pp_comp_op op
           (pp_exp pp_v pp_i) e2
     | IComp (e1, op, e2) ->
-        pf out "(%a %a %a)"
+        pf out "@[<2>(%a@ %a@ %a)@]"
           (pp_iexp pp_v pp_i) e1
           pp_icomp_op op
           (pp_iexp pp_v pp_i) e2
     | LUn (op, fml) ->
-        pf out "(%a %a)" pp_lunop op (pp_fml pp_v pp_i) fml
+        pf out "@[<2>(%a@ %a)@]" pp_lunop op (pp_fml pp_v pp_i) fml
     | LBin (f1, op, f2) ->
-        pf out "(%a %a %a)"
+        pf out "@[<2>(%a@ %a@ %a)@]"
           (pp_fml pp_v pp_i) f1
           pp_lbinop op
           (pp_fml pp_v pp_i) f2        
     | QAEN (q, decls, blk) ->
-        pf out "(%a %a@ %a)"
+        pf out "@[<2>(%a %a@ %a)@]"
           pp_ae_quant q
           (list ~sep:(sp **> comma) @@ pp_sim_binding pp_v pp_i) decls
           (pp_block pp_v pp_i) blk        
     | QLO (q, bindings, blk) ->
-        pf out "(%a %a@ %a)"
+        pf out "@[<2>(%a %a@ %a)@]"
           pp_lo_quant q
           (list ~sep:(sp **> comma) @@ pp_binding ~sep:colon pp_v pp_i) bindings
           (pp_block pp_v pp_i) blk
@@ -361,7 +361,7 @@ and pp_prim_fml pp_v pp_i out =
           (list ~sep:(sp **> comma) @@ pp_binding ~sep:equal pp_v pp_i) bindings
           (pp_block pp_v pp_i) blk
     | FIte (c, t, e) ->
-        pf out "(%a@ @[implies %a@]@ @[else %a@])"
+        pf out "@[<2>(%a@ @[implies %a@]@ @[else %a@])@]"
           (pp_fml pp_v pp_i) c
           (pp_fml pp_v pp_i) t
           (pp_fml pp_v pp_i) e
@@ -370,12 +370,9 @@ and pp_prim_fml pp_v pp_i out =
 
 and pp_block pp_v pp_i out fmls = 
   let open Fmtc in
-  pf out "%a" (braces_
-               @@ hvbox
-               @@ list ~sep:(sp **> semi)
-               @@ box2
-               @@ pp_fml pp_v pp_i) fmls
-  
+  pf out "@[<b 0>{@[<hv>%a@]@,}@]"
+    (list ~sep:(sp **> semi) @@ pp_fml pp_v pp_i) fmls
+
 and pp_rqualify out x =
   Fmtc.(kwd_styled pf) out
   @@ match x with
@@ -439,14 +436,14 @@ and pp_ae_quant out x =
 
 and pp_binding ~sep pp_v pp_i out (v, e) =
   let open Fmtc in
-  pf out "%a %a %a"
+  pf out "%a@ %a@ %a"
     pp_v v
     sep ()
     (pp_exp pp_v pp_i) e
 
 and pp_sim_binding pp_v pp_i out (disj, vars, exp) =
   let open Fmtc in
-  pf out "%a%a : %a"
+  pf out "%a%a :@ %a"
     (if disj then kwd_styled string else nop) "disj "
     (list ~sep:(sp **> comma) pp_v) vars
     (pp_exp pp_v pp_i) exp
@@ -466,27 +463,27 @@ and pp_prim_exp pp_v pp_i out =
     | Ident id ->
         pf out "%a" pp_i id
     | RUn (op, e) ->
-        pf out "(%a%a)"
+        pf out "@[<2>(%a%a)@]"
           pp_runop op
           (pp_exp pp_v pp_i) e
     | RBin (e1, Join, e2) ->
-        pf out "(%a.%a)"
+        pf out "@[<2>(%a.%a)@]"
           (pp_exp pp_v pp_i) e1
           (pp_exp pp_v pp_i) e2
     | RBin (e1, op, e2) ->
-        pf out "(%a %a@ %a)"
+        pf out "@[<2>(%a@ %a@ %a)@]"
           (pp_exp pp_v pp_i) e1
           pp_rbinop op
           (pp_exp pp_v pp_i) e2
     | RIte (c, t, e) ->
-        pf out "(%a@ @[%a %a@]@ @[%a %a@])"
+        pf out "@[<2>(%a@ @[%a@ %a@]@ @[%a@ %a@])@]"
           (pp_fml pp_v pp_i) c
           (kwd_styled string) "implies"
           (pp_exp pp_v pp_i) t
           (kwd_styled string) "else"
           (pp_exp pp_v pp_i) e
     | BoxJoin (exp, args) ->
-        pf out "(%a%a)"
+        pf out "@[<2>(%a%a)@]"
           (pp_exp pp_v pp_i) exp
           (brackets @@ list ~sep:(sp **> comma) @@ pp_exp pp_v pp_i) args          
     | Compr (sim_bindings, blk) ->
@@ -527,13 +524,13 @@ and pp_prim_iexp pp_v pp_i out =
     | Num n ->
         pf out "%d" n
     | Card exp ->
-        pf out "(#%a)" (pp_exp pp_v pp_i) exp
+        pf out "@[<2>(#%a)@]" (pp_exp pp_v pp_i) exp
     | IUn (op, iexp) ->
-        pf out "(%a%a)"
+        pf out "@[<2>(%a%a)@]"
           pp_iunop op
           (pp_iexp pp_v pp_i) iexp
     | IBin (e1, op, e2) -> 
-        pf out "(%a %a@ %a)"
+        pf out "@[<2>(%a@ %a@ %a)@]"
           (pp_iexp pp_v pp_i) e1
           pp_ibinop op
           (pp_iexp pp_v pp_i) e2
