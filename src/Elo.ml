@@ -9,13 +9,15 @@ let equal_var id1 id2 = match id1, id2 with
   | `Var v1, `Var v2 -> Var.equal v1 v2
 
 (* any identifier: a binder-introduced variable or a set/relation name *)
-type ident = [ var | `Name of Name.t ]
+type ident = [ var | `Name of Name.t | `Atom of Atom.t]
 
 let equal_ident id1 id2 = match id1, id2 with
+  | `Atom at1, `Atom at2 -> Atom.equal at1 at2
   | `Name n1, `Name n2 -> Name.equal n1 n2
   | `Var v1, `Var v2 -> Var.equal v1 v2
-  | `Name _, `Var _
-  | `Var _, `Name _ -> false
+  | (`Name _, _)
+  | (`Var _, _)
+  | (`Atom _, _)-> false
 
 type goal = (var, ident) GenGoal.t
               
@@ -35,7 +37,8 @@ let pp_var out (`Var v) =
 
 let pp_ident out = function
   | `Name n -> Fmtc.(styled `Cyan Name.pp) out n
-  | `Var v as var -> Fmtc.(styled `Yellow pp_var) out var
+  | `Var _ as var -> Fmtc.(styled `Yellow pp_var) out var
+  | `Atom at -> Fmtc.(styled `Cyan Atom.pp) out at
 
 let pp out { file; domain; instance; goals } =
   let open Fmtc in

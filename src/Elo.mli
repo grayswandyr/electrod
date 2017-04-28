@@ -8,8 +8,10 @@ type var = [ `Var of Var.t ]
 
 val equal_var : var -> var -> bool
 
-(** any identifier: a binder-introduced variable or a set/relation name *)
-type ident = [ var | `Name of Name.t ]
+(** any identifier: a binder-introduced variable or a set/relation name or an
+    atom name (the latter cannot appear out of parsing but will, after a
+    substitution, when compiling to LTL formulas). *)
+type ident = [ var | `Name of Name.t | `Atom of Atom.t]
 
 val equal_ident : ident -> ident -> bool 
 
