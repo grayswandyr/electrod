@@ -24,6 +24,8 @@ let append (t1, t2) = Array.append t1 t2
 
 let compare t1 t2 = Array.compare Atom.compare t1 t2
 
+let equal t1 t2 = Array.equal Atom.equal t1 t2
+
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 
 

@@ -15,6 +15,8 @@ val arity : t -> int
     (useful to compute the flat product of bounds/tuple sets). *)
 val append : t * t -> t
 
+val equal : t -> t -> bool
+
 include Intf.Print.S with type t := t
 
 module Set : CCSet.S with type elt = t

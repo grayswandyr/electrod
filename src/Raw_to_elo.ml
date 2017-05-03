@@ -286,8 +286,8 @@ let compute_instances domain (pb : Raw.raw_problem) =
 let refine_identifiers raw_pb =
   let open GenGoal in
   let rec walk_fml ctx fml =
-    let ctx2, f = walk_prim_fml ctx fml.data in
-    (ctx2, { fml with data = f })
+    let ctx2, f = walk_prim_fml ctx fml.prim_fml in
+    (ctx2, { fml with prim_fml = f })
 
   and walk_prim_fml ctx = function
     | QLO (q, bindings, blk) ->
@@ -323,8 +323,8 @@ let refine_identifiers raw_pb =
 
   and walk_binding ctx (v, exp) =
     let exp2 = walk_exp ctx exp in
-    let var = `Var (Var.fresh_of_raw_ident v) in
-    ((v, var) :: ctx, (var, exp2))
+    let var = (Var.fresh_of_raw_ident v) in
+    ((v, Elo.var_ident var) :: ctx, (Elo.bound_var var, exp2))
 
   and walk_sim_bindings ctx = function
     | [] -> (ctx, [])
@@ -345,19 +345,21 @@ let refine_identifiers raw_pb =
         disj
     in
     let exp2 = walk_exp ctx exp in
-    let vars = List.map (fun v -> `Var (Var.fresh (Raw_ident.basename v))) vs in
-    (List.(combine vs vars |> rev) @ ctx, (disj2, vars, exp2))      
+    let bvars = List.map (fun v -> Elo.bound_var (Var.fresh (Raw_ident.basename v))) vs in
+    let vars = List.map Elo.var_ident_of_bound_var bvars in
+    (List.(combine vs vars |> rev) @ ctx, (disj2, bvars, exp2))      
 
   and walk_block ctx blk =
     (ctx, List.map (fun fml -> snd @@ walk_fml ctx fml) blk)
 
   and walk_exp ctx exp =
-    { exp with data = walk_prim_exp ctx exp.data }
+    { exp with prim_exp = walk_prim_exp ctx exp.prim_exp }
 
   and walk_prim_exp ctx = function
     | Ident id ->
         (try
-           ident @@ CCList.Assoc.get_exn ~eq:Raw_ident.eq_name id ctx
+           ident
+           @@ CCList.Assoc.get_exn ~eq:Raw_ident.eq_name id ctx
          with Not_found ->
            Msg.Fatal.undeclared_id @@ fun args -> args raw_pb.file id)
     | None_ -> none
@@ -373,8 +375,8 @@ let refine_identifiers raw_pb =
         let _, blk2 = walk_block ctx2 blk in
         compr sim_bindings2 blk2
 
-  and walk_iexp ctx exp =
-    { exp with data = walk_prim_iexp ctx exp.data }
+  and walk_iexp ctx iexp =
+    { iexp with prim_iexp = walk_prim_iexp ctx iexp.prim_iexp }
 
   and walk_prim_iexp ctx = function
     | Num n -> num n
@@ -387,11 +389,11 @@ let refine_identifiers raw_pb =
   let init_ctx =
     List.map
       (fun decl ->
-         Pair.dup_map (fun id -> `Name (Name.of_raw_ident id))
+         Pair.dup_map (fun id -> Elo.name_ident (Name.of_raw_ident id))
          @@ Raw.decl_id decl)
       raw_pb.raw_decls
     @ [ (Raw_ident.ident "univ" Lexing.dummy_pos Lexing.dummy_pos,
-         `Name Name.univ) ]
+         Elo.name_ident Name.univ) ]
   in
   let walk_goal (Sat blk) : Elo.goal = 
     sat @@ snd @@ walk_block init_ctx blk
@@ -419,8 +421,8 @@ let check_arities elo =
   let open Elo in
   let open GenGoal in
   (* ctx is a map from identifiers to their arity  *)
-  let rec walk_fml ctx { data; _ } =
-    walk_prim_fml ctx data
+  let rec walk_fml ctx { prim_fml; _ } =
+    walk_prim_fml ctx prim_fml
 
   and walk_prim_fml ctx = function
     | True | False -> ()
@@ -475,13 +477,13 @@ let check_arities elo =
 
   and walk_bindings ctx in_q = function
     | [] -> ctx
-    | (`Var v, exp) :: bs ->
+    | (BVar v, exp) :: bs ->
         let ar = arity_exp ctx exp in
         if in_q && ar <> Some 1 then (* under a quantification, range arity must be 1 *)
           Msg.Fatal.arity_error
             (fun args -> args elo.file exp "arity should be 1")
         else
-          walk_bindings ((`Var v, ar) :: ctx) in_q bs
+          walk_bindings ((Var v, ar) :: ctx) in_q bs
 
   and walk_sim_bindings ctx = function
     | [] -> ctx
@@ -494,10 +496,10 @@ let check_arities elo =
     if ar <> Some 1 then
       Msg.Fatal.arity_error (fun args -> args elo.file exp "arity should be 1")
     else
-      List.map (CCPair.dup_map (fun _ -> Some 1)) (vs :> Elo.ident list) @ ctx
+      List.map (fun (BVar v) -> (Var v, Some 1)) vs @ ctx
 
   and arity_exp ctx exp =
-    match arity_prim_exp ctx exp.data with
+    match arity_prim_exp ctx exp.prim_exp with
       | Ok ar -> ar
       | Error msg -> Msg.Fatal.arity_error (fun args -> args elo.file exp msg)
 
@@ -626,8 +628,8 @@ let check_arities elo =
         end
     | Prime e -> Result.return @@ arity_exp ctx e
 
-  and arity_iexp ctx { data; _ } =
-    arity_prim_iexp ctx data
+  and arity_iexp ctx { prim_iexp; _ } =
+    arity_prim_iexp ctx prim_iexp
 
   and arity_prim_iexp ctx = function
     | Num _ -> ()
@@ -644,7 +646,7 @@ let check_arities elo =
     |> List.map (fun (name, rel) ->
           (* Msg.debug *)
           (*   (fun m -> m "Raw_to_elo: ar(%a) = %a" Name.pp name Fmtc.int (Relation.arity rel)); *)
-          (`Name name, Some (Relation.arity rel)))
+          (Name name, Some (Relation.arity rel)))
   in
   let walk_goal (Sat blk) =
     walk_block init_ctx blk

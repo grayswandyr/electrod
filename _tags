@@ -10,6 +10,8 @@ true: package(fmt)
 true: package(fmt.cli)
 true: package(fmt.tty)
 true: package(ppx_deriving.std)
+true: package(visitors.ppx)
+true: package(visitors.runtime)
 
 ".git": -traverse
 ".git": not_hygienic

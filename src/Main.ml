@@ -3,12 +3,11 @@
 
 open Containers
 
-open Raw
-open Elo
 
-(* inspired by Logs_fmt code *)
+open ToLTL
 
-        
+
+(* inspired by Logs_fmt code *)     
 let keyword =
   let open Logs in
   function
@@ -69,14 +68,18 @@ let main style_renderer verbosity infile =
   (* begin work *)
   try
     let raw_to_elo_t = Transfo.tlist [ Raw_to_elo.transfo ] in
-    let elo_cleanup_t = Transfo.tlist [ Elo_cleanup.transfo ] in
 
     let elo =
       Parser_main.parse_file infile
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
-      |> Transfo.(get_exn elo_cleanup_t "elo_cleanup" |> run)
-
     in
+
+    let _ =
+      let open Elo in
+      let module Elo_to_SMV = ToLTL.Make(ToSMV1.Logic) in
+      List.map (Elo_to_SMV.convert elo) elo.goals
+    in
+    
 
     Msg.debug
       (fun m -> m "Elo AST =@;%a" (Elo.pp) elo);
@@ -87,3 +90,5 @@ let main style_renderer verbosity infile =
     Logs.app
       (fun m -> m "Aborting (%a)." Mtime.pp_span (Mtime.elapsed ()));
     exit 2
+
+

@@ -1,20 +1,31 @@
 
-type 'a located = {
-  data : 'a;
-  loc : Location.t;
-}
+(* type 'a located = { *)
+(*   data : 'a; *)
+(*   loc : Location.t; *)
+(* } *)
 
-let pp_located pp_data out { data; _ } =
-  Fmtc.pf out "%a" pp_data data
+(* let pp_located pp_data out { data; _ } = *)
+(*   Fmtc.pf out "%a" pp_data data *)
+
+(* class virtual ['self] fold_methods = object (self : 'self) *)
+(*   method virtual visit_fmls : _ *)
+(*   method virtual visit_sim_bindings : _ *)
+(*   method virtual visit_bindings : _ *)
+(*   method virtual visit_exps : _ *)
+(*   method virtual visit_variables : _ *)
+(* end *)
 
 (* ['v] is the type of variables introduced in quantifiers, ['i] is the type of
    any identifier (a variable like in the former case or a relation name) *)
 type ('v, 'i) t =
-  | Sat of ('v, 'i) fml list
+  | Sat of (('v, 'i) fml list [@name "fmls"])
 
 (** Formulas and expressions *)
 
-and ('v, 'i) fml = ('v, 'i) prim_fml located
+and ('v, 'i) fml = {
+  prim_fml : ('v, 'i) prim_fml;
+  fml_loc : (Location.t [@opaque])
+}
 
 and ('v, 'i) prim_fml =
   | True 
@@ -25,10 +36,10 @@ and ('v, 'i) prim_fml =
   | LUn of lunop * ('v, 'i) fml
   | LBin of ('v, 'i) fml * lbinop * ('v, 'i) fml
   | QAEN of ae_quant
-    * ('v, 'i) sim_binding list (** nonempty *)
-    * ('v, 'i) block
-  | QLO of lo_quant * (('v, 'i) binding) list * ('v, 'i) block (** nonempty *)
-  | Let of (('v, 'i) binding) list * ('v, 'i) block (** nonempty *)
+            * (('v, 'i) sim_binding list [@name "sim_bindings"]) (** nonempty *)
+            * ('v, 'i) block
+  | QLO of lo_quant * ((('v, 'i) binding) list  [@name "bindings"]) * ('v, 'i) block (** nonempty *)
+  | Let of ((('v, 'i) binding) list  [@name "bindings"]) * ('v, 'i) block (** nonempty *)
   | FIte of ('v, 'i) fml * ('v, 'i) fml * ('v, 'i) fml      
   | Block of ('v, 'i) block
 
@@ -36,11 +47,11 @@ and ('v, 'i) prim_fml =
 and ('v, 'i) binding = 'v * ('v, 'i) exp
 
 (* simultaneous bindings to the same range *)
-and ('v, 'i) sim_binding = disj * 'v list * ('v, 'i) exp (* nonempty *)
+and ('v, 'i) sim_binding = disj * ('v list [@name "variables"]) * ('v, 'i) exp (* nonempty *)
 
-and disj = bool 
+and disj = (bool [@opaque]) 
 
-and ('v, 'i) block = ('v, 'i) fml list (** nonempty *)
+and ('v, 'i) block = (('v, 'i) fml list [@name "fmls"]) (** nonempty *)
 
 and ae_quant = 
   | All 
@@ -83,7 +94,10 @@ and icomp_op =
   | Gt 
   | Gte 
 
-and ('v, 'i) exp = ('v, 'i) prim_exp located
+and ('v, 'i) exp = {
+  prim_exp : ('v, 'i) prim_exp;
+  exp_loc : (Location.t [@opaque])
+}
 
 and ('v, 'i) prim_exp =
   | None_ 
@@ -91,12 +105,12 @@ and ('v, 'i) prim_exp =
   | Iden 
   | Ident of 'i
   | RUn of runop * ('v, 'i) exp
-      
+
   | RBin of ('v, 'i) exp * rbinop * ('v, 'i) exp
-      
+
   | RIte of ('v, 'i) fml * ('v, 'i) exp * ('v, 'i) exp
-  | BoxJoin of ('v, 'i) exp * ('v, 'i) exp list (** <> []  *)
-  | Compr of ('v, 'i) sim_binding list * ('v, 'i) block
+  | BoxJoin of ('v, 'i) exp * (('v, 'i) exp list [@name "exps"]) (** <> []  *)
+  | Compr of (('v, 'i) sim_binding list [@name "sim_bindings"])* ('v, 'i) block
   | Prime of ('v, 'i) exp
 
 and rqualify = 
@@ -120,10 +134,13 @@ and rbinop =
   | Diff 
   | Join
 
-and ('v, 'i) iexp = ('v, 'i) prim_iexp located
+and ('v, 'i) iexp = {
+  prim_iexp : ('v, 'i) prim_iexp;
+  iexp_loc : (Location.t [@opaque])
+}
 
 and ('v, 'i) prim_iexp =
-  | Num of int
+  | Num of (int [@opaque])
   | Card of ('v, 'i) exp
   | IUn of iunop * ('v, 'i) iexp
   | IBin of ('v, 'i) iexp * ibinop * ('v, 'i) iexp
@@ -134,6 +151,7 @@ and iunop =
 and ibinop =
   | Add
   | Sub
+[@@deriving visitors { variety = "fold"(* ; ancestors = ["fold_methods"]  *)} ]
 
 
 let true_ = True
@@ -289,11 +307,11 @@ let add = Add
 let sub = Sub
 
 
-let fml loc data = { data; loc }
+let fml fml_loc prim_fml = { prim_fml; fml_loc }
 
-let exp loc data = { data; loc }
+let exp exp_loc prim_exp = { prim_exp; exp_loc }
 
-let iexp loc data = { data; loc }
+let iexp iexp_loc prim_iexp = { prim_iexp; iexp_loc }
 
 let sat fs = Sat fs
 
@@ -317,7 +335,7 @@ let rec pp pp_v pp_i out (Sat fmls) =
   end
 
 and pp_fml pp_v pp_i out fml =
-  pp_prim_fml pp_v pp_i out fml.data
+  pp_prim_fml pp_v pp_i out fml.prim_fml
 
 and pp_prim_fml pp_v pp_i out = 
   let open Fmtc in
@@ -449,7 +467,7 @@ and pp_sim_binding pp_v pp_i out (disj, vars, exp) =
     (pp_exp pp_v pp_i) exp
 
 and pp_exp pp_v pp_i out exp =
-  pp_prim_exp pp_v pp_i out exp.data
+  pp_prim_exp pp_v pp_i out exp.prim_exp
 
 and pp_prim_exp pp_v pp_i out = 
   let open Fmtc in
@@ -516,7 +534,7 @@ and pp_rbinop out =
 
 and pp_iexp pp_v pp_i out iexp =  
   let open Fmtc in
-  pf out "%a" (pp_prim_iexp pp_v pp_i) iexp.data
+  pf out "%a" (pp_prim_iexp pp_v pp_i) iexp.prim_iexp
 
 and pp_prim_iexp pp_v pp_i out = 
   let open Fmtc in

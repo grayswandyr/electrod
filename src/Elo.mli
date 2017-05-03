@@ -4,14 +4,24 @@ open Containers
 
 
 (** variables introduced by a binder *)
-type var = [ `Var of Var.t ]
+type var = BVar of Var.t
+val bound_var : Var.t -> var
 
 val equal_var : var -> var -> bool
 
-(** any identifier: a binder-introduced variable or a set/relation name or an
-    atom name (the latter cannot appear out of parsing but will, after a
-    substitution, when compiling to LTL formulas). *)
-type ident = [ var | `Name of Name.t | `Atom of Atom.t]
+(** any identifier: a binder-introduced variable or a set/relation
+    name or tuple (the latter cannot appear out of parsing but will,
+    after a substitution, when compiling to LTL formulas). *)
+type ident = 
+  | Var of Var.t
+  | Name of Name.t
+  | Tuple of Tuple.t
+
+val var_ident : Var.t -> ident
+val name_ident : Name.t -> ident
+val tuple_ident : Tuple.t -> ident
+
+val var_ident_of_bound_var : var -> ident
 
 val equal_ident : ident -> ident -> bool 
 

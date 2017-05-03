@@ -441,23 +441,23 @@ expr:
   
 iexpr:
   n = NUMBER
-  { G.exp (Location.from_positions $startpos $endpos)
+  { G.iexp (Location.from_positions $startpos $endpos)
     @@ G.num n  }
   | HASH e = expr
-  { G.exp (Location.from_positions $startpos $endpos)
+  { G.iexp (Location.from_positions $startpos $endpos)
     @@ G.card e  }
   | NEG e = brackets(iexpr)
-  { G.exp (Location.from_positions $startpos $endpos)
+  { G.iexp (Location.from_positions $startpos $endpos)
     @@ G.(iunary neg e) } 
   | ADD e = brackets(two_iexprs)
       {
         let (e1, e2) = e in
-        G.exp (Location.from_positions $startpos $endpos)
+        G.iexp (Location.from_positions $startpos $endpos)
     @@ G.(ibinary e1 add e2)  }
   | SUB e = brackets(two_iexprs)
   { 
     let (e1, e2) = e in
-    G.exp (Location.from_positions $startpos $endpos)
+    G.iexp (Location.from_positions $startpos $endpos)
     @@ G.(ibinary e1 sub e2)  } 
 
 %inline two_iexprs:
