@@ -46,4 +46,24 @@ val mem : Tuple.t -> t -> bool
 (** Cardinality of a tuple set  *)
 val size : t -> int
 
+(** Set difference.  *)
+val diff : t -> t -> t
+  
+(** Transposition.  *)
+val transpose : t -> t
+
+(** Diagonal of a set.  *)
+val diagonal : t -> t
+
+(** Join of two tuple sets.  *)
+val join : t -> t -> t
+
+(** Infix version(s) of preivous operations.  *)
+module Infix : sig
+  (** [mem] *)
+  val ( $: ) : Tuple.t -> t -> bool
+end
+
+val to_seq : t -> Tuple.t CCSet.sequence
+
 include Intf.Print.S with type t := t

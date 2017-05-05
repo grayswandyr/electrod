@@ -4,6 +4,7 @@ FLG -w -4-33-40-41-42-43-34-44
 FLG -short-paths
 PKG menhirLib
 PKG containers
+PKG containers.data
 PKG cmdliner
 PKG gen
 PKG sequence
@@ -12,3 +13,4 @@ PKG fmt
 PKG mtime.os
 PKG visitors.runtime
 PKG visitors.ppx
+PKG ppx_deriving.std

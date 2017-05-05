@@ -36,6 +36,11 @@ type t = {
 
 val make : string option -> Domain.t -> Instance.t -> goal list -> t
 
+
+val must : Domain.t -> (var, ident) GenGoal.exp -> TupleSet.t
+val may : Domain.t -> (var, ident) GenGoal.exp -> TupleSet.t
+val sup : Domain.t -> (var, ident) GenGoal.exp -> TupleSet.t
+
 val pp_var : Format.formatter -> var -> unit
 val pp_ident : Format.formatter -> ident -> unit
 

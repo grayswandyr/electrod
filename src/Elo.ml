@@ -31,7 +31,7 @@ let equal_ident id1 id2 = match id1, id2 with
   | (Tuple _, _)-> false
 
 type goal = (var, ident) GenGoal.t
-              
+
 type t = {
   file : string option;
   (* table of relations indexed by names (remark: a {!Relation.t} also knows its name) *)
@@ -57,6 +57,128 @@ let pp out { file; domain; instance; goals } =
     Domain.pp domain
     Instance.pp instance
     (vbox @@ list @@ GenGoal.pp pp_var pp_ident) goals
+
+
+let must, sup =
+  let walk bound = object (self : 'self)
+    inherit [_] GenGoal.fold as super
+
+    method build_exp domain bnd _ = bnd
+    method build_None_ domain = TupleSet.empty
+    method build_Iden domain = bound @@ Domain.get_exn Name.iden domain
+    method build_Union domain = TupleSet.union
+    method build_Univ domain = bound @@ Domain.get_exn Name.univ domain
+
+    method build_Ident domain = function
+      | Var _ -> assert false
+      | Tuple tuple -> TupleSet.of_tuples [tuple]
+      | Name name -> bound @@ Domain.get_exn name domain
+
+    method build_RBin domain l op r = op l r
+    method build_RIte domain = failwith "Elo.build_RIte TODO"
+    method build_Compr domain = assert false
+    method build_Diff domain = TupleSet.diff
+    method build_Inter domain = TupleSet.inter
+    method build_Join domain = TupleSet.join
+    method build_LProj domain = assert false
+    method build_Over domain = assert false
+    method build_RProj domain = assert false
+    method build_RUn domain op e = op e
+    method build_RTClos domain = assert false
+    method build_TClos domain = assert false
+    method build_Transpose domain = TupleSet.transpose
+    method build_BoxJoin domain left right = assert false (* simplified *)
+    method build_Prime domain = Fun.id
+    method build_Prod domain = TupleSet.product
+    method visit_'i domain = Fun.id
+
+    method visit_'v domain = assert false
+
+    method build_Add domain = assert false
+    method build_All domain = assert false
+    method build_And domain = assert false
+    method build_Block domain = assert false
+    method build_Card domain = assert false
+    method build_F domain = assert false
+    method build_FIte domain = assert false
+    method build_False domain = assert false
+    method build_G domain = assert false
+    method build_Gt domain = assert false
+    method build_Gte domain = assert false
+    method build_H domain = assert false
+    method build_IBin domain = assert false
+    method build_IComp domain = assert false
+    method build_IEq domain = assert false
+    method build_INEq domain = assert false
+    method build_IUn domain = assert false
+    method build_Iff domain = assert false
+    method build_Imp domain = assert false
+    method build_In domain = assert false
+    method build_LBin domain = assert false
+    method build_LUn domain = assert false
+    method build_Let domain = assert false
+    method build_Lone domain = assert false
+    method build_Lt domain = assert false
+    method build_Lte domain = assert false
+    method build_Neg domain = assert false
+    method build_No domain = assert false
+    method build_Not domain = assert false
+    method build_NotIn domain = assert false
+    method build_Num domain = assert false
+    method build_O domain = assert false
+    method build_One domain = assert false
+    method build_Or domain = assert false
+    method build_P domain = assert false
+    method build_QAEN domain = assert false
+    method build_QLO domain = assert false
+    method build_Qual domain = assert false
+    method build_R domain = assert false
+    method build_RComp domain = assert false
+    method build_REq domain = assert false
+    method build_RLone domain = assert false
+    method build_RNEq domain = assert false
+    method build_RNo domain = assert false
+    method build_ROne domain = assert false
+    method build_RSome domain = assert false
+    method build_S domain = assert false
+    method build_Sat domain = assert false
+    method build_Some_ domain = assert false
+    method build_Sub domain = assert false
+    method build_True domain = assert false
+    method build_U domain = assert false
+    method build_X domain = assert false
+    method build_fml domain = assert false
+    method build_iexp domain = assert false
+  end
+  in
+  let must domain exp = 
+    (walk @@ Relation.must) # visit_exp domain exp
+    |> Fun.tap (fun res ->
+          Msg.debug @@
+          fun m -> m "Elo.must(%a) = %a"
+                     (GenGoal.pp_exp pp_var pp_ident) exp TupleSet.pp res)
+  in
+  let sup domain exp =
+    (walk @@ Relation.sup)  # visit_exp domain exp
+    |> Fun.tap (fun res ->
+          Msg.debug @@
+          fun m -> m "Elo.sup(%a) = %a"
+                     (GenGoal.pp_exp pp_var pp_ident) exp TupleSet.pp res)
+  in
+  CCCache.(with_cache (unbounded 79) must),
+  CCCache.(with_cache (unbounded 79) sup)
+  
+
+let may =
+  let aux domain exp =
+    TupleSet.diff (sup domain exp) (must domain exp)
+    |> Fun.tap (fun res ->
+          Msg.debug @@
+          fun m -> m "Elo.may(%a) = %a"
+                     (GenGoal.pp_exp pp_var pp_ident) exp TupleSet.pp res)
+  in
+  CCCache.(with_cache (unbounded 79) aux)
+
 
 
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)

@@ -14,6 +14,8 @@ let of_raw_ident id = Raw_ident.basename id
 
 let univ = "univ"
 
+let iden = "iden"
+
 let equal = String.equal
 
 let style = `Cyan

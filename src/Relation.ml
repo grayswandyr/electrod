@@ -31,6 +31,10 @@ let is_var = function
   | Const _ -> false
   | Var _ -> true
 
+let scope = function
+  | Const { scope; _}
+  | Var { scope; _ } -> scope
+
 
 let pp ?(print_name = true) out rel = 
   let open Fmtc in
@@ -57,6 +61,21 @@ let pp ?(print_name = true) out rel =
     | Var { name; scope; fby; arity  } ->
         pp_def "var" name scope fby arity
 
+
+let must = function
+  | Const { scope; _ }
+  | Var { scope; _ } ->
+      Scope.must scope
+
+let may = function
+  | Const { scope; _ }
+  | Var { scope; _ } ->
+      Scope.may scope
+
+let sup = function
+  | Const { scope; _ }
+  | Var { scope; _ } ->
+      Scope.sup scope
 
 let to_string ?(print_name = true) rel =
   Fmtc.to_to_string (pp ~print_name) rel

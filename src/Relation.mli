@@ -26,7 +26,12 @@ val is_const : t -> bool
 
 val is_var : t -> bool
 
+(** Returns the scope of a relation (for variable relations: not [fby]!)  *)
+val scope : t -> Scope.t
 
+val must : t -> TupleSet.t
+val may : t -> TupleSet.t
+val sup : t -> TupleSet.t
 
 val pp : ?print_name:bool -> Format.formatter -> t -> unit
 

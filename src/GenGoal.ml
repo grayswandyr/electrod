@@ -18,7 +18,7 @@
 (* ['v] is the type of variables introduced in quantifiers, ['i] is the type of
    any identifier (a variable like in the former case or a relation name) *)
 type ('v, 'i) t =
-  | Sat of (('v, 'i) fml list [@name "fmls"])
+  | Sat of (('v, 'i) fml list)
 
 (** Formulas and expressions *)
 
@@ -36,10 +36,10 @@ and ('v, 'i) prim_fml =
   | LUn of lunop * ('v, 'i) fml
   | LBin of ('v, 'i) fml * lbinop * ('v, 'i) fml
   | QAEN of ae_quant
-            * (('v, 'i) sim_binding list [@name "sim_bindings"]) (** nonempty *)
+            * ('v, 'i) sim_binding list (** nonempty *)
             * ('v, 'i) block
-  | QLO of lo_quant * ((('v, 'i) binding) list  [@name "bindings"]) * ('v, 'i) block (** nonempty *)
-  | Let of ((('v, 'i) binding) list  [@name "bindings"]) * ('v, 'i) block (** nonempty *)
+  | QLO of lo_quant * (('v, 'i) binding) list * ('v, 'i) block (** nonempty *)
+  | Let of (('v, 'i) binding) list * ('v, 'i) block (** nonempty *)
   | FIte of ('v, 'i) fml * ('v, 'i) fml * ('v, 'i) fml      
   | Block of ('v, 'i) block
 
@@ -47,11 +47,11 @@ and ('v, 'i) prim_fml =
 and ('v, 'i) binding = 'v * ('v, 'i) exp
 
 (* simultaneous bindings to the same range *)
-and ('v, 'i) sim_binding = disj * ('v list [@name "variables"]) * ('v, 'i) exp (* nonempty *)
+and ('v, 'i) sim_binding = disj * 'v list * ('v, 'i) exp (* nonempty *)
 
 and disj = (bool [@opaque]) 
 
-and ('v, 'i) block = (('v, 'i) fml list [@name "fmls"]) (** nonempty *)
+and ('v, 'i) block = ('v, 'i) fml list (** nonempty *)
 
 and ae_quant = 
   | All 
@@ -109,8 +109,8 @@ and ('v, 'i) prim_exp =
   | RBin of ('v, 'i) exp * rbinop * ('v, 'i) exp
 
   | RIte of ('v, 'i) fml * ('v, 'i) exp * ('v, 'i) exp
-  | BoxJoin of ('v, 'i) exp * (('v, 'i) exp list [@name "exps"]) (** <> []  *)
-  | Compr of (('v, 'i) sim_binding list [@name "sim_bindings"])* ('v, 'i) block
+  | BoxJoin of ('v, 'i) exp * ('v, 'i) exp list (** <> []  *)
+  | Compr of ('v, 'i) sim_binding list * ('v, 'i) block
   | Prime of ('v, 'i) exp
 
 and rqualify = 
@@ -151,7 +151,8 @@ and iunop =
 and ibinop =
   | Add
   | Sub
-[@@deriving visitors { variety = "fold"(* ; ancestors = ["fold_methods"]  *)} ]
+[@@deriving visitors { variety = "fold" ; ancestors = ["VisitorsRuntime.map"] },
+            visitors { variety = "map"} ]
 
 
 let true_ = True

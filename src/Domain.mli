@@ -28,5 +28,9 @@ val univ_atoms : t -> TupleSet.t
 (** Returns the map as an association list *)
 val to_list : t -> (Name.t * Relation.t) list
 
+(** Returns the "may" and "must" tuple sets associated to a relation name.  *)
+val must : Name.t -> t -> TupleSet.t
+val may : Name.t -> t -> TupleSet.t
+
 include Intf.Print.S with type t := t
 

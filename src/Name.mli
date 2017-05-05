@@ -11,8 +11,9 @@ val dummy : unit -> t
 
 val of_raw_ident : Raw_ident.t -> t
 
-(** Reserved name for 'univ'. *)
+(** Reserved name for 'univ' and 'iden'. *)
 val univ : t
+val iden : t
 
 (** Tells whether two names are the same *)
 val equal : t -> t -> bool

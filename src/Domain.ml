@@ -38,5 +38,17 @@ let pp out rels =
           (styled `Cyan Name.pp) (Relation.pp ~print_name:false))
     out rels
 
+let must name domain =
+  assert (mem name domain);
+  get_exn name domain
+  |> Relation.scope
+  |> Scope.must
+
+let may name domain =
+  assert (mem name domain);
+  get_exn name domain
+  |> Relation.scope
+  |> Scope.may
+
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 

@@ -233,7 +233,15 @@ let compute_decl infile domain = function
 
 let compute_domain (pb : Raw.raw_problem) =
   let univ = compute_univ pb.file pb.raw_univ in
-  let init = Domain.add Name.univ univ Domain.empty in
+  let univ_ts = Relation.must univ in (* corresponding tuple set *)
+  let iden =
+    Relation.const Name.iden 2
+    @@ Scope.exact
+    @@ TupleSet.diagonal univ_ts
+  in
+  let init =
+    Domain.add Name.univ univ Domain.empty
+    |> Domain.add Name.iden iden in
   (* updating the domain, given a previous domain and a raw_decl *)
   let update dom decl =
     let name = Name.of_raw_ident @@ Raw.decl_id decl in
@@ -255,7 +263,7 @@ let check_assignment_in_scope infile domain id tupleset =
     | None -> Msg.Fatal.undeclared_id (fun args -> args infile id)
     | Some Relation.Var _ ->
         Msg.Fatal.instance_is_var (fun args -> args infile id)
-    | Some Relation.Const { scope; _ } when not @@ Scope.mem tupleset scope ->
+    | Some Relation.Const { scope; _ } when not @@ Scope.included_in tupleset scope ->
         Msg.Fatal.instance_not_in_scope (fun args -> args infile id)
     | Some _ -> ()
         

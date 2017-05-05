@@ -1,4 +1,5 @@
-
+open Containers
+    
 type t =
   | Exact of TupleSet.t              
   | Inexact of TupleSet.t * TupleSet.t    
@@ -15,12 +16,33 @@ let inferred_arity = function
   | Inexact (_, b) -> TupleSet.inferred_arity b
 
 
-let mem tupleset = function
+let included_in tupleset = function
   | Exact exact ->
-      TupleSet.compare tupleset exact <= 0
+      TupleSet.subset tupleset exact
   | Inexact (inf, sup) -> 
-      TupleSet.compare inf tupleset <= 0
-      && TupleSet.compare tupleset sup <= 0
+      TupleSet.subset inf tupleset
+      && TupleSet.subset tupleset sup
+
+let inf = function
+  | Exact ts
+  | Inexact (ts, _) -> ts
+    
+let sup = function
+  | Exact ts
+  | Inexact (_, ts) -> ts
+
+let must = inf
+
+let may_aux sc =
+  assert (TupleSet.subset (inf sc) (sup sc));
+  match sc with
+    | Exact _ ->
+        TupleSet.empty
+    | Inexact (inf, sup) ->
+        TupleSet.diff sup inf
+
+let may =
+  CCCache.(with_cache (unbounded 79) may_aux) 
 
 
 let pp out = function
