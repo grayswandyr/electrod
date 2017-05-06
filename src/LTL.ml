@@ -139,12 +139,15 @@ module LTL_from_Atom (At : ATOM) = struct
     | True, _ -> q
     | _, False -> p
     | _, _ -> Imp (p, q)
-    
-
-
-    
+                
   let xor p1 p2 = Xor (p1, p2)
-  let iff p1 p2 = Iff (p1, p2)
+                    
+  let iff p q = match p, q with
+    | False, False
+    | True, True -> True
+    | False, True
+    | True, False -> False
+    | _, _ -> Iff (p, q)
 
   let conj =
     List.fold_left and_ true_

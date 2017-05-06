@@ -153,17 +153,17 @@ let must, sup =
   in
   let must domain exp = 
     (walk @@ Relation.must) # visit_exp domain exp
-    |> Fun.tap (fun res ->
-          Msg.debug @@
-          fun m -> m "Elo.must(%a) = %a"
-                     (GenGoal.pp_exp pp_var pp_ident) exp TupleSet.pp res)
+    (* |> Fun.tap (fun res -> *)
+    (*       Msg.debug @@ *)
+    (*       fun m -> m "Elo.must(%a) = %a" *)
+    (*                  (GenGoal.pp_exp pp_var pp_ident) exp TupleSet.pp res) *)
   in
   let sup domain exp =
     (walk @@ Relation.sup)  # visit_exp domain exp
-    |> Fun.tap (fun res ->
-          Msg.debug @@
-          fun m -> m "Elo.sup(%a) = %a"
-                     (GenGoal.pp_exp pp_var pp_ident) exp TupleSet.pp res)
+    (* |> Fun.tap (fun res -> *)
+    (*       Msg.debug @@ *)
+    (*       fun m -> m "Elo.sup(%a) = %a" *)
+    (*                  (GenGoal.pp_exp pp_var pp_ident) exp TupleSet.pp res) *)
   in
   CCCache.(with_cache (unbounded 79) must),
   CCCache.(with_cache (unbounded 79) sup)
@@ -172,12 +172,13 @@ let must, sup =
 let may =
   let aux domain exp =
     TupleSet.diff (sup domain exp) (must domain exp)
-    |> Fun.tap (fun res ->
-          Msg.debug @@
-          fun m -> m "Elo.may(%a) = %a"
-                     (GenGoal.pp_exp pp_var pp_ident) exp TupleSet.pp res)
+    (* |> Fun.tap (fun res -> *)
+    (*       Msg.debug @@ *)
+    (*       fun m -> m "Elo.may(%a) = %a" *)
+    (*                  (GenGoal.pp_exp pp_var pp_ident) exp TupleSet.pp res) *)
   in
   CCCache.(with_cache (unbounded 79) aux)
+
 
 
 

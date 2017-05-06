@@ -44,21 +44,42 @@ let is_in_join tuple t1 t2 =
   done;
   !yes
 
-let join t1 t2 =
-  let lg1 = Array.length t1 in
-  let lg2 = Array.length t2 in
-  assert (t1.(lg1 - 1) = t2.(0));
-  let res = Array.make (lg1 + lg2 - 2) t1.(0) in
-  Array.blit t1 0 res 0 (lg1 - 1);
-  Array.blit t2 1 res lg1 (lg2 - 1);
-  res
-
 let pp out atoms =
   let open Fmtc in
   (array ~sep:sp Atom.pp
    |> (if arity atoms > 1 then parens else (fun x -> x)))
     out atoms
     
+let join t1 t2 =
+  let lg1 = Array.length t1 in
+  let lg2 = Array.length t2 in
+  assert (t1.(lg1 - 1) = t2.(0));
+  let res = Array.make (lg1 + lg2 - 2) t1.(0) in
+  Array.blit t1 0 res 0 (lg1 - 1);
+  Array.blit t2 1 res (lg1 - 1) (lg2 - 1);
+  res
+
+let split t len =
+  let full_len = Array.length t in
+  assert (len < full_len);
+  let t1 = Array_slice.(make t 0 len |> copy) in
+  let t2 = Array_slice.(make t len (full_len - len) |> copy) in
+  (t1, t2)
+
+let all_different tuple =
+  let sorted = Array.sorted Atom.compare tuple in
+  let lg = Array.length tuple in
+  let i = ref 1 in
+  let yes = ref true in
+  while !yes && !i < lg do
+    yes := Atom.compare sorted.(!i - 1) sorted.(!i) <> 0
+  done;
+  !yes
+
+let to_1tuples t =
+  Array.fold_right (fun at acc -> of_list1 [at] :: acc) t []
+
+
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 
 

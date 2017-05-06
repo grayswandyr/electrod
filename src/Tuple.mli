@@ -30,6 +30,15 @@ val is_in_join : t -> t -> t -> bool
 (** Joins two tuples (getting rid of the last and first columns (resp.))  *)
 val join : t -> t -> t
 
+(** [split t lg] splits a tuple into two, the first being of length [lg]. *)
+val split : t -> int -> (t * t)
+
+(** [all_different t] tells whether all atoms in a tuple are different.  *)
+val all_different : t -> bool
+
+(** [to_1tuples t] splits a tuple into as many 1-tuples at its length.  *)
+val to_1tuples : t -> t list
+
 include Intf.Print.S with type t := t
 
 module Set : CCSet.S with type elt = t

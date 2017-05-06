@@ -64,6 +64,9 @@ module Infix : sig
   val ( $: ) : Tuple.t -> t -> bool
 end
 
+(** Filters tuples depending on a predicate.  *)
+val filter : (Tuple.t -> bool) -> t -> t
+
 val to_seq : t -> Tuple.t CCSet.sequence
 
 include Intf.Print.S with type t := t

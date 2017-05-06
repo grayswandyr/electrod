@@ -16,9 +16,13 @@ let simplify_fml f =
     method visit_'i _ = Fun.id
 
     (* TODO split multiple simultaneous bindings into many quantifications *)
+    method visit_QAEN env quant sim_bindings blk = match sim_bindings with
+      | [] -> assert false
+      | [b] -> qaen quant sim_bindings blk
+      | ((_, _, e) as b)::bs -> qaen quant [b] [fml e.exp_loc @@ self#visit_QAEN env quant bs blk]
 
     (* TODO substitute let bindings *)
-        
+
     (* change relation qualifiers into formulas *)
     method visit_Qual env qual exp =
       let prim_fml = match qual with
@@ -42,7 +46,7 @@ let simplify_fml f =
       (* BoxJoin (_visitors_r0, _visitors_r1) *)
   end
   in
-  walk#visit_t [] f
+  walk#visit_t (ref []) f
 
 let run elo =
   let open Elo in

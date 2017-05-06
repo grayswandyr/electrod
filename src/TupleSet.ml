@@ -84,6 +84,7 @@ let join b1 b2 =
 
 let mem t bnd = TS.mem t bnd
 
+let filter = TS.filter
 
 let pp out b =
   Fmtc.pf out "@[<hov 2>{";

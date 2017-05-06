@@ -6,156 +6,198 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
   open Ltl.Infix
   open TupleSet.Infix
 
+
+  
+  let substitute = object (self : 'self)
+    inherit [_] GenGoal.map as super
+
+    method visit_'v _ = Fun.id
+
+    method visit_'i _ = Fun.id
+
+    method visit_Ident env (id : Elo.ident) =
+      let open Elo in
+      match id with
+        | Var var when List.Assoc.mem ~eq:Var.equal var env ->
+            List.Assoc.get_exn ~eq:Var.equal var env
+        | Var _ | Name _ | Tuple _ -> GenGoal.ident id
+  end
+
   
   class ['self] convert = object (self : 'self)
-    inherit [_] GenGoal.fold as super
-
-    val mutable r : _ GenGoal.exp option = None
-    val mutable s : _ GenGoal.exp option = None
-    
-
+    inherit [_] GenGoalRecursor.recursor as super
+      
     method visit_'v env = Fun.id
 
     method visit_'i env = Fun.id
 
-    (* fml  *)
-                        
+    (* fml  *)                        
 
-    method build_fml env ltl _ = ltl    
+    method build_fml env _ ltl _ = ltl
 
-    method build_All env = GenGoal.All
+    method build_Sat env _ = conj
 
-    method build_And env = and_
-
-    method build_Block env = conj
-
-    method build_F env = eventually
-
-    method build_FIte env = ifthenelse 
-
+    method build_True env = true_
+      
     method build_False env = false_
 
-    method build_G env = always
+    method build_Block env _ = conj
+
+    method build_FIte env _ _ _ = ifthenelse 
+
+    method build_Let env bindings block bindings' block'= assert false (* SIMPLIFIED *)
+
+    (* lo_quant *)
+
+    method build_QLO env quant bindings block quant' bindings' block' = match quant with
+      | GenGoal.One
+      | GenGoal.Lone -> failwith "build_QLO"
+
+    method build_One env = GenGoal.One
+                             
+    method build_Lone env = GenGoal.Lone
+
+    (* ae_quant *)
+
+    method build_QAEN env quant sim_bindings blk _ _ _ =
+      assert (List.length sim_bindings = 1); (* SIMPLIFIED *)
+      let disj, xs, s = List.hd sim_bindings in
+      let must_s, may_s = Elo.must env.Elo.domain s, Elo.may env.Elo.domain s in
+      let s' = self#visit_exp env s in
+      let lg = List.length xs in
+      let range ts =
+        let open Sequence in
+        repeat ts
+        |> take (lg - 1)        (* -1 because we use the remaining one as the seed for the fold below *)
+        |> fold TupleSet.product ts
+        |> TupleSet.filter Tuple.all_different
+        |> TupleSet.to_seq
+      in
+      let sub_for tuple =       (* substitution mapping for a specific tuple *)
+        let split = Tuple.to_1tuples tuple |> List.map (fun t1 -> GenGoal.ident @@ Elo.Tuple t1) in
+        let xs_as_vars = List.map (fun (Elo.BVar v) -> v) xs in
+        substitute#visit_prim_fml (List.combine xs_as_vars split)
+      in
+      let (bigop, smallop, ok_or_not) = match quant with
+        | GenGoal.All -> (wedge, (+&&), Fun.id)
+        | GenGoal.Some_ -> (vee, (+||), Fun.id)
+        | GenGoal.No -> (wedge, (+&&), not_)
+      in
+      let mustpart =
+        bigop ~range:(range must_s)
+          (fun tuple -> ok_or_not @@ self#visit_prim_fml env @@ sub_for tuple @@ GenGoal.block blk)
+      in
+      let maypart =
+        bigop ~range:(range may_s)
+          (fun tuple ->
+             ok_or_not (s' tuple (* ??????? ok_or_not to be placed after @=> ?????  TODO *)
+                        @=> self#visit_prim_fml env @@ sub_for tuple @@ GenGoal.block blk))
+      in
+      smallop mustpart maypart
+                        
+    method build_All env = GenGoal.All
+
+    method build_No env = GenGoal.No 
+
+    method build_Some_ env = GenGoal.Some_    
+
+    (* lbinop *)      
+
+    method build_LBin env f1 _ f2 f1_r op f2_r = op f1 f2 f1_r f2_r
+    
+    method build_And env _ _ = and_          
+
+    method build_Iff env _ _ = iff
+
+    method build_Imp env _ _ = implies
+
+    method build_U env _ _ = until
+
+    method build_Or env _ _ = or_
+
+    method build_R env _ _ = releases
+
+    method build_S env _ _ = since
+
+    (* lunop *)                     
+      
+    method build_LUn env _ f op f' = op f f'
+
+    method build_X env _ = next
+
+    method build_F env _ = eventually
+
+    method build_G env _ = always
+
+    method build_H env _ = historically
+
+    method build_O env _ = once
+
+    method build_P env _ = yesterday
+
+    method build_Not env _ = not_
+
+    (* compo_op *)
+
+    method build_RComp env f1 _ f2 f1' op' f2' = op' f1 f2 f1' f2'
+
+    method build_REq env r s r' s' =
+      self#build_In env r s r' s' +&& self#build_In env s r s' r'
+
+    method build_In env r s r' s' =
+      let must_r = Elo.must env.Elo.domain r in
+      let may_r = Elo.may env.Elo.domain r in
+      wedge ~range:(TupleSet.to_seq must_r) s'
+      +&& vee ~range:(TupleSet.to_seq may_r) (fun bs -> r' bs @=> s' bs)
+
+    method build_NotIn env r s r' s' = not_ @@ self#build_In env r s r' s'
+
+    method build_RNEq env r s r' s' = not_ @@ self#build_REq env r s r' s'
+
+    (* icomp_op *)
+
+    method build_IComp env e1 _ e2 e1_r op e2_r = op e1 e2 e1_r e2_r
 
     method build_Gt env = failwith "build_Gt"
 
     method build_Gte env = failwith "build_Gte"
 
-    method build_H env = historically
-
-    method build_IComp env e1_r op e2_r = op e1_r e2_r
-
     method build_IEq env = failwith "build_IEq"
 
     method build_INEq env = failwith "build_INEq"
-          
-
-    method build_Iff env = iff
-
-    method build_Imp env = implies
-      
-
-    method build_In env r' s' =
-      assert (Option.is_some r && Option.is_some s);
-      let must_r = Elo.must env.Elo.domain @@ Option.get_exn r in
-      let may_r = Elo.may env.Elo.domain @@ Option.get_exn r in
-      wedge ~range:(TupleSet.to_seq must_r) s'
-      +&& vee ~range:(TupleSet.to_seq may_r) (fun bs -> r' bs @=> s' bs)
-      
-                            
-                     
-      
-
-    method build_LBin env f1_r op f2_r = op f1_r f2_r
-
-    method build_LUn env op f' = op f'
-
-    method build_Let env = failwith "build_Let"
-
-    method build_Lone env = GenGoal.Lone
 
     method build_Lt env = failwith "build_Lt"
 
     method build_Lte env = failwith "build_Lte"
 
-    method build_No env = GenGoal.No 
+    (* rqualify *)
 
-    method build_Not env = not_
-
-    method build_NotIn env r' s' = not_ @@ self#build_In env r' s'
-
-    method build_O env = once
-
-    method build_One env = GenGoal.One
-
-    method build_Or env = or_
-
-    method build_P env = yesterday
-
-    method build_QAEN env quant sim_bindings' block' = match quant with
-      | GenGoal.All
-      | GenGoal.Some_
-      | GenGoal.No -> failwith "build_QAEN"
-
-    method build_QLO env quant bindings' block' = match quant with
-      | GenGoal.One
-      | GenGoal.Lone -> failwith "build_QLO"
-
-    method build_Qual env = assert false
-
-    method build_R env = releases
-
-    method build_RBin env f1 op f2 = op f1 f2
-
-    method build_RComp env f1 op f2 = op f1 f2
-
-    method build_REq env = failwith "build_REq" 
+    method build_Qual env _ r q' r' = q' r r'
 
     method build_RLone env = assert false
 
-    method build_RNEq env r' s' = not_ @@ self#build_REq env r' s'
+    method build_RNo env = assert false
 
-    method build_S env = since
+    method build_ROne env = assert false
 
-    method build_Sat env = conj
+    method build_RSome env = assert false
 
-    method build_Some_ env = GenGoal.Some_
+    (************************** exp  ********************************)
 
-    method build_True env = true_
+    method build_exp env _ exp _ = exp
 
-    method build_U env = until
+    method build_Compr env sbs b sbs' b' = failwith "build_Compr"
 
-    method build_Union env e1 e2 = fun x -> e1 x +|| e2 x
-
-    method build_X env = next
-
-    (* exp  *)
-
-    method build_exp env exp _ = exp
-
-
-    method visit_RComp env left op right =
-      r <- Some left;
-      s <- Some right;
-      super#visit_RComp env left op right
-      |> Fun.tap (fun _ -> r <- None; s <- None)
-    
-
-    method build_BoxJoin env = assert false (* simplified *)
-
-    method build_Compr env = failwith "build_Compr"
-
-    method build_Diff env = failwith "build_Diff"
-
-    method build_Iden env tuple =
+    method build_Iden env = fun tuple -> 
       assert (Tuple.arity tuple = 2);
       if Atom.equal (Tuple.ith 0 tuple) (Tuple.ith 1 tuple) then
         true_
       else
         false_
       
+    method build_BoxJoin env call args call' args' = assert false (* SIMPLIFIED *)
 
-    method build_Ident env id = fun tuple ->
+    method build_Ident env _ id = fun tuple ->
       let open Elo in
       match id with
         | Var _ -> assert false (* shoud've been substituted from above *)
@@ -169,59 +211,68 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
             else
               false_
 
-    method build_Inter env e1 e2 = fun x -> e1 x +&& e2 x
+    method build_None_ env = fun _ -> false_
+      
+    method build_Univ env = fun _ -> true_
 
-    method build_Join env r' s' tuple =
-      assert (Option.is_some r && Option.is_some s);
-      let sup_r = Elo.sup env.Elo.domain @@ Option.get_exn r in
-      let sup_s = Elo.sup env.Elo.domain @@ Option.get_exn s in
+    method build_Prime env e e' = failwith "build_Prime"
+
+    method build_RIte env _ _ _ f_r e1_r e2_r = fun tuple -> 
+      f_r @=> e1_r tuple +&& not_ f_r @=> e2_r tuple
+
+
+    (* rbinop *)
+
+    method build_RBin env f1 _ f2 f1' op' f2' = op' f1 f2 f1' f2'
+    
+    method build_Union env _ _ e1 e2 = fun x -> e1 x +|| e2 x
+                                                           
+    method build_Inter env _ _ e1 e2 = fun x -> e1 x +&& e2 x
+
+    method build_Join env r s r' s' =  fun tuple ->
+      let sup_r = Elo.sup env.Elo.domain r in
+      let sup_s = Elo.sup env.Elo.domain s in
       let eligible_pairs =
         let s1 = TupleSet.to_seq sup_r in
         let s2 = TupleSet.to_seq sup_s in
         Sequence.product s1 s2
-        |> Sequence.filter (Fun.uncurry @@ Tuple.is_in_join tuple)
+        |> Sequence.filter (fun (t1, t2) -> Tuple.is_in_join tuple t1 t2)
       in
       vee ~range:eligible_pairs (fun (bs, cs) -> r' bs +&& s' cs)
         
 
-    method build_LProj env s' r' tuple =
+    method build_LProj env _ _ s' r' = fun tuple -> 
       r' tuple +&& (s' @@ Tuple.(of_list1 [ith 0 tuple]))
+    
+    method build_Prod env r s r' s' = fun tuple ->
+      let ar_r = TupleSet.inferred_arity @@ Elo.sup env.Elo.domain r in
+      let t1, t2 = Tuple.split tuple ar_r in
+      r' t1 +&& s' t2
+      
 
-    method build_None_ env = fun _ -> false_
-
-    method build_Over env r' s' tuple =
-      s' tuple +|| (r' tuple +&& (not_ @@ s' Tuple.(of_list1 [ith 0 tuple])))
-
-    method build_Prime env = failwith "build_Prime"
-
-    method build_Prod env = failwith "build_Prod" (* need to compute arity of r and s *)
-
-    method build_RIte env f_r e1_r e2_r tuple =
-      f_r @=> e1_r tuple +&& not_ f_r @=> e2_r tuple
-
-    method build_RNo env = assert false
-
-    method build_ROne env = assert false
-
-    method build_RProj env r' s' tuple =
+    method build_RProj env _ _ r' s' = fun tuple -> 
       let lg = Tuple.arity tuple in
       r' tuple +&& (s' @@ Tuple.of_list1 [Tuple.ith (lg - 1) tuple])
 
-    method build_RSome env = assert false
+    method build_Diff env _ _ e' f' = fun x -> e' x +&& not_ (f' x)
 
-    method build_RTClos env = assert false
+    method build_Over env _ _ r' s' = fun tuple -> 
+      s' tuple +|| (r' tuple +&& (not_ @@ s' Tuple.(of_list1 [ith 0 tuple])))
 
-    method build_RUn env op e_r = op e_r
 
-    method build_TClos env = failwith "build_TClos"
+    (* runop *)
 
-    method build_Transpose env r' tuple =
-      assert (Tuple.arity tuple = 2);
+    method build_RUn env _ e op e_r = op e e_r
+
+    method build_RTClos env r r' = fun tuple ->
+      self#build_Iden env tuple +|| self#visit_RUn env GenGoal.TClos r tuple
+
+    method build_Transpose env _ r' = fun tuple -> 
       r' @@ Tuple.transpose tuple
 
-    method build_Univ env = fun _ -> true_
+    method build_TClos env r r' = failwith "build_TClos BRUNEL !!!"
     
-    (* iexp *)
+    (*********************************** iexp *****************************************)
 
     method build_iexp env iexp _ = failwith "build_iexp" 
 
