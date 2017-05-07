@@ -39,6 +39,9 @@ val all_different : t -> bool
 (** [to_1tuples t] splits a tuple into as many 1-tuples at its length.  *)
 val to_1tuples : t -> t list
 
+(** [to_list t] produces a list of atoms. *)
+val to_list : t -> Atom.t list
+
 include Intf.Print.S with type t := t
 
 module Set : CCSet.S with type elt = t

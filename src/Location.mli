@@ -17,7 +17,8 @@ val endc : t -> int
 (** Merge two positions *)
 val span : t * t -> t
 
-
+(** Dummy position *)
+val dummy : t
 
 type 'a located = {
   data : 'a;

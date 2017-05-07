@@ -8,22 +8,6 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
 
   
-  let substitute = object (self : 'self)
-    inherit [_] GenGoal.map as super
-
-    method visit_'v _ = Fun.id
-
-    method visit_'i _ = Fun.id
-
-    method visit_Ident env (id : Elo.ident) =
-      let open Elo in
-      match id with
-        | Var var when List.Assoc.mem ~eq:Var.equal var env ->
-            List.Assoc.get_exn ~eq:Var.equal var env
-        | Var _ | Name _ | Tuple _ -> GenGoal.ident id
-  end
-
-  
   class ['self] convert = object (self : 'self)
     inherit [_] GenGoalRecursor.recursor as super
       
@@ -76,7 +60,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       let sub_for tuple =       (* substitution mapping for a specific tuple *)
         let split = Tuple.to_1tuples tuple |> List.map (fun t1 -> GenGoal.ident @@ Elo.Tuple t1) in
         let xs_as_vars = List.map (fun (Elo.BVar v) -> v) xs in
-        substitute#visit_prim_fml (List.combine xs_as_vars split)
+        Elo.substitute#visit_prim_fml (List.combine xs_as_vars split)
       in
       let (bigop, smallop, ok_or_not) = match quant with
         | GenGoal.All -> (wedge, (+&&), Fun.id)
@@ -90,8 +74,8 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       let maypart =
         bigop ~range:(range may_s)
           (fun tuple ->
-             ok_or_not (s' tuple (* ??????? ok_or_not to be placed after @=> ?????  TODO *)
-                        @=> self#visit_prim_fml env @@ sub_for tuple @@ GenGoal.block blk))
+             s' tuple 
+             @=> ok_or_not @@ self#visit_prim_fml env @@ sub_for tuple @@ GenGoal.block blk)
       in
       smallop mustpart maypart
                         
@@ -172,7 +156,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     (* rqualify *)
 
-    method build_Qual env _ r q' r' = q' r r'
+    method build_Qual env _ r q' r' = assert false (* SIMPLIFIED *)
 
     method build_RLone env = assert false
 

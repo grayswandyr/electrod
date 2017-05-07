@@ -15,13 +15,19 @@ let simplify_fml f =
 
     method visit_'i _ = Fun.id
 
-    (* TODO split multiple simultaneous bindings into many quantifications *)
+    (* split multiple simultaneous bindings into many quantifications *)
     method visit_QAEN env quant sim_bindings blk = match sim_bindings with
       | [] -> assert false
       | [b] -> qaen quant sim_bindings blk
       | ((_, _, e) as b)::bs -> qaen quant [b] [fml e.exp_loc @@ self#visit_QAEN env quant bs blk]
 
-    (* TODO substitute let bindings *)
+    (* TODO rewrite QLO *)
+
+    (* substitute let bindings *)
+    method visit_Let env bindings fmls =
+      (* substitute from right to left as a binding on the left may apply in the range of a binding on the right *)
+      let subs = List.rev_map (function (Elo.BVar v, e) -> (v, e.prim_exp)) bindings in
+      Elo.substitute#visit_prim_fml subs @@ block fmls
 
     (* change relation qualifiers into formulas *)
     method visit_Qual env qual exp =
@@ -36,14 +42,10 @@ let simplify_fml f =
     (* change box join in join *)
     method visit_BoxJoin env call args =
       let res = List.fold_right
-                  (fun arg r -> exp (Location.span (arg.exp_loc, r.exp_loc))
-                    @@ rbinary arg join r) args call
+                  (fun arg r -> exp Location.dummy @@ rbinary arg join r) args call
       in
       self#visit_prim_exp env res.prim_exp
-      (* let _visitors_r0 = self#visit_exp env call  in *)
-      (* let _visitors_r1 = self#visit_list self#visit_exp env args *)
-      (* in *)
-      (* BoxJoin (_visitors_r0, _visitors_r1) *)
+        
   end
   in
   walk#visit_t (ref []) f

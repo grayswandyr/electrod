@@ -34,6 +34,7 @@ let span (loc1, loc2) =
   from_positions begp endp                       
   
 
+let dummy = { begp = Lexing.dummy_pos; endp = Lexing.dummy_pos }
 
 type 'a located = {
   data : 'a;

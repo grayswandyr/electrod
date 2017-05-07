@@ -59,7 +59,8 @@ let pp out { file; domain; instance; goals } =
     (vbox @@ list @@ GenGoal.pp pp_var pp_ident) goals
 
 
-let must, sup =
+let (must : Domain.t -> (var, ident) GenGoal.exp -> TupleSet.t),
+    (sup : Domain.t -> (var, ident) GenGoal.exp -> TupleSet.t)  =
   let walk bound = object (self : 'self)
     inherit [_] GenGoal.fold as super
 
@@ -179,6 +180,23 @@ let may =
   in
   CCCache.(with_cache (unbounded 79) aux)
 
+
+  
+let substitute = object (self : 'self)
+  inherit [_] GenGoal.map as super
+
+  method visit_'v _ = Fun.id
+
+  method visit_'i _ = Fun.id
+
+  method visit_Ident
+           (env : (Var.t, (var, ident) GenGoal.prim_exp) CCList.Assoc.t )
+           (id : ident) =
+    match id with
+      | Var var when List.Assoc.mem ~eq:Var.equal var env ->
+          List.Assoc.get_exn ~eq:Var.equal var env
+      | Var _ | Name _ | Tuple _ -> GenGoal.ident id
+end
 
 
 

@@ -8,6 +8,8 @@ let of_list1 xs =
   assert (xs <> []);
   Array.of_list xs
 
+let to_list = Array.to_list
+
 let tuple1 at =
   Array.make 1 at
 
