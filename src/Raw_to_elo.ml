@@ -160,7 +160,7 @@ let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
         let bnd = check_tuples_arities_and_duplicates infile id tuples in
         if TupleSet.size bnd <> List.length tuples then
           Msg.Warn.duplicate_elements
-            (fun args -> args infile id which bnd);
+            (fun args -> args infile id which TupleSet.pp bnd);
         bnd
   in
   walk raw_bound 
@@ -180,7 +180,7 @@ let compute_scope infile domain id = function
       if ar_inf <> ar_sup && not (TupleSet.is_empty inf) then
         Msg.Fatal.incompatible_arities (fun args -> args infile id);
       if not @@ TupleSet.subset inf sup then
-        Msg.Fatal.inf_not_in_sup (fun args -> args infile id inf sup);
+        Msg.Fatal.inf_not_in_sup (fun args -> args infile id TupleSet.pp inf sup);
       if TupleSet.is_empty sup then
         Msg.Warn.empty_scope_declared (fun args -> args infile id);
       if TupleSet.equal inf sup then

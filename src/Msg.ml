@@ -242,7 +242,7 @@ module Fatal = struct
       (hardline **< Extract.pp) (Extract.extract infile loc)
 
   let inf_not_in_sup args = err @@ fun m -> args @@
-    fun infile id inf sup ->
+    fun infile id pp_bound inf sup ->
     let loc = Raw_ident.location id in
     m ~header:(code 11)
       "%a%a: lower bound of %S is not included upper bound@\n%a@\n\
@@ -251,8 +251,8 @@ module Fatal = struct
       Loc.pp loc
       (Raw_ident.basename id)
       (Extract.pp) (Extract.extract infile loc)
-      (box2 @@ TupleSet.pp) inf
-      (box2 @@ TupleSet.pp) sup
+      (box2 @@ pp_bound) inf
+      (box2 @@ pp_bound) sup
 
   let inexact_ref_used_in_exact_scope args = err @@ fun m -> args @@
     fun infile id ref_id ->
@@ -370,7 +370,7 @@ module Warn = struct
       Extract.pp (Extract.extract infile loc)
 
   let duplicate_elements args = warn @@ fun m -> args @@
-    fun infile id bound_kind bound ->
+    fun infile id bound_kind pp_bound bound ->
     let loc = Raw_ident.location id in
     let pp_inf_sup (which : [ `Inf | `Sup] option) = match which with
       | None -> ""
@@ -385,7 +385,7 @@ module Warn = struct
       (pp_inf_sup bound_kind)
       (Raw_ident.basename id)
       Extract.pp (Extract.extract infile loc)
-      (box2 @@ TupleSet.pp) bound
+      (box2 @@ pp_bound) bound
 
   let disj_with_only_one_variable args = warn @@ fun m -> args @@
     fun infile id ->
