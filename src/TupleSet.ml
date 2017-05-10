@@ -4,6 +4,11 @@ module TS = Tuple.Set
 
 type t = TS.t
 
+let pp out b =
+  Fmtc.pf out "@[<hov 2>{";
+  TS.pp ~start:"" ~stop:"" ~sep:" " Tuple.pp out b;
+  Fmtc.pf out "}@]"
+
 
 let to_seq = TS.to_seq
 
@@ -54,7 +59,6 @@ let product b1 b2 =
 
 
 let union b1 b2 =
-  assert (inferred_arity b1 = inferred_arity b2);
   TS.union b1 b2 
 
 let diff b1 b2 = 
@@ -86,10 +90,6 @@ let mem t bnd = TS.mem t bnd
 
 let filter = TS.filter
 
-let pp out b =
-  Fmtc.pf out "@[<hov 2>{";
-  TS.pp ~start:"" ~stop:"" ~sep:" " Tuple.pp out b;
-  Fmtc.pf out "}@]"
   
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 

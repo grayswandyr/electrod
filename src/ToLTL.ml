@@ -44,48 +44,54 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     (* ae_quant *)
 
-    method build_QAEN env quant sim_bindings blk _ _ _ = 
+    method build_QAEN env quant sim_bindings blk _ sim_bindings' _ = 
       assert (List.length sim_bindings = 1); (* SIMPLIFIED *)
       let disj, xs, s = List.hd sim_bindings in
-      let must_s, may_s = Elo.must env.Elo.domain s, Elo.may env.Elo.domain s in
-      let s' = self#visit_exp env s in
-      let lg = List.length xs in
-      let range ts =
-        let open Sequence in
-        repeat ts
-        |> take (lg - 1) (* -1 as we use the remaining 1 as the seed for the fold below *)
-        |> fold TupleSet.product ts
-        |> TupleSet.filter Tuple.all_different
-        |> TupleSet.to_seq
+      let _, _, s' = List.hd sim_bindings' in
+      (* filter out "diagonal" tuples of a tuple set if [disj = true] *)
+      let filter_out ts =
+        if disj then TupleSet.filter Tuple.all_different ts
+        else ts
       in
-      let sub_for tuple =       (* substitution mapping for a specific tuple *)
+      let must_s, may_s =
+        (filter_out @@ Elo.must env.Elo.domain s,
+         filter_out @@ Elo.may env.Elo.domain s) 
+      in
+      (* The range quantified upon (by wedge or vee) will be made of tuples of
+         the arity of [s^(nb of bound variables)]. [split] is the result of
+         breaking these tuples into 1-tuples, one for each bound variable.  *)
+      let sub_for tuple =    
         let split = Tuple.to_1tuples tuple
                     |> List.map (fun t1 -> GenGoal.ident @@ Elo.Tuple t1) in
         let xs_as_vars = List.map (fun (Elo.BVar v) -> v) xs in
-        Elo.substitute#visit_prim_fml (List.combine xs_as_vars split)
+        (* we zip the bound variables and the 1-tuples to get a list of substitutions  *)
+        List.combine xs_as_vars split
+        |> Elo.substitute#visit_prim_fml (* and we use them to substitute *)
       in
-      let (bigop, smallop, ok_or_not) = match quant with
+      (* [positive_or_negative] tells whether the quantifier was a [no ...], in
+         which case we consider the whole as [all ... | not ...] *)
+      let (bigop, smallop, positive_or_negative) = match quant with
         | GenGoal.All -> (wedge, (+&&), Fun.id)
         | GenGoal.Some_ -> (vee, (+||), Fun.id)
         | GenGoal.No -> (wedge, (+&&), not_)
       in
       let mustpart =
-        bigop ~range:(range must_s)
+        bigop ~range:(TupleSet.to_seq must_s)
           (fun tuple ->
-             ok_or_not
-             @@ self#visit_prim_fml env
-             @@ sub_for tuple @@ GenGoal.block blk)
+             positive_or_negative
+             @@ self#visit_prim_fml env (* [[...]] *)
+             @@ (GenGoal.block blk |> sub_for tuple)) (* b [as / xs] *)
       in
       let maypart =
-        bigop ~range:(range may_s)
+        bigop ~range:(TupleSet.to_seq may_s)
           (fun tuple ->
              s' tuple 
              @=>
-             ok_or_not
-             @@ self#visit_prim_fml env
-             @@ sub_for tuple @@ GenGoal.block blk)
+             positive_or_negative
+             @@ self#visit_prim_fml env (* [[...]] *)
+             @@ (GenGoal.block blk |> sub_for tuple)) (* b [as / xs] *)
       in
-      smallop mustpart maypart
+      smallop mustpart maypart 
 
     method build_All env = GenGoal.All
 

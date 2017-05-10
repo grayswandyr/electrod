@@ -75,7 +75,6 @@ let main style_renderer verbosity infile =
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
       |> Transfo.(get_exn elo_to_elo_t "simplify" |> run)
     in
-
     let test_f =
       let open Elo in
       let module Elo_to_SMV1_formulas = ToLTL.MakeLtlConverter(ToSMV1.Logic) in

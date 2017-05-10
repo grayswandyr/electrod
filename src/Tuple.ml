@@ -55,7 +55,7 @@ let pp out atoms =
 let join t1 t2 =
   let lg1 = Array.length t1 in
   let lg2 = Array.length t2 in
-  assert (t1.(lg1 - 1) = t2.(0));
+  assert (Atom.equal t1.(lg1 - 1) t2.(0));
   let res = Array.make (lg1 + lg2 - 2) t1.(0) in
   Array.blit t1 0 res 0 (lg1 - 1);
   Array.blit t2 1 res (lg1 - 1) (lg2 - 1);
