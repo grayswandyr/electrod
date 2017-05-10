@@ -283,8 +283,13 @@ let compute_instances domain (pb : Raw.raw_problem) =
     (name, tupleset)
   in
   List.fold_left
-    (fun acc asgn -> (compute_assignment asgn)
-                     |> fun (n, ts) -> Instance.add n ts acc)
+    (fun acc asgn ->
+       compute_assignment asgn
+       |> fun (n, ts) ->
+       if Instance.mem n acc then
+         Msg.Fatal.instance_already_declared (fun args -> args pb.file @@ fst asgn)
+       else
+         Instance.add n ts acc)
     Instance.empty pb.raw_inst
 
 (*******************************************************************************

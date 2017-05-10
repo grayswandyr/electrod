@@ -16,36 +16,90 @@ let simplify_fml f =
     method visit_'i _ = Fun.id
 
     (* split multiple simultaneous bindings into many quantifications *)
-    method visit_QAEN env quant sim_bindings blk = match sim_bindings with
-      | [] -> assert false
-      | [b] -> qaen quant sim_bindings blk
-      | ((_, _, e) as b)::bs -> qaen quant [b] [fml e.exp_loc @@ self#visit_QAEN env quant bs blk]
+    method visit_QAEN env quant sim_bindings blk = 
+      Msg.debug (fun m -> m "Simplify.visit_QAEN: %a"
+                            Elo.(pp_prim_fml pp_var pp_ident)
+                  @@ qaen quant sim_bindings blk);
+      let res = match sim_bindings with
+        | [] -> assert false
+        | [b] ->
+            let sim_bindings' =
+              List.map
+                (fun (disj, vs, e) -> (disj, vs, self#visit_exp env e))
+                sim_bindings in
+            let blk' = List.map (self#visit_fml env) blk in
+            qaen quant sim_bindings' blk'
+        | ((_, _, e) as b)::bs ->
+            qaen quant [b] [fml e.exp_loc @@ self#visit_QAEN env quant bs blk]
+      in
+      Msg.debug (fun m -> m "Simplify.visit_QAEN --> %a"
+                            Elo.(pp_prim_fml pp_var pp_ident)
+                            res);
+      res
 
     (* TODO rewrite QLO *)
 
     (* substitute let bindings *)
     method visit_Let env bindings fmls =
-      (* substitute from right to left as a binding on the left may apply in the range of a binding on the right *)
-      let subs = List.rev_map (function (Elo.BVar v, e) -> (v, e.prim_exp)) bindings in
-      Elo.substitute#visit_prim_fml subs @@ block fmls
+      (* substitute from right to left as a binding on the left may apply in the
+         range of a binding on the right *)
+      Msg.debug (fun m -> m "Simplify.visit_Let: %a"
+                            Elo.(pp_prim_fml pp_var pp_ident)
+                  @@ let_ bindings fmls);
+      List.fold_right
+        (function (Elo.BVar v, e) ->
+           Elo.substitute#visit_prim_fml [(v, e.prim_exp)])
+        bindings
+        (block fmls)
+      |> self#visit_prim_fml env
+      |> Fun.tap
+      @@ fun res ->
+      Msg.debug (fun m -> m "Simplify.visit_Let --> %a"
+                            (pp_prim_fml Elo.pp_var Elo.pp_ident) res)
 
     (* change relation qualifiers into formulas *)
     method visit_Qual env qual exp =
+      Msg.debug (fun m -> m "Simplify.visit_Qual: %a"
+                            Elo.(pp_prim_fml pp_var pp_ident)
+                  @@ GenGoal.qual qual exp);
       let prim_fml = match qual with
-      | ROne -> qlo one [(Elo.bound_var @@ fresh_var "one" exp, exp)] [fml exp.exp_loc true_]
-      | RLone -> qlo lone [(Elo.bound_var @@ fresh_var "lone" exp, exp)] [fml exp.exp_loc true_]
-      | RSome -> qaen some [(false, [Elo.bound_var @@ fresh_var "some" exp], exp)] [fml exp.exp_loc true_]
-      | RNo -> qaen no_ [(false, [Elo.bound_var @@ fresh_var "no" exp], exp)] [fml exp.exp_loc true_]
+        | ROne ->
+            qlo one [(Elo.bound_var @@ fresh_var "one" exp, exp)]
+              [fml exp.exp_loc true_]
+        | RLone ->
+            qlo lone [(Elo.bound_var @@ fresh_var "lone" exp, exp)]
+              [fml exp.exp_loc true_]
+        | RSome ->
+            qaen some [(false, [Elo.bound_var @@ fresh_var "some" exp], exp)]
+              [fml exp.exp_loc true_]
+        | RNo ->
+            qaen no_ [(false, [Elo.bound_var @@ fresh_var "no" exp], exp)]
+              [fml exp.exp_loc true_]
       in
       self#visit_prim_fml env prim_fml
+      |> Fun.tap
+      @@ fun res ->
+      Msg.debug (fun m -> m "Simplify.visit_Qual --> %a"
+                            (pp_prim_fml Elo.pp_var Elo.pp_ident) res)
 
     (* change box join in join *)
     method visit_BoxJoin env call args =
-      let res = List.fold_right
-                  (fun arg r -> exp Location.dummy @@ rbinary arg join r) args call
+      Msg.debug (fun m -> m "Simplify.visit_BoxJoin: %a[%a]"
+                            Elo.(pp_exp pp_var pp_ident) call
+                            Elo.(Fmtc.list @@ pp_exp pp_var pp_ident) args);
+      let res =
+        List.fold_right
+          (fun arg r -> exp Location.dummy @@ rbinary arg join r) args call
       in
       self#visit_prim_exp env res.prim_exp
-        
+      |> Fun.tap
+      @@ fun res ->
+      Msg.debug (fun m -> m "Simplify.visit_BoxJoin --> %a"
+                            (pp_prim_exp Elo.pp_var Elo.pp_ident) res)
+
+
+
+
   end
   in
   walk#visit_t (ref []) f

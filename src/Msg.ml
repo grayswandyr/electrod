@@ -333,6 +333,16 @@ module Fatal = struct
       Loc.pp loc
       (Raw_ident.basename id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
+      
+  let instance_already_declared args = err @@ fun m -> args @@
+    fun infile id ->
+    let loc = Raw_ident.location id in
+    m ~header:(code 19)
+      "%a%a: instance %S already declared%a"
+      (option @@ colon **> string) infile
+      Loc.pp loc
+      (Raw_ident.basename id)
+      (hardline **< Extract.pp) (Extract.extract infile loc)
 end
 
   

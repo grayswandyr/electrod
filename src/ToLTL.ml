@@ -10,7 +10,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
   
   class ['self] convert = object (self : 'self)
     inherit [_] GenGoalRecursor.recursor as super
-      
+
     method visit_'v env = Fun.id
 
     method visit_'i env = Fun.id
@@ -22,28 +22,29 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_Sat env _ = conj
 
     method build_True env = true_
-      
+
     method build_False env = false_
 
     method build_Block env _ = conj
 
     method build_FIte env _ _ _ = ifthenelse 
 
-    method build_Let env bindings block bindings' block'= assert false (* SIMPLIFIED *)
+    method build_Let env bs block bs' block'= assert false (* SIMPLIFIED *)
 
     (* lo_quant *)
 
-    method build_QLO env quant bindings block quant' bindings' block' = match quant with
-      | GenGoal.One
-      | GenGoal.Lone -> failwith "build_QLO"
+    method build_QLO env quant bindings block quant' bindings' block' =
+      match quant with
+        | GenGoal.One
+        | GenGoal.Lone -> failwith "build_QLO"
 
     method build_One env = GenGoal.One
-                             
+
     method build_Lone env = GenGoal.Lone
 
     (* ae_quant *)
 
-    method build_QAEN env quant sim_bindings blk _ _ _ =
+    method build_QAEN env quant sim_bindings blk _ _ _ = 
       assert (List.length sim_bindings = 1); (* SIMPLIFIED *)
       let disj, xs, s = List.hd sim_bindings in
       let must_s, may_s = Elo.must env.Elo.domain s, Elo.may env.Elo.domain s in
@@ -52,13 +53,14 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       let range ts =
         let open Sequence in
         repeat ts
-        |> take (lg - 1)        (* -1 because we use the remaining one as the seed for the fold below *)
+        |> take (lg - 1) (* -1 as we use the remaining 1 as the seed for the fold below *)
         |> fold TupleSet.product ts
         |> TupleSet.filter Tuple.all_different
         |> TupleSet.to_seq
       in
       let sub_for tuple =       (* substitution mapping for a specific tuple *)
-        let split = Tuple.to_1tuples tuple |> List.map (fun t1 -> GenGoal.ident @@ Elo.Tuple t1) in
+        let split = Tuple.to_1tuples tuple
+                    |> List.map (fun t1 -> GenGoal.ident @@ Elo.Tuple t1) in
         let xs_as_vars = List.map (fun (Elo.BVar v) -> v) xs in
         Elo.substitute#visit_prim_fml (List.combine xs_as_vars split)
       in
@@ -69,16 +71,22 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       in
       let mustpart =
         bigop ~range:(range must_s)
-          (fun tuple -> ok_or_not @@ self#visit_prim_fml env @@ sub_for tuple @@ GenGoal.block blk)
+          (fun tuple ->
+             ok_or_not
+             @@ self#visit_prim_fml env
+             @@ sub_for tuple @@ GenGoal.block blk)
       in
       let maypart =
         bigop ~range:(range may_s)
           (fun tuple ->
              s' tuple 
-             @=> ok_or_not @@ self#visit_prim_fml env @@ sub_for tuple @@ GenGoal.block blk)
+             @=>
+             ok_or_not
+             @@ self#visit_prim_fml env
+             @@ sub_for tuple @@ GenGoal.block blk)
       in
       smallop mustpart maypart
-                        
+
     method build_All env = GenGoal.All
 
     method build_No env = GenGoal.No 
@@ -88,7 +96,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     (* lbinop *)      
 
     method build_LBin env f1 _ f2 f1_r op f2_r = op f1 f2 f1_r f2_r
-    
+
     method build_And env _ _ = and_          
 
     method build_Iff env _ _ = iff
@@ -104,7 +112,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_S env _ _ = since
 
     (* lunop *)                     
-      
+
     method build_LUn env _ f op f' = op f f'
 
     method build_X env _ = next
@@ -132,7 +140,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       let must_r = Elo.must env.Elo.domain r in
       let may_r = Elo.may env.Elo.domain r in
       wedge ~range:(TupleSet.to_seq must_r) s'
-      +&& vee ~range:(TupleSet.to_seq may_r) (fun bs -> r' bs @=> s' bs)
+      +&& wedge ~range:(TupleSet.to_seq may_r) (fun bs -> r' bs @=> s' bs)
 
     method build_NotIn env r s r' s' = not_ @@ self#build_In env r s r' s'
 
@@ -158,13 +166,13 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     method build_Qual env _ r q' r' = assert false (* SIMPLIFIED *)
 
-    method build_RLone env = assert false
+    method build_RLone env = assert false (* SIMPLIFIED *)
 
-    method build_RNo env = assert false
+    method build_RNo env = assert false (* SIMPLIFIED *)
 
-    method build_ROne env = assert false
+    method build_ROne env = assert false (* SIMPLIFIED *)
 
-    method build_RSome env = assert false
+    method build_RSome env = assert false (* SIMPLIFIED *)
 
     (************************** exp  ********************************)
 
@@ -178,8 +186,9 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         true_
       else
         false_
-      
-    method build_BoxJoin env call args call' args' = assert false (* SIMPLIFIED *)
+
+    method build_BoxJoin env call args call' args' = (* SIMPLIFIED *)
+      assert false
 
     method build_Ident env _ id = fun tuple ->
       let open Elo in
@@ -196,7 +205,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
               false_
 
     method build_None_ env = fun _ -> false_
-      
+
     method build_Univ env = fun _ -> true_
 
     method build_Prime env e e' = failwith "build_Prime"
@@ -208,9 +217,9 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     (* rbinop *)
 
     method build_RBin env f1 _ f2 f1' op' f2' = op' f1 f2 f1' f2'
-    
+
     method build_Union env _ _ e1 e2 = fun x -> e1 x +|| e2 x
-                                                           
+
     method build_Inter env _ _ e1 e2 = fun x -> e1 x +&& e2 x
 
     method build_Join env r s r' s' =  fun tuple ->
@@ -223,16 +232,16 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         |> Sequence.filter (fun (t1, t2) -> Tuple.is_in_join tuple t1 t2)
       in
       vee ~range:eligible_pairs (fun (bs, cs) -> r' bs +&& s' cs)
-        
+
 
     method build_LProj env _ _ s' r' = fun tuple -> 
       r' tuple +&& (s' @@ Tuple.(of_list1 [ith 0 tuple]))
-    
+
     method build_Prod env r s r' s' = fun tuple ->
       let ar_r = TupleSet.inferred_arity @@ Elo.sup env.Elo.domain r in
       let t1, t2 = Tuple.split tuple ar_r in
       r' t1 +&& s' t2
-      
+
 
     method build_RProj env _ _ r' s' = fun tuple -> 
       let lg = Tuple.arity tuple in
@@ -255,8 +264,8 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       r' @@ Tuple.transpose tuple
 
     method build_TClos env r r' = failwith "build_TClos BRUNEL !!!"
-    
-    (*********************************** iexp *****************************************)
+
+    (*********************************** iexp **************************************)
 
     method build_iexp env iexp _ = failwith "build_iexp" 
 

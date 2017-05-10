@@ -88,7 +88,7 @@ let (must : Domain.t -> (var, ident) GenGoal.exp -> TupleSet.t),
     method build_RTClos domain = assert false
     method build_TClos domain = assert false
     method build_Transpose domain = TupleSet.transpose
-    method build_BoxJoin domain left right = assert false (* simplified *)
+    method build_BoxJoin domain left right = assert false (* SIMPLIFIED *)
     method build_Prime domain = Fun.id
     method build_Prod domain = TupleSet.product
     method visit_'i domain = Fun.id

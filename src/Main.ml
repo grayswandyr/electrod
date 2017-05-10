@@ -81,7 +81,7 @@ let main style_renderer verbosity infile =
       let module Elo_to_SMV1_formulas = ToLTL.MakeLtlConverter(ToSMV1.Logic) in
       List.map (Elo_to_SMV1_formulas.convert elo) elo.goals
     in
-    
+
 
     Msg.debug
       (fun m -> m "Elo AST =@;%a" (Elo.pp) elo);
@@ -90,9 +90,15 @@ let main style_renderer verbosity infile =
 
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
                          Mtime.pp_span (Mtime.elapsed ()))
-  with Exit ->
-    Logs.app
-      (fun m -> m "Aborting (%a)." Mtime.pp_span (Mtime.elapsed ()));
-    exit 2
+  with
+    | Exit ->
+        flush_all ();
+        Logs.app
+          (fun m -> m "Aborting (%a)." Mtime.pp_span (Mtime.elapsed ()));
+        exit 2
+    | e ->
+        flush_all ();
+        raise e
+      
 
 
