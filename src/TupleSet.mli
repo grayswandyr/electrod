@@ -68,5 +68,6 @@ end
 val filter : (Tuple.t -> bool) -> t -> t
 
 val to_seq : t -> Tuple.t CCSet.sequence
+val to_list : t -> Tuple.t list
 
 include Intf.Print.S with type t := t

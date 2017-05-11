@@ -10,6 +10,8 @@ let pp out b =
   Fmtc.pf out "}@]"
 
 
+let to_list = TS.to_list
+                
 let to_seq = TS.to_seq
 
 let of_seq = TS.of_seq

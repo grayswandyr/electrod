@@ -154,19 +154,19 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     (* icomp_op *)
 
-    method build_IComp env e1 _ e2 e1_r op e2_r = op e1 e2 e1_r e2_r
+    method build_IComp env e1 _ e2 e1_r op e2_r = op e1_r e2_r
 
-    method build_Gt env = failwith "build_Gt"
+    method build_Gt env = comp gt
 
-    method build_Gte env = failwith "build_Gte"
+    method build_Gte env = comp gte
 
-    method build_IEq env = failwith "build_IEq"
+    method build_IEq env = comp eq
 
-    method build_INEq env = failwith "build_INEq"
+    method build_INEq env = comp neq
 
-    method build_Lt env = failwith "build_Lt"
+    method build_Lt env = comp lt
 
-    method build_Lte env = failwith "build_Lte"
+    method build_Lte env = comp lte
 
     (* rqualify *)
 
@@ -214,7 +214,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     method build_Univ env = fun _ -> true_
 
-    method build_Prime env e e' = failwith "build_Prime"
+    method build_Prime env _ e' = fun tuple -> next @@ e' tuple
 
     method build_RIte env _ _ _ f_r e1_r e2_r = fun tuple -> 
       f_r @=> e1_r tuple +&& not_ f_r @=> e2_r tuple
@@ -273,21 +273,27 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     (*********************************** iexp **************************************)
 
-    method build_iexp env iexp _ = failwith "build_iexp" 
+    method build_iexp env _ iexp' _ = iexp'
 
-    method build_Num env = failwith "build_Num"
+    method build_IBin env _ _ _ i1' op' i2' = op' i1' i2'
 
-    method build_Add env = failwith "build_Add"
+    method build_IUn env _ _ op' i' = op' i'
 
-    method build_Neg env = failwith "build_Neg"
+    method build_Num env _ = num
 
-    method build_Sub env = failwith "build_Sub"
+    method build_Add env = plus
 
-    method build_Card env = failwith "build_Card"
+    method build_Neg env = neg
 
-    method build_IBin env = failwith "build_IBin"
+    method build_Sub env = minus
 
-    method build_IUn env = failwith "build_IUn"
+    method build_Card env r r' =
+      let must_card = num @@ TupleSet.size @@ Elo.may env.Elo.domain r in
+      let may_card =
+        count @@ List.map r' @@ TupleSet.to_list @@ Elo.may env.Elo.domain r
+      in
+      plus must_card may_card
+        
 
   end
 

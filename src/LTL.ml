@@ -1,5 +1,5 @@
 open Containers
-    
+
 module type ATOM = sig
   type t
 
@@ -13,7 +13,16 @@ end
 module type S = sig
   type atom
     
+  type tcomp = private
+    | Lte 
+    | Lt
+    | Gte
+    | Gt
+    | Eq 
+    | Neq
+
   type t = private
+    | Comp of tcomp * term * term
     | True
     | False
     | Atom of atom
@@ -34,13 +43,20 @@ module type S = sig
     | S of t * t
     | T of t * t               
 
+  and term = private
+    | Num of int 
+    | Plus of term * term
+    | Minus of term * term
+    | Neg of term 
+    | Count of t list
+
   val true_ : t
   val false_ : t
 
   val atom : Name.t -> Tuple.t -> t
 
   val not_ : t -> t
-    
+
   val and_ : t -> t -> t
   val or_ : t -> t -> t
   val implies : t -> t -> t
@@ -52,13 +68,13 @@ module type S = sig
 
   val wedge : range:('a Sequence.t) -> ('a -> t) -> t
   val vee : range:('a Sequence.t) -> ('a -> t) -> t
-  
+
   val ifthenelse : t -> t -> t -> t
 
   val next : t -> t
   val always : t -> t
   val eventually : t -> t
-    
+
   val yesterday : t -> t
   val once : t -> t
   val historically : t -> t
@@ -67,7 +83,21 @@ module type S = sig
   val releases : t -> t -> t
   val since : t -> t -> t
   val trigerred : t -> t -> t
-    
+
+  val num : int -> term
+  val plus : term -> term -> term
+  val minus : term -> term -> term
+  val neg : term -> term
+  val count : t list -> term
+
+  val comp : tcomp -> term -> term -> t
+  val lt : tcomp
+  val lte : tcomp
+  val gt : tcomp
+  val gte : tcomp
+  val eq : tcomp
+  val neq : tcomp
+
   module Infix : sig
     (* precedence: from strongest to weakest *)
     (* 1 *)
@@ -80,16 +110,26 @@ module type S = sig
     val ( @<=> ) : t -> t -> t
   end
 
-  
+
   val pp : Format.formatter -> t -> unit
   include Intf.Print.S with type t := t
 end
 
 
-module LTL_from_Atom (At : ATOM) = struct  
+module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
+  type tcomp = 
+    | Lte 
+    | Lt
+    | Gte
+    | Gt
+    | Eq 
+    | Neq
+  [@@deriving show]  
+  
   type atom = At.t
 
   and t =
+    | Comp of tcomp * term * term
     | True
     | False
     | Atom of atom
@@ -108,8 +148,15 @@ module LTL_from_Atom (At : ATOM) = struct
     | U of t * t                (* until *)
     | R of t * t                (* releases *)
     | S of t * t                (* since *)
-    | T of t * t                (* triggered *)
-  [@@deriving show]
+    | T of t * t                (* triggered *)  
+
+  and term = 
+    | Num of int 
+    | Plus of term * term
+    | Minus of term * term
+    | Neg of term 
+    | Count of t list
+  [@@deriving show]  
 
   let true_ = True
   let false_ = False
@@ -132,16 +179,16 @@ module LTL_from_Atom (At : ATOM) = struct
     | False, p
     | p, False -> p
     | _, _ -> Or (p1, p2)
-                
+
   let implies p q = match p, q with
     | False, _ -> True
     | _, True -> True
     | True, _ -> q
     | _, False -> p
     | _, _ -> Imp (p, q)
-                
+
   let xor p1 p2 = Xor (p1, p2)
-                    
+
   let iff p q = match p, q with
     | False, False
     | True, True -> True
@@ -151,7 +198,7 @@ module LTL_from_Atom (At : ATOM) = struct
 
   let conj =
     List.fold_left and_ true_
-      
+
   let disj =
     List.fold_left or_ false_
 
@@ -170,12 +217,26 @@ module LTL_from_Atom (At : ATOM) = struct
   let since p1 p2 = S (p1, p2)
   let trigerred p1 p2 = T (p1, p2)
 
+  let num n = Num n
+  let plus t1 t2 = Plus (t1, t2)
+  let minus t1 t2 = Minus (t1, t2)
+  let neg t = Neg t
+  let count ps = Count ps
+
+  let comp op t1 t2 = Comp (op, t1, t2)
+  let lt = Lt
+  let lte = Lte
+  let gt = Gt
+  let gte = Gte
+  let eq = Eq
+  let neq = Neq
+
   let wedge ~range f =
     Sequence.fold (fun fml tuple -> and_ fml @@ f tuple) true_ range
 
   let vee ~range f =
     Sequence.fold (fun fml tuple -> or_ fml @@ f tuple) false_ range
-                                                                    
+
   module Infix = struct
     (* precedence: from strongest to weakest *)
     (* 1 *)
@@ -192,4 +253,4 @@ module LTL_from_Atom (At : ATOM) = struct
   include P 
 
 end
- 
+

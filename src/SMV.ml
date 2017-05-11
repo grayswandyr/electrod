@@ -7,13 +7,25 @@ module MakeLTL (At : LTL.ATOM) = struct
   include I
       
   module PP = struct
+    open Fmtc
+        
     type atom = At.t
 
     let pp_atom = At.pp
-        
-    let rec pp out (f : t) =
-      let open Fmtc in
+
+    let pp_tcomp out (t : tcomp) =
+      pf out "%s"
+      @@ match t with
+      | Lte  -> "<="
+      | Lt  -> "<"
+      | Gte  -> ">="
+      | Gt  -> ">"
+      | Eq  -> "="
+      | Neq  -> "!="
+    
+    let rec pp out f =
       match f with
+        | Comp (op, t1, t2) -> infix pp_tcomp pp_term pp_term out (op, t1, t2)
         | True  -> pf out "true"
         | False  -> pf out "false"
         | Atom at -> pp_atom out at
@@ -33,6 +45,15 @@ module MakeLTL (At : LTL.ATOM) = struct
         | R (p, q)-> infix string pp pp out ("V", p, q)
         | S (p, q)-> infix string pp pp out ("S", p, q)
         | T (p, q)-> infix string pp pp out ("T", p, q)
+
+    and pp_term out (t : term) = match t with
+      | Num n -> pf out "%d" n
+      | Plus (t1, t2) -> infix string pp_term pp_term out ("+", t1, t2)
+      | Minus (t1, t2) -> infix string pp_term pp_term out ("-", t1, t2)
+      | Neg t -> pf out "@[(- %a)@]" pp_term t
+      | Count ts ->
+          pf out "@[count(@[<hov 2>%a@])@]"
+            (list ~sep:(const string "@ +@ ") pp) ts
   end
   
 
