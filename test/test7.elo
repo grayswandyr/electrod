@@ -1,0 +1,21 @@
+univ : { a b c  e$2 .. e$4 };
+const r : univ; 
+const t : { (a a) (a b) (c e$2)} (univ -> (univ + r));
+const ord##foo : { a b } {a b c}; 	 
+var u : {} ord##foo;
+
+inst
+
+r = { (a) };
+
+r = { (a) };
+
+t = { (a a)  (a b) };
+
+sym
+
+[ a b ] <= [ b c ];
+[ a b ] [ e$2 e$3 b ] <= [ b c ] [e$4 b c];
+
+sat
+{ disj a,b : univ | a->b in t } not in u->u;
