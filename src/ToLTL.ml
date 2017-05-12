@@ -6,7 +6,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
   open Ltl.Infix
   open TupleSet.Infix
 
-
+  type goal = Elo.goal 
   
   class ['self] convert = object (self : 'self)
     inherit [_] GenGoalRecursor.recursor as super
@@ -184,7 +184,36 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     method build_exp env _ exp _ = exp
 
-    method build_Compr env sbs b sbs' b' = failwith "build_Compr"
+    (* shape: [{ sb1, sb2,... | b }]. Each [sb] is of shape [x1, x2 : e] (the
+       [disj]'s have already been simplified).
+
+       The first item implies that we have to fold over the [sb]'s to substitute
+       previously-bound variables. In the following function, we perform these
+       substitutions and then compute separately the semantics of every binding,
+       before computing the whole resulting formula.
+    *)
+    method build_Compr env sbs b _ _ = fun tuple ->
+      assert (List.for_all (fun (disj, _, _) -> not disj) sbs);
+      (* compute the subtitution of elements in [tuple] for all bound variables *)
+      let split = Tuple.to_1tuples tuple
+                  |> List.map (fun t1 -> GenGoal.ident @@ Elo.Tuple t1) in
+      let all_vars =
+        List.flat_map (fun (_, vs, _) ->
+              List.map (fun (Elo.BVar v) -> v) vs) sbs in
+      let sub = List.combine all_vars split in
+      (* semantics of [b] is [[ b [atoms / variables] ]] *)
+      let b' = self#visit_prim_fml env
+        @@ Elo.substitute#visit_prim_fml sub
+        @@ GenGoal.block b
+      in b'
+    (* TODO *)
+    (* accumuler de g à d variables rencontrées et la formule AND_[[e [as / vs]]] en cours de construction*)
+      (* List.fold_left (fold_left2 ?) *)
+      (*   (fun (bound_vars, fml) (_, vs, e) -> *)
+      (*      let local_sub = List.filter (fun (x, e) -> List.mem x vs) sub in *)
+      (*   ) ([], []) sbs *)
+
+
 
     method build_Iden env = fun tuple -> 
       assert (Tuple.arity tuple = 2);
@@ -293,7 +322,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         count @@ List.map r' @@ TupleSet.to_list @@ Elo.may env.Elo.domain r
       in
       plus must_card may_card
-        
+
 
   end
 
