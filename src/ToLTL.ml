@@ -195,8 +195,8 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_Compr env sbs b _ _ = fun tuple ->
       assert (List.for_all (fun (disj, _, _) -> not disj) sbs);
       (* compute the subtitution of elements in [tuple] for all bound variables *)
-      let split = Tuple.to_1tuples tuple
-                  |> List.map (fun t1 -> GenGoal.ident @@ Elo.Tuple t1) in
+      let split_tuples = Tuple.to_1tuples tuple in
+      let split =  List.map Fun.(GenGoal.ident % Elo.tuple_ident) split_tuples in
       let all_vars =
         List.flat_map (fun (_, vs, _) ->
               List.map (fun (Elo.BVar v) -> v) vs) sbs in
@@ -205,13 +205,26 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       let b' = self#visit_prim_fml env
         @@ Elo.substitute#visit_prim_fml sub
         @@ GenGoal.block b
-      in b'
-    (* TODO *)
-    (* accumuler de g à d variables rencontrées et la formule AND_[[e [as / vs]]] en cours de construction*)
-      (* List.fold_left (fold_left2 ?) *)
-      (*   (fun (bound_vars, fml) (_, vs, e) -> *)
-      (*      let local_sub = List.filter (fun (x, e) -> List.mem x vs) sub in *)
-      (*   ) ([], []) sbs *)
+      in
+      (* get a tuple out of a list of variables in sub *)
+      let sub_tuples = List.combine all_vars split_tuples in
+      let get_tuple vs =
+        vs
+        |> List.flat_map (fun (Elo.BVar v) ->
+              Tuple.to_list @@
+              List.Assoc.get_exn ~eq:Var.equal v sub_tuples) 
+        |> Tuple.of_list1
+      in
+      (* we bluntly substitute in ranges also, as bound-variable names are
+         unique!, instead of folding more finely over the list of bindings *)
+      let ranges =
+        List.map (fun (_, vs, e) ->
+              self#visit_exp env
+                (Elo.substitute#visit_exp sub e)
+              @@ get_tuple vs) sbs
+      in
+      conj (b' :: ranges)
+
 
 
 
