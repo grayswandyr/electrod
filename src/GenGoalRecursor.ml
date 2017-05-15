@@ -1,3 +1,6 @@
+(** Implements a recursor over generic goals (necessary for conversion to
+    LTL).  *)
+
 open GenGoal
 
 class virtual ['self] recursor =

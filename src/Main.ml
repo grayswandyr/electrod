@@ -4,7 +4,6 @@
 open Containers
 
 
-open ToLTL
 
 
 (* inspired by Logs_fmt code *)     
@@ -69,6 +68,7 @@ let main style_renderer verbosity infile =
   try
     let raw_to_elo_t = Transfo.tlist [ Raw_to_elo.transfo ] in
     let elo_to_elo_t = Transfo.tlist [ Simplify.transfo ] in
+    let elo_to_smv_t = Transfo.tlist [ ToSMV1.transfo ] in
 
     let elo =
       Parser_main.parse_file infile
@@ -76,16 +76,14 @@ let main style_renderer verbosity infile =
       |> Transfo.(get_exn elo_to_elo_t "simplify" |> run)
     in
     let test_f =
-      let open Elo in
-      let module Elo_to_SMV1_formulas = ToLTL.MakeLtlConverter(ToSMV1.Logic) in
-      List.map (Elo_to_SMV1_formulas.convert elo) elo.goals
+      elo |> Transfo.(get_exn elo_to_smv_t "to_smv1" |> run)
     in
 
 
     Msg.debug
       (fun m -> m "Elo AST =@;%a" (Elo.pp) elo);
 
-    List.iter (fun f -> Msg.debug (fun m -> m "SMV formula: %a" ToSMV1.Logic.pp f)) test_f;
+    Msg.debug (fun m -> m "SMV formula: %a" ToSMV1.Logic.pp test_f);
 
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
                          Mtime.pp_span (Mtime.elapsed ()))

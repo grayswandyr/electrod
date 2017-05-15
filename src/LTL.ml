@@ -110,9 +110,6 @@ module type S = sig
     val ( @<=> ) : t -> t -> t
   end
 
-
-  val pp : Format.formatter -> t -> unit
-  include Intf.Print.S with type t := t
 end
 
 
@@ -124,7 +121,6 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
     | Gt
     | Eq 
     | Neq
-  [@@deriving show]  
   
   type atom = At.t
 
@@ -156,7 +152,6 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
     | Minus of term * term
     | Neg of term 
     | Count of t list
-  [@@deriving show]  
 
   let true_ = True
   let false_ = False
@@ -249,8 +244,13 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
     let ( @<=> ) = iff
   end
 
-  module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
-  include P 
 
 end
 
+
+module type PrintableLTL = sig
+  include S
+
+  val pp : Format.formatter -> t -> unit
+  include Intf.Print.S with type t := t
+end

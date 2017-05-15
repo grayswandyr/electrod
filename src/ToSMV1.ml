@@ -17,6 +17,16 @@ module Logic = struct
     include P 
   end
 
-  module Ltl = SMV.MakeLTL(Atom)
+  module Ltl = SMV.MakePrintableLTL(Atom)
   include Ltl
 end
+
+module FormulaConverter = Elo_to_LTL.MakeLtlConverter(Logic)
+
+open FormulaConverter
+
+let run elo =
+  let open Elo in
+  Logic.conj @@ List.map (convert elo) elo.goals 
+
+let transfo = Transfo.make "to_smv1" run

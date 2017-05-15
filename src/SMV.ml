@@ -1,14 +1,14 @@
 open Containers
 
 
-module MakeLTL (At : LTL.ATOM) = struct
+module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL = struct
   module I = LTL.LTL_from_Atom(At) 
 
   include I
-      
+
   module PP = struct
     open Fmtc
-        
+
     type atom = At.t
 
     let pp_atom = At.pp
@@ -22,7 +22,7 @@ module MakeLTL (At : LTL.ATOM) = struct
       | Gt  -> ">"
       | Eq  -> "="
       | Neq  -> "!="
-    
+
     let rec pp out f =
       match f with
         | Comp (op, t1, t2) -> infix pp_tcomp pp_term pp_term out (op, t1, t2)
@@ -55,18 +55,17 @@ module MakeLTL (At : LTL.ATOM) = struct
           pf out "@[count(@[<hov 2>%a@])@]"
             (list ~sep:(const string "@ +@ ") pp) ts
   end
-  
+
 
   let pp = PP.pp
 
+  module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
+  include P 
+
+
 end
 
-module type SMV_LTL = sig
-  include LTL.S
-    (* TODO *)
-end
-
-module File (Logic : SMV_LTL) = struct
+module File (Logic : LTL.PrintableLTL) = struct
 
   (* TODO file format *)
 end
