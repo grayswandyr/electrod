@@ -6,9 +6,9 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
   open Ltl.Infix
   open TupleSet.Infix
 
-  type goal = Elo.goal 
+  type goal = Elo.goal
   
-  class ['self] convert = object (self : 'self)
+  let converter = object (self : 'self)
     inherit [_] GenGoalRecursor.recursor as super
 
     method visit_'v env = Fun.id
@@ -53,9 +53,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         if disj then TupleSet.filter Tuple.all_different ts
         else ts
       in
-      let must_s, may_s =
-        (filter_out @@ Elo.must env.Elo.domain s,
-         filter_out @@ Elo.may env.Elo.domain s) 
+      let must_s, may_s = (filter_out @@ env#must s, filter_out @@ env#may s) 
       in
       (* The range quantified upon (by wedge or vee) will be made of tuples of
          the arity of [s^(nb of bound variables)]. [split] is the result of
@@ -143,8 +141,8 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       self#build_In env r s r' s' +&& self#build_In env s r s' r'
 
     method build_In env r s r' s' =
-      let must_r = Elo.must env.Elo.domain r in
-      let may_r = Elo.may env.Elo.domain r in
+      let must_r = env#must r in
+      let may_r = env#may r in
       wedge ~range:(TupleSet.to_seq must_r) s'
       +&& wedge ~range:(TupleSet.to_seq may_r) (fun bs -> r' bs @=> s' bs)
 
@@ -245,9 +243,9 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         | Tuple bs ->
             if Tuple.equal bs tuple then true_ else false_
         | Name r ->
-            if tuple $: Domain.must r env.domain then
+            if tuple $: Domain.may r env#domain then
               true_
-            else if tuple $: Domain.may r env.domain then
+            else if tuple $: Domain.may r env#domain then
               atom r tuple
             else
               false_
@@ -271,8 +269,8 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_Inter env _ _ e1 e2 = fun x -> e1 x +&& e2 x
 
     method build_Join env r s r' s' =  fun tuple ->
-      let sup_r = Elo.sup env.Elo.domain r in
-      let sup_s = Elo.sup env.Elo.domain s in
+      let sup_r = env#sup r in
+      let sup_s = env#sup s in
       let eligible_pairs =
         let s1 = TupleSet.to_seq sup_r in
         let s2 = TupleSet.to_seq sup_s in
@@ -286,7 +284,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       r' tuple +&& (s' @@ Tuple.(of_list1 [ith 0 tuple]))
 
     method build_Prod env r s r' s' = fun tuple ->
-      let ar_r = TupleSet.inferred_arity @@ Elo.sup env.Elo.domain r in
+      let ar_r = TupleSet.inferred_arity @@ env#sup r in
       let t1, t2 = Tuple.split tuple ar_r in
       r' t1 +&& s' t2
 
@@ -330,15 +328,28 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_Sub env = minus
 
     method build_Card env r r' =
-      let must_card = num @@ TupleSet.size @@ Elo.may env.Elo.domain r in
+      let must_card = num @@ TupleSet.size @@ env#may r in
       let may_card =
-        count @@ List.map r' @@ TupleSet.to_list @@ Elo.may env.Elo.domain r
+        count @@ List.map r' @@ TupleSet.to_list @@ env#may r
       in
       plus must_card may_card
 
 
   end
 
-  let convert elo goal = (new convert)#visit_t elo goal
+
+
+  class environment (elo : Elo.t) = object (self)
+    method domain = Elo.(elo.domain)
+    method must = Elo.(must elo.domain)
+    method may = Elo.(may elo.domain) 
+    method sup = Elo.(sup elo.domain) 
+  end
+
+  
+  let convert elo =
+    let open Elo in
+    let env = new environment elo in
+    converter#visit_t env elo.goal
   
 end

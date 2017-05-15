@@ -171,6 +171,6 @@ let simplify_fml env goal =
 
 let run elo =
   let open Elo in
-  { elo with goals = List.map (simplify_fml elo) elo.goals }
+  { elo with goal = simplify_fml elo elo.goal }
 
 let transfo = Transfo.make "simplify" run

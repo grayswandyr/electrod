@@ -8,7 +8,7 @@ module G = GenGoal
   
 %start <Raw.raw_urelements list
  * Raw.raw_declaration list
- * Raw.raw_goal list
+ * Raw.raw_goal
  * Raw.raw_assignment list> parse_problem
 
 %token UNIV NONE VAR COLON SEMI EOF EQ IN NEQ AND OR HISTORICALLY
@@ -64,7 +64,7 @@ module G = GenGoal
 %public parse_problem:
   urelts_list = universe decls = possible_declarations
     i = insts? syms? 
-    gs = goal+ EOF
+    gs = goal EOF
 	  { (urelts_list, decls, gs, CCOpt.get_or ~default:[] i) }
 
 

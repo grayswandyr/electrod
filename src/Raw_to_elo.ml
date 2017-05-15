@@ -411,7 +411,7 @@ let refine_identifiers raw_pb =
   let walk_goal (Sat blk) : Elo.goal = 
     sat @@ snd @@ walk_block init_ctx blk
   in
-  List.map walk_goal raw_pb.raw_goals
+  walk_goal raw_pb.raw_goal
 
 (*******************************************************************************
  *  Check arities #708
@@ -664,7 +664,7 @@ let check_arities elo =
   let walk_goal (Sat blk) =
     walk_block init_ctx blk
   in
-  List.iter walk_goal elo.goals
+  walk_goal elo.goal
 
 (*******************************************************************************
  *  Declaration of the whole transformation
@@ -673,8 +673,8 @@ let check_arities elo =
 let whole raw_pb =
   let domain = compute_domain raw_pb in
   let instance = compute_instances domain raw_pb in
-  let goals = refine_identifiers raw_pb in
-  Elo.make raw_pb.file domain instance goals
+  let goal = refine_identifiers raw_pb in
+  Elo.make raw_pb.file domain instance goal
   |> CCFun.tap check_arities
 
 let transfo = Transfo.make "raw_to_elo" whole (* temporary *)

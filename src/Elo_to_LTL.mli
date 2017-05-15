@@ -3,5 +3,5 @@
 module MakeLtlConverter :
   functor (Ltl : LTL.S) ->
     sig
-      val convert : Elo.t -> (Elo.var, Elo.ident) GenGoal.t -> Ltl.t
+      val convert : Elo.t -> Ltl.t
     end

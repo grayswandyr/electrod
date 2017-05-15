@@ -6,7 +6,7 @@ type raw_problem = {
   file : string option;
   raw_univ : raw_urelements list;
   raw_decls : raw_declaration list;     (** does not contain 'univ'  *)
-  raw_goals : raw_goal list;            (** nonempty *)
+  raw_goal : raw_goal;
   raw_inst : raw_assignment list;       (** may be empty *)
 }
 
@@ -75,7 +75,7 @@ val uintvl : raw_interval -> raw_urelements
 val uplain : Raw_ident.t -> raw_urelements
 
 val problem : string option -> raw_urelements list ->
-  raw_declaration list -> raw_goal list -> raw_assignment list -> raw_problem
+  raw_declaration list -> raw_goal -> raw_assignment list -> raw_problem
 
 (** {1 Accessors} *)
 

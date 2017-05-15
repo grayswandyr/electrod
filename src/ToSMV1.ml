@@ -27,6 +27,6 @@ open FormulaConverter
 
 let run elo =
   let open Elo in
-  Logic.conj @@ List.map (convert elo) elo.goals 
+  convert elo
 
 let transfo = Transfo.make "to_smv1" run

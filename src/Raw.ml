@@ -8,7 +8,7 @@ type raw_problem = {
   file : string option;
   raw_univ : raw_urelements list;
   raw_decls : raw_declaration list;     (** does not contain 'univ'  *)
-  raw_goals : raw_goal list;            (** nonempty *)
+  raw_goal : raw_goal;
   raw_inst : raw_assignment list;       (** may be empty *)
 }
 
@@ -72,8 +72,8 @@ let uintvl intvl = UIntvl intvl
 
 let uplain atom = UPlain atom
 
-let problem file raw_univ raw_decls raw_goals raw_inst =
-  { file; raw_univ; raw_decls; raw_goals; raw_inst }
+let problem file raw_univ raw_decls raw_goal raw_inst =
+  { file; raw_univ; raw_decls; raw_goal; raw_inst }
 
 
 let decl_id = function

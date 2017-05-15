@@ -37,11 +37,11 @@ type t = {
   (* table of relations indexed by names (remark: a {!Relation.t} also knows its name) *)
   domain : Domain.t;
   instance : Instance.t;
-  goals : goal list;            (** nonempty  *)
+  goal : goal;       
 }
 
-let make file domain instance goals =
-  { file; domain; instance; goals }
+let make file domain instance goal =
+  { file; domain; instance; goal }
 
 let pp_var out (BVar v) =
   Var.pp out v
@@ -51,12 +51,12 @@ let pp_ident out = function
   | Var v -> Fmtc.(styled `Yellow pp_var) out (BVar v)
   | Tuple at -> Fmtc.(styled `Cyan Tuple.pp) out at
 
-let pp out { file; domain; instance; goals } =
+let pp out { file; domain; instance; goal } =
   let open Fmtc in
   pf out "%a@\n%a@\n%a"
     Domain.pp domain
     Instance.pp instance
-    (vbox @@ list @@ GenGoal.pp pp_var pp_ident) goals
+    (vbox @@ GenGoal.pp pp_var pp_ident) goal
 
 
 let (must : Domain.t -> (var, ident) GenGoal.exp -> TupleSet.t),
