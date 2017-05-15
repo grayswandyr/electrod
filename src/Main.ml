@@ -68,7 +68,7 @@ let main style_renderer verbosity infile =
   try
     let raw_to_elo_t = Transfo.tlist [ Raw_to_elo.transfo ] in
     let elo_to_elo_t = Transfo.tlist [ Simplify.transfo ] in
-    let elo_to_smv_t = Transfo.tlist [ ToSMV1.transfo ] in
+    let elo_to_smv_t = Transfo.tlist [ Elo_to_SMV1.transfo ] in
 
     let elo =
       Parser_main.parse_file infile
@@ -83,7 +83,7 @@ let main style_renderer verbosity infile =
     Msg.debug
       (fun m -> m "Elo AST =@;%a" (Elo.pp) elo);
 
-    Msg.debug (fun m -> m "SMV formula: %a" ToSMV1.Logic.pp test_f);
+    Msg.debug (fun m -> m "SMV formula: %a" Elo_to_SMV1.Logic.pp test_f);
 
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
                          Mtime.pp_span (Mtime.elapsed ()))
