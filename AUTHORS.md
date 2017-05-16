@@ -2,7 +2,6 @@ Authors of electrod:
 
 * Julien Brunel
 * David Chemouil
-* Xavier Olive
 
 Current maintainers of electrod:
 

@@ -51,19 +51,27 @@ let main style_renderer verbosity infile =
 
   Fmt_tty.setup_std_outputs ?style_renderer ();
 
-  (try
-     let cols = int_of_string @@ Sys.getenv "COLUMNS" in
-     Format.(pp_set_margin stdout) cols;
-     Format.(pp_set_margin stderr) cols
-   with Not_found ->
-     Msg.debug
-       (fun m -> m "Unfound environment variable: COLUMNS"));
-
   Logs.set_reporter (Logs_fmt.reporter ~pp_header ());
   Logs.set_level ~all:true verbosity;
 
   Logs.app
-    (fun m -> m "%a" Fmtc.(styled `Bold string) "electrod (C) 2016 ONERA");
+    (fun m -> m "%a" Fmtc.(styled `Bold string) "electrod (C) 2016-2017 ONERA");
+
+  (try
+     let inch = Unix.open_process_in "tput cols" in
+     let cols =
+       inch
+       |> IO.read_line
+       |> Option.get_or ~default:"80"
+       |> int_of_string in
+     Msg.debug (fun m -> m "Columns: %d" cols);
+     Format.(pp_set_margin stdout) cols;
+     Format.(pp_set_margin stderr) cols;
+     ignore @@ Unix.close_process_in inch
+   with _ ->
+     Msg.debug
+       (fun m -> m "Columns not found, leaving terminal as is..."));
+  
   (* begin work *)
   try
     let raw_to_elo_t = Transfo.tlist [ Raw_to_elo.transfo ] in
