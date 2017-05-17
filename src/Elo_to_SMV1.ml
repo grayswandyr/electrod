@@ -21,7 +21,7 @@ module Logic = struct
   include Ltl
 end
 
-module FormulaConverter = Elo_to_LTL.MakeLtlConverter(Logic)
+module FormulaConverter = Elo_to_LTL1.MakeLtlConverter(Logic)
 
 open FormulaConverter
 
