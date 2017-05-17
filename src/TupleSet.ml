@@ -71,6 +71,21 @@ let transpose b =
   assert (ar = 2 || ar = 0);
   TS.map Tuple.transpose b
 
+(* r ++ s (so we need the first column of s) *)
+let override r s =
+  let in_r_but_not_in_s1 =
+    TS.filter
+      (fun tr ->
+         not @@ TS.exists
+                  (fun ts1 -> Tuple.(ith 0 tr = ith 0 ts1)) s) r
+  in
+  TS.union s in_r_but_not_in_s1
+
+(* [s <: r] *)
+let lproj s r =
+  TS.filter (fun tr -> TS.mem Tuple.([ith 0 tr] |> of_list1) s) r
+
+let rproj r s = lproj s @@ transpose r
 
 let diagonal b =
   TS.map (fun e -> Tuple.(@@@) (e, e)) b

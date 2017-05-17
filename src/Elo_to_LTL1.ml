@@ -337,9 +337,9 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
   class environment (elo : Elo.t) = object (self : 'self)
     method domain = Elo.(elo.domain)
-    method must (e : (Elo.var, Elo.ident) GenGoal.exp) = e.must
-    method may (e : (Elo.var, Elo.ident) GenGoal.exp) = e.may
-    method sup (e : (Elo.var, Elo.ident) GenGoal.exp) = e.sup
+    method must (e : (Elo.var, Elo.ident) GenGoal.exp) = e.GenGoal.must
+    method may (e : (Elo.var, Elo.ident) GenGoal.exp) = e.GenGoal.may
+    method sup (e : (Elo.var, Elo.ident) GenGoal.exp) = e.GenGoal.sup
   end
 
   

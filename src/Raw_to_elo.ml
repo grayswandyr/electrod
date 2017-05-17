@@ -667,6 +667,18 @@ let check_arities elo =
                 (Fmtc.strf "incompatible arities between %s and %s"
                    (str_exp e1)
                    (str_exp e2))
+          | Diff when ar1 = None -> 
+              Result.return
+              @@ update_exp exp None TS.empty TS.empty
+          | Diff when ar1 = ar2 || ar2 = None ->
+              Result.return
+              @@ update_exp exp ar1 (TS.diff e1.must e2.must)
+                   (TS.diff e1.sup e2.sup)
+          | Diff ->
+              Result.fail
+                (Fmtc.strf "incompatible arities between %s and %s"
+                   (str_exp e1)
+                   (str_exp e2))
           | Inter when ar1 = None || ar2 = None ->
               Result.return
               @@ update_exp exp None (TS.inter e1.must e2.must)
@@ -684,67 +696,31 @@ let check_arities elo =
               if CCOpt.compare CCInt.compare ar1 (Some 1) <= 0 then
                 Result.fail
                   (Fmtc.strf "arity of %s is < 2" (str_exp e1))
-              else if CCOpt.compare CCInt.compare ar2 (Some 1) <= 0 then
-                Result.fail
-                  (Fmtc.strf "arity of %s is < 2" (str_exp e2))
               else
-                begin
-                  failwith __LOC__;
-                  Result.return ar1
-                end
+                Result.return
+                @@ update_exp exp ar1 (TS.override e1.must e2.must)
+                     (TS.override e1.sup e2.sup)
           | Over when ar1 = None ->
-              begin
-                failwith __LOC__;
-                Result.return None
-              end
+              Result.return @@ update_exp exp ar2 e2.must e2.sup
           | Over when ar2 = None ->
-              if CCOpt.compare CCInt.compare ar1 (Some 1) <= 0 then
-                Result.fail
-                  (Fmtc.strf "arity of %s is < 2" (str_exp e1))
-              else
-                begin
-                  failwith __LOC__;
-                  Result.return ar1
-                end
+              Result.return @@ update_exp exp ar1 e1.must e1.sup
           | Over ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
                    (str_exp e1)
                    (str_exp e2))
-          | Diff when ar1 = None -> 
-              Result.return
-              @@ update_exp exp None TS.empty TS.empty
-          | Diff when ar1 = ar2 || ar2 = None ->
-              Result.return
-              @@ update_exp exp ar1 (TS.diff e1.must e2.must)
-                   (TS.diff e1.sup e2.sup)
-          | Diff ->
-              Result.fail
-                (Fmtc.strf "incompatible arities between %s and %s"
-                   (str_exp e1)
-                   (str_exp e2))
           | LProj when ar1 = None ->
-              begin
-                failwith __LOC__;
-                Result.return None
-              end
+              Result.return @@ update_exp exp None TS.empty TS.empty
           | LProj when ar1 = Some 1 ->
-              begin
-                failwith __LOC__;
-                Result.return ar2
-              end
+              Result.return @@ update_exp exp ar2 (TS.lproj e1.must e2.must)
+                                 (TS.lproj e1.sup e2.sup)
           | LProj ->
               Result.fail "left projection should be on a set"
           | RProj when ar2 = None ->
-              begin
-                failwith __LOC__;
-                Result.return None
-              end
+              Result.return @@ update_exp exp None TS.empty TS.empty
           | RProj when ar2 = Some 1 ->
-              begin
-                failwith __LOC__; 
-                Result.return ar1
-              end
+              Result.return @@ update_exp exp ar1 (TS.rproj e1.must e2.must)
+                                 (TS.rproj e1.sup e2.sup)
           | RProj -> 
               Result.fail "right projection should be on a set"
           | Prod ->
