@@ -14,7 +14,7 @@ val const : Name.t -> int -> Scope.t -> t
 val var : Name.t -> int -> Scope.t -> Scope.t option -> t
 
   
-(** Arity of the relation. Recall remark for {!Bound.arity} *)
+(** Arity of the relation. (> 0) *)
 val arity : t -> int
 
 (** Tells whether the relation is a set or a relation of arity > 1. *)

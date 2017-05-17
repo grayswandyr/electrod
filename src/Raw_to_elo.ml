@@ -593,7 +593,7 @@ let check_arities elo =
           Msg.Fatal.arity_error
             (fun args -> args elo.file exp "arity should be 1")
         else
-          walk_bindings ((Var v, ar) :: ctx) in_q bs
+          walk_bindings (ctx#add_variable v ar exp.must exp.sup) in_q bs
 
   and walk_sim_bindings ctx = function
     | [] -> ctx
@@ -606,7 +606,9 @@ let check_arities elo =
     if ar <> Some 1 then
       Msg.Fatal.arity_error (fun args -> args elo.file exp "arity should be 1")
     else
-      List.map (fun (BVar v) -> (Var v, Some 1)) vs @ ctx
+      let arity, must, sup = exp.arity, exp.must, exp.sup in
+      List.fold_right
+        (fun (BVar v) ctx -> ctx#add_variable v arity must sup) vs ctx
 
   and arity_exp ctx exp =
     (* if arity = Some 0 then the analysis has not been made yet, otherwise it has *)
@@ -633,14 +635,14 @@ let check_arities elo =
     | None_ ->
         Result.return @@ update_exp exp None TS.empty TS.empty
     | Univ -> 
-        failwith __LOC__;
-        Result.return @@ Some 1
+        let arity, must, sup = ctx#get (Elo.Name Name.univ) in 
+        Result.return @@ update_exp exp arity must sup
     | Iden ->
-        failwith __LOC__;
-        Result.return @@ Some 2 
+        let arity, must, sup = ctx#get (Elo.Name Name.iden) in 
+        Result.return @@ update_exp exp arity must sup
     | Ident id -> 
-        failwith __LOC__;
-        Result.return @@ List.Assoc.get_exn ~eq:Elo.equal_ident id ctx
+        let arity, must, sup = ctx#get id in 
+        Result.return @@ update_exp exp arity must sup
     | RUn (op, e) ->
         let ar = arity_exp ctx e in
         if ar <> Some 2 then
@@ -814,15 +816,32 @@ let check_arities elo =
           arity_iexp ctx iexp2
         end
   in
-  let init_ctx =
-    Domain.to_list elo.domain
-    |> List.map (fun (name, rel) ->
-          Msg.debug
-            (fun m -> m "Raw_to_elo: ar(%a) = %a" Name.pp name Fmtc.int (Relation.arity rel));
-          (Name name, Some (Relation.arity rel)))
+  let init =
+    Msg.debug (fun m -> m "Raw_to_elo.check_arities: initial context =@ %a"
+                          Domain.pp elo.domain);
+    object 
+      val variables = []
+
+      val domain = elo.domain
+
+      method add_variable v arity must sup =
+        Msg.debug (fun m -> m "Raw_to_elo.add_variable %a %a %a %a"
+                              Var.pp v
+                              Fmtc.(option int) arity
+                              TS.pp must
+                              TS.pp sup);
+        {< variables = (v, (arity, must, sup)) :: variables >}
+
+      method get ident = match ident with
+        | Elo.Tuple _ -> assert false (* no tuples yet, only present when instantiating *)
+        | Var v -> List.Assoc.get_exn ~eq:Var.equal v variables
+        | Name name ->
+            let rel = Domain.get_exn name domain in
+            Relation.(Some (arity rel), must rel, sup rel)      
+    end
   in
   let walk_goal (Sat blk) =
-    walk_block init_ctx blk
+    walk_block init blk
   in
   walk_goal elo.goal
 
