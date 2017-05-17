@@ -29,6 +29,7 @@ module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL = struct
         | True  -> pf out "true"
         | False  -> pf out "false"
         | Atom at -> pp_atom out at
+        | Not p -> pf out "!%a" pp p
         | And (p, q) -> infix string pp pp out ("&", p, q)
         | Or (p, q)-> infix string pp pp out ("|", p, q)
         | Imp (p, q)-> infix string pp pp out ("->", p, q)

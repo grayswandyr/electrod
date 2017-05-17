@@ -241,7 +241,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         | Tuple bs ->
             if Tuple.equal bs tuple then true_ else false_
         | Name r ->
-            if tuple $: Domain.may r env#domain then
+            if tuple $: Domain.must r env#domain then
               true_
             else if tuple $: Domain.may r env#domain then
               atom r tuple

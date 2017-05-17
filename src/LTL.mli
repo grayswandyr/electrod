@@ -21,6 +21,7 @@ module type S =
       | True
       | False
       | Atom of atom
+      | Not of t
       | And of t * t
       | Or of t * t
       | Imp of t * t

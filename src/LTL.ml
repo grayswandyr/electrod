@@ -26,6 +26,7 @@ module type S = sig
     | True
     | False
     | Atom of atom
+    | Not of t
     | And of t * t
     | Or of t * t
     | Imp of t * t
@@ -129,6 +130,7 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
     | True
     | False
     | Atom of atom
+    | Not of t
     | And of t * t
     | Or of t * t
     | Imp of t * t
@@ -158,7 +160,7 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
 
   let atom r ts = Atom (At.make r ts)
 
-  let not_ p = p
+  let not_ p = Not p
 
   (* TODO: add simplification rules *)
   let and_ p q = match p, q with
@@ -179,9 +181,13 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
     | False, _ -> True
     | _, True -> True
     | True, _ -> q
-    | _, False -> p
+    | _, False -> not_ p
     | _, _ -> Imp (p, q)
 
+  (* let and_ p q = And (p, q) *)
+  (* let or_ p q = Or (p, q) *)
+  (* let implies_ p q = Imp (p, q) *)
+  
   let xor p1 p2 = Xor (p1, p2)
 
   let iff p q = match p, q with
