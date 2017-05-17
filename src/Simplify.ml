@@ -62,7 +62,7 @@ let simplify_fml env goal =
       Msg.debug (fun m -> m "Simplify.visit_Qual <-- %a"
                             Elo.(pp_prim_fml pp_var pp_ident)
                   @@ GenGoal.qual qual exp);
-      let arity = TupleSet.inferred_arity @@ Elo.sup env.Elo.domain exp in
+      let arity = TupleSet.inferred_arity exp.sup in
       let make_bound_variables pattern e = (* [e] to get a location  *)
         (* create [arity] bound variables *)
         List.init arity (fun _ -> Elo.bound_var @@ fresh_var pattern exp)

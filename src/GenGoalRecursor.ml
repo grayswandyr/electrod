@@ -262,7 +262,23 @@ class virtual ['self] recursor =
       let _visitors_r1 =
         (fun _visitors_this  -> _visitors_this) _visitors_this.exp_loc
       in
-      self#build_exp env _visitors_this _visitors_r0 _visitors_r1
+      let _visitors_r2 =
+        (fun _visitors_this  -> _visitors_this) _visitors_this.arity  in
+      let _visitors_r3 =
+        (fun _visitors_this  -> _visitors_this) _visitors_this.must  in
+      let _visitors_r4 =
+        (fun _visitors_this  -> _visitors_this) _visitors_this.sup  in
+      let _visitors_r5 =
+        (fun _visitors_this  -> _visitors_this) _visitors_this.may  in
+      self#build_exp env _visitors_this _visitors_r0 _visitors_r1 _visitors_r2
+        _visitors_r3 _visitors_r4 _visitors_r5
+    (* method visit_exp env _visitors_this = *)
+    (*   let _visitors_r0 = self#visit_prim_exp env _visitors_this.prim_exp *)
+    (*   in *)
+    (*   let _visitors_r1 = *)
+    (*     (fun _visitors_this  -> _visitors_this) _visitors_this.exp_loc *)
+    (*   in *)
+    (*   self#build_exp env _visitors_this _visitors_r0 _visitors_r1 *)
     method visit_None_ env = self#build_None_ env
     method visit_Univ env = self#build_Univ env
     method visit_Iden env = self#build_Iden env

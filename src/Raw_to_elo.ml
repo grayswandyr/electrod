@@ -1,6 +1,7 @@
 open Containers
 open Raw
-    
+
+module TS = TupleSet
 
 (*******************************************************************************
  *  Domain computation
@@ -50,7 +51,7 @@ let compute_univ infile raw_univ =
                 | UPlain id -> [ Atom.of_raw_ident id ]) raw_univ
   in
   let dedup = check_duplicate_atoms infile atoms in
-  let bound = List.map Tuple.tuple1 dedup |> TupleSet.of_tuples in
+  let bound = List.map Tuple.tuple1 dedup |> TS.of_tuples in
   Relation.(const Name.univ 1 @@ Scope.exact bound) (* 1 = arity *)
        
 (* returns a list of tuples (possibly 1-tuples corresponding to plain atoms) *)
@@ -62,7 +63,7 @@ let compute_tuples infile domain = function
       let absent =   (* compute 1-tuples/atoms absent from univ, if there are *)
         List.flat_map
           (fun t ->
-             if not @@ TupleSet.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain
+             if not @@ TS.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain
              then [t] else []) atoms in
       (if absent <> [] then
          Msg.Fatal.undeclared_atoms
@@ -83,7 +84,7 @@ let compute_tuples infile domain = function
       let absent =   (* compute 1-tuples/atoms absent from univ, if there are *)
         List.flat_map
           (fun t ->
-             if not @@ TupleSet.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain
+             if not @@ TS.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain
              then [t] else []) atoms in
       (if absent <> [] then
          Msg.Fatal.undeclared_atoms
@@ -96,13 +97,13 @@ let compute_tuples infile domain = function
 
 
 let check_tuples_arities_and_duplicates infile id = function
-  | [] -> TupleSet.empty
+  | [] -> TS.empty
   | t::ts as tuples ->
       let ar = Tuple.arity t in
       (* List.iter (fun t -> Msg.debug (fun m -> m "ar(%a) = %d" Tuple.pp t ar)) tuples; *)
       if List.exists (fun t2 -> Tuple.arity t2 <> ar) ts then
         Msg.Fatal.incompatible_arities (fun args -> args infile id);
-      TupleSet.of_tuples tuples
+      TS.of_tuples tuples
 
       (* [`Inf] and [`Sup] tell whether we are computing a lower of upper bound:
          this is important as a bound may be defined out of other ones, so we
@@ -127,9 +128,9 @@ let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
             | Some rel ->
                 match rel with
                   | Const { scope = Exact b }
-                    when TupleSet.inferred_arity b = 1 -> b
+                    when TS.inferred_arity b = 1 -> b
                   | Const { scope = Inexact (inf, sup) }
-                    when TupleSet.inferred_arity sup = 1 ->
+                    when TS.inferred_arity sup = 1 ->
                       (match which with
                         | Some `Inf -> inf
                         | Some `Sup -> sup
@@ -145,22 +146,22 @@ let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
         (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BProd"); *)
         let b1 = walk rb1 in
         let b2 = walk rb2 in
-        TupleSet.product b1 b2
+        TS.product b1 b2
     | BUnion (rb1, rb2) ->
         (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BUnion"); *)
         let b1 = walk rb1 in
         let b2 = walk rb2 in
-        if TupleSet.(inferred_arity b1 = inferred_arity b2) then
-          TupleSet.union b1 b2
+        if TS.(inferred_arity b1 = inferred_arity b2) then
+          TS.union b1 b2
         else
           Msg.Fatal.incompatible_arities @@ fun args -> args infile id
     | BElts elts ->
         (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BElts"); *)
         let tuples = List.flat_map (compute_tuples infile domain) elts in 
         let bnd = check_tuples_arities_and_duplicates infile id tuples in
-        if TupleSet.size bnd <> List.length tuples then
+        if TS.size bnd <> List.length tuples then
           Msg.Warn.duplicate_elements
-            (fun args -> args infile id which TupleSet.pp bnd);
+            (fun args -> args infile id which TS.pp bnd);
         bnd
   in
   walk raw_bound 
@@ -175,15 +176,15 @@ let compute_scope infile domain id = function
       (* Msg.debug (fun m -> m "Raw_to_elo.compute_scope:SInexact"); *)
       let inf = compute_bound infile domain (Some `Inf) id raw_inf in
       let sup = compute_bound infile domain (Some `Sup) id raw_sup in
-      let ar_inf = TupleSet.inferred_arity inf in
-      let ar_sup = TupleSet.inferred_arity sup in
-      if ar_inf <> ar_sup && not (TupleSet.is_empty inf) then
+      let ar_inf = TS.inferred_arity inf in
+      let ar_sup = TS.inferred_arity sup in
+      if ar_inf <> ar_sup && not (TS.is_empty inf) then
         Msg.Fatal.incompatible_arities (fun args -> args infile id);
-      if not @@ TupleSet.subset inf sup then
-        Msg.Fatal.inf_not_in_sup (fun args -> args infile id TupleSet.pp inf sup);
-      if TupleSet.is_empty sup then
+      if not @@ TS.subset inf sup then
+        Msg.Fatal.inf_not_in_sup (fun args -> args infile id TS.pp inf sup);
+      if TS.is_empty sup then
         Msg.Warn.empty_scope_declared (fun args -> args infile id);
-      if TupleSet.equal inf sup then
+      if TS.equal inf sup then
         Scope.exact sup
       else
         Scope.inexact inf sup
@@ -237,7 +238,7 @@ let compute_domain (pb : Raw.raw_problem) =
   let iden =
     Relation.const Name.iden 2
     @@ Scope.exact
-    @@ TupleSet.diagonal univ_ts
+    @@ TS.diagonal univ_ts
   in
   let init =
     Domain.add Name.univ univ Domain.empty
@@ -277,7 +278,7 @@ let compute_instances domain (pb : Raw.raw_problem) =
       raw_tuples
       |> List.map CCFun.(List.map Atom.of_raw_ident %> Tuple.of_list1)
       |> CCFun.tap (check_tuples_arities_and_duplicates pb.file id)
-      |> TupleSet.of_tuples
+      |> TS.of_tuples
       |> CCFun.tap (check_assignment_in_scope pb.file domain id)
     in
     (name, tupleset)
@@ -430,6 +431,102 @@ let join_arity ar1 ar2 = match ar1, ar2 with
 let str_exp =
   Fmtc.to_to_string (Fmtc.hbox2 @@ GenGoal.pp_exp Elo.pp_var Elo.pp_ident)
 
+(* let compute_semantic_attributes = object (self) *)
+(*   inherit [_] GenGoal.fold as super *)
+
+(*   method visit_'i _ = Fun.id *)
+(*   method visit_'v _ = Fun.id *)
+(*   (\* exp *\) *)
+                        
+(*   method build_exp env () res _ _ _  = failwith __LOC__ *)
+                           
+(*   method build_None_ env = failwith __LOC__ *)
+(*   method build_Iden env = failwith __LOC__ *)
+(*   method build_Ident env = failwith __LOC__ *)
+(*   method build_Univ env = failwith __LOC__ *)
+                            
+(*   method build_RUn env = failwith __LOC__ *)
+                            
+(*   method build_RTClos env = failwith __LOC__ *)
+(*   method build_TClos env = failwith __LOC__ *)
+(*   method build_Transpose env = failwith __LOC__ *)
+                                 
+(*   method build_BoxJoin env = failwith __LOC__ *)
+                               
+(*   method build_Compr env = failwith __LOC__ *)
+                             
+(*   method build_Prime env = failwith __LOC__ *)
+                            
+(*   method build_RIte env = failwith __LOC__ *)
+                            
+(*   method build_RBin env = failwith __LOC__ *)
+(*   method build_Inter env = failwith __LOC__ *)
+(*   method build_Join env = failwith __LOC__ *)
+(*   method build_LProj env = failwith __LOC__ *)
+(*   method build_RProj env = failwith __LOC__ *)
+(*   method build_Diff env = failwith __LOC__ *)
+(*   method build_Prod env = failwith __LOC__ *)
+                           
+(*   method build_Add env = failwith __LOC__ *)
+(*   method build_All env = failwith __LOC__ *)
+(*   method build_And env = failwith __LOC__ *)
+(*   method build_Block env = failwith __LOC__ *)
+(*   method build_Card env = failwith __LOC__ *)
+(*   method build_F env = failwith __LOC__ *)
+(*   method build_FIte env = failwith __LOC__ *)
+(*   method build_False env = failwith __LOC__ *)
+(*   method build_G env = failwith __LOC__ *)
+(*   method build_Gt env = failwith __LOC__ *)
+(*   method build_Gte env = failwith __LOC__ *)
+(*   method build_H env = failwith __LOC__ *)
+(*   method build_IBin env = failwith __LOC__ *)
+(*   method build_IComp env = failwith __LOC__ *)
+(*   method build_IEq env = failwith __LOC__ *)
+(*   method build_INEq env = failwith __LOC__ *)
+(*   method build_IUn env = failwith __LOC__ *)
+(*   method build_Iff env = failwith __LOC__ *)
+(*   method build_Imp env = failwith __LOC__ *)
+(*   method build_In env = failwith __LOC__ *)
+(*   method build_LBin env = failwith __LOC__ *)
+(*   method build_LUn env = failwith __LOC__ *)
+(*   method build_Let env = failwith __LOC__ *)
+(*   method build_Lone env = failwith __LOC__ *)
+(*   method build_Lt env = failwith __LOC__ *)
+(*   method build_Lte env = failwith __LOC__ *)
+(*   method build_Neg env = failwith __LOC__ *)
+(*   method build_No env = failwith __LOC__ *)
+(*   method build_Not env = failwith __LOC__ *)
+(*   method build_NotIn env = failwith __LOC__ *)
+(*   method build_Num env = failwith __LOC__ *)
+(*   method build_O env = failwith __LOC__ *)
+(*   method build_One env = failwith __LOC__ *)
+(*   method build_Or env = failwith __LOC__ *)
+(*   method build_Over env = failwith __LOC__ *)
+(*   method build_P env = failwith __LOC__ *)
+(*   method build_QAEN env = failwith __LOC__ *)
+(*   method build_QLO env = failwith __LOC__ *)
+(*   method build_Qual env = failwith __LOC__ *)
+(*   method build_R env = failwith __LOC__ *)
+(*   method build_RComp env = failwith __LOC__ *)
+(*   method build_REq env = failwith __LOC__ *)
+(*   method build_RLone env = failwith __LOC__ *)
+(*   method build_RNEq env = failwith __LOC__ *)
+(*   method build_RNo env = failwith __LOC__ *)
+(*   method build_ROne env = failwith __LOC__ *)
+(*   method build_RSome env = failwith __LOC__ *)
+(*   method build_S env = failwith __LOC__ *)
+(*   method build_Sat env = failwith __LOC__ *)
+(*   method build_Some_ env = failwith __LOC__ *)
+(*   method build_Sub env = failwith __LOC__ *)
+(*   method build_True env = failwith __LOC__ *)
+(*   method build_U env = failwith __LOC__ *)
+(*   method build_Union env = failwith __LOC__ *)
+(*   method build_X env = failwith __LOC__ *)
+(*   method build_fml env = failwith __LOC__ *)
+(*   method build_iexp env = failwith __LOC__ *)
+
+(* end *)
+
 let check_arities elo =
   let open Elo in
   let open GenGoal in
@@ -512,41 +609,70 @@ let check_arities elo =
       List.map (fun (BVar v) -> (Var v, Some 1)) vs @ ctx
 
   and arity_exp ctx exp =
-    match arity_prim_exp ctx exp.prim_exp with
-      | Ok ar -> ar
-      | Error msg -> Msg.Fatal.arity_error (fun args -> args elo.file exp msg)
+    (* if arity = Some 0 then the analysis has not been made yet, otherwise it has *)
+    if Option.equal Int.equal exp.arity (Some 0) then
+      match arity_prim_exp ctx exp with
+        | Ok ar -> ar
+        | Error msg -> Msg.Fatal.arity_error (fun args -> args elo.file exp msg)
+    else
+      exp.arity
+
+  and update_exp exp arity must sup =
+    exp.arity <- arity;
+    exp.must <- must;
+    exp.sup <- sup;
+    exp.may <- TS.diff sup must;
+    arity
 
   (* this function returns a [result] to factor the error messages out and also
      to enable to display the expression (i.e [exp], not [prim_exp]) concerned
      by the error*)
-  and arity_prim_exp ctx exp = match exp with
-    | None_ -> Result.return None
-    | Univ -> Result.return @@ Some 1
-    | Iden -> Result.return @@ Some 2
-    | Ident id -> Result.return @@ List.Assoc.get_exn ~eq:Elo.equal_ident id ctx
-    | RUn (op, exp) ->
-        let ar = arity_exp ctx exp in
+  (* IMPORTANT: the function receives an *expression*, not a *primitive* one; in
+     order to easily set the mutable fields of the said expression. *)
+  and arity_prim_exp ctx exp = match exp.prim_exp with
+    | None_ ->
+        Result.return @@ update_exp exp None TS.empty TS.empty
+    | Univ -> 
+        failwith __LOC__;
+        Result.return @@ Some 1
+    | Iden ->
+        failwith __LOC__;
+        Result.return @@ Some 2 
+    | Ident id -> 
+        failwith __LOC__;
+        Result.return @@ List.Assoc.get_exn ~eq:Elo.equal_ident id ctx
+    | RUn (op, e) ->
+        let ar = arity_exp ctx e in
         if ar <> Some 2 then
           Result.fail "arity should be 2"
         else
-          Result.return ar
+          Result.return
+          @@ update_exp exp ar (TS.transpose e.must) (TS.transpose e.sup)
     | RBin (e1, op, e2) ->
         let ar1 = arity_exp ctx e1 in
         let ar2 = arity_exp ctx e2 in
         (match op with
           | Union when ar1 = ar2 || ar2 = None ->
-              Result.return ar1
+              Result.return
+              @@ update_exp exp ar1 (TS.union e1.must e2.must)
+                   (TS.union e1.sup e2.sup)
           | Union when ar1 = None ->
-              Result.return ar2
+              Result.return
+              @@ update_exp exp ar2 (TS.union e1.must e2.must)
+                   (TS.union e1.sup e2.sup)
           | Union ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
                    (str_exp e1)
                    (str_exp e2))
           | Inter when ar1 = None || ar2 = None ->
-              Result.return None
+              Result.return
+              @@ update_exp exp None (TS.inter e1.must e2.must)
+                   (TS.inter e1.sup e2.sup)
           | Inter when ar1 = ar2 -> 
-              Result.return ar1
+              Result.return
+              @@ update_exp exp ar1 (TS.inter e1.must e2.must)
+                   (TS.inter e1.sup e2.sup)
           | Inter ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
@@ -560,47 +686,74 @@ let check_arities elo =
                 Result.fail
                   (Fmtc.strf "arity of %s is < 2" (str_exp e2))
               else
-                Result.return ar1
+                begin
+                  failwith __LOC__;
+                  Result.return ar1
+                end
           | Over when ar1 = None ->
-              Result.return None
+              begin
+                failwith __LOC__;
+                Result.return None
+              end
           | Over when ar2 = None ->
               if CCOpt.compare CCInt.compare ar1 (Some 1) <= 0 then
                 Result.fail
                   (Fmtc.strf "arity of %s is < 2" (str_exp e1))
               else
-                Result.return ar1
+                begin
+                  failwith __LOC__;
+                  Result.return ar1
+                end
           | Over ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
                    (str_exp e1)
                    (str_exp e2))
           | Diff when ar1 = None -> 
-              Result.return None
+              Result.return
+              @@ update_exp exp None TS.empty TS.empty
           | Diff when ar1 = ar2 || ar2 = None ->
-              Result.return ar1
+              Result.return
+              @@ update_exp exp ar1 (TS.diff e1.must e2.must)
+                   (TS.diff e1.sup e2.sup)
           | Diff ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
                    (str_exp e1)
                    (str_exp e2))
-          | RProj when ar1 = None ->
-              Result.return None
+          | LProj when ar1 = None ->
+              begin
+                failwith __LOC__;
+                Result.return None
+              end
           | LProj when ar1 = Some 1 ->
-              Result.return ar2
+              begin
+                failwith __LOC__;
+                Result.return ar2
+              end
           | LProj ->
               Result.fail "left projection should be on a set"
           | RProj when ar2 = None ->
-              Result.return None
+              begin
+                failwith __LOC__;
+                Result.return None
+              end
           | RProj when ar2 = Some 1 ->
-              Result.return ar1
+              begin
+                failwith __LOC__; 
+                Result.return ar1
+              end
           | RProj -> 
               Result.fail "right projection should be on a set"
           | Prod ->
               (match ar1, ar2 with
-                | Some a1, Some a2 -> Result.return @@ Some (a1 + a2)
-                | Some _, _ -> Result.return @@ ar1
-                | _, Some _ -> Result.return @@ ar2
-                | None, None -> Result.return None)
+                | Some a1, Some a2 ->
+                    let ar = Some (a1 + a2) in
+                    Result.return
+                    @@ update_exp exp ar (TS.product e1.must e2.must)
+                         (TS.product e1.sup e2.sup)
+                | None, _
+                | _, None -> Result.return None)
           | Join ->
               let ar_join = join_arity ar1 ar2 in
               if ar_join = None then
@@ -608,18 +761,20 @@ let check_arities elo =
                 Fmtc.strf "wrong arities for the dot join of %s and %s"
                   (str_exp e1) (str_exp e2)
               else
-                Result.return ar_join)
+                Result.return
+                @@ update_exp exp ar_join (TS.join e1.must e2.must)
+                     (TS.join e1.sup e2.sup)
+        )
     | RIte (c, t, e) -> 
         begin
           walk_fml ctx c;
           let a_t = arity_exp ctx t in
           let a_e = arity_exp ctx e in
-          if a_t <> a_e &&
-             a_t <> None &&
-             a_e <> None then
+          if Option.equal Int.equal a_t a_e then
+            Result.return
+            @@ update_exp exp a_t (TS.inter t.must e.must) (TS.union t.sup e.sup)
+          else 
             Result.fail "incompatible arities in the bodies of 'then' and 'else'" 
-          else
-            Result.return a_t
         end
     | BoxJoin (exp, args) ->
         let ar_exp = arity_exp ctx exp in
@@ -630,16 +785,21 @@ let check_arities elo =
         if ar_join = None then
           Result.fail "wrong arities for the box join" 
         else
-          Result.return ar_join
+          begin
+            failwith __LOC__;
+            Result.return ar_join
+          end
     | Compr (sim_bindings, blk) ->
         let ctx2 = walk_sim_bindings ctx sim_bindings in
         begin
           walk_block ctx2 blk;
+          failwith __LOC__;
           Result.return (* accumulate lengths of variables in various bindings *)
           @@ Some List.(
                 fold_left (fun acc (_, vs, _) -> acc + length vs) 0 sim_bindings)
         end
-    | Prime e -> Result.return @@ arity_exp ctx e
+    | Prime e ->
+        Result.return @@ update_exp exp e.arity e.must e.sup
 
   and arity_iexp ctx { prim_iexp; _ } =
     arity_prim_iexp ctx prim_iexp
@@ -657,8 +817,8 @@ let check_arities elo =
   let init_ctx =
     Domain.to_list elo.domain
     |> List.map (fun (name, rel) ->
-          (* Msg.debug *)
-          (*   (fun m -> m "Raw_to_elo: ar(%a) = %a" Name.pp name Fmtc.int (Relation.arity rel)); *)
+          Msg.debug
+            (fun m -> m "Raw_to_elo: ar(%a) = %a" Name.pp name Fmtc.int (Relation.arity rel));
           (Name name, Some (Relation.arity rel)))
   in
   let walk_goal (Sat blk) =

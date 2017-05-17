@@ -180,7 +180,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     (************************** exp  ********************************)
 
-    method build_exp env _ exp _ = exp
+    method build_exp env _ exp' _ _ _ _ _ = exp'
 
     (* shape: [{ sb1, sb2,... | b }]. Each [sb] is of shape [x1, x2 : e] (the
        [disj]'s have already been simplified).
@@ -222,9 +222,6 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
               @@ get_tuple vs) sbs
       in
       conj (b' :: ranges)
-
-
-
 
     method build_Iden env = fun tuple -> 
       assert (Tuple.arity tuple = 2);
@@ -339,11 +336,11 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
 
 
-  class environment (elo : Elo.t) = object (self)
+  class environment (elo : Elo.t) = object (self : 'self)
     method domain = Elo.(elo.domain)
-    method must = Elo.(must elo.domain)
-    method may = Elo.(may elo.domain) 
-    method sup = Elo.(sup elo.domain) 
+    method must (e : (Elo.var, Elo.ident) GenGoal.exp) = e.must
+    method may (e : (Elo.var, Elo.ident) GenGoal.exp) = e.may
+    method sup (e : (Elo.var, Elo.ident) GenGoal.exp) = e.sup
   end
 
   
