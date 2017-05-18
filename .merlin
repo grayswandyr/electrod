@@ -1,4 +1,4 @@
-S src/**
+S src/** 
 B _build/**
 FLG -w -4-33-40-41-42-43-34-44
 FLG -short-paths
@@ -10,7 +10,7 @@ PKG gen
 PKG sequence
 PKG logs
 PKG fmt
-PKG mtime.os
+PKG mtime.clock.os
 PKG visitors.runtime
 PKG visitors.ppx
 PKG ppx_deriving.std

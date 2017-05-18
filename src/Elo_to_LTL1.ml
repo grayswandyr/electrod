@@ -326,7 +326,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_Sub (env : 'env) = minus
 
     method build_Card (env : 'env) r r' =
-      let must_card = num @@ TupleSet.size @@ env#may r in
+      let must_card = num @@ TupleSet.size @@ env#must r in
       let may_card =
         count @@ List.map r' @@ TupleSet.to_list @@ env#may r
       in
@@ -337,9 +337,9 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
   class environment (elo : Elo.t) = object (self : 'self)
     method domain = Elo.(elo.domain)
-    method must (e : (Elo.var, Elo.ident) GenGoal.exp) = e.must
-    method may (e : (Elo.var, Elo.ident) GenGoal.exp) = e.may
-    method sup (e : (Elo.var, Elo.ident) GenGoal.exp) = e.sup
+    method must (e : (Elo.var, Elo.ident) GenGoal.exp) = e.GenGoal.must
+    method may (e : (Elo.var, Elo.ident) GenGoal.exp) = e.GenGoal.may
+    method sup (e : (Elo.var, Elo.ident) GenGoal.exp) = e.GenGoal.sup
   end
 
   

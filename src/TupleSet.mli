@@ -34,6 +34,15 @@ val product : t -> t -> t
 (** [subset b1 b2] returns [true] if [b1] is included in [b2].  *)
 val subset : t -> t -> bool
 
+(** Computes the override [b1 ++ b2] of two tuple sets [b1] and [b2]. *)
+val override : t -> t -> t
+  
+(** Computes the left projection [s <: r] of a set [s] and a relation [r]. *)
+val lproj : t -> t -> t
+  
+(** Computes the right projection [r :> s] of a relation [r] and a set [s]. *)
+val rproj : t -> t -> t
+  
 (** [equal b1 b2] returns [true] if [b1] is equal [b2]. *)
 val equal : t -> t -> bool
 

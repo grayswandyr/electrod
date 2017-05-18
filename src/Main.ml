@@ -82,6 +82,7 @@ let main style_renderer verbosity infile =
     let elo =
       Parser_main.parse_file infile
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
+      |> Fun.tap (fun elo -> Msg.debug (fun m -> m "After raw_to_elo =@;%a" (Elo.pp) elo))
       |> Transfo.(get_exn elo_to_elo_t "simplify" |> run)
     in
     let test_f =
@@ -90,17 +91,17 @@ let main style_renderer verbosity infile =
 
 
     Msg.debug
-      (fun m -> m "Elo AST =@;%a" (Elo.pp) elo);
+      (fun m -> m "After simplify =@;%a" (Elo.pp) elo);
 
-    Msg.debug (fun m -> m "SMV formula: %a" Elo_to_SMV1.Logic.pp test_f);
+    Msg.debug (fun m -> m "After conversion: SMV formula:@;%a" Elo_to_SMV1.Logic.pp test_f);
 
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
-                         Mtime.pp_span (Mtime.elapsed ()))
+                         Mtime.Span.pp (Mtime_clock.elapsed ()))
   with
     | Exit ->
         flush_all ();
         Logs.app
-          (fun m -> m "Aborting (%a)." Mtime.pp_span (Mtime.elapsed ()));
+          (fun m -> m "Aborting (%a)." Mtime.Span.pp (Mtime_clock.elapsed ()));
         exit 2
     | e ->
         flush_all ();

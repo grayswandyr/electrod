@@ -1,0 +1,16 @@
+univ : { a b c d e f g };
+
+r : {} { (a a) (a b) (a c) };
+
+E : { (a) (b) };
+
+F : {} { a b c};
+
+G : {} univ;
+
+sat
+
+one { x, y : E, disj z, t : F, u : G | true};
+
+some r[F] + r[r[r[E]]];
+

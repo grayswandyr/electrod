@@ -474,7 +474,8 @@ and pp_sim_binding pp_v pp_i out (disj, vars, exp) =
     (pp_exp pp_v pp_i) exp
 
 and pp_exp pp_v pp_i out exp =
-  pp_prim_exp pp_v pp_i out exp.prim_exp
+  pp_prim_exp pp_v pp_i out exp.prim_exp;
+  Fmtc.(pf out "«%a»" (option int) exp.arity)
 
 and pp_prim_exp pp_v pp_i out = 
   let open Fmtc in
