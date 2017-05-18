@@ -54,7 +54,7 @@ module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL = struct
       | Neg t -> pf out "@[(- %a)@]" pp_term t
       | Count ts ->
           pf out "@[count(@[<hov 2>%a@])@]"
-            (list ~sep:(const string "@ +@ ") pp) ts
+            (list ~sep:(const string "+") pp) ts
   end
 
 

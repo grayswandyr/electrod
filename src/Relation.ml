@@ -45,9 +45,9 @@ let pp ?(print_name = true) out rel =
     pp_name out name;
     (styled `Bold @@ string) out const_or_var;
     Format.pp_open_hbox out ();
-    string out "<";
+    string out "«";
     int out arity;
-    (sp **> string) out ">";
+    (sp **> string) out "»";
     Format.pp_open_box out 2;
     (box2 @@ Scope.pp) out scope;
     option ((styled `Bold @@ sp **< const string "then")

@@ -160,7 +160,10 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
 
   let atom r ts = Atom (At.make r ts)
 
-  let not_ p = Not p
+  let not_ = function
+    | True -> False
+    | False -> True
+    | p -> Not p
 
   (* TODO: add simplification rules *)
   let and_ p q = match p, q with
@@ -222,7 +225,10 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
   let plus t1 t2 = Plus (t1, t2)
   let minus t1 t2 = Minus (t1, t2)
   let neg t = Neg t
-  let count ps = Count ps
+  let count ps =
+    match List.filter (function False -> false | _ -> true) ps with
+      | [] -> num 0
+      | props -> Count props
 
   let comp op t1 t2 = Comp (op, t1, t2)
   let lt = Lt
