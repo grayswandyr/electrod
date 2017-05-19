@@ -75,7 +75,7 @@ let main style_renderer verbosity infile =
   (* begin work *)
   try
     let raw_to_elo_t = Transfo.tlist [ Raw_to_elo.transfo ] in
-    let elo_to_elo_t = Transfo.tlist [ Simplify.transfo ] in
+    let elo_to_elo_t = Transfo.tlist [ Simplify1.transfo; Simplify2.transfo ] in
     let elo_to_smv_t = Transfo.tlist
                          [ Elo_to_SMV1.transfo; Elo_to_SMV2.transfo] in
 
@@ -83,16 +83,16 @@ let main style_renderer verbosity infile =
       Parser_main.parse_file infile
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
       |> Fun.tap (fun elo -> Msg.debug (fun m -> m "After raw_to_elo =@;%a" (Elo.pp) elo))
-      |> Transfo.(get_exn elo_to_elo_t "simplify" |> run)
-    in
-    let test_f =
-      elo |> Transfo.(get_exn elo_to_smv_t "to_smv1" |> run)
+      |> Transfo.(get_exn elo_to_elo_t "simplify1" |> run)
     in
 
 
     Msg.debug
       (fun m -> m "After simplify =@;%a" (Elo.pp) elo);
 
+    let test_f =
+      elo |> Transfo.(get_exn elo_to_smv_t "to_smv1" |> run)
+    in
     Msg.debug (fun m -> m "After conversion: SMV formula:@;%a" Elo_to_SMV1.Logic.pp test_f);
 
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
