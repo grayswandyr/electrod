@@ -81,6 +81,12 @@ let all_different tuple =
 let to_1tuples t =
   Array.fold_right (fun at acc -> of_list1 [at] :: acc) t []
 
+let to_ntuples n t =
+  assert (Array.length t mod n = 0);
+  Array.to_list t
+  |> List.sublists_of_len n
+  |> List.map Array.of_list
+
 
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 

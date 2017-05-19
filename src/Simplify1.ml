@@ -20,29 +20,31 @@ class simplify = object (self : 'self)
 
   method visit_'i _ = Fun.id
 
-  (* split multiple simultaneous bindings into many quantifications *)
-  method visit_QAEN env quant sim_bindings blk = 
-    Msg.debug (fun m -> m "Simplify1.visit_QAEN <-- %a"
+  (* split multiple simultaneous All/Some/No bindings into many quantifications *)
+  method visit_Quant env q sim_bindings blk = 
+    Msg.debug (fun m -> m "Simplify1.visit_Quant <-- %a"
                           Elo.(pp_prim_fml pp_var pp_ident)
-                @@ qaen quant sim_bindings blk);
-    let res = match sim_bindings with
-      | [] -> assert false
-      | [b] ->
-          let sim_bindings' =
-            List.map
-              (fun (disj, vs, e) -> (disj, vs, self#visit_exp env e))
-              sim_bindings in
-          let blk' = List.map (self#visit_fml env) blk in
-          qaen quant sim_bindings' blk'
-      | ((_, _, e) as b)::bs ->
-          qaen quant [b] [fml e.exp_loc @@ self#visit_QAEN env quant bs blk]
-    in
-    Msg.debug (fun m -> m "Simplify1.visit_QAEN --> %a"
-                          Elo.(pp_prim_fml pp_var pp_ident)
-                          res);
-    res
+                @@ quant q sim_bindings blk);
+    match q with
+      | One | Lone -> quant q sim_bindings blk (* do nothing YET *)
+      | All | Some_ | No ->
+          let res = match sim_bindings with
+            | [] -> assert false
+            | [b] ->
+                let sim_bindings' =
+                  List.map
+                    (fun (disj, vs, e) -> (disj, vs, self#visit_exp env e))
+                    sim_bindings in
+                let blk' = List.map (self#visit_fml env) blk in
+                quant q sim_bindings' blk'
+            | ((_, _, e) as b)::bs ->
+                quant q [b] [fml e.exp_loc @@ self#visit_Quant env q bs blk]
+          in
+          Msg.debug (fun m -> m "Simplify1.visit_Quant --> %a"
+                                Elo.(pp_prim_fml pp_var pp_ident)
+                                res);
+          res
 
-  (* TODO rewrite QLO *)
 
   (* substitute let bindings *)
   method visit_Let env bindings fmls =
@@ -180,6 +182,7 @@ let run elo =
   let open Elo in
   Msg.debug (fun m -> m "Entering Simplify1.simplify_fml");
   { elo with goal = (new simplify)#visit_t () elo.goal }
+  |> Fun.tap (fun _ -> Msg.debug (fun m -> m "Finished Simplify1.simplify_fml"))
   
 
 let transfo = Transfo.make "simplify1" run

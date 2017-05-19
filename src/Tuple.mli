@@ -39,6 +39,10 @@ val all_different : t -> bool
 (** [to_1tuples t] splits a tuple into as many 1-tuples at its length.  *)
 val to_1tuples : t -> t list
 
+(** [to_ntuples n t] splits a tuple into [n]-tuples (length must be a multiple
+    of [n]).  *)
+val to_ntuples : int -> t -> t list
+                        
 (** [to_list t] produces a list of atoms. *)
 val to_list : t -> Atom.t list
 

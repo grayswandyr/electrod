@@ -304,14 +304,10 @@ let refine_identifiers raw_pb =
     (ctx2, { fml with prim_fml = f })
 
   and walk_prim_fml ctx = function
-    | QLO (q, bindings, blk) ->
-        let ctx2, bindings2 = walk_bindings ctx bindings in
-        let _, blk2 = walk_block ctx2 blk in
-        (ctx, qlo q bindings2 blk2)
-    | QAEN (q, sim_bindings, blk) ->
+    | Quant (q, sim_bindings, blk) ->
         let ctx2, sim_bindings2 = walk_sim_bindings ctx sim_bindings in
         let _, blk2 = walk_block ctx2 blk in
-        (ctx, qaen q sim_bindings2 blk2) 
+        (ctx, quant q sim_bindings2 blk2) 
     | True -> (ctx, true_)
     | False -> (ctx, false_)
     | Block b -> (ctx, Pair.map_snd block (walk_block ctx b))
@@ -471,11 +467,8 @@ let check_arities elo =
           walk_fml ctx f1;
           walk_fml ctx f2
         end
-    | QAEN (_, sim_bindings, blk) -> 
+    | Quant (_, sim_bindings, blk) -> 
         let ctx = walk_sim_bindings ctx sim_bindings in
-        walk_block ctx blk
-    | QLO (_, bindings, blk) ->
-        let ctx = walk_bindings ctx true bindings in
         walk_block ctx blk
     | Let (bindings, blk) -> 
         let ctx = walk_bindings ctx false bindings in
@@ -508,12 +501,9 @@ let check_arities elo =
 
   and walk_sim_binding ctx (_, vs, exp) =
     let ar = arity_exp ctx exp in
-    if ar <> Some 1 then
-      Msg.Fatal.arity_error (fun args -> args elo.file exp "arity should be 1")
-    else
-      let arity, must, sup = exp.arity, exp.must, exp.sup in
-      List.fold_right
-        (fun (BVar v) ctx -> ctx#add_variable v arity must sup) vs ctx
+    let arity, must, sup = ar, exp.must, exp.sup in
+    List.fold_right
+      (fun (BVar v) ctx -> ctx#add_variable v arity must sup) vs ctx
 
   and arity_exp ctx exp =
     (* if arity = Some 0 then the analysis has not been made yet, otherwise it has *)
@@ -758,7 +748,7 @@ let whole raw_pb =
   |> Fun.tap @@ fun elo -> 
   begin
     Msg.debug
-      (fun m -> m "Entering Simplify.check_arities: <-- initial context =@ %a"
+      (fun m -> m "Entering Raw_to_elo.check_arities: <-- initial context =@!%a"
                   Domain.pp elo.Elo.domain);
     check_arities elo;
     Msg.debug (fun m -> m "Simplify.check_arities -->@ %a" Elo.pp elo)

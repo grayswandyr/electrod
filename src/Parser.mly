@@ -233,13 +233,9 @@ formula :
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.lbinary f1 op f2 }
 	
-	| q = ae_quant decls = comma_sep1(ae_decl) block = f_block_or_bar
+	| q = quant decls = comma_sep1(ae_decl) block = f_block_or_bar
 	{ G.fml (Location.from_positions $startpos $endpos)
-    @@ G.qaen q decls block }
-  
-	| q = lo_quant decls = comma_sep1(lo_decl) block = f_block_or_bar
-	{ G.fml (Location.from_positions $startpos $endpos)
-    @@ G.qlo q decls block }
+    @@ G.quant q decls block }
   
 	| LET decls = comma_sep1(let_decl) block = f_block_or_bar
 	{ G.fml (Location.from_positions $startpos $endpos)
@@ -257,16 +253,14 @@ formula :
 	    { f }
 
   
-%inline ae_quant:
+%inline quant:
 	ALL
 	{ G.all }
 	| SOME
 	{ G.some }
 	| NO
 	{ G.no_ }
-
-%inline lo_quant:
-	ONE
+	| ONE
 	{ G.one }
   | LONE
 	{ G.lone }
@@ -279,10 +273,6 @@ formula :
   id = PLAIN_ID
  	{ Raw_ident.ident id $startpos(id) $endpos(id) }
   
-%inline lo_decl:
- 	id = PLAIN_ID COLON e = expr
- 	{ (Raw_ident.ident id $startpos(id) $endpos(id), e) }
-
 %inline f_block_or_bar:
  	BAR f = formula
 	{ [f] }

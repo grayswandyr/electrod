@@ -83,12 +83,13 @@ let main style_renderer verbosity infile =
       Parser_main.parse_file infile
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
       |> Fun.tap (fun elo -> Msg.debug (fun m -> m "After raw_to_elo =@;%a" (Elo.pp) elo))
+      |> Fun.tap (fun _ -> flush_all ())
       |> Transfo.(get_exn elo_to_elo_t "simplify1" |> run)
     in
 
 
     Msg.debug
-      (fun m -> m "After simplify =@;%a" (Elo.pp) elo);
+      (fun m -> m "After simplify1 =@;%a" (Elo.pp) elo);
 
     let test_f =
       elo |> Transfo.(get_exn elo_to_smv_t "to_smv1" |> run)
@@ -99,12 +100,10 @@ let main style_renderer verbosity infile =
                          Mtime.Span.pp (Mtime_clock.elapsed ()))
   with
     | Exit ->
-        flush_all ();
         Logs.app
           (fun m -> m "Aborting (%a)." Mtime.Span.pp (Mtime_clock.elapsed ()));
         exit 2
     | e ->
-        flush_all ();
         raise e
       
 

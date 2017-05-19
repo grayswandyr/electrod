@@ -53,8 +53,7 @@ class virtual ['self] recursor =
     method virtual  build_P : _
     method virtual  build_Prime : _
     method virtual  build_Prod : _
-    method virtual  build_QAEN : _
-    method virtual  build_QLO : _
+    method virtual  build_Quant : _
     method virtual  build_Qual : _
     method virtual  build_R : _
     method virtual  build_RBin : _
@@ -124,19 +123,12 @@ class virtual ['self] recursor =
       let _visitors_r1 = self#visit_lbinop env _visitors_c1  in
       let _visitors_r2 = self#visit_fml env _visitors_c2  in
       self#build_LBin env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2
-    method visit_QAEN env _visitors_c0 _visitors_c1 _visitors_c2 =
-      let _visitors_r0 = self#visit_ae_quant env _visitors_c0  in
+    method visit_Quant env _visitors_c0 _visitors_c1 _visitors_c2 =
+      let _visitors_r0 = self#visit_quant env _visitors_c0  in
       let _visitors_r1 =
-        self#visit_list self#visit_sim_binding env _visitors_c1
-      in
+        self#visit_list self#visit_sim_binding env _visitors_c1  in
       let _visitors_r2 = self#visit_block env _visitors_c2  in
-      self#build_QAEN env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2
-    method visit_QLO env _visitors_c0 _visitors_c1 _visitors_c2 =
-      let _visitors_r0 = self#visit_lo_quant env _visitors_c0  in
-      let _visitors_r1 =
-        self#visit_list self#visit_binding env _visitors_c1  in
-      let _visitors_r2 = self#visit_block env _visitors_c2  in
-      self#build_QLO env  _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2
+      self#build_Quant env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2
     method visit_Let env _visitors_c0 _visitors_c1 =
       let _visitors_r0 =
         self#visit_list self#visit_binding env _visitors_c0  in
@@ -164,10 +156,8 @@ class virtual ['self] recursor =
             self#visit_LUn env _visitors_c0 _visitors_c1
         | LBin (_visitors_c0,_visitors_c1,_visitors_c2) ->
             self#visit_LBin env _visitors_c0 _visitors_c1 _visitors_c2
-        | QAEN (_visitors_c0,_visitors_c1,_visitors_c2) ->
-            self#visit_QAEN env _visitors_c0 _visitors_c1 _visitors_c2
-        | QLO (_visitors_c0,_visitors_c1,_visitors_c2) ->
-            self#visit_QLO env _visitors_c0 _visitors_c1 _visitors_c2
+        | Quant (_visitors_c0,_visitors_c1,_visitors_c2) ->
+            self#visit_Quant env _visitors_c0 _visitors_c1 _visitors_c2
         | Let (_visitors_c0,_visitors_c1) ->
             self#visit_Let env _visitors_c0 _visitors_c1
         | FIte (_visitors_c0,_visitors_c1,_visitors_c2) ->
@@ -189,15 +179,13 @@ class virtual ['self] recursor =
     method visit_All env = self#build_All env
     method visit_Some_ env = self#build_Some_ env
     method visit_No env = self#build_No env
-    method visit_ae_quant env _visitors_this =
+    method visit_One env = self#build_One env
+    method visit_Lone env = self#build_Lone env
+    method visit_quant env _visitors_this =
       match _visitors_this with
         | All  -> self#visit_All env
         | Some_  -> self#visit_Some_ env
         | No  -> self#visit_No env
-    method visit_One env = self#build_One env
-    method visit_Lone env = self#build_Lone env
-    method visit_lo_quant env _visitors_this =
-      match _visitors_this with
         | One  -> self#visit_One env
         | Lone  -> self#visit_Lone env
     method visit_And env = self#build_And env

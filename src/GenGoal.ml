@@ -35,10 +35,9 @@ and ('v, 'i) prim_fml =
   | IComp of ('v, 'i) iexp * icomp_op * ('v, 'i) iexp
   | LUn of lunop * ('v, 'i) fml
   | LBin of ('v, 'i) fml * lbinop * ('v, 'i) fml
-  | QAEN of ae_quant
+  | Quant of quant
             * ('v, 'i) sim_binding list (** nonempty *)
             * ('v, 'i) block
-  | QLO of lo_quant * (('v, 'i) binding) list * ('v, 'i) block (** nonempty *)
   | Let of (('v, 'i) binding) list * ('v, 'i) block (** nonempty *)
   | FIte of ('v, 'i) fml * ('v, 'i) fml * ('v, 'i) fml      
   | Block of ('v, 'i) block
@@ -53,12 +52,10 @@ and disj = (bool [@opaque])
 
 and ('v, 'i) block = ('v, 'i) fml list (** nonempty *)
 
-and ae_quant = 
+and quant = 
   | All 
   | Some_ 
   | No 
-
-and lo_quant = 
   | One 
   | Lone 
 
@@ -156,7 +153,9 @@ and ibinop =
   | Add
   | Sub
 [@@deriving visitors { variety = "fold" ; ancestors = ["VisitorsRuntime.map"] },
-            visitors { variety = "map"} ]
+            visitors { variety = "map"},
+            visitors { variety = "reduce" }
+]
 
 
 let true_ = True
@@ -171,13 +170,10 @@ let icomp exp1 rcomp exp2 = IComp (exp1, rcomp, exp2)
 
 let lbinary fml1 binop fml2 = LBin (fml1, binop, fml2)
 
-let qaen quant decls block = 
+let quant quant decls block = 
   assert (decls <> [] && block <> []);
-  QAEN (quant, decls, block)
+  Quant (quant, decls, block)
 
-let qlo quant decl block = 
-  assert (block <> []);
-  QLO (quant, decl, block)
 
 let lunary lunop fml = LUn (lunop, fml)
 
@@ -370,16 +366,11 @@ and pp_prim_fml pp_v pp_i out =
           (pp_fml pp_v pp_i) f1
           pp_lbinop op
           (pp_fml pp_v pp_i) f2        
-    | QAEN (q, decls, blk) ->
+    | Quant (q, decls, blk) ->
         pf out "@[<2>(%a %a@ %a)@]"
-          pp_ae_quant q
+          pp_quant q
           (list ~sep:(sp **> comma) @@ pp_sim_binding pp_v pp_i) decls
-          (pp_block pp_v pp_i) blk        
-    | QLO (q, bindings, blk) ->
-        pf out "@[<2>(%a %a@ %a)@]"
-          pp_lo_quant q
-          (list ~sep:(sp **> comma) @@ pp_binding ~sep:colon pp_v pp_i) bindings
-          (pp_block pp_v pp_i) blk
+          (pp_block pp_v pp_i) blk       
     | Let (bindings, blk) ->
         pf out "%a %a@ %a"
           (kwd_styled string) "let"
@@ -446,15 +437,11 @@ and pp_lbinop out x =
   | R -> "release"
   | S -> "since"
 
-and pp_lo_quant out x =
+and pp_quant out x =
   Fmtc.(kwd_styled pf) out
   @@ match x with
   | Lone -> "lone"
   | One -> "one"
-
-and pp_ae_quant out x =
-  Fmtc.(kwd_styled pf) out
-  @@ match x with
   | All -> "all"
   | Some_ -> "some"
   | No -> "no"
