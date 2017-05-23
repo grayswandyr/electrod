@@ -10,6 +10,24 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
   type goal = Elo.goal
 
+  
+  let substs_of_sim_binding ~disj (vars : Elo.var list) (dom : Tuple.t list) =
+    let open List in
+    (* (\* substituitons take [Var.t] keys *\) *)
+    (* let xs = map (fun (Elo.BVar v) -> v) vars in *)
+    (* let tuples_as_idents = map (fun t1 -> G.ident @@ Elo.Tuple t1) dom in *)
+    let lg = length vars in
+    (* create as many copies as necessary (= nb of variables) of the domain *)
+    init lg (fun _ -> dom)
+    (* take their cartesian product *)
+    |> cartesian_product
+    (* remove lines where there are tuples in common if [disj = true] *)
+    |> (if disj then
+          filter (fun l -> length l = length @@ sort_uniq l) else Fun.id)
+    (* combine with variable names *)
+    (* |> map @@ combine xs *)
+    (* Cast. This ain't cool as we lose all the benefit of the lazy nature of sequences *)
+    |> to_seq
     
   class ['env] converter = object (self : 'self)
     inherit ['self] GenGoalRecursor.recursor as super
@@ -36,12 +54,22 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     (* quant *)
 
+    (* re-defining this method to avoid going down in the block as a
+       substitution must be made first *)
+    method visit_Quant env _visitors_c0 _visitors_c1 _visitors_c2 =
+      let _visitors_r0 = self#visit_quant env _visitors_c0  in
+      let _visitors_r1 =
+        self#visit_list self#visit_sim_binding env _visitors_c1  in
+      let _visitors_r2 = [true_]  in
+      self#build_Quant env _visitors_c0 _visitors_c1 _visitors_c2
+        _visitors_r0 _visitors_r1 _visitors_r2
+
     method build_Quant (env : 'env) quant sim_bindings blk _ sim_bindings' _ =
       Msg.debug
         (fun m -> m "Elo_to_LTL1.build_Quant <-- %a"
                     (G.pp_prim_fml Elo.pp_var Elo.pp_ident)
                     (G.quant quant sim_bindings blk)
-                );
+        );
       match quant with
         | G.Lone | G.One ->
             failwith "Elo_to_LTL1.build_Quant: lone/one not implemented yet"
@@ -49,40 +77,49 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
             assert (List.length sim_bindings = 1); (* SIMPLIFIED *)
             let disj, xs, s = List.hd sim_bindings in
             let _, _, s' = List.hd sim_bindings' in
-            let nbxs = List.length xs in
-            let nproduct nb ts =
-              let open List in
-              init (nb - 1) (fun _ -> ts)
-              |> fold_left TS.product ts
+            (* let nbxs = List.length xs in *)
+            (* let nproduct nb ts = *)
+            (*   let open List in *)
+            (*   init (nb - 1) (fun _ -> ts) *)
+            (*   |> fold_left TS.product ts *)
+            (* in *)
+            (* let must_s_to_the_n, may_s_to_the_n =               *)
+            (*   (nproduct nbxs @@ env#must s, *)
+            (*    nproduct nbxs @@ env#may s)  *)
+            (* in *)
+            (* let all_diff tuples = (\* tuples: list of tuples *\) *)
+            (*   true *)
+            (* in *)
+            (* (\* The range quantified upon (by wedge or vee) will be made of tuples of *)
+            (*    the arity of [s^(nb of bound variables)]. [split] is the result of *)
+            (*    breaking these tuples into 1-tuples, one for each bound variable.  *\)             *)
+            (* let sub_for neutral tuple blk =     *)
+            (*   Msg.debug *)
+            (*     (fun m -> m "Elo_to_LTL1.sub_for <-- %a %a %a" *)
+            (*                 (G.pp_prim_fml Elo.pp_var Elo.pp_ident) neutral *)
+            (*                 Tuple.pp tuple *)
+            (*                 (G.pp_prim_fml Elo.pp_var Elo.pp_ident) blk); *)
+            (*   let split = Tuple.to_ntuples nbxs tuple in *)
+            (*   if disj && not @@ all_diff split then *)
+            (*     neutral *)
+            (*   else *)
+            (*     let tuple_exps = *)
+            (*       List.map (fun t1 -> G.ident @@ Elo.Tuple t1) split in *)
+            (*     let xs_as_vars = List.map (fun (Elo.BVar v) -> v) xs in *)
+            (*     (\* we zip the bound variables and the 1-tuples to get a list of *)
+            (*        substitutions *\) *)
+            (*     let substitution = List.combine xs_as_vars tuple_exps in *)
+            (*     Elo.substitute#visit_prim_fml substitution blk *)
+            (* in *)
+            let sub_for tuples =
+              let tuples_as_idents =
+                List.map (fun t1 -> G.ident @@ Elo.Tuple t1) tuples in
+              let xs_as_vars = List.map (fun (Elo.BVar v) -> v) xs in
+              (* we zip the bound variables and the 1-tuples to get a list of
+                 substitutions *)
+              List.combine xs_as_vars tuples_as_idents
             in
-            let must_s_to_the_n, may_s_to_the_n =              
-              (nproduct nbxs @@ env#must s,
-               nproduct nbxs @@ env#may s) 
-            in
-            let all_diff tuples = (* tuples: list of tuples *)
-              true
-            in
-            (* The range quantified upon (by wedge or vee) will be made of tuples of
-               the arity of [s^(nb of bound variables)]. [split] is the result of
-               breaking these tuples into 1-tuples, one for each bound variable.  *)            
-            let sub_for neutral tuple blk =    
-              Msg.debug
-                (fun m -> m "Elo_to_LTL1.sub_for <-- %a %a %a"
-                            (G.pp_prim_fml Elo.pp_var Elo.pp_ident) neutral
-                            Tuple.pp tuple
-                            (G.pp_prim_fml Elo.pp_var Elo.pp_ident) blk);
-              let split = Tuple.to_ntuples nbxs tuple in
-              if disj && not @@ all_diff split then
-                neutral
-              else
-                let tuple_exps =
-                  List.map (fun t1 -> G.ident @@ Elo.Tuple t1) split in
-                let xs_as_vars = List.map (fun (Elo.BVar v) -> v) xs in
-                (* we zip the bound variables and the 1-tuples to get a list of
-                   substitutions *)
-                let substitution = List.combine xs_as_vars tuple_exps in
-                Elo.substitute#visit_prim_fml substitution blk
-            in
+
             (* [pos_or_neg] tells whether the quantifier was a [no ...], in
                which case we consider the whole as [all ... | not ...]. [neutral]
                is the neutral element for the wedge or vee. *)
@@ -92,21 +129,34 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
               | G.No -> (wedge, (+&&), not_, G.true_)
               | G.Lone | G.One -> assert false
             in
+            (* let mustpart = *)
+            (*   bigop ~range:(TS.to_seq must_s_to_the_n) *)
+            (*     (fun ntuple ->  (\* tuple of arity |s|^nbxs *\) *)
+            (*        pos_or_neg *)
+            (*        @@ self#visit_prim_fml env (\* [[...]] *\) *)
+            (*        @@ (sub_for neutral ntuple @@ G.block blk)) (\* b [as / xs] *\) *)
+            (* in *)
             let mustpart =
-              bigop ~range:(TS.to_seq must_s_to_the_n)
-                (fun ntuple ->  (* tuple of arity |s|^nbxs *)
+              bigop
+                ~range:(substs_of_sim_binding ~disj xs @@ TS.to_list @@ env#must s)
+                (fun tuples -> 
                    pos_or_neg
                    @@ self#visit_prim_fml env (* [[...]] *)
-                   @@ (sub_for neutral ntuple @@ G.block blk)) (* b [as / xs] *)
+                   @@ Elo.substitute#visit_prim_fml (sub_for tuples)
+                   @@ G.block blk) (* b [as / xs] *)
             in
             let maypart =
-              bigop ~range:(TS.to_seq may_s_to_the_n)
-                (fun ntuple ->
-                   s' ntuple 
+              bigop
+                ~range:(substs_of_sim_binding ~disj xs @@ TS.to_list @@ env#may s)
+                (fun tuples ->
+                   (* concat because semantics of expressions expects *one* tuple *)
+                   s' (List.fold_left Tuple.(fun acc t -> (@@@) (acc, t))
+                         (List.hd tuples) (List.tl tuples))
                    @=>
                    pos_or_neg
                    @@ self#visit_prim_fml env (* [[...]] *)
-                   @@ (sub_for neutral ntuple @@ G.block blk)) (* b [as / xs] *)
+                   @@ Elo.substitute#visit_prim_fml (sub_for tuples)
+                   @@ G.block blk) (* b [as / xs] *)
             in
             smallop mustpart maypart 
 
@@ -207,6 +257,16 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     method build_exp (env : 'env) _ exp' _ _ _ _ _ = exp'
 
+
+    (* re-defining this method to avoid going down in the block as a
+       substitution must be made first *)
+    method visit_Compr env _visitors_c0 _visitors_c1 =
+      let _visitors_r0 =
+        self#visit_list self#visit_sim_binding env _visitors_c0
+      in
+      let _visitors_r1 = [true_]  in
+      self#build_Compr env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
+
     (* shape: [{ sb1, sb2,... | b }]. Each [sb] is of shape [x1, x2 : e] (the
        [disj]'s have already been simplified).
 
@@ -262,10 +322,8 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       let open Elo in
       match id with
         | Var v ->
-            Msg.debug
-              (fun m -> m "Elo_to_LTL1.build_Ident <-- %a, \
-                           returning LTL.true_ (wrongly?)" Var.pp v);
-            true_
+            failwith @@ "Elo_to_LTL1.build_Ident <-- %a, \
+                         theoretically unreachable case" ^ Var.to_string v
         | Tuple bs ->
             if Tuple.equal bs tuple then true_ else false_
         | Name r ->
