@@ -455,7 +455,8 @@ let check_arities elo =
            Msg.Fatal.arity_error
              (fun args ->
                 args elo.file e2
-                  (Fmtc.strf "arity incompatible with that of %s" (str_exp e1))))
+                  (Fmtc.strf "arity of %s incompatible with that of %s"
+                     (str_exp e1) (str_exp e2))))
     | IComp (e1, op, e2) ->
         begin
           arity_iexp ctx e1;
@@ -694,7 +695,8 @@ let check_arities elo =
                 Result.return @@ update_exp exp (Some ar) must sup
         end
     | Prime e ->
-        Result.return @@ update_exp exp e.arity e.must e.sup
+        let ar = arity_exp ctx e in
+        Result.return @@ update_exp exp ar e.must e.sup
 
   and arity_iexp ctx { prim_iexp; _ } =
     arity_prim_iexp ctx prim_iexp
@@ -715,7 +717,7 @@ let check_arities elo =
     val domain = elo.domain
 
     method add_variable v arity must sup =
-      Msg.debug (fun m -> m "Simplify.add_variable %a %a %a %a"
+      Msg.debug (fun m -> m "Raw_to_elo.check_arities.add_variable %a %a %a %a"
                             Var.pp v
                             Fmtc.(option int) arity
                             TS.pp must
@@ -748,10 +750,10 @@ let whole raw_pb =
   |> Fun.tap @@ fun elo -> 
   begin
     Msg.debug
-      (fun m -> m "Entering Raw_to_elo.check_arities: <-- initial context =@!%a"
+      (fun m -> m "Entering Raw_to_elo.check_arities: <-- initial context =@\n%a"
                   Domain.pp elo.Elo.domain);
     check_arities elo;
-    Msg.debug (fun m -> m "Simplify.check_arities -->@ %a" Elo.pp elo)
+    Msg.debug (fun m -> m "Raw_to_elo.check_arities -->@ %a" Elo.pp elo)
   end
   
 let transfo = Transfo.make "raw_to_elo" whole (* temporary *)
