@@ -19,31 +19,36 @@ class simplify = object (self : 'self)
   method visit_'v () = Fun.id
 
   method visit_'i _ = Fun.id
-
+ 
+  method visit_One_Lone env q sim_bindings blk =
+    let blk' = List.map (self#visit_fml env) blk in
+    quant q sim_bindings blk'
+                        
   (* split multiple simultaneous All/Some/No bindings into many quantifications *)
   method visit_Quant env q sim_bindings blk = 
     Msg.debug (fun m -> m "Simplify1.visit_Quant <-- %a"
                           Elo.(pp_prim_fml pp_var pp_ident)
-                @@ quant q sim_bindings blk);
+                        @@ quant q sim_bindings blk);
     match q with
-      | One | Lone -> quant q sim_bindings blk (* do nothing YET *)
-      | All | Some_ | No ->
-          let res = match sim_bindings with
-            | [] -> assert false
-            | [b] ->
-                let sim_bindings' =
-                  List.map
-                    (fun (disj, vs, e) -> (disj, vs, self#visit_exp env e))
-                    sim_bindings in
-                let blk' = List.map (self#visit_fml env) blk in
-                quant q sim_bindings' blk'
-            | ((_, _, e) as b)::bs ->
-                quant q [b] [fml e.exp_loc @@ self#visit_Quant env q bs blk]
-          in
-          Msg.debug (fun m -> m "Simplify1.visit_Quant --> %a"
-                                Elo.(pp_prim_fml pp_var pp_ident)
-                                res);
-          res
+    | One | Lone -> self#visit_One_Lone env q sim_bindings blk
+                                   
+    | All | Some_ | No ->
+       let res = match sim_bindings with
+         | [] -> assert false
+         | [b] ->
+            let sim_bindings' =
+              List.map
+                (fun (disj, vs, e) -> (disj, vs, self#visit_exp env e))
+                sim_bindings in
+            let blk' = List.map (self#visit_fml env) blk in
+            quant q sim_bindings' blk'
+         | ((_, _, e) as b)::bs ->
+            quant q [b] [fml e.exp_loc @@ self#visit_Quant env q bs blk]
+       in
+       Msg.debug (fun m -> m "Simplify1.visit_Quant --> %a"
+                             Elo.(pp_prim_fml pp_var pp_ident)
+                             res);
+       res
 
 
   (* substitute let bindings *)

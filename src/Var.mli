@@ -8,6 +8,8 @@ type t
     identifier, if there is one). *)
 val fresh : ?sep:string -> ?loc:Location.t -> string -> t
 
+val fresh_copy : t  -> t
+
 val fresh_of_raw_ident : ?sep:string -> Raw_ident.t -> t
 
 val compare : t -> t -> int

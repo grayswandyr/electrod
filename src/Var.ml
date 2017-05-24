@@ -13,11 +13,13 @@ type t = {
 let fresh =
   let c = ref 0 in
   fun ?(sep = "/") ?loc s ->
-    assert (!c < max_int);
-    let res = { id = !c; name = s; sep; loc } in
-    incr c;
-    res
+  assert (!c < max_int);
+  let res = { id = !c; name = s; sep; loc } in
+  incr c;
+  res
 
+let fresh_copy var = fresh @@ var.name
+      
 let fresh_of_raw_ident ?(sep = "/") v =
   fresh ~sep ~loc:(Raw_ident.location v) (Raw_ident.basename v)
 
