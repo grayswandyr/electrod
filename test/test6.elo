@@ -1,7 +1,7 @@
-univ : { a b c  e$2 .. e$4 };
+univ : { a b c  e$2  };
 const r : univ; 
 const t : { (a a) (a b) (c e$2)} (univ -> (univ + r));
 const foo : { a b } {a b c}; 	 
 var u : {} foo;  
 sat
-{ disj a,b : univ, c,d : t.a, disj e, f, g, h : t.foo | a->b in { disj x, y : univ | some univ } } in none
+{ disj a : univ, c,d : t.a, disj e, f, g : t.foo | t in { disj x, y : univ | some univ } } in none

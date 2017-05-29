@@ -316,19 +316,19 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         Sequence.product s1 s2
         |> Sequence.filter (fun (t1, t2) -> Tuple.is_in_join tuple t1 t2)
       in
-      Msg.debug
-        (fun m -> m "Elo_to_LTL1.build_Join <-- \
-                     %a.%a@\nsup(%a) = %a@\nsup(%a) = %a@\neligible_pairs =@ %a"
-                    (G.pp_exp Elo.pp_var Elo.pp_ident) r
-                    (G.pp_exp Elo.pp_var Elo.pp_ident) s
-                    (G.pp_exp Elo.pp_var Elo.pp_ident) r
-                    TupleSet.pp (env#sup r)
-                    (G.pp_exp Elo.pp_var Elo.pp_ident) s
-                    TupleSet.pp (env#sup s)
-                    (Sequence.pp_seq 
-                     @@ Fmtc.brackets @@ Fmt.pair ~sep:Fmtc.sp Tuple.pp Tuple.pp)
-                    eligible_pairs
-        );
+      (* Msg.debug *)
+      (*   (fun m -> m "Elo_to_LTL1.build_Join <-- \ *)
+      (*                %a.%a@\nsup(%a) = %a@\nsup(%a) = %a@\neligible_pairs =@ %a" *)
+      (*               (G.pp_exp Elo.pp_var Elo.pp_ident) r *)
+      (*               (G.pp_exp Elo.pp_var Elo.pp_ident) s *)
+      (*               (G.pp_exp Elo.pp_var Elo.pp_ident) r *)
+      (*               TupleSet.pp (env#sup r) *)
+      (*               (G.pp_exp Elo.pp_var Elo.pp_ident) s *)
+      (*               TupleSet.pp (env#sup s) *)
+      (*               (Sequence.pp_seq  *)
+      (*                @@ Fmtc.brackets @@ Fmt.pair ~sep:Fmtc.sp Tuple.pp Tuple.pp) *)
+      (*               eligible_pairs *)
+      (*   ); *)
       vee ~range:eligible_pairs (fun (bs, cs) -> r' bs +&& s' cs)
 
 

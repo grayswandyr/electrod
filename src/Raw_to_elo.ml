@@ -659,7 +659,8 @@ let check_arities elo =
             (fun arg r ->
                GenGoal.exp
                  Location.(span (arg.exp_loc, r.exp_loc))
-                 ~arity:Option.(return @@ get_exn arg.arity + get_exn r.arity - 2)
+                 ~arity:Option.(
+                       (-) <$> ((+) <$> arg.arity <*> r.arity) <*> pure 2)
                  ~must:(TS.join arg.must r.must)
                  ~sup:(TS.join arg.sup r.sup)
                @@ rbinary arg join r
@@ -674,12 +675,9 @@ let check_arities elo =
         let ctx2 = walk_sim_bindings ctx sim_bindings in
         begin
           walk_block ctx2 blk;
-          (* Result.return *) (* accumulate lengths of variables in various bindings *)
-          (* @@ Some List.( *)
-          (*       fold_left (fun acc (_, vs, _) -> acc + length vs) 0 sim_bindings) *)
           match
             List.(flat_map (fun (_, vs, _) ->
-                  map (fun (v) -> ctx2#get @@ var_ident_of_bound_var v) vs))
+                  map (fun v -> ctx2#get @@ var_ident_of_bound_var v) vs))
               sim_bindings
           with
             | [] -> assert false

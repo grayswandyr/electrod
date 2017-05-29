@@ -9,6 +9,8 @@ let pp out b =
   TS.pp ~start:"" ~stop:"" ~sep:" " Tuple.pp out b;
   Fmtc.pf out "}@]"
 
+module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
+include P 
 
 let to_list = TS.to_list
                 
@@ -50,15 +52,17 @@ let compare b1 b2 =
   TS.compare b1 b2
     
 let product b1 b2 =
+  prerr_endline @@ "TupleSet.product " ^ (to_string b1)^ " " ^ (to_string b2);
   if is_empty b1 then
     b2
   else if is_empty b2 then
     b1
   else
-    Sequence.product (TS.to_seq @@ tuples b1) (TS.to_seq @@ tuples b2)
-    |> Sequence.map Tuple.(@@@)
-    |> TS.of_seq
-
+    (* Sequence.product (TS.to_seq @@ tuples b1) (TS.to_seq @@ tuples b2) *)
+    (* |> Sequence.map Tuple.(@@@) *)
+    (* |> TS.of_seq *)
+         List.product (fun a1 a2 -> Tuple.(@@@) (a1, a2)) (to_list b1) (to_list b2)
+     |> TS.of_list 
 
 let union b1 b2 =
   TS.union b1 b2 
@@ -108,8 +112,6 @@ let mem t bnd = TS.mem t bnd
 let filter = TS.filter
 
   
-module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
-include P 
 
 module Infix = struct
   let ( $: ) = mem
