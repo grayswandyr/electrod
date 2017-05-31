@@ -747,12 +747,12 @@ let whole raw_pb =
   let goal = refine_identifiers raw_pb in
   Elo.make raw_pb.file domain instance goal
   |> Fun.tap @@ fun elo -> 
-  begin
-    Msg.debug
-      (fun m -> m "Entering Raw_to_elo.check_arities: <-- initial context =@\n%a"
-                  Domain.pp elo.Elo.domain);
-    check_arities elo;
-    Msg.debug (fun m -> m "Raw_to_elo.check_arities -->@ %a" Elo.pp elo)
-  end
+  (* begin *)
+  (*   Msg.debug *)
+  (*     (fun m -> m "Entering Raw_to_elo.check_arities: <-- initial context =@\n%a" *)
+  (*                 Domain.pp elo.Elo.domain); *)
+    check_arities elo(* ; *)
+  (*   Msg.debug (fun m -> m "Raw_to_elo.check_arities -->@ %a" Elo.pp elo) *)
+  (* end *)
   
 let transfo = Transfo.make "raw_to_elo" whole (* temporary *)

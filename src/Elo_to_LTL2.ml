@@ -23,9 +23,11 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       invar <- fml :: invar
   end
 
-  
+
   let convert elo =
     let open Elo in
     let env = new environment elo in
-    (new converter)#visit_t env elo.goal
+    let GenGoal.Sat fmls = elo.goal in
+    List.map ((new converter)#visit_fml env) fmls
+  
 end
