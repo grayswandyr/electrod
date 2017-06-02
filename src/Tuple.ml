@@ -24,7 +24,7 @@ let ith i tuple =
   assert (i >= 0 && i < arity tuple);
   Array.get tuple i
 
-let ( @@@ ) (t1, t2) = Array.append t1 t2
+let ( @@@ ) t1 t2 = Array.append t1 t2
 
 let compare t1 t2 = Array.compare Atom.compare t1 t2
 

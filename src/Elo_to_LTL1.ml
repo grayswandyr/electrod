@@ -107,7 +107,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
                 ~range:(substs_of_sim_binding ~disj xs @@ TS.to_list @@ env#may s)
                 (fun tuples ->
                    (* concat because semantics of expressions expects *one* tuple *)
-                   s' (List.fold_left Tuple.(fun acc t -> (@@@) (acc, t))
+                   s' (List.fold_left Tuple.(@@@)
                          (List.hd tuples) (List.tl tuples))
                    @=>
                    pos_or_neg

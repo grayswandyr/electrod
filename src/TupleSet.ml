@@ -58,7 +58,7 @@ let product b1 b2 =
     b1
   else
     Sequence.product (TS.to_seq @@ tuples b1) (TS.to_seq @@ tuples b2)
-    |> Sequence.map Tuple.(@@@)
+    |> Sequence.map Fun.(uncurry Tuple.(@@@))
     |> TS.of_seq
 
 let union b1 b2 =
@@ -89,7 +89,7 @@ let lproj s r =
 let rproj r s = lproj s @@ transpose r
 
 let diagonal b =
-  TS.map (fun e -> Tuple.(@@@) (e, e)) b
+  TS.map Tuple.(fun e -> e @@@ e) b
 
 let join b1 b2 =
   let open Sequence in
