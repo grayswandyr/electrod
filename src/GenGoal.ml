@@ -95,9 +95,9 @@ and ('v, 'i) exp = {
   prim_exp : ('v, 'i) prim_exp;
   exp_loc : (Location.t [@opaque]);
   mutable arity : (int option [@opaque]);   (* None for none or Some n where n > 0 *)
-  mutable must : (TupleSet.t [@opaque]);
-  mutable sup : (TupleSet.t [@opaque]);
-  mutable may : (TupleSet.t [@opaque]);
+  mutable must : (TupleSet.t Lazy.t [@opaque]);
+  mutable sup : (TupleSet.t Lazy.t [@opaque]);
+  mutable may : (TupleSet.t Lazy.t [@opaque]);
 }
 
 and ('v, 'i) prim_exp =
@@ -309,9 +309,11 @@ let sub = Sub
 
 let fml fml_loc prim_fml = { prim_fml; fml_loc }
 
-let exp ?(arity = Some 0) ?(must = TupleSet.empty) ?(sup = TupleSet.empty)
-      ?(may = TupleSet.empty)
-      exp_loc prim_exp = { prim_exp; exp_loc; arity; must; sup; may }
+let exp ?(arity = Some 0) ?(must = lazy TupleSet.empty)
+      ?(sup = lazy TupleSet.empty)
+      exp_loc prim_exp =
+  { prim_exp; exp_loc; arity; must; sup;
+    may = lazy (TupleSet.diff (Lazy.force sup) (Lazy.force must))}
 
 let iexp iexp_loc prim_iexp = { prim_iexp; iexp_loc }
 
@@ -459,9 +461,9 @@ and pp_sim_binding pp_v pp_i out (disj, vars, exp) =
     (list ~sep:(sp **> comma) pp_v) vars
     (pp_exp pp_v pp_i) exp
 
-and pp_exp pp_v pp_i out exp =
+and pp_exp ?(show_arity = false) pp_v pp_i out exp =
   pp_prim_exp pp_v pp_i out exp.prim_exp;
-  Fmtc.(pf out "«%a»" (option int) exp.arity)
+  if show_arity then Fmtc.(pf out "«%a»" (option int) exp.arity)
 
 and pp_prim_exp pp_v pp_i out = 
   let open Fmtc in

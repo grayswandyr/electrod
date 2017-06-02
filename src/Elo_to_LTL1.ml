@@ -24,8 +24,6 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     (* remove lines where there are tuples in common if [disj = true] *)
     |> (if disj then
           filter (fun l -> length l = length @@ sort_uniq l) else Fun.id)
-    (* combine with variable names *)
-    (* |> map @@ combine xs *)
     (* Cast. This ain't cool as we lose all the benefit of the lazy nature of sequences *)
     |> to_seq
     
@@ -77,40 +75,6 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
             assert (List.length sim_bindings = 1); (* SIMPLIFIED *)
             let disj, xs, s = List.hd sim_bindings in
             let _, _, s' = List.hd sim_bindings' in
-            (* let nbxs = List.length xs in *)
-            (* let nproduct nb ts = *)
-            (*   let open List in *)
-            (*   init (nb - 1) (fun _ -> ts) *)
-            (*   |> fold_left TS.product ts *)
-            (* in *)
-            (* let must_s_to_the_n, may_s_to_the_n =               *)
-            (*   (nproduct nbxs @@ env#must s, *)
-            (*    nproduct nbxs @@ env#may s)  *)
-            (* in *)
-            (* let all_diff tuples = (\* tuples: list of tuples *\) *)
-            (*   true *)
-            (* in *)
-            (* (\* The range quantified upon (by wedge or vee) will be made of tuples of *)
-            (*    the arity of [s^(nb of bound variables)]. [split] is the result of *)
-            (*    breaking these tuples into 1-tuples, one for each bound variable.  *\)             *)
-            (* let sub_for neutral tuple blk =     *)
-            (*   Msg.debug *)
-            (*     (fun m -> m "Elo_to_LTL1.sub_for <-- %a %a %a" *)
-            (*                 (G.pp_prim_fml Elo.pp_var Elo.pp_ident) neutral *)
-            (*                 Tuple.pp tuple *)
-            (*                 (G.pp_prim_fml Elo.pp_var Elo.pp_ident) blk); *)
-            (*   let split = Tuple.to_ntuples nbxs tuple in *)
-            (*   if disj && not @@ all_diff split then *)
-            (*     neutral *)
-            (*   else *)
-            (*     let tuple_exps = *)
-            (*       List.map (fun t1 -> G.ident @@ Elo.Tuple t1) split in *)
-            (*     let xs_as_vars = List.map (fun (Elo.BVar v) -> v) xs in *)
-            (*     (\* we zip the bound variables and the 1-tuples to get a list of *)
-            (*        substitutions *\) *)
-            (*     let substitution = List.combine xs_as_vars tuple_exps in *)
-            (*     Elo.substitute#visit_prim_fml substitution blk *)
-            (* in *)
             let sub_for tuples =
               let tuples_as_idents =
                 List.map (fun t1 -> G.ident @@ Elo.Tuple t1) tuples in
@@ -129,13 +93,6 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
               | G.No -> (wedge, (+&&), not_, G.true_)
               | G.Lone | G.One -> assert false
             in
-            (* let mustpart = *)
-            (*   bigop ~range:(TS.to_seq must_s_to_the_n) *)
-            (*     (fun ntuple ->  (\* tuple of arity |s|^nbxs *\) *)
-            (*        pos_or_neg *)
-            (*        @@ self#visit_prim_fml env (\* [[...]] *\) *)
-            (*        @@ (sub_for neutral ntuple @@ G.block blk)) (\* b [as / xs] *\) *)
-            (* in *)
             let mustpart =
               bigop
                 ~range:(substs_of_sim_binding ~disj xs @@ TS.to_list @@ env#must s)
@@ -150,7 +107,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
                 ~range:(substs_of_sim_binding ~disj xs @@ TS.to_list @@ env#may s)
                 (fun tuples ->
                    (* concat because semantics of expressions expects *one* tuple *)
-                   s' (List.fold_left Tuple.(fun acc t -> (@@@) (acc, t))
+                   s' (List.fold_left Tuple.(@@@)
                          (List.hd tuples) (List.tl tuples))
                    @=>
                    pos_or_neg
@@ -359,19 +316,19 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         Sequence.product s1 s2
         |> Sequence.filter (fun (t1, t2) -> Tuple.is_in_join tuple t1 t2)
       in
-      Msg.debug
-        (fun m -> m "Elo_to_LTL1.build_Join <-- \
-                     %a.%a@\nsup(%a) = %a@\nsup(%a) = %a@\neligible_pairs =@ %a"
-                    (G.pp_exp Elo.pp_var Elo.pp_ident) r
-                    (G.pp_exp Elo.pp_var Elo.pp_ident) s
-                    (G.pp_exp Elo.pp_var Elo.pp_ident) r
-                    TupleSet.pp r.sup
-                    (G.pp_exp Elo.pp_var Elo.pp_ident) s
-                    TupleSet.pp s.sup
-                    (Sequence.pp_seq 
-                     @@ Fmtc.brackets @@ Fmt.pair ~sep:Fmtc.sp Tuple.pp Tuple.pp)
-                    eligible_pairs
-        );
+      (* Msg.debug *)
+      (*   (fun m -> m "Elo_to_LTL1.build_Join <-- \ *)
+      (*                %a.%a@\nsup(%a) = %a@\nsup(%a) = %a@\neligible_pairs =@ %a" *)
+      (*               (G.pp_exp Elo.pp_var Elo.pp_ident) r *)
+      (*               (G.pp_exp Elo.pp_var Elo.pp_ident) s *)
+      (*               (G.pp_exp Elo.pp_var Elo.pp_ident) r *)
+      (*               TupleSet.pp (env#sup r) *)
+      (*               (G.pp_exp Elo.pp_var Elo.pp_ident) s *)
+      (*               TupleSet.pp (env#sup s) *)
+      (*               (Sequence.pp_seq  *)
+      (*                @@ Fmtc.brackets @@ Fmt.pair ~sep:Fmtc.sp Tuple.pp Tuple.pp) *)
+      (*               eligible_pairs *)
+      (*   ); *)
       vee ~range:eligible_pairs (fun (bs, cs) -> r' bs +&& s' cs)
 
 
@@ -434,15 +391,16 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
   class environment (elo : Elo.t) = object (self : 'self)
     method domain = Elo.(elo.domain)
-    method must (e : (Elo.var, Elo.ident) G.exp) = e.G.must
-    method may (e : (Elo.var, Elo.ident) G.exp) = e.G.may
-    method sup (e : (Elo.var, Elo.ident) G.exp) = e.G.sup
+    method must (e : (Elo.var, Elo.ident) G.exp) = Lazy.force e.G.must
+    method may (e : (Elo.var, Elo.ident) G.exp) = Lazy.force e.G.may
+    method sup (e : (Elo.var, Elo.ident) G.exp) = Lazy.force e.G.sup
   end
 
   
   let convert elo =
     let open Elo in
     let env = new environment elo in
-    (new converter)#visit_t env elo.goal
+    let G.Sat fmls = elo.goal in
+    List.map ((new converter)#visit_fml env) fmls
   
 end

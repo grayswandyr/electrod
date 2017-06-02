@@ -65,7 +65,7 @@ let main style_renderer verbosity infile =
        |> Fun.tap (fun _ -> ignore @@ Unix.close_process_in inch)
        |> Option.get_or ~default:"80"
        |> int_of_string in
-     Msg.debug (fun m -> m "Columns: %d" cols);
+     (* Msg.debug (fun m -> m "Columns: %d" cols); *)
      Format.(pp_set_margin stdout) cols;
      Format.(pp_set_margin stderr) cols
    with _ ->
@@ -82,19 +82,27 @@ let main style_renderer verbosity infile =
     let elo =
       Parser_main.parse_file infile
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
-      |> Fun.tap (fun elo -> Msg.debug (fun m -> m "After raw_to_elo =@;%a" (Elo.pp) elo))
+      |> Fun.tap (fun elo -> Msg.debug (fun m -> m "After raw_to_elo =@\n%a" (Elo.pp) elo))
       |> Fun.tap (fun _ -> flush_all ())
       |> Transfo.(get_exn elo_to_elo_t "simplify1" |> run)
     in
 
 
     Msg.debug
-      (fun m -> m "After simplify1 =@;%a" (Elo.pp) elo);
+      (fun m -> m "After simplify1 =@\n%a" (Elo.pp) elo);
 
     let test_f =
-      elo |> Transfo.(get_exn elo_to_smv_t "to_smv1" |> run)
+      Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) elo
     in
-    Msg.debug (fun m -> m "After conversion: SMV formula:@;%a" Elo_to_SMV1.Logic.pp test_f);
+    Msg.debug (fun m ->
+          let GenGoal.Sat fmls = elo.Elo.goal in
+          let trad = List.combine fmls test_f in
+          m "After conversion to SMV formulas:@\n%a"
+            (Fmtc.list ~sep:Fmtc.hardline
+             @@ Fmt.pair ~sep:Fmtc.hardline
+                  Fmtc.(const string "// "
+                        **< GenGoal.pp_fml Elo.pp_var Elo.pp_ident)
+                  Elo_to_SMV1.Logic.pp) trad);
 
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
                          Mtime.Span.pp (Mtime_clock.elapsed ()))

@@ -165,7 +165,6 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
     | False -> True
     | p -> Not p
 
-  (* TODO: add simplification rules *)
   let and_ p q = match p, q with
     | False, _
     | _, False -> False
@@ -186,10 +185,6 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
     | True, _ -> q
     | _, False -> not_ p
     | _, _ -> Imp (p, q)
-
-  (* let and_ p q = And (p, q) *)
-  (* let or_ p q = Or (p, q) *)
-  (* let implies_ p q = Imp (p, q) *)
   
   let xor p1 p2 = Xor (p1, p2)
 
@@ -222,15 +217,29 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
   let trigerred p1 p2 = T (p1, p2)
 
   let num n = Num n
-  let plus t1 t2 = Plus (t1, t2)
-  let minus t1 t2 = Minus (t1, t2)
-  let neg t = Neg t
+  let plus t1 t2 = match t1, t2 with
+    | Num 0, _ -> t2
+    | _, Num 0 -> t1
+    | _ -> Plus (t1, t2)
+             
+  let minus t1 t2 = match t2 with
+    | Num 0 -> t1
+    | _ -> Minus (t1, t2)
+             
+  let neg t = match t with
+    | Neg _ -> t
+    | _ -> Neg t
+             
   let count ps =
     match List.filter (function False -> false | _ -> true) ps with
       | [] -> num 0
       | props -> Count props
 
-  let comp op t1 t2 = Comp (op, t1, t2)
+  let comp op t1 t2 = match op, t1, t2 with
+    | Eq, Num n, Num m when n = m -> true_
+    | (Lt | Lte | Gt | Gte | Neq), Num n, Num m when n = m -> false_
+    | Eq, Num n, Num m when n <> m -> false_
+    | _ -> Comp (op, t1, t2)
   let lt = Lt
   let lte = Lte
   let gt = Gt
@@ -238,6 +247,19 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
   let eq = Eq
   let neq = Neq
 
+  
+
+  (* OPTIMIZATIONS REMOVED *)
+  (* let not_ p = Not p *)
+  (* let and_ p q = And (p, q) *)
+  (* let or_ p q = Or (p, q) *)
+  (* let implies p q = Imp (p, q) *)
+  (* let iff p q = Iff (p, q) *)
+  (* let plus t1 t2 = Plus (t1, t2) *)
+  (* let minus t1 t2 = Minus (t1, t2) *)
+  (* let neg t = Neg t *)
+  (* let comp op t1 t2 = Comp (op, t1, t2) *)
+                        
   let wedge ~range f =
     Sequence.fold (fun fml tuple -> and_ fml @@ f tuple) true_ range
 
@@ -255,10 +277,7 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
     let ( @=> ) = implies
     let ( @<=> ) = iff
   end
-
-
 end
-
 
 module type PrintableLTL = sig
   include S

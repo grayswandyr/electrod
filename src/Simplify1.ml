@@ -163,11 +163,13 @@ class simplify = object (self : 'self)
                      or_ (fml expr.exp_loc @@ qual rone expr))
       | RSome ->
           rcomp expr not_in
-          @@ GenGoal.exp ~arity:None ~must:TS.empty ~sup:TS.empty expr.exp_loc
+          @@ GenGoal.exp ~arity:None
+               ~must:(lazy TS.empty) ~sup:(lazy TS.empty) expr.exp_loc
                none
       | RNo ->
           rcomp expr in_
-          @@ GenGoal.exp ~arity:None ~must:TS.empty ~sup:TS.empty expr.exp_loc
+          @@ GenGoal.exp ~arity:None
+               ~must:(lazy TS.empty) ~sup:(lazy TS.empty) expr.exp_loc
                none
     in
     self#visit_prim_fml env prim_fml
@@ -187,8 +189,8 @@ class simplify = object (self : 'self)
            exp
              Location.(span (arg.exp_loc, r.exp_loc))
              ~arity:Option.(return @@ get_exn arg.arity + get_exn r.arity - 2)
-             ~must:(TS.join arg.must r.must)
-             ~sup:(TS.join arg.sup r.sup)
+             ~must:(lazy (TS.join (Lazy.force arg.must) (Lazy.force r.must)))
+             ~sup:(lazy (TS.join (Lazy.force arg.sup) (Lazy.force r.sup)))
            @@ rbinary arg join r
         ) args call
     in
@@ -266,9 +268,9 @@ end
 
 let run elo =
   let open Elo in
-  Msg.debug (fun m -> m "Entering Simplify1.simplify_fml");
+  (* Msg.debug (fun m -> m "Entering Simplify1.simplify_fml"); *)
   { elo with goal = (new simplify)#visit_t () elo.goal }
-  |> Fun.tap (fun _ -> Msg.debug (fun m -> m "Finished Simplify1.simplify_fml"))
+  (* |> Fun.tap (fun _ -> Msg.debug (fun m -> m "Finished Simplify1.simplify_fml")) *)
   
 
 let transfo = Transfo.make "simplify1" run

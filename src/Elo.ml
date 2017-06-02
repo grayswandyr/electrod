@@ -69,13 +69,13 @@ let substitute = object (self : 'self)
   method visit_Ident
            (env : (Var.t, (var, ident) GenGoal.prim_exp) CCList.Assoc.t )
            (id : ident) =
-    Msg.debug
-      (fun m -> m "Elo.substitute.visit_prim_fml: %a [%a]"
-                  pp_ident id
-                  (List.pp
-                   @@ Fmt.pair ~sep:Fmtc.(const string "<-") Var.pp
-                   @@ GenGoal.pp_prim_exp pp_var pp_ident)
-                  env);
+    (* Msg.debug *)
+    (*   (fun m -> m "Elo.substitute.visit_prim_fml: %a [%a]" *)
+    (*               pp_ident id *)
+    (*               (List.pp *)
+    (*                @@ Fmt.pair ~sep:Fmtc.(const string "<-") Var.pp *)
+    (*                @@ GenGoal.pp_prim_exp pp_var pp_ident) *)
+    (*               env); *)
     match id with
       | Var var when List.Assoc.mem ~eq:Var.equal var env ->
           List.Assoc.get_exn ~eq:Var.equal var env
