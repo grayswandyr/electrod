@@ -4,4 +4,4 @@ const t : { (a a) (a b) (c e$2)} (univ -> (univ + r));
 const foo : { a b } {a b c}; 	 
 var u : {} foo;  
 sat
-all x : t | true
+one x : t | true

@@ -20,18 +20,99 @@ class simplify = object (self : 'self)
 
   method visit_'i _ = Fun.id
  
-  method visit_One_Lone env q sim_bindings blk =
-    let blk' = List.map (self#visit_fml env) blk in
-    quant q sim_bindings blk'
-                        
+  method visit_Quant_One env q sim_bindings blk =
+    let open Location in
+    let open GenGoal in
+    (*re-write one x1,y1:r1, x2,y2:r2 | phi into
+           some x1,y1:r1, x2,y2:r2 | (phi and all x1',x2':r1, x2',y2';r2 | ...)*)
+
+    (* from the var list [x1, x2, ...] 
+            create [x1', x2', ...] and the assoc list [(x1, x1'), (x2, x2') ...] 
+            and the formula x1!=x1' or x2!=x2' or ...
+     *)
+    let create_new_vars_and_assoc_list_and_comp_fml vs =
+      List.fold_right
+        (fun (Elo.BVar var) (new_vars, assoc, prim_fml) ->
+          let new_var = Var.fresh_copy var in
+          let new_var_as_ident = ident (Elo.var_ident new_var) in
+          (Elo.bound_var new_var)::new_vars,
+          CCList.Assoc.set ~eq:Var.equal
+                           var
+                           new_var_as_ident
+                           assoc
+          ,
+            lbinary
+              (fml
+                 dummy @@
+                 rcomp
+                   (exp dummy @@ ident @@ Elo.var_ident var )
+                   REq
+                   (exp dummy @@ new_var_as_ident)
+              )
+              and_
+              (fml dummy prim_fml)
+        )
+        vs
+        ([], [], true_)
+    in
+
+    let new_sim_bindings, assoc_new_vars, cmp_fml =
+      List.fold_right
+        (fun  (disj, vars, e) (sim_bindings, acc_assoc, acc_fml) -> (
+           let (new_vars, assoc, prim_fml) =
+             create_new_vars_and_assoc_list_and_comp_fml vars in
+           (disj, new_vars, e):: sim_bindings,
+           assoc @ acc_assoc,
+           lbinary
+             (fml dummy @@ prim_fml)
+             and_
+             (fml dummy acc_fml)
+        ))
+        sim_bindings
+        ([],[], true_)
+    in
+
+    (* subst_blk = phi [x1'\x1, x2'\x2, ...] *)
+    let subst_blk = Elo.substitute#visit_block assoc_new_vars blk in
+    (* conversion of the block in a formula *)
+    let fml_subst_blk =
+      List.fold_right
+        (fun curfml acc_fml -> (fml dummy @@ lbinary curfml and_ acc_fml))
+        subst_blk
+        (fml dummy true_)
+    in   
+    
+    let temp_forall_fml =
+      quant all new_sim_bindings
+            [fml dummy @@ lbinary fml_subst_blk impl (fml dummy cmp_fml)]
+    in
+    let temporary_fml =
+      quant some sim_bindings 
+            [fml dummy @@ lbinary
+                            (fml dummy (block blk))
+                            and_ (fml dummy temp_forall_fml) ]
+    in
+    self#visit_prim_fml env temporary_fml
+
+  (* translate lone x:t|phi into one x:t|phi or no x:t|phi *)
+  method visit_Quant_Lone env q sim_bindings blk =
+    let open Location in
+    let res_fml =
+      lbinary 
+        (fml dummy @@ quant one sim_bindings blk)
+        or_
+        (fml dummy @@ quant no_ sim_bindings blk)
+    in
+    self#visit_prim_fml env res_fml
+                   
   (* split multiple simultaneous All/Some/No bindings into many quantifications *)
   method visit_Quant env q sim_bindings blk = 
     Msg.debug (fun m -> m "Simplify1.visit_Quant <-- %a"
                           Elo.(pp_prim_fml pp_var pp_ident)
                         @@ quant q sim_bindings blk);
     match q with
-    | One | Lone -> self#visit_One_Lone env q sim_bindings blk
-                                   
+    | One -> self#visit_Quant_One env q sim_bindings blk
+    | Lone -> self#visit_Quant_Lone env q sim_bindings blk
     | All | Some_ | No ->
        let res = match sim_bindings with
          | [] -> assert false
