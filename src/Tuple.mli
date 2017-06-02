@@ -13,7 +13,7 @@ val arity : t -> int
 
 (** [t1 @@@ t2] yields the concatenantion of [t1] followed by [t2]
     (useful to compute the flat product of bounds/tuple sets). *)
-val ( @@@ ) : t * t -> t
+val ( @@@ ) : t -> t -> t
 
 val equal : t -> t -> bool
 
