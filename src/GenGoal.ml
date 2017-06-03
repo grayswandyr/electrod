@@ -461,9 +461,16 @@ and pp_sim_binding pp_v pp_i out (disj, vars, exp) =
     (list ~sep:(sp **> comma) pp_v) vars
     (pp_exp pp_v pp_i) exp
 
-and pp_exp ?(show_arity = false) pp_v pp_i out exp =
+and pp_exp ?(show_arity = false) ?(show_bounds = true) pp_v pp_i out exp =
   pp_prim_exp pp_v pp_i out exp.prim_exp;
-  if show_arity then Fmtc.(pf out "«%a»" (option int) exp.arity)
+  if show_arity || show_bounds then Fmtc.(pf out "«");
+  if show_arity then Fmtc.(pf out "%a" (option int) exp.arity);
+  if show_arity && show_bounds then Fmtc.(pf out "@ ");
+  if show_bounds then
+    Fmtc.(pf out "%a@ %a"
+            TupleSet.pp (Lazy.force exp.must)
+            TupleSet.pp (Lazy.force exp.may));
+  if show_arity || show_bounds then Fmtc.(pf out "»")
 
 and pp_prim_exp pp_v pp_i out = 
   let open Fmtc in

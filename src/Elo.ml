@@ -70,7 +70,7 @@ let substitute = object (self : 'self)
            (env : (Var.t, (var, ident) GenGoal.prim_exp) CCList.Assoc.t )
            (id : ident) =
     (* Msg.debug *)
-    (*   (fun m -> m "Elo.substitute.visit_prim_fml: %a [%a]" *)
+    (*   (fun m -> m "Elo.substitute.visit_Ident: %a [%a]" *)
     (*               pp_ident id *)
     (*               (List.pp *)
     (*                @@ Fmt.pair ~sep:Fmtc.(const string "<-") Var.pp *)

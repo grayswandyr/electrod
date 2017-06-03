@@ -160,11 +160,6 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
 
   let atom r ts = Atom (At.make r ts)
 
-  let not_ = function
-    | True -> False
-    | False -> True
-    | p -> Not p
-
   let and_ p q = match p, q with
     | False, _
     | _, False -> False
@@ -178,13 +173,6 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
     | False, p
     | p, False -> p
     | _, _ -> Or (p1, p2)
-
-  let implies p q = match p, q with
-    | False, _ -> True
-    | _, True -> True
-    | True, _ -> q
-    | _, False -> not_ p
-    | _, _ -> Imp (p, q)
   
   let xor p1 p2 = Xor (p1, p2)
 
@@ -194,6 +182,21 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
     | False, True
     | True, False -> False
     | _, _ -> Iff (p, q)
+
+  let rec not_ = function
+    | True -> False
+    | False -> True
+    | And (p, q) -> or_ (not_ p) (not_ q)
+    | Or (p, q) -> and_ (not_ p) (not_ q)
+    | Imp (p, q) -> and_ p (not_ q)
+    | p -> Not p
+
+  and implies p q = match p, q with
+    | False, _ -> True
+    | _, True -> True
+    | True, _ -> q
+    | _, False -> not_ p
+    | _, _ -> Imp (p, q)
 
   let conj =
     List.fold_left and_ true_
@@ -250,10 +253,10 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
   
 
   (* OPTIMIZATIONS REMOVED *)
-  (* let not_ p = Not p *)
-  (* let and_ p q = And (p, q) *)
-  (* let or_ p q = Or (p, q) *)
-  (* let implies p q = Imp (p, q) *)
+  let not_ p = Not p
+  let and_ p q = And (p, q)
+  let or_ p q = Or (p, q)
+  let implies p q = Imp (p, q)
   (* let iff p q = Iff (p, q) *)
   (* let plus t1 t2 = Plus (t1, t2) *)
   (* let minus t1 t2 = Minus (t1, t2) *)

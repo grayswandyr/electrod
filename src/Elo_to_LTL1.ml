@@ -70,7 +70,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         );
       match quant with
         | G.Lone | G.One ->
-            failwith "Elo_to_LTL1.build_Quant: lone/one not implemented yet"
+            assert false        (* SIMPLIFIED *)
         | G.All | G.Some_ | G.No ->
             assert (List.length sim_bindings = 1); (* SIMPLIFIED *)
             let disj, xs, s = List.hd sim_bindings in
@@ -82,17 +82,30 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
               (* we zip the bound variables and the 1-tuples to get a list of
                  substitutions *)
               List.combine xs_as_vars tuples_as_idents
+              |> Fun.tap (fun res ->
+                    Msg.debug (fun m ->
+                          m "sub_for %a = %a"
+                            (Fmtc.(list Tuple.pp)) tuples
+                            (Fmtc.(brackets
+                                   @@ list
+                                   @@ pair ~sep:(const string "→") Var.pp
+                                   @@ G.pp_prim_exp Elo.pp_var Elo.pp_ident)) res
+                        ))
             in
 
             (* [pos_or_neg] tells whether the quantifier was a [no ...], in
-               which case we consider the whole as [all ... | not ...]. [neutral]
-               is the neutral element for the wedge or vee. *)
-            let (bigop, smallop, pos_or_neg, neutral) = match quant with
-              | G.All -> (wedge, (+&&), Fun.id, G.true_)
-              | G.Some_ -> (vee, (+||), Fun.id, G.false_)
-              | G.No -> (wedge, (+&&), not_, G.true_)
-              | G.Lone | G.One -> assert false
+               which case we consider the whole as [all ... | not ...]. [link]
+               tells how to connect a premise and a test in the may part of the
+               formula. *)
+            let (bigop, smallop, link, pos_or_neg) = match quant with
+              | G.All -> (wedge, and_, implies, Fun.id)
+              | G.Some_ -> (vee, or_, and_, Fun.id)
+              | G.No -> (wedge, and_, implies, not_)
+              | G.Lone | G.One -> assert false (* SIMPLIFIED *)
             in
+            (* Msg.debug (fun m -> *)
+            (*       m "must(%a) = %a" (G.pp_exp Elo.pp_var Elo.pp_ident) s *)
+            (*         TS.pp (env#may s)); *)
             let mustpart =
               bigop
                 ~range:(substs_of_sim_binding ~disj xs @@ TS.to_list @@ env#must s)
@@ -102,18 +115,23 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
                    @@ Elo.substitute#visit_prim_fml (sub_for tuples)
                    @@ G.block blk) (* b [as / xs] *)
             in
+            (* Msg.debug (fun m -> *)
+            (*       m "may(%a) = %a" (G.pp_exp Elo.pp_var Elo.pp_ident) s *)
+            (*         TS.pp (env#may s)); *)
             let maypart =
               bigop
                 ~range:(substs_of_sim_binding ~disj xs @@ TS.to_list @@ env#may s)
                 (fun tuples ->
                    (* concat because semantics of expressions expects *one* tuple *)
-                   s' (List.fold_left Tuple.(@@@)
-                         (List.hd tuples) (List.tl tuples))
-                   @=>
-                   pos_or_neg
-                   @@ self#visit_prim_fml env (* [[...]] *)
-                   @@ Elo.substitute#visit_prim_fml (sub_for tuples)
-                   @@ G.block blk) (* b [as / xs] *)
+                   let premise = s' (List.fold_left Tuple.(@@@)
+                                       (List.hd tuples) (List.tl tuples)) in
+                   let test =                    
+                     pos_or_neg
+                     @@ self#visit_prim_fml env (* [[...]] *)
+                     @@ Elo.substitute#visit_prim_fml (sub_for tuples)
+                     @@ G.block blk in (* b [as / xs] *)
+                   link premise test
+                )
             in
             smallop mustpart maypart 
 
@@ -318,7 +336,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       in
       (* Msg.debug *)
       (*   (fun m -> m "Elo_to_LTL1.build_Join <-- \ *)
-      (*                %a.%a@\nsup(%a) = %a@\nsup(%a) = %a@\neligible_pairs =@ %a" *)
+           (*                %a.%a@\nsup(%a) = %a@\nsup(%a) = %a@\neligible_pairs =@ %a" *)
       (*               (G.pp_exp Elo.pp_var Elo.pp_ident) r *)
       (*               (G.pp_exp Elo.pp_var Elo.pp_ident) s *)
       (*               (G.pp_exp Elo.pp_var Elo.pp_ident) r *)

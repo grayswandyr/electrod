@@ -3,6 +3,8 @@ open GenGoal
 
 module TS = TupleSet
 
+module L = Location
+
 (*******************************************************************************
  *  Simplify formulas: EXPECTED TO BE BE DONE AFTER CHECKING ARITIES
  *******************************************************************************)
@@ -12,45 +14,38 @@ let fresh_var base exp =
 
 (* simplify Elo goals *)
 class simplify = object (self : 'self)
-  inherit [_] GenGoal.map as super
+  inherit [_] map as super
 
   (* the environment is not used, setting it here at [()] to avoid unbound type
      variables *)
   method visit_'v () = Fun.id
 
   method visit_'i _ = Fun.id
- 
+
   method visit_Quant_One env q sim_bindings blk =
-    let open Location in
-    let open GenGoal in
     (*re-write one x1,y1:r1, x2,y2:r2 | phi into
-           some x1,y1:r1, x2,y2:r2 | (phi and all x1',x2':r1, x2',y2';r2 | ...)*)
+      some x1,y1:r1, x2,y2:r2 | (phi and all x1',x2':r1, x2',y2';r2 | ...)*)
 
     (* from the var list [x1, x2, ...] 
-            create [x1', x2', ...] and the assoc list [(x1, x1'), (x2, x2') ...] 
-            and the formula x1!=x1' or x2!=x2' or ...
-     *)
+       create [x1', x2', ...] and the assoc list [(x1, x1'), (x2, x2') ...] 
+       and the formula x1!=x1' or x2!=x2' or ...  *)
     let create_new_vars_and_assoc_list_and_comp_fml vs =
       List.fold_right
         (fun (Elo.BVar var) (new_vars, assoc, prim_fml) ->
-          let new_var = Var.fresh_copy var in
-          let new_var_as_ident = ident (Elo.var_ident new_var) in
-          (Elo.bound_var new_var)::new_vars,
-          CCList.Assoc.set ~eq:Var.equal
-                           var
-                           new_var_as_ident
-                           assoc
-          ,
+           let new_var = Var.fresh_copy var in
+           let new_var_as_ident = ident (Elo.var_ident new_var) in
+           (Elo.bound_var new_var :: new_vars,
+            CCList.Assoc.set ~eq:Var.equal var new_var_as_ident assoc,
             lbinary
-              (fml
-                 dummy @@
-                 rcomp
-                   (exp dummy @@ ident @@ Elo.var_ident var )
-                   REq
-                   (exp dummy @@ new_var_as_ident)
+              (fml L.dummy
+               @@ rcomp
+                    (exp L.dummy
+                     @@ ident @@ Elo.var_ident var)
+                    REq
+                    (exp L.dummy new_var_as_ident)
               )
               and_
-              (fml dummy prim_fml)
+              (fml L.dummy prim_fml))
         )
         vs
         ([], [], true_)
@@ -58,78 +53,74 @@ class simplify = object (self : 'self)
 
     let new_sim_bindings, assoc_new_vars, cmp_fml =
       List.fold_right
-        (fun  (disj, vars, e) (sim_bindings, acc_assoc, acc_fml) -> (
+        (fun (disj, vars, e) (sim_bindings, acc_assoc, acc_fml) -> 
            let (new_vars, assoc, prim_fml) =
              create_new_vars_and_assoc_list_and_comp_fml vars in
-           (disj, new_vars, e):: sim_bindings,
-           assoc @ acc_assoc,
-           lbinary
-             (fml dummy @@ prim_fml)
-             and_
-             (fml dummy acc_fml)
-        ))
+           ((disj, new_vars, e) :: sim_bindings,
+            assoc @ acc_assoc,
+            lbinary (fml L.dummy prim_fml) and_ (fml L.dummy acc_fml)))
         sim_bindings
-        ([],[], true_)
+        ([], [], true_)
     in
 
     (* subst_blk = phi [x1'\x1, x2'\x2, ...] *)
     let subst_blk = Elo.substitute#visit_block assoc_new_vars blk in
+
     (* conversion of the block in a formula *)
     let fml_subst_blk =
       List.fold_right
-        (fun curfml acc_fml -> (fml dummy @@ lbinary curfml and_ acc_fml))
+        (fun curfml acc_fml -> fml L.dummy @@ lbinary curfml and_ acc_fml)
         subst_blk
-        (fml dummy true_)
+        (fml L.dummy true_)
     in   
-    
+
     let temp_forall_fml =
       quant all new_sim_bindings
-            [fml dummy @@ lbinary fml_subst_blk impl (fml dummy cmp_fml)]
+        [fml L.dummy @@ lbinary fml_subst_blk impl (fml L.dummy cmp_fml)]
     in
     let temporary_fml =
       quant some sim_bindings 
-            [fml dummy @@ lbinary
-                            (fml dummy (block blk))
-                            and_ (fml dummy temp_forall_fml) ]
+        [fml L.dummy @@ lbinary
+                          (fml L.dummy (block blk))
+                          and_ (fml L.dummy temp_forall_fml) ]
     in
     self#visit_prim_fml env temporary_fml
 
   (* translate lone x:t|phi into one x:t|phi or no x:t|phi *)
   method visit_Quant_Lone env q sim_bindings blk =
-    let open Location in
     let res_fml =
       lbinary 
-        (fml dummy @@ quant one sim_bindings blk)
+        (fml L.dummy @@ quant one sim_bindings blk)
         or_
-        (fml dummy @@ quant no_ sim_bindings blk)
+        (fml L.dummy @@ quant no_ sim_bindings blk)
     in
     self#visit_prim_fml env res_fml
-                   
+
   (* split multiple simultaneous All/Some/No bindings into many quantifications *)
   method visit_Quant env q sim_bindings blk = 
     Msg.debug (fun m -> m "Simplify1.visit_Quant <-- %a"
                           Elo.(pp_prim_fml pp_var pp_ident)
-                        @@ quant q sim_bindings blk);
+                @@ quant q sim_bindings blk);
     match q with
-    | One -> self#visit_Quant_One env q sim_bindings blk
-    | Lone -> self#visit_Quant_Lone env q sim_bindings blk
-    | All | Some_ | No ->
-       let res = match sim_bindings with
-         | [] -> assert false
-         | [b] ->
-            let sim_bindings' =
-              List.map
-                (fun (disj, vs, e) -> (disj, vs, self#visit_exp env e))
-                sim_bindings in
-            let blk' = List.map (self#visit_fml env) blk in
-            quant q sim_bindings' blk'
-         | ((_, _, e) as b)::bs ->
-            quant q [b] [fml e.exp_loc @@ self#visit_Quant env q bs blk]
-       in
-       Msg.debug (fun m -> m "Simplify1.visit_Quant --> %a"
-                             Elo.(pp_prim_fml pp_var pp_ident)
-                             res);
-       res
+      | One -> self#visit_Quant_One env q sim_bindings blk
+      | Lone -> self#visit_Quant_Lone env q sim_bindings blk
+      | All | Some_ | No ->
+          let res = match sim_bindings with
+            | [] -> assert false
+            | [b] ->
+                let sim_bindings' =
+                  List.map
+                    (fun (disj, vs, e) -> (disj, vs, self#visit_exp env e))
+                    sim_bindings in
+                let blk' = List.map (self#visit_fml env) blk in
+                quant q sim_bindings' blk'
+            | ((_, _, e) as b)::bs ->
+                quant q [b] [fml e.exp_loc @@ self#visit_Quant env q bs blk]
+          in
+          Msg.debug (fun m -> m "Simplify1.visit_Quant --> %a"
+                                Elo.(pp_prim_fml pp_var pp_ident)
+                                res);
+          res
 
 
   (* substitute let bindings *)
@@ -151,24 +142,29 @@ class simplify = object (self : 'self)
                           (pp_prim_fml Elo.pp_var Elo.pp_ident) res)
 
   (* change relation qualifiers into formulas *)
-  method visit_Qual env qual expr =
+  method visit_Qual env q expr =
     Msg.debug (fun m -> m "Simplify1.visit_Qual <-- %a"
                           Elo.(pp_prim_fml pp_var pp_ident)
-                @@ GenGoal.qual qual expr);
-    let prim_fml = match qual with
+                @@ qual q expr);
+    let prim_fml = match q with
       | ROne ->
-          icomp (iexp expr.exp_loc @@ card expr) ieq (iexp expr.exp_loc @@ num 1)
+          quant one
+            [(false,
+              [Elo.bound_var @@ fresh_var "one" expr],
+              expr)]
+            [fml expr.exp_loc true_]
       | RLone ->
-          GenGoal.(lbinary (fml expr.exp_loc @@ qual rno expr)
-                     or_ (fml expr.exp_loc @@ qual rone expr))
+          (lbinary (fml expr.exp_loc @@ qual rno expr)
+             or_ (fml expr.exp_loc @@ qual rone expr))
       | RSome ->
-          rcomp expr not_in
-          @@ GenGoal.exp ~arity:None
-               ~must:(lazy TS.empty) ~sup:(lazy TS.empty) expr.exp_loc
-               none
+          quant some
+            [(false,
+              [Elo.bound_var @@ fresh_var "some" expr],
+              expr)]
+            [fml expr.exp_loc true_]
       | RNo ->
           rcomp expr in_
-          @@ GenGoal.exp ~arity:None
+          @@ exp ~arity:None
                ~must:(lazy TS.empty) ~sup:(lazy TS.empty) expr.exp_loc
                none
     in
@@ -187,7 +183,7 @@ class simplify = object (self : 'self)
       List.fold_right
         (fun arg r ->
            exp
-             Location.(span (arg.exp_loc, r.exp_loc))
+             L.(span (arg.exp_loc, r.exp_loc))
              ~arity:Option.(return @@ get_exn arg.arity + get_exn r.arity - 2)
              ~must:(lazy (TS.join (Lazy.force arg.must) (Lazy.force r.must)))
              ~sup:(lazy (TS.join (Lazy.force arg.sup) (Lazy.force r.sup)))
@@ -205,14 +201,14 @@ class simplify = object (self : 'self)
   method visit_Compr env sbs b =
     Msg.debug (fun m -> m "Simplify1.visit_Compr <-- %a"
                           (pp_prim_exp Elo.pp_var Elo.pp_ident)
-                          (GenGoal.compr sbs b));
+                          (compr sbs b));
     (* a function to compute all relevant pairs of disjoint variables for
        which a subformula will have to be generated. The function takes the
        product of [vs] with itself, except the diagonal and except pairs that
        are the transpose of the one being added (hence the [~eq] part). *)
     (* a utility function *)
     let make_var range v =
-      exp ~arity:range.arity ~must:range.must ~sup:range.sup range.exp_loc
+      exp ~arity:range.arity (* ~must:range.must ~sup:range.sup *) range.exp_loc
       @@ ident @@ Elo.var_ident_of_bound_var v
     in
     (* Given a set [vs] of variables, this function yields a list of formulas
@@ -238,9 +234,9 @@ class simplify = object (self : 'self)
                 acc
               else
                 ((x, y) :: pairs,
-                 GenGoal.(fml Location.dummy
-                          @@ rcomp (make_var range x) rneq (make_var range y)
-                         ) :: formulas)
+                 (fml L.dummy
+                  @@ rcomp (make_var range x) rneq (make_var range y)
+                 ) :: formulas)
            )
            ([], []) vs vs
     in
