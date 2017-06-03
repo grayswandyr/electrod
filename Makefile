@@ -87,3 +87,5 @@ check-config:
 
 
 .PHONY: all clean byte native profile debug check-config test doc doc-requisites test-requisites
+
+include $(shell ocamlfind query visitors)/Makefile.preprocess

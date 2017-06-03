@@ -164,9 +164,7 @@ class simplify = object (self : 'self)
             [fml expr.exp_loc true_]
       | RNo ->
           rcomp expr in_
-          @@ exp ~arity:None
-               ~must:(lazy TS.empty) ~sup:(lazy TS.empty) expr.exp_loc
-               none
+          @@ exp ~arity:None expr.exp_loc none
     in
     self#visit_prim_fml env prim_fml
     |> Fun.tap
@@ -185,8 +183,6 @@ class simplify = object (self : 'self)
            exp
              L.(span (arg.exp_loc, r.exp_loc))
              ~arity:Option.(return @@ get_exn arg.arity + get_exn r.arity - 2)
-             ~must:(lazy (TS.join (Lazy.force arg.must) (Lazy.force r.must)))
-             ~sup:(lazy (TS.join (Lazy.force arg.sup) (Lazy.force r.sup)))
            @@ rbinary arg join r
         ) args call
     in

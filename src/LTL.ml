@@ -253,10 +253,10 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
   
 
   (* OPTIMIZATIONS REMOVED *)
-  let not_ p = Not p
-  let and_ p q = And (p, q)
-  let or_ p q = Or (p, q)
-  let implies p q = Imp (p, q)
+  (* let not_ p = Not p *)
+  (* let and_ p q = And (p, q) *)
+  (* let or_ p q = Or (p, q) *)
+  (* let implies p q = Imp (p, q) *)
   (* let iff p q = Iff (p, q) *)
   (* let plus t1 t2 = Plus (t1, t2) *)
   (* let minus t1 t2 = Minus (t1, t2) *)

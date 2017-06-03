@@ -50,5 +50,11 @@ let may name domain =
   |> Relation.scope
   |> Scope.may
 
+let sup name domain =
+  assert (mem name domain);
+  get_exn name domain
+  |> Relation.scope
+  |> Scope.sup
+
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 
