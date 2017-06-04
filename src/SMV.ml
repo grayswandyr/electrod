@@ -11,7 +11,7 @@ module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL = struct
 
     type atom = At.t
 
-    let pp_atom = At.pp
+    let pp_atom = Fmtc.(styled Name.style) At.pp
 
     let pp_tcomp out (t : tcomp) =
       pf out "%s"
@@ -29,19 +29,19 @@ module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL = struct
         | True  -> pf out "true"
         | False  -> pf out "false"
         | Atom at -> pp_atom out at
-        | Not p -> pf out "!%a" pp p
+        | Not p -> prefix string pp out ("!", p)
         | And (p, q) -> infix string pp pp out ("&", p, q)
         | Or (p, q)-> infix string pp pp out ("|", p, q)
         | Imp (p, q)-> infix string pp pp out ("->", p, q)
         | Iff (p, q)-> infix string pp pp out ("<->", p, q)
         | Xor (p, q)-> infix string pp pp out ("xor", p, q)
         | Ite (c, t, e) -> pf out "@[<hov 2>(%a@ ?@ %a@ :@ %a)@]" pp c pp t pp e
-        | X p -> pf out "@[(X %a)@]" pp p
-        | F p -> pf out "@[(F %a)@]" pp p
-        | G p -> pf out "@[(G %a)@]" pp p
-        | Y p -> pf out "@[(Y %a)@]" pp p
-        | O p -> pf out "@[(O %a)@]" pp p
-        | H p -> pf out "@[(H %a)@]" pp p
+        | X p -> prefix string pp out ("X ", p)
+        | F p -> prefix string pp out ("F ", p)
+        | G p -> prefix string pp out ("G ", p)
+        | Y p -> prefix string pp out ("Y ", p)
+        | O p -> prefix string pp out ("O ", p)
+        | H p -> prefix string pp out ("H ", p)
         | U (p, q)-> infix string pp pp out ("U", p, q)
         | R (p, q)-> infix string pp pp out ("V", p, q)
         | S (p, q)-> infix string pp pp out ("S", p, q)
@@ -51,7 +51,7 @@ module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL = struct
       | Num n -> pf out "%d" n
       | Plus (t1, t2) -> infix string pp_term pp_term out ("+", t1, t2)
       | Minus (t1, t2) -> infix string pp_term pp_term out ("-", t1, t2)
-      | Neg t -> pf out "@[(- %a)@]" pp_term t
+      | Neg t -> prefix string pp_term out ("- ", t)
       | Count ts ->
           pf out "@[count(@[<hov 2>%a@])@]"
             (list ~sep:(const string "+") pp) ts

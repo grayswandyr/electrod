@@ -98,9 +98,9 @@ class simplify = object (self : 'self)
 
   (* split multiple simultaneous All/Some/No bindings into many quantifications *)
   method visit_Quant env q sim_bindings blk = 
-    Msg.debug (fun m -> m "Simplify1.visit_Quant <-- %a"
-                          Elo.(pp_prim_fml pp_var pp_ident)
-                @@ quant q sim_bindings blk);
+    (* Msg.debug (fun m -> m "Simplify1.visit_Quant <-- %a" *)
+    (*                       Elo.(pp_prim_fml pp_var pp_ident) *)
+    (*             @@ quant q sim_bindings blk); *)
     match q with
       | One -> self#visit_Quant_One env q sim_bindings blk
       | Lone -> self#visit_Quant_Lone env q sim_bindings blk
@@ -117,9 +117,9 @@ class simplify = object (self : 'self)
             | ((_, _, e) as b)::bs ->
                 quant q [b] [fml e.exp_loc @@ self#visit_Quant env q bs blk]
           in
-          Msg.debug (fun m -> m "Simplify1.visit_Quant --> %a"
-                                Elo.(pp_prim_fml pp_var pp_ident)
-                                res);
+          (* Msg.debug (fun m -> m "Simplify1.visit_Quant --> %a" *)
+          (*                       Elo.(pp_prim_fml pp_var pp_ident) *)
+          (*                       res); *)
           res
 
 
@@ -127,25 +127,25 @@ class simplify = object (self : 'self)
   method visit_Let env bindings fmls =
     (* substitute from right to left as a binding on the left may apply in the
        range of a binding on the right *)
-    Msg.debug (fun m -> m "Simplify1.visit_Let <-- %a"
-                          Elo.(pp_prim_fml pp_var pp_ident)
-                @@ let_ bindings fmls);
+    (* Msg.debug (fun m -> m "Simplify1.visit_Let <-- %a" *)
+    (*                       Elo.(pp_prim_fml pp_var pp_ident) *)
+    (*             @@ let_ bindings fmls); *)
     List.fold_right
       (function (Elo.BVar v, e) ->
          Elo.substitute#visit_prim_fml [(v, e.prim_exp)])
       bindings
       (block fmls)
     |> self#visit_prim_fml env
-    |> Fun.tap
-    @@ fun res ->
-    Msg.debug (fun m -> m "Simplify1.visit_Let --> %a"
-                          (pp_prim_fml Elo.pp_var Elo.pp_ident) res)
+    (* |> Fun.tap *)
+    (* @@ fun res -> *)
+    (* Msg.debug (fun m -> m "Simplify1.visit_Let --> %a" *)
+    (*                       (pp_prim_fml Elo.pp_var Elo.pp_ident) res) *)
 
   (* change relation qualifiers into formulas *)
   method visit_Qual env q expr =
-    Msg.debug (fun m -> m "Simplify1.visit_Qual <-- %a"
-                          Elo.(pp_prim_fml pp_var pp_ident)
-                @@ qual q expr);
+    (* Msg.debug (fun m -> m "Simplify1.visit_Qual <-- %a" *)
+    (*                       Elo.(pp_prim_fml pp_var pp_ident) *)
+    (*             @@ qual q expr); *)
     let prim_fml = match q with
       | ROne ->
           quant one
@@ -167,16 +167,16 @@ class simplify = object (self : 'self)
           @@ exp ~arity:None expr.exp_loc none
     in
     self#visit_prim_fml env prim_fml
-    |> Fun.tap
-    @@ fun res ->
-    Msg.debug (fun m -> m "Simplify1.visit_Qual --> %a"
-                          (pp_prim_fml Elo.pp_var Elo.pp_ident) res)
+    (* |> Fun.tap *)
+    (* @@ fun res -> *)
+    (* Msg.debug (fun m -> m "Simplify1.visit_Qual --> %a" *)
+    (*                       (pp_prim_fml Elo.pp_var Elo.pp_ident) res) *)
 
   (* change box join in join *)
   method visit_BoxJoin env call args =
-    Msg.debug (fun m -> m "Simplify1.visit_BoxJoin <-- %a[%a]"
-                          Elo.(pp_exp pp_var pp_ident) call
-                          Elo.(Fmtc.list @@ pp_exp pp_var pp_ident) args);
+    (* Msg.debug (fun m -> m "Simplify1.visit_BoxJoin <-- %a[%a]" *)
+    (*                       Elo.(pp_exp pp_var pp_ident) call *)
+    (*                       Elo.(Fmtc.list @@ pp_exp pp_var pp_ident) args); *)
     let res =
       List.fold_right
         (fun arg r ->
@@ -187,17 +187,17 @@ class simplify = object (self : 'self)
         ) args call
     in
     self#visit_prim_exp env res.prim_exp
-    |> Fun.tap
-    @@ fun res ->
-    Msg.debug (fun m -> m "Simplify1.visit_BoxJoin --> %a"
-                          (pp_prim_exp Elo.pp_var Elo.pp_ident)
-                          res)
+    (* |> Fun.tap *)
+    (* @@ fun res -> *)
+    (* Msg.debug (fun m -> m "Simplify1.visit_BoxJoin --> %a" *)
+    (*                       (pp_prim_exp Elo.pp_var Elo.pp_ident) *)
+    (*                       res) *)
 
 
   method visit_Compr env sbs b =
-    Msg.debug (fun m -> m "Simplify1.visit_Compr <-- %a"
-                          (pp_prim_exp Elo.pp_var Elo.pp_ident)
-                          (compr sbs b));
+    (* Msg.debug (fun m -> m "Simplify1.visit_Compr <-- %a" *)
+    (*                       (pp_prim_exp Elo.pp_var Elo.pp_ident) *)
+    (*                       (compr sbs b)); *)
     (* a function to compute all relevant pairs of disjoint variables for
        which a subformula will have to be generated. The function takes the
        product of [vs] with itself, except the diagonal and except pairs that
@@ -249,11 +249,11 @@ class simplify = object (self : 'self)
       (List.map
          (fun (_, vs, e) -> (false, vs, self#visit_exp env e)) sbs)
       (fmls @ List.map (self#visit_fml env) b)
-    |> Fun.tap
-    @@ fun res ->
-    Msg.debug (fun m -> m "Simplify1.visit_Compr --> %a"
-                          (pp_prim_exp Elo.pp_var Elo.pp_ident)
-                          res)
+    (* |> Fun.tap *)
+    (* @@ fun res -> *)
+    (* Msg.debug (fun m -> m "Simplify1.visit_Compr --> %a" *)
+    (*                       (pp_prim_exp Elo.pp_var Elo.pp_ident) *)
+    (*                       res) *)
 
 end
 

@@ -657,8 +657,7 @@ let check_arities elo =
             (fun arg r ->
                GenGoal.exp
                  Location.(span (arg.exp_loc, r.exp_loc))
-                 ~arity:Option.(
-                       (-) <$> ((+) <$> arg.arity <*> r.arity) <*> pure 2)
+                 ~arity:Option.(map2 (+) (pure (-2)) @@ map2 (+) arg.arity r.arity)
                  (* ~must:(lazy (TS.join (Lazy.force arg.must) (Lazy.force r.must))) *)
                  (* ~sup:(lazy (TS.join (Lazy.force arg.sup) (Lazy.force r.sup))) *)
                @@ rbinary arg join r
@@ -681,7 +680,7 @@ let check_arities elo =
             | [] -> assert false
             | hd::tl -> 
                 let ar =
-                  List.fold_left Option.(fun a b -> (+) <$> a <*> b) hd tl
+                  List.fold_left Option.(map2 (+)) hd tl
                 in
                 Result.return @@ update_exp exp ar (* must sup *)
         end
