@@ -4,9 +4,9 @@ r : {} { (a a) (a b) (a c) };
 
 E : { (a) (b) };
 
-F : {} { a b c};
+F : {} { a b };
 
-G : {} univ;
+G : {} {d};
 
 sat
 

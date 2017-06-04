@@ -67,12 +67,9 @@ val diagonal : t -> t
 (** Join of two tuple sets.  *)
 val join : t -> t -> t
 
-(** Infix version(s) of preivous operations.  *)
-module Infix : sig
-  (** [mem] *)
-  val ( $: ) : Tuple.t -> t -> bool
-end
-
+(** Guess. *)
+val transitive_closure : t -> t
+  
 (** Filters tuples depending on a predicate.  *)
 val filter : (Tuple.t -> bool) -> t -> t
 

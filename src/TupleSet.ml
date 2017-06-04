@@ -104,12 +104,18 @@ let join b1 b2 =
           else None)
   |> of_seq
 
+let transitive_closure b =
+  assert (inferred_arity b = 2);
+  let old = ref b in
+  let next = ref (join b b) in
+  while not @@ TS.equal !old !next do
+    old := !next;
+    next := join !next b
+  done;
+  !next
+
 let mem t bnd = TS.mem t bnd
 
 let filter = TS.filter
 
   
-
-module Infix = struct
-  let ( $: ) = mem
-end

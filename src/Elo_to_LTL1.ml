@@ -6,10 +6,150 @@ module TS = TupleSet
 module MakeLtlConverter (Ltl : LTL.S) = struct
   open Ltl
   open Ltl.Infix
-  open TS.Infix
 
   type goal = Elo.goal
 
+  (*****************************************************************
+   * Bound computation
+   *************************************************************************************** *)
+  type bounds = {
+    must : TS.t;
+    sup : TS.t;
+    may : TS.t;
+  }
+
+  let bounds must sup = { must; sup; may = TS.diff sup must }
+
+
+  let product_of_sim_binding (disj, vars, ts) =
+    let open List in
+    let dom = TS.to_list ts in
+    let lg = length vars in
+    (* create as many copies as necessary (= nb of variables) of the domain *)
+    init lg (fun _ -> dom)
+    (* take their cartesian product *)
+    |> cartesian_product
+    (* remove lines where there are tuples in common if [disj = true] *)
+    |> (if disj then
+          filter (fun l -> length l = length @@ sort_uniq l) else Fun.id)
+    >|= (function [] -> assert false | hd::tl -> fold_left Tuple.(@@@) hd tl)
+    (* |> TS.of_tuples *)
+         
+  let product_of_sim_bindings sbs =
+    let open List in
+    map product_of_sim_binding sbs
+    |> cartesian_product
+    >|= (function [] -> assert false | hd::tl -> fold_left Tuple.(@@@) hd tl)
+    |> TS.of_tuples
+    |> Fun.tap @@ fun res ->
+    Msg.debug (fun m ->
+          m "product_of_sim_bindings %a =@\n%a"
+            Fmtc.(list ~sep:(const string ", ")
+                  @@ tuple3 ~sep1:sp ~sep2:(const string " : ")
+                       bool
+                       (list ~sep:(const string ", ") Elo.pp_var)
+                       TS.pp)
+            sbs
+            TS.pp res
+        )
+    
+    
+  
+  let rec bounds_exp domain exp =
+    bounds_prim_exp domain exp.G.prim_exp
+    (* |> Fun.tap @@ fun res -> *)
+    (* Msg.debug (fun m -> *)
+    (*       m "bounds_exp %a: must = %a may = %a" *)
+    (*         (G.pp_exp Elo.pp_var Elo.pp_ident) exp *)
+    (*         TS.pp res.must *)
+    (*         TS.pp res.may *)
+    (*     ) *)
+
+  and bounds_prim_exp domain pe =
+    let open G in
+    let open TS in
+    match pe with         
+      | BoxJoin (_,_) -> assert false (* SIMPLIFIED *)
+      | Ident (Elo.Var _) -> assert false (* impossible: substituted *)
+      | Ident (Elo.Tuple t) ->
+          let singleton = of_tuples [t] in
+          bounds singleton singleton
+      | Ident (Elo.Name n) -> 
+          let rel = Domain.get_exn n domain in
+          bounds (Relation.must rel) (Relation.sup rel)
+      | None_  ->
+          bounds empty empty 
+      | Univ  ->
+          let univ = Domain.univ_atoms domain in
+          bounds univ univ
+      | Iden  ->
+          let iden = Domain.get_exn Name.iden domain in
+          bounds (Relation.must iden) (Relation.sup iden)
+      | RUn (Transpose, e) ->
+          let b = bounds_exp domain e in
+          bounds (transpose b.must) (transpose b.sup)
+      | RUn (TClos, e) -> 
+          let b = bounds_exp domain e in
+          bounds (transitive_closure b.must) (transitive_closure b.sup)
+      | RUn (RTClos, e) -> 
+          let iden = Domain.get_exn Name.iden domain in
+          let b = bounds_exp domain e in
+          bounds (union b.must @@ Relation.must iden)
+            (union b.sup @@ Relation.sup iden)
+      | RBin (e1, Union ,e2) -> 
+          let b1 = bounds_exp domain e1 in
+          let b2 = bounds_exp domain e2 in
+          bounds (union b1.must b2.must) (union b1.sup b2.sup)
+      | RBin (e1, Inter ,e2) -> 
+          let b1 = bounds_exp domain e1 in
+          let b2 = bounds_exp domain e2 in
+          bounds (inter b1.must b2.must) (inter b1.sup b2.sup)
+      | RBin (e1, Over ,e2) -> 
+          let b1 = bounds_exp domain e1 in
+          let b2 = bounds_exp domain e2 in
+          bounds (override b1.must b2.must) (override b1.sup b2.sup)
+      | RBin (e1, LProj ,e2) -> 
+          let b1 = bounds_exp domain e1 in
+          let b2 = bounds_exp domain e2 in
+          bounds (lproj b1.must b2.must) (lproj b1.sup b2.sup)
+      | RBin (e1, RProj ,e2) -> 
+          let b1 = bounds_exp domain e1 in
+          let b2 = bounds_exp domain e2 in
+          bounds (rproj b1.must b2.must) (rproj b1.sup b2.sup)
+      | RBin (e1, Prod ,e2) -> 
+          let b1 = bounds_exp domain e1 in
+          let b2 = bounds_exp domain e2 in
+          bounds (product b1.must b2.must) (product b1.sup b2.sup)
+      | RBin (e1, Diff ,e2) -> 
+          let b1 = bounds_exp domain e1 in
+          let b2 = bounds_exp domain e2 in
+          bounds (diff b1.must b2.must) (diff b1.sup b2.sup)
+      | RBin (e1, Join ,e2) -> 
+          let b1 = bounds_exp domain e1 in
+          let b2 = bounds_exp domain e2 in
+          bounds (join b1.must b2.must) (join b1.sup b2.sup)
+      | RIte (_, e1, e2) ->
+          let b1 = bounds_exp domain e1 in
+          let b2 = bounds_exp domain e2 in
+          bounds (inter b1.must b2.must) (union b1.sup b2.sup) 
+      | Prime e ->
+          bounds_exp domain e
+      | Compr (sim_bindings, _) ->
+          let musts =
+            List.map (fun (disj, vars, e) -> (disj, vars, (bounds_exp domain e).must))
+              sim_bindings
+          in
+          let sups =
+            List.map (fun (disj, vars, e) -> (disj, vars, (bounds_exp domain e).sup))
+              sim_bindings
+          in
+          bounds (product_of_sim_bindings musts) (product_of_sim_bindings sups)
+
+
+
+  (*****************************************************************
+   * Semantic function
+   *************************************************************************************** *)  
 
   class ['env] converter = object (self : 'self)
     inherit ['self] GenGoalRecursor.recursor as super
@@ -59,7 +199,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
             assert (List.length sim_bindings = 1); (* SIMPLIFIED *)
             let disj, xs, s = List.hd sim_bindings in
             let _, _, s' = List.hd sim_bindings' in
-            let substs_of_sim_binding ~disj (vars : Elo.var list) (dom : Tuple.t list) =
+            let tuples_of_sim_binding ~disj (vars : Elo.var list) (dom : Tuple.t list) =
               let open List in
               (* (\* substituitons take [Var.t] keys *\) *)
               (* let xs = map (fun (Elo.BVar v) -> v) vars in *)
@@ -106,10 +246,10 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
             (* Msg.debug (fun m -> *)
             (*       m "must(%a) = %a" (G.pp_exp Elo.pp_var Elo.pp_ident) s *)
             (*         TS.pp (env#may s)); *)
-            let must, may, _ = env#must_may_sup s in
+            let { must; may; _ } = env#must_may_sup s in
             let mustpart =
               bigop
-                ~range:(substs_of_sim_binding ~disj xs @@ TS.to_list must)
+                ~range:(tuples_of_sim_binding ~disj xs @@ TS.to_list must)
                 (fun tuples -> 
                    pos_or_neg
                    @@ self#visit_prim_fml env (* [[...]] *)
@@ -121,7 +261,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
             (*         TS.pp (env#may s)); *)
             let maypart =
               bigop
-                ~range:(substs_of_sim_binding ~disj xs @@ TS.to_list may)
+                ~range:(tuples_of_sim_binding ~disj xs @@ TS.to_list may)
                 (fun tuples ->
                    (* concat because semantics of expressions expects *one* tuple *)
                    let premise = s' (List.fold_left Tuple.(@@@)
@@ -190,9 +330,9 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       self#build_In env r s r' s' +&& self#build_In env s r s' r'
 
     method build_In (env : 'env) r s r' s' =
-      let must_r, may_r, _ = env#must_may_sup r in
-      wedge ~range:(TS.to_seq must_r) s'
-      +&& wedge ~range:(TS.to_seq may_r) (fun bs -> r' bs @=> s' bs)
+      let { must; may; _} = env#must_may_sup r in
+      wedge ~range:(TS.to_seq must) s'
+      +&& wedge ~range:(TS.to_seq may) (fun bs -> r' bs @=> s' bs)
 
     method build_NotIn (env : 'env) r s r' s' =
       not_ @@ self#build_In env r s r' s'
@@ -329,8 +469,8 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     method build_Join (env : 'env) r s r' s' =  fun tuple ->
       let eligible_pairs =
-        let _, _, sup_r = env#must_may_sup r in
-        let _, _, sup_s = env#must_may_sup s in
+        let sup_r = (env#must_may_sup r).sup in
+        let sup_s = (env#must_may_sup s).sup in
         let s1 = TS.to_seq sup_r in
         let s2 = TS.to_seq sup_s in
         Sequence.product s1 s2
@@ -356,7 +496,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       r' tuple +&& (s' @@ Tuple.(of_list1 [ith 0 tuple]))
 
     method build_Prod (env : 'env) r s r' s' = fun tuple ->
-      let _, _, sup_r = env#must_may_sup r in
+      let sup_r = (env#must_may_sup r).sup in
       let ar_r = TS.inferred_arity sup_r in
       let t1, t2 = Tuple.split tuple ar_r in
       r' t1 +&& s' t2
@@ -401,115 +541,23 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_Sub (env : 'env) = minus
 
     method build_Card (env : 'env) r r' =
-      let must_r, may_r, _ = env#must_may_sup r in
-      let must_card = num @@ TS.size must_r in
+      let { must; may; _ } = env#must_may_sup r in
+      let must_card = num @@ TS.size must in
       let may_card =
-        count @@ List.map r' @@ TS.to_list may_r
+        count @@ List.map r' @@ TS.to_list may
       in
       plus must_card may_card
 
 
   end
 
-  type bounds = {
-    inf : TS.t;
-    sup : TS.t;
-    may : TS.t;
-  }
-
-  let bounds inf sup = { inf; sup; may = TS.diff sup inf }
-
-  let rec bounds_exp domain exp =
-    bounds_prim_exp domain exp.G.prim_exp
-    (* |> Fun.tap @@ fun res -> *)
-    (* Msg.debug (fun m -> *)
-    (*       m "bounds_exp %a: must = %a may = %a" *)
-    (*         (G.pp_exp Elo.pp_var Elo.pp_ident) exp *)
-    (*         TS.pp res.inf *)
-    (*         TS.pp res.may *)
-    (*     ) *)
-
-  and bounds_prim_exp domain pe =
-    let open G in
-    let open TS in
-    match pe with
-      | None_  ->
-          bounds empty empty 
-      | Univ  ->
-          let univ = Domain.univ_atoms domain in
-          bounds univ univ
-      | Iden  ->
-          let iden = Domain.get_exn Name.iden domain in
-          bounds (Relation.must iden) (Relation.sup iden)
-      | Ident (Elo.Var _) -> assert false (* impossible: substituted *)
-      | Ident (Elo.Tuple t) ->
-          let singleton = of_tuples [t] in
-          bounds singleton singleton
-      | Ident (Elo.Name n) -> 
-          let rel = Domain.get_exn n domain in
-          bounds (Relation.must rel) (Relation.sup rel)
-      | RUn (Transpose, e) ->
-          let b = bounds_exp domain e in
-          bounds (transpose b.inf) (transpose b.sup)
-      | RUn (TClos, e) -> failwith @@ "TODO " ^ __LOC__
-      | RUn (RTClos, e) -> 
-          let iden = Domain.get_exn Name.iden domain in
-          let b = bounds_exp domain e in
-          bounds (union b.inf @@ Relation.must iden)
-            (union b.sup @@ Relation.sup iden)
-      | RBin (e1, Union ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
-          bounds (union b1.inf b2.inf) (union b1.sup b2.sup)
-      | RBin (e1, Inter ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
-          bounds (inter b1.inf b2.inf) (inter b1.sup b2.sup)
-      | RBin (e1, Over ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
-          bounds (override b1.inf b2.inf) (override b1.sup b2.sup)
-      | RBin (e1, LProj ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
-          bounds (lproj b1.inf b2.inf) (lproj b1.sup b2.sup)
-      | RBin (e1, RProj ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
-          bounds (rproj b1.inf b2.inf) (rproj b1.sup b2.sup)
-      | RBin (e1, Prod ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
-          bounds (product b1.inf b2.inf) (product b1.sup b2.sup)
-      | RBin (e1, Diff ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
-          bounds (diff b1.inf b2.inf) (diff b1.sup b2.sup)
-      | RBin (e1, Join ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
-          bounds (join b1.inf b2.inf) (join b1.sup b2.sup)
-      | RIte (_, e1, e2) ->
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
-          bounds (inter b1.inf b2.inf) (union b1.sup b2.sup)          
-      | BoxJoin (_,_) -> assert false (* SIMPLIFIED *)
-      | Compr (sim_bindings, _) ->
-          (* TODO simply iterate a product? consider disj to remove pairs from bounds? *)
-          failwith @@ "TODO " ^ __LOC__
-      | Prime e ->
-          bounds_exp domain e
-
-  let split { inf; sup; may } =
-    (inf, may, sup)
 
   class environment (elo : Elo.t) = object (self : 'self)
-
     method domain = Elo.(elo.domain)
-
+    
     method must_may_sup (e : (Elo.var, Elo.ident) G.exp) =
       (* TODO add hash for expressions ? *)
-      CCCache.(with_cache (lru 256)) Fun.(split % bounds_exp Elo.(elo.domain)) e
+      CCCache.(with_cache (lru 256)) bounds_exp Elo.(elo.domain) e
   end
 
 
