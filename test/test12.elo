@@ -2,15 +2,16 @@ univ : { a b c d e f g };
 
 r : {} { (a a) (a b) (a c) };
 
-E : { (a) (b) };
+E : { (a) (b) c d };
 
-F : {} { a b };
+F : {} { a b e};
 
-G : {} {d};
+G : {} {d f};
 
 sat
+lone { x, y : E, disj z, t : F, u : G | true};
 
-one { x, y : E, disj z, t : F, u : G | true};
 
 some r[F] + r[r[r[E]]];
 
+lone E->E->F->F->G;

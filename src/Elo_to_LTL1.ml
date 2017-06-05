@@ -57,20 +57,23 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
   
   let rec bounds_exp domain exp =
     bounds_prim_exp domain exp.G.prim_exp
-    (* |> Fun.tap @@ fun res -> *)
-    (* Msg.debug (fun m -> *)
-    (*       m "bounds_exp %a: must = %a may = %a" *)
-    (*         (G.pp_exp Elo.pp_var Elo.pp_ident) exp *)
-    (*         TS.pp res.must *)
-    (*         TS.pp res.may *)
-    (*     ) *)
+  (* |> Fun.tap @@ fun res -> *)
+  (* Msg.debug (fun m -> *)
+  (*       m "bounds_exp %a: must = %a may = %a" *)
+  (*         (G.pp_exp Elo.pp_var Elo.pp_ident) exp *)
+  (*         TS.pp res.must *)
+  (*         TS.pp res.may *)
+  (*     ) *)
 
   and bounds_prim_exp domain pe =
     let open G in
     let open TS in
     match pe with         
       | BoxJoin (_,_) -> assert false (* SIMPLIFIED *)
-      | Ident (Elo.Var _) -> assert false (* impossible: substituted *)
+      | Ident (Elo.Var v) ->
+          failwith
+          @@ Fmtc.strf "Elo_to_LTL1.bounds_prim_exp: %a should have been substituted"
+               Var.pp v(* impossible: substituted *)
       | Ident (Elo.Tuple t) ->
           let singleton = of_tuples [t] in
           bounds singleton singleton
@@ -135,15 +138,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       | Prime e ->
           bounds_exp domain e
       | Compr (sim_bindings, _) ->
-          let musts =
-            List.map (fun (disj, vars, e) -> (disj, vars, (bounds_exp domain e).must))
-              sim_bindings
-          in
-          let sups =
-            List.map (fun (disj, vars, e) -> (disj, vars, (bounds_exp domain e).sup))
-              sim_bindings
-          in
-          bounds (product_of_sim_bindings musts) (product_of_sim_bindings sups)
+          failwith "Elo_to_LTL1.bounds_prim_exp(Compr): unimplemented (bound substitutions needed in telescopes!)"
 
 
 
