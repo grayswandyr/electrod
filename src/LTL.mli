@@ -48,15 +48,15 @@ module type S =
     val false_ : t
     val atom : Name.t -> Tuple.t -> t
     val not_ : t -> t
-    val and_ : t -> t -> t
-    val or_ : t -> t -> t
-    val implies : t -> t -> t
+    val and_ : t -> t Lazy.t -> t
+    val or_ : t -> t Lazy.t -> t
+    val implies : t -> t Lazy.t -> t
     val xor : t -> t -> t
     val iff : t -> t -> t
     val conj : t list -> t
     val disj : t list -> t
-    val wedge : range:'a Sequence.t -> ('a -> t) -> t
-    val vee : range:'a Sequence.t -> ('a -> t) -> t
+    val wedge : range:'a Sequence.t -> ('a -> t Lazy.t) -> t
+    val vee : range:'a Sequence.t -> ('a -> t Lazy.t) -> t
     val ifthenelse : t -> t -> t -> t
     val next : t -> t
     val always : t -> t
@@ -83,9 +83,9 @@ module type S =
     module Infix :
       sig
         val ( !! ) : t -> t
-        val ( +|| ) : t -> t -> t
-        val ( +&& ) : t -> t -> t
-        val ( @=> ) : t -> t -> t
+        val ( +|| ) : t -> t Lazy.t -> t
+        val ( +&& ) : t -> t Lazy.t -> t
+        val ( @=> ) : t -> t Lazy.t -> t
         val ( @<=> ) : t -> t -> t
       end
   end

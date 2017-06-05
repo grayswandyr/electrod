@@ -251,28 +251,31 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
               bigop
                 ~range:(tuples_of_sim_binding ~disj xs @@ TS.to_list must)
                 (fun tuples -> 
-                   pos_or_neg
-                   @@ self#visit_prim_fml env (* [[...]] *)
-                   @@ Elo.substitute#visit_prim_fml (sub_for tuples)
-                   @@ G.block blk) (* b [as / xs] *)
+                   lazy (pos_or_neg
+                         @@ self#visit_prim_fml env (* [[...]] *)
+                         @@ Elo.substitute#visit_prim_fml (sub_for tuples)
+                         @@ G.block blk)) (* b [as / xs] *)
             in
             (* Msg.debug (fun m -> *)
             (*       m "may(%a) = %a" (G.pp_exp Elo.pp_var Elo.pp_ident) s *)
             (*         TS.pp (env#may s)); *)
             let maypart =
-              bigop
-                ~range:(tuples_of_sim_binding ~disj xs @@ TS.to_list may)
-                (fun tuples ->
-                   (* concat because semantics of expressions expects *one* tuple *)
-                   let premise = s' (List.fold_left Tuple.(@@@)
-                                       (List.hd tuples) (List.tl tuples)) in
-                   let test =                    
-                     pos_or_neg
-                     @@ self#visit_prim_fml env (* [[...]] *)
-                     @@ Elo.substitute#visit_prim_fml (sub_for tuples)
-                     @@ G.block blk in (* b [as / xs] *)
-                   link premise test
-                )
+              lazy 
+                (bigop
+                   ~range:(tuples_of_sim_binding ~disj xs @@ TS.to_list may)
+                   (fun tuples ->
+                      (* concat because semantics of expressions expects *one* tuple *)
+                      let premise = s' (List.fold_left Tuple.(@@@)
+                                          (List.hd tuples) (List.tl tuples)) in
+                      let test =
+                        lazy
+                          (pos_or_neg
+                           @@ self#visit_prim_fml env (* [[...]] *)
+                           @@ Elo.substitute#visit_prim_fml (sub_for tuples)
+                           @@ G.block blk) (* b [as / xs] *)
+                      in
+                      lazy (link premise test)
+                   ))
             in
             smallop mustpart maypart 
 
@@ -290,15 +293,15 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     method build_LBin (env : 'env) f1 _ f2 f1_r op f2_r = op f1 f2 f1_r f2_r
 
-    method build_And (env : 'env) _ _ = and_          
+    method build_And (env : 'env) _ _ = fun a b -> and_ a (lazy b)
 
     method build_Iff (env : 'env) _ _ = iff
 
-    method build_Imp (env : 'env) _ _ = implies
+    method build_Imp (env : 'env) _ _ = fun a b -> implies a (lazy b)
 
     method build_U (env : 'env) _ _ = until
 
-    method build_Or (env : 'env) _ _ = or_
+    method build_Or (env : 'env) _ _ = fun a b -> or_ a (lazy b)
 
     method build_R (env : 'env) _ _ = releases
 
@@ -327,12 +330,21 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_RComp (env : 'env) f1 _ f2 f1' op' f2' = op' f1 f2 f1' f2'
 
     method build_REq (env : 'env) r s r' s' =
-      self#build_In env r s r' s' +&& self#build_In env s r s' r'
+      let r_bounds = env#must_may_sup r in
+      let s_bounds = env#must_may_sup s in
+      let inter = TS.inter r_bounds.may s_bounds.may in
+      wedge ~range:(TS.to_seq r_bounds.must) (fun t -> lazy (s' t))
+      +&& lazy (wedge ~range:(TS.to_seq s_bounds.must) (fun t -> lazy (r' t)))
+      +&& lazy (wedge ~range:(TS.to_seq inter) (fun bs -> lazy (r' bs @<=> s' bs)))
+      +&& lazy (wedge ~range:(TS.to_seq @@ TS.diff r_bounds.may inter)
+                  (fun bs -> lazy (r' bs @=> lazy (s' bs))))
+      +&& lazy (wedge ~range:(TS.to_seq @@ TS.diff s_bounds.may inter)
+                  (fun bs -> lazy (s' bs @=> lazy (r' bs))))    
 
     method build_In (env : 'env) r s r' s' =
       let { must; may; _} = env#must_may_sup r in
-      wedge ~range:(TS.to_seq must) s'
-      +&& wedge ~range:(TS.to_seq may) (fun bs -> r' bs @=> s' bs)
+      wedge ~range:(TS.to_seq must) (fun t -> lazy (s' t))
+      +&& lazy (wedge ~range:(TS.to_seq may) (fun bs -> lazy (r' bs @=> lazy (s' bs))))
 
     method build_NotIn (env : 'env) r s r' s' =
       not_ @@ self#build_In env r s r' s'
@@ -456,16 +468,16 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_Prime (env : 'env) _ e' = fun tuple -> next @@ e' tuple
 
     method build_RIte (env : 'env) _ _ _ f_r e1_r e2_r = fun tuple -> 
-      f_r @=> e1_r tuple +&& not_ f_r @=> e2_r tuple
+      f_r @=> lazy (e1_r tuple +&& lazy (not_ f_r @=> lazy (e2_r tuple)))
 
 
     (* rbinop *)
 
     method build_RBin (env : 'env) f1 _ f2 f1' op' f2' = op' f1 f2 f1' f2'
 
-    method build_Union (env : 'env) _ _ e1 e2 = fun x -> e1 x +|| e2 x
+    method build_Union (env : 'env) _ _ e1 e2 = fun x -> e1 x +|| lazy (e2 x)
 
-    method build_Inter (env : 'env) _ _ e1 e2 = fun x -> e1 x +&& e2 x
+    method build_Inter (env : 'env) _ _ e1 e2 = fun x -> e1 x +&& lazy (e2 x)
 
     method build_Join (env : 'env) r s r' s' =  fun tuple ->
       let eligible_pairs =
@@ -489,27 +501,26 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       (*                @@ Fmtc.brackets @@ Fmt.pair ~sep:Fmtc.sp Tuple.pp Tuple.pp) *)
       (*               eligible_pairs *)
       (*   ); *)
-      vee ~range:eligible_pairs (fun (bs, cs) -> r' bs +&& s' cs)
+      vee ~range:eligible_pairs (fun (bs, cs) -> lazy (r' bs +&& lazy (s' cs)))
 
 
     method build_LProj (env : 'env) _ _ s' r' = fun tuple -> 
-      r' tuple +&& (s' @@ Tuple.(of_list1 [ith 0 tuple]))
+      r' tuple +&& lazy (s' @@ Tuple.(of_list1 [ith 0 tuple]))
 
     method build_Prod (env : 'env) r s r' s' = fun tuple ->
-      let sup_r = (env#must_may_sup r).sup in
-      let ar_r = TS.inferred_arity sup_r in
+      let ar_r = Option.get_exn r.G.arity in
       let t1, t2 = Tuple.split tuple ar_r in
-      r' t1 +&& s' t2
+      r' t1 +&& lazy (s' t2)
 
 
     method build_RProj (env : 'env) _ _ r' s' = fun tuple -> 
       let lg = Tuple.arity tuple in
-      r' tuple +&& (s' @@ Tuple.of_list1 [Tuple.ith (lg - 1) tuple])
+      r' tuple +&& lazy (s' @@ Tuple.of_list1 [Tuple.ith (lg - 1) tuple])
 
-    method build_Diff (env : 'env) _ _ e' f' = fun x -> e' x +&& not_ (f' x)
+    method build_Diff (env : 'env) _ _ e' f' = fun x -> e' x +&& lazy (not_ (f' x))
 
     method build_Over (env : 'env) _ _ r' s' = fun tuple -> 
-      s' tuple +|| (r' tuple +&& (not_ @@ s' Tuple.(of_list1 [ith 0 tuple])))
+      s' tuple +|| lazy (r' tuple +&& lazy (not_ @@ s' Tuple.(of_list1 [ith 0 tuple])))
 
 
     (* runop *)
@@ -517,7 +528,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_RUn (env : 'env) _ e op e_r = op e e_r
 
     method build_RTClos (env : 'env) r r' = fun tuple ->
-      self#build_Iden env tuple +|| self#visit_RUn env G.TClos r tuple
+      self#build_Iden env tuple +|| lazy (self#visit_RUn env G.TClos r tuple)
 
     method build_Transpose (env : 'env) _ r' = fun tuple -> 
       r' @@ Tuple.transpose tuple

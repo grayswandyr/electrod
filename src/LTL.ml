@@ -58,17 +58,17 @@ module type S = sig
 
   val not_ : t -> t
 
-  val and_ : t -> t -> t
-  val or_ : t -> t -> t
-  val implies : t -> t -> t
+  val and_ : t -> t Lazy.t -> t
+  val or_ : t -> t Lazy.t -> t
+  val implies : t -> t Lazy.t -> t
   val xor : t -> t -> t
   val iff : t -> t -> t
 
   val conj : t list -> t
   val disj : t list -> t
 
-  val wedge : range:('a Sequence.t) -> ('a -> t) -> t
-  val vee : range:('a Sequence.t) -> ('a -> t) -> t
+  val wedge : range:('a Sequence.t) -> ('a -> t Lazy.t) -> t
+  val vee : range:('a Sequence.t) -> ('a -> t Lazy.t) -> t
 
   val ifthenelse : t -> t -> t -> t
 
@@ -104,10 +104,10 @@ module type S = sig
     (* 1 *)
     val ( !! ) : t -> t 
     (* 2 *)
-    val ( +|| ) : t -> t -> t
-    val ( +&& ) : t -> t -> t
+    val ( +|| ) : t -> t Lazy.t -> t
+    val ( +&& ) : t -> t Lazy.t -> t
     (* 3 *)
-    val ( @=> ) : t -> t -> t
+    val ( @=> ) : t -> t Lazy.t -> t
     val ( @<=> ) : t -> t -> t
   end
 
@@ -161,18 +161,18 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
   let atom r ts = Atom (At.make r ts)
 
   let and_ p q = match p, q with
-    | False, _
-    | _, False -> False
-    | True, _ -> q
-    | _, True -> p
-    | _, _ -> And (p, q)
+    | False, _ -> False
+    | True, lazy q -> q
+    | _, lazy False -> False
+    | _, lazy True -> p
+    | _, lazy q -> And (p, q)
 
   let or_ p1 p2 = match p1, p2 with
     | True, _
-    | _, True -> True
-    | False, p
-    | p, False -> p
-    | _, _ -> Or (p1, p2)
+    | _, lazy True -> True
+    | False, lazy p
+    | p, lazy False -> p
+    | _, lazy q -> Or (p1, q)
   
   let xor p1 p2 = Xor (p1, p2)
 
@@ -186,23 +186,23 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
   let rec not_ = function
     | True -> False
     | False -> True
-    | And (p, q) -> or_ (not_ p) (not_ q)
-    | Or (p, q) -> and_ (not_ p) (not_ q)
-    | Imp (p, q) -> and_ p (not_ q)
+    | And (p, q) -> or_ (not_ p) (lazy (not_ q))
+    | Or (p, q) -> and_ (not_ p) (lazy (not_ q))
+    | Imp (p, q) -> and_ p (lazy (not_ q))
     | p -> Not p
 
   and implies p q = match p, q with
     | False, _ -> True
-    | _, True -> True
-    | True, _ -> q
-    | _, False -> not_ p
-    | _, _ -> Imp (p, q)
+    | _, lazy True -> True
+    | True, lazy q2 -> q2
+    | _, lazy False -> not_ p
+    | _, lazy q2 -> Imp (p, q2)
 
   let conj =
-    List.fold_left and_ true_
+    List.fold_left (fun a b -> and_ a (lazy b)) true_
 
   let disj =
-    List.fold_left or_ false_
+    List.fold_left (fun a b -> or_ a (lazy b)) false_
 
   let ifthenelse c t e = Ite (c, t, e)
 
