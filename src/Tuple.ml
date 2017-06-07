@@ -26,6 +26,10 @@ let ith i tuple =
 
 let ( @@@ ) t1 t2 = Array.append t1 t2
 
+let concat = function
+  | [] -> invalid_arg "Tuple.concat: empty list of tuples"
+  | hd::tl -> List.fold_left (@@@) hd tl
+
 let compare t1 t2 = Array.compare Atom.compare t1 t2
 
 let equal t1 t2 = Array.equal Atom.equal t1 t2

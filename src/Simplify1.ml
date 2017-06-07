@@ -194,66 +194,66 @@ class simplify = object (self : 'self)
     (*                       res) *)
 
 
-  method visit_Compr env sbs b =
-    (* Msg.debug (fun m -> m "Simplify1.visit_Compr <-- %a" *)
-    (*                       (pp_prim_exp Elo.pp_var Elo.pp_ident) *)
-    (*                       (compr sbs b)); *)
-    (* a function to compute all relevant pairs of disjoint variables for
-       which a subformula will have to be generated. The function takes the
-       product of [vs] with itself, except the diagonal and except pairs that
-       are the transpose of the one being added (hence the [~eq] part). *)
-    (* a utility function *)
-    let make_var range v =
-      exp ~arity:range.arity (* ~must:range.must ~sup:range.sup *) range.exp_loc
-      @@ ident @@ Elo.var_ident_of_bound_var v
-    in
-    (* Given a set [vs] of variables, this function yields a list of formulas
-       expressing that all these variables are as marked disjoint. *)
-    let disj_fml_for_variables vs range =
-      snd
-      (* The following computes the product of the [vs] with temselves, except
-         the diagonal and except symmetric pairs ('cause [disj x, y] <=> [disj
-         y, x]).  Actually, the accumulator keeps the list of pairs of
-         variables alreeady added, to check whether they have already been
-         added, and the disequality formula (which really is what we're
-         looking for.)  *)
-      @@ List.fold_product
-           (fun ((pairs, formulas) as acc) x y ->
-              if Elo.equal_var x y
-              || List.mem
-                   ~eq:(fun (x, y) (a, b) ->
-                         Pair.equal Elo.equal_var Elo.equal_var (x, y) (a, b)
-                         ||
-                         Pair.equal Elo.equal_var Elo.equal_var (x, y) (b, a))
-                   (x, y) pairs
-              then
-                acc
-              else
-                ((x, y) :: pairs,
-                 (fml L.dummy
-                  @@ rcomp (make_var range x) rneq (make_var range y)
-                 ) :: formulas)
-           )
-           ([], []) vs vs
-    in
-    (* get the list of all disjointness formulas, for all disjoint parts *)
-    let fmls =
-      List.flat_map
-        (fun (disj, vs, e) ->
-           if disj then disj_fml_for_variables vs e else [])
-        sbs
-    in
-    (* yield a new comprohension where the disequality predicates are added to
-       the "such that" predicate *)
-    compr
-      (List.map
-         (fun (_, vs, e) -> (false, vs, self#visit_exp env e)) sbs)
-      (fmls @ List.map (self#visit_fml env) b)
-    (* |> Fun.tap *)
-    (* @@ fun res -> *)
-    (* Msg.debug (fun m -> m "Simplify1.visit_Compr --> %a" *)
-    (*                       (pp_prim_exp Elo.pp_var Elo.pp_ident) *)
-    (*                       res) *)
+  (* method visit_Compr env sbs b = *)
+  (*   (\* Msg.debug (fun m -> m "Simplify1.visit_Compr <-- %a" *\) *)
+  (*   (\*                       (pp_prim_exp Elo.pp_var Elo.pp_ident) *\) *)
+  (*   (\*                       (compr sbs b)); *\) *)
+  (*   (\* a function to compute all relevant pairs of disjoint variables for *)
+  (*      which a subformula will have to be generated. The function takes the *)
+  (*      product of [vs] with itself, except the diagonal and except pairs that *)
+  (*      are the transpose of the one being added (hence the [~eq] part). *\) *)
+  (*   (\* a utility function *\) *)
+  (*   let make_var range v = *)
+  (*     exp ~arity:range.arity (\* ~must:range.must ~sup:range.sup *\) range.exp_loc *)
+  (*     @@ ident @@ Elo.var_ident_of_bound_var v *)
+  (*   in *)
+  (*   (\* Given a set [vs] of variables, this function yields a list of formulas *)
+  (*      expressing that all these variables are as marked disjoint. *\) *)
+  (*   let disj_fml_for_variables vs range = *)
+  (*     snd *)
+  (*     (\* The following computes the product of the [vs] with temselves, except *)
+  (*        the diagonal and except symmetric pairs ('cause [disj x, y] <=> [disj *)
+  (*        y, x]).  Actually, the accumulator keeps the list of pairs of *)
+  (*        variables alreeady added, to check whether they have already been *)
+  (*        added, and the disequality formula (which really is what we're *)
+  (*        looking for.)  *\) *)
+  (*     @@ List.fold_product *)
+  (*          (fun ((pairs, formulas) as acc) x y -> *)
+  (*             if Elo.equal_var x y *)
+  (*             || List.mem *)
+  (*                  ~eq:(fun (x, y) (a, b) -> *)
+  (*                        Pair.equal Elo.equal_var Elo.equal_var (x, y) (a, b) *)
+  (*                        || *)
+  (*                        Pair.equal Elo.equal_var Elo.equal_var (x, y) (b, a)) *)
+  (*                  (x, y) pairs *)
+  (*             then *)
+  (*               acc *)
+  (*             else *)
+  (*               ((x, y) :: pairs, *)
+  (*                (fml L.dummy *)
+  (*                 @@ rcomp (make_var range x) rneq (make_var range y) *)
+  (*                ) :: formulas) *)
+  (*          ) *)
+  (*          ([], []) vs vs *)
+  (*   in *)
+  (*   (\* get the list of all disjointness formulas, for all disjoint parts *\) *)
+  (*   let fmls = *)
+  (*     List.flat_map *)
+  (*       (fun (disj, vs, e) -> *)
+  (*          if disj then disj_fml_for_variables vs e else []) *)
+  (*       sbs *)
+  (*   in *)
+  (*   (\* yield a new comprohension where the disequality predicates are added to *)
+  (*      the "such that" predicate *\) *)
+  (*   compr *)
+  (*     (List.map *)
+  (*        (fun (_, vs, e) -> (false, vs, self#visit_exp env e)) sbs) *)
+  (*     (fmls @ List.map (self#visit_fml env) b) *)
+  (*   (\* |> Fun.tap *\) *)
+  (*   (\* @@ fun res -> *\) *)
+  (*   (\* Msg.debug (fun m -> m "Simplify1.visit_Compr --> %a" *\) *)
+  (*   (\*                       (pp_prim_exp Elo.pp_var Elo.pp_ident) *\) *)
+  (*   (\*                       res) *\) *)
 
 end
 

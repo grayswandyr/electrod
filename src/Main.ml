@@ -55,7 +55,10 @@ let main style_renderer verbosity infile =
   Logs.set_level ~all:true verbosity;
 
   Logs.app
-    (fun m -> m "%a" Fmtc.(styled `Bold string) "electrod (C) 2016-2017 ONERA");
+    (fun m ->
+       m "%a:@ processing file %S"
+         Fmtc.(styled `Bold string) "electrod (C) 2016-2017 ONERA"
+         infile);
 
   (try
      let inch = Unix.open_process_in "tput cols" in

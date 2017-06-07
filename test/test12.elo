@@ -2,11 +2,11 @@ univ : { a b c d e f g };
 
 r : {} { (a a) (a b) (a c) };
 
-E : { (a) (b) c d };
+E : { (a)  c  };
 
-F : {} { a b e};
+F : {a b} { a b e};
 
-G : {} {d f};
+G : {d} {d f};
 
 sat
 lone { x, y : E, disj z, t : F, u : G | true};

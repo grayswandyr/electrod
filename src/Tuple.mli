@@ -11,9 +11,12 @@ val tuple1 : Atom.t -> t
 (** Returns the arity of the tuple. *)
 val arity : t -> int
 
-(** [t1 @@@ t2] yields the concatenantion of [t1] followed by [t2]
+(** [t1 @@@ t2] yields the concatenation of [t1] followed by [t2]
     (useful to compute the flat product of bounds/tuple sets). *)
 val ( @@@ ) : t -> t -> t
+
+(** Concatenation of a list of tuples. Fails if the list is empty.  *)
+val concat : t list -> t
 
 val equal : t -> t -> bool
 
