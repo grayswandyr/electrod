@@ -5,3 +5,4 @@ const foo : { a b } {a b c};
 var u : {} foo;  
 sat
 { disj a : univ, c,d : t.a, disj e, f, g : { disj x, y : univ | some univ }.foo | true  } in none
+

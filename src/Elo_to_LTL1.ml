@@ -138,18 +138,19 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
             TS.of_tuples
             @@ walk_sim_bindings (fun { sup; _} -> sup) domain [] sim_bindings
           in
-          Msg.debug (fun m -> m
-                                "Elo_to_LTL1.bounds_exp(Compr):\
-                                 @\nmust(%a) = @[%a@]\
-                                 @\nsup(%a) = @[%a@]"
-                                (Fmtc.(list ~sep:(const string ": "))
-                                 @@ G.pp_sim_binding Elo.pp_var Elo.pp_ident)
-                                sim_bindings
-                                TS.pp pmust
-                                (Fmtc.(list ~sep:(const string ": "))
-                                 @@ G.pp_sim_binding Elo.pp_var Elo.pp_ident)
-                                sim_bindings
-                                TS.pp psup);
+          Msg.debug (fun m ->
+                m
+                  "Elo_to_LTL1.bounds_exp(Compr):\
+                   @\nmust(%a) = @[%a@]\
+                   @\nsup(%a) = @[%a@]"
+                  (Fmtc.(list ~sep:(const string ": "))
+                   @@ G.pp_sim_binding Elo.pp_var Elo.pp_ident)
+                  sim_bindings
+                  TS.pp pmust
+                  (Fmtc.(list ~sep:(const string ": "))
+                   @@ G.pp_sim_binding Elo.pp_var Elo.pp_ident)
+                  sim_bindings
+                  TS.pp psup);
           bounds pmust psup
 
   (* walks along a sim_binding list and return a list of pairs (must, sup) 
@@ -214,20 +215,36 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
   and compute_for_bound bound domain subst vars bnd_hd remainder =
     let open List in
-    Msg.debug (fun m ->
-          m "compute_for_bound <--- %a %a %a "
-            Fmtc.(brackets @@ list ~sep:sp @@ Var.pp) vars
-            Fmtc.(brackets
-                  @@ list ~sep:sp @@ brackets @@ list ~sep:sp @@ Tuple.pp) bnd_hd
-            Fmtc.(parens @@ list ~sep:(sp **> comma)
-                  @@ G.pp_sim_binding Elo.pp_var Elo.pp_ident) remainder
-        );
-    (* given the list of tuples corresponding to the bound for the head sim
-       binding (so it's a list of tuples, as there are multiple variables bound
-       to a given range), compute all the products with all the results obtained
-       by substituting in the tail according to the substitutions induced by the
-       said head tuples*)
-    let compute_products_for_hd tuple_hd = 
+    (* Msg.debug (fun m -> *)
+    (*       m "compute_for_bound <--- %a %a %a " *)
+    (*         Fmtc.(brackets @@ list ~sep:sp @@ Var.pp) vars *)
+    (*         Fmtc.(brackets *)
+    (*               @@ list ~sep:sp @@ brackets @@ list ~sep:sp @@ Tuple.pp) bnd_hd *)
+    (*         Fmtc.(parens @@ list ~sep:(sp **> comma) *)
+    (*               @@ G.pp_sim_binding Elo.pp_var Elo.pp_ident) remainder *)
+    (*     ); *)
+    (* compute the products, *flat* produces the *union* of the said products *)
+    map (compute_products_for_hd bound domain subst vars remainder) bnd_hd
+    |> fold_left union []
+    (* |> Fun.tap *)
+    (* @@ fun res -> *)
+    (* Msg.debug (fun m -> *)
+    (*       m "compute_for_bound@ %a@ %a@ %a@ -->@ @[<hov>%a@]" *)
+    (*         Fmtc.(brackets @@ list ~sep:sp @@ Var.pp) vars *)
+    (*         Fmtc.(brackets *)
+    (*               @@ list ~sep:sp @@ brackets @@ list ~sep:sp @@ Tuple.pp) bnd_hd *)
+    (*         Fmtc.(parens @@ list ~sep:(sp **> comma) *)
+    (*               @@ G.pp_sim_binding Elo.pp_var Elo.pp_ident) remainder *)
+    (*         Fmtc.(brackets @@ list ~sep:sp @@ Tuple.pp) *)
+    (*         res) *)
+
+  (* given the list of tuples corresponding to the bound for the head sim
+     binding (so it's a list of tuples, as there are multiple variables bound
+     to a given range), compute all the products with all the results obtained
+     by substituting in the tail according to the substitutions induced by the
+     said head tuples*)
+  and compute_products_for_hd bound domain subst vars remainder tuple_hd =
+    let open List in
       (* compute the corresponding substitution for this instance of the head bound *)
       let hd_subst = Fun.(combine vars % tuples_to_idents) tuple_hd in
       (* compute all the tuples for the tail with *this* subtitution *)
@@ -247,21 +264,6 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         [hd_as_tuple]
       else   (* product of lists (@@@ converts the results into plain tuples) *)
         product Tuple.(@@@) [hd_as_tuple] tuples_tl
-    in
-    (* compute the products, *flat* produces the *union* of the said products *)
-    flat_map compute_products_for_hd bnd_hd
-    |> Fun.tap
-    @@ fun res ->
-    Msg.debug (fun m ->
-          m "compute_for_bound %a %a %a --> @[<hov>%a@]"
-            Fmtc.(brackets @@ list ~sep:sp @@ Var.pp) vars
-            Fmtc.(brackets
-                  @@ list ~sep:sp @@ brackets @@ list ~sep:sp @@ Tuple.pp) bnd_hd
-            Fmtc.(parens @@ list ~sep:(sp **> comma)
-                  @@ G.pp_sim_binding Elo.pp_var Elo.pp_ident) remainder
-            Fmtc.(brackets @@ list ~sep:sp @@ Tuple.pp)
-            res
-        )
 
   (***************************************************************** 
    * Semantic function
@@ -510,8 +512,13 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       let _visitors_r1 = [true_]  in
       self#build_Compr env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
 
-    (* shape: [{ sb1, sb2,... | b }]. Each [sb] is of shape [x1, x2 : e] (the
-       [disj]'s have already been simplified).
+    method private allocate_sbs_to_tuples vars l = match vars with
+      | [] -> []
+      | (v, r)::tl ->
+          let xs, ys = List.take_drop Option.(get_exn r.G.arity) l in
+          Tuple.of_list1 xs :: self#allocate_sbs_to_tuples tl ys
+
+    (* shape: [{ sb1, sb2,... | b }]. Each [sb] is of shape [disj x1, x2 : e] .
 
        The first item implies that we have to fold over the [sb]'s to substitute
        previously-bound variables. In the following function, we perform these
@@ -521,17 +528,26 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_Compr (env : 'env) sbs b _ _ = fun tuple ->
       (* assert (List.for_all (fun (disj, _, _) -> not disj) sbs); *)
       (* compute the subtitution of elements in [tuple] for all bound variables *)
-      let split_tuples = Tuple.to_1tuples tuple in
+      let ranging_vars = 
+        List.(flat_map (fun (_, vs, r) ->
+              List.map (fun (Elo.BVar v) -> (v, r)) vs) sbs) in
+      let split_tuples =
+        self#allocate_sbs_to_tuples ranging_vars @@ Tuple.to_list tuple in
       let split =  List.map Fun.(G.ident % Elo.tuple_ident) split_tuples in
       let all_vars =
         List.flat_map (fun (_, vs, _) ->
               List.map (fun (Elo.BVar v) -> v) vs) sbs in
-      Msg.debug (fun m ->
-            m "build_Compr: all_vars = %a split = %a"
-              Fmtc.(brackets @@ list ~sep:sp @@ Var.pp) all_vars
-              Fmtc.(brackets @@ list ~sep:sp @@ G.pp_prim_exp Elo.pp_var Elo.pp_ident) split
-          );
       let sub = List.combine all_vars split in
+      Msg.debug (fun m ->
+            m "build_Compr: tuple = %a split = %a sub = %a "
+              Tuple.pp tuple
+              Fmtc.(brackets
+                    @@ list ~sep:sp
+                    @@ G.pp_prim_exp Elo.pp_var Elo.pp_ident) split
+              Fmtc.(list @@ brackets 
+                    @@ pair ~sep:(const string " <- ") Var.pp
+                    @@ G.pp_prim_exp Elo.pp_var Elo.pp_ident) sub
+          );
       (* semantics of [b] is [[ b [atoms / variables] ]] *)
       let b' = self#visit_prim_fml env
         @@ Elo.substitute#visit_prim_fml sub

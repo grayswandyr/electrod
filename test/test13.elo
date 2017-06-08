@@ -1,6 +1,6 @@
 univ : { a b c d e f };
 
-r1 : {} { (a b) (a c) };
+r1 : { (a b) (a c)} { (a b) (a c) (b c) };
 
 r2 : { (b d) (b e) (c f) (c d) };
 
