@@ -18,6 +18,7 @@ val ( @@@ ) : t -> t -> t
 (** Concatenation of a list of tuples. Fails if the list is empty.  *)
 val concat : t list -> t
 
+val compare : t -> t -> int
 val equal : t -> t -> bool
 
 (** Transposes a pair. *)

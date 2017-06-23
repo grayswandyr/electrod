@@ -20,12 +20,13 @@ let of_seq = TS.of_seq
                
 let empty = TS.empty
 
-let of_tuples tuples = match tuples with
-  | [] -> empty
-  | t :: ts ->
-      let ar = Tuple.arity t in
-      assert (List.for_all (fun t2 -> Tuple.arity t2 = ar) ts);
-      TS.of_list tuples 
+let of_tuples tuples =
+  match tuples with
+    | [] -> empty
+    | t :: ts ->
+        let ar = Tuple.arity t in
+        assert (List.for_all (fun t2 -> Tuple.arity t2 = ar) ts);
+        TS.of_list tuples 
 
 let inferred_arity b =
   if TS.is_empty b then 0

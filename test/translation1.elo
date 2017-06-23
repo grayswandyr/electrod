@@ -29,5 +29,5 @@ some inexact1;
 
 (some one0 : inexact1 {({true} and (all one1 : inexact1 {((true and true) implies (((one0 = one1) and true) and true))}))});
 
+all x : inexact2 | x.r in inexact2;
 
-all x : inexact2 | x.r in inexact2

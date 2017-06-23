@@ -3,6 +3,11 @@ open Containers
 module G = GenGoal
 module TS = TupleSet
 
+
+let tuples_to_idents =
+  List.map @@ fun tuple -> G.ident @@ Elo.tuple_ident tuple
+
+
 module MakeLtlConverter (Ltl : LTL.S) = struct
   open Ltl
   open Ltl.Infix
@@ -18,26 +23,8 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     may : TS.t;
   }
 
-  let bounds must sup = { must; sup; may = TS.diff sup must }
-
-
-  let compute_product disj vars ts =
-    let open List in
-    let dom = TS.to_list ts in
-    let lg = length vars in
-    (* create as many copies as necessary (= nb of variables) of the domain *)
-    let prod = init lg (fun _ -> dom) |> cartesian_product (* and compute product *)
-    in
-    (* remove lines where there are tuples in common if [disj = true] *)
-    let tupless =
-      if disj then
-        filter (fun tuples -> length tuples = length @@ sort_uniq tuples) prod
-      else prod
-    in
-    (* convert every list of tuples in one tuple *)
-    map Tuple.concat tupless
-    (* convert the result in a tuple set *)
-    (* |> TS.of_tuples *)
+  let make_bounds must sup =
+    { must; sup; may = TS.diff sup must }
 
 
   let rec bounds_exp domain exp =
@@ -62,87 +49,81 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
                Var.pp v
       | Ident (Elo.Tuple t) ->
           let singleton = of_tuples [t] in
-          bounds singleton singleton
+          make_bounds singleton singleton
       | Ident (Elo.Name n) -> 
           let rel = Domain.get_exn n domain in
-          bounds (Relation.must rel) (Relation.sup rel)
+          make_bounds (Relation.must rel) (Relation.sup rel)
       | None_  ->
-          bounds empty empty 
+          make_bounds empty empty 
       | Univ  ->
           let univ = Domain.univ_atoms domain in
-          bounds univ univ
+          make_bounds univ univ
       | Iden  ->
           let iden = Domain.get_exn Name.iden domain in
-          bounds (Relation.must iden) (Relation.sup iden)
+          make_bounds (Relation.must iden) (Relation.sup iden)
       | RUn (Transpose, e) ->
           let b = bounds_exp domain e in
-          bounds (transpose b.must) (transpose b.sup)
+          make_bounds (transpose b.must) (transpose b.sup)
       | RUn (TClos, e) -> 
           let b = bounds_exp domain e in
-          bounds (transitive_closure b.must) (transitive_closure b.sup)
+          make_bounds (transitive_closure b.must) (transitive_closure b.sup)
       | RUn (RTClos, e) -> 
           let iden = Domain.get_exn Name.iden domain in
           let b = bounds_exp domain e in
-          bounds (union b.must @@ Relation.must iden)
+          make_bounds (union b.must @@ Relation.must iden)
             (union b.sup @@ Relation.sup iden)
       | RBin (e1, Union ,e2) -> 
           let b1 = bounds_exp domain e1 in
           let b2 = bounds_exp domain e2 in
-          bounds (union b1.must b2.must) (union b1.sup b2.sup)
+          make_bounds (union b1.must b2.must) (union b1.sup b2.sup)
       | RBin (e1, Inter ,e2) -> 
           let b1 = bounds_exp domain e1 in
           let b2 = bounds_exp domain e2 in
-          bounds (inter b1.must b2.must) (inter b1.sup b2.sup)
+          make_bounds (inter b1.must b2.must) (inter b1.sup b2.sup)
       | RBin (e1, Over ,e2) -> 
           let b1 = bounds_exp domain e1 in
           let b2 = bounds_exp domain e2 in
-          bounds (override b1.must b2.must) (override b1.sup b2.sup)
+          make_bounds (override b1.must b2.must) (override b1.sup b2.sup)
       | RBin (e1, LProj ,e2) -> 
           let b1 = bounds_exp domain e1 in
           let b2 = bounds_exp domain e2 in
-          bounds (lproj b1.must b2.must) (lproj b1.sup b2.sup)
+          make_bounds (lproj b1.must b2.must) (lproj b1.sup b2.sup)
       | RBin (e1, RProj ,e2) -> 
           let b1 = bounds_exp domain e1 in
           let b2 = bounds_exp domain e2 in
-          bounds (rproj b1.must b2.must) (rproj b1.sup b2.sup)
+          make_bounds (rproj b1.must b2.must) (rproj b1.sup b2.sup)
       | RBin (e1, Prod ,e2) -> 
           let b1 = bounds_exp domain e1 in
           let b2 = bounds_exp domain e2 in
-          bounds (product b1.must b2.must) (product b1.sup b2.sup)
+          make_bounds (product b1.must b2.must) (product b1.sup b2.sup)
       | RBin (e1, Diff ,e2) -> 
           let b1 = bounds_exp domain e1 in
           let b2 = bounds_exp domain e2 in
-          bounds (diff b1.must b2.must) (diff b1.sup b2.sup)
+          make_bounds (diff b1.must b2.must) (diff b1.sup b2.sup)
       | RBin (e1, Join ,e2) -> 
           let b1 = bounds_exp domain e1 in
           let b2 = bounds_exp domain e2 in
-          bounds (join b1.must b2.must) (join b1.sup b2.sup)
+          make_bounds (join b1.must b2.must) (join b1.sup b2.sup)
       | RIte (_, e1, e2) ->
           let b1 = bounds_exp domain e1 in
           let b2 = bounds_exp domain e2 in
-          bounds (inter b1.must b2.must) (union b1.sup b2.sup) 
+          make_bounds (inter b1.must b2.must) (union b1.sup b2.sup) 
       | Prime e ->
           bounds_exp domain e
       | Compr (sim_bindings, _) ->
-          (* let products = expand_sim_bindings domain [] sim_bindings in *)
-          (* let musts, sups = List.split products in (\* unzip *\) *)
-          (* let pmust = *)
-          (*   TS.of_tuples @@ List.(map Tuple.concat @@ cartesian_product musts) in *)
-          (* let psup = *)
-          (*   TS.of_tuples @@ List.(map Tuple.concat @@ cartesian_product sups) in *)
           let pmust =
             TS.of_tuples
-            @@ walk_sim_bindings (fun { must; _} -> must) domain [] sim_bindings
+            @@ bounds_sim_bindings (fun { must; _} -> must) domain [] sim_bindings
           in
           let psup =
             TS.of_tuples
-            @@ walk_sim_bindings (fun { sup; _} -> sup) domain [] sim_bindings
+            @@ bounds_sim_bindings (fun { sup; _} -> sup) domain [] sim_bindings
           in
           Msg.debug (fun m ->
                 m
                   "Elo_to_LTL1.bounds_exp(Compr):\
-                   @\nmust(%a) = @[%a@]\
-                   @\nsup(%a) = @[%a@]"
+                   @\nmust(%a) = @[<hov>%a@]\
+                   @\nsup(%a) = @[<hov>%a@]"
                   (Fmtc.(list ~sep:(const string ": "))
                    @@ G.pp_sim_binding Elo.pp_var Elo.pp_ident)
                   sim_bindings
@@ -151,120 +132,148 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
                    @@ G.pp_sim_binding Elo.pp_var Elo.pp_ident)
                   sim_bindings
                   TS.pp psup);
-          bounds pmust psup
+          make_bounds pmust psup
 
-  (* walks along a sim_binding list and return a list of pairs (must, sup) 
-     for every sim_binding *)
-  (* and expand_sim_bindings domain subst *)
-  (*       (sbs : (Elo.var, Elo.ident) G.sim_binding list) = match sbs with *)
-  (*   | [] -> [] *)
-  (*   | (disj, vs, r)::tl -> *)
-  (*       (\* compute the range after substitution w/ previous bindings in the telescope *\) *)
-  (*       let r' = Elo.substitute#visit_exp subst r in *)
-  (*       (\* update the substitution for the remaining computation *\) *)
-  (*       let newsubst = *)
-  (*         List.map (fun (Elo.BVar v) -> (v, r'.G.prim_exp)) vs @ subst in *)
-  (*       (\* compute the product for the must and sup for *this* sim binding*\) *)
-  (*       let bnds = bounds_exp domain r' in         *)
-  (*       (compute_product disj vs bnds.must, compute_product disj vs bnds.sup) *)
-  (*       (\* and walk along *\) *)
-  (*       :: expand_sim_bindings domain newsubst tl *)
+  (* The whole idea of this function (and the following auxiliary ones) is to
+     apply the following scheme.  Say we want to compute: 
 
-  and product_for_one_sim_binding disj vars ts =
-    let open List in
-    let dom = TS.to_list ts in
-    let lg = length vars in
-    (* create as many copies as necessary (= nb of variables) of the domain *)
-    let prod = init lg (fun _ -> dom) |> cartesian_product (* & compute product *)
-    in
-    (* remove lines where there are tuples in common if [disj = true] *)
-    (if disj then
-       filter
-         (fun tuples -> length tuples = length @@ sort_uniq tuples) prod
-     else prod)
-    (* |> Fun.tap *)
-    (* @@ fun res -> *)
-    (* Msg.debug *)
-    (*   (fun m -> *)
-    (*      m "product_for_one_sim_binding %B %a %a --> @[<hov>%a@]" *)
-    (*        disj *)
-    (*        Fmtc.(list ~sep:(const string ", ")@@ Var.pp) vars *)
-    (*        TS.pp ts *)
-    (*        Fmtc.(brackets @@ list ~sep:sp @@ brackets @@ list ~sep:sp @@ Tuple.pp) res) *)
+     must({x : s, y : x.t | ...})
 
-  and tuples_to_idents =
-    List.map @@ fun tuple -> G.ident @@ Elo.tuple_ident tuple
+     The result must be:
 
-  and walk_sim_bindings bound domain subst 
-        (sbs : (Elo.var, Elo.ident) G.sim_binding list) = 
+     must(s) -> { UNION_(tuple in must(s)) must( x.t [tuple/x] ) }
+
+     as every pair in the comprehension is s.t. the range for y depends on the value for x.
+
+     So what we do is the following: Walk left-to-right along some sim_bindings
+     and compute the corresponding bound, while accumulating already computed
+     bounds. Finally everything is composed.  
+
+     [subst] is a substitution from already-visited sim_bindings. [fbound] is the
+     function returning the bound (say the must or the sup).  *)
+  and bounds_sim_bindings
+        fbound
+        domain
+        (subst : (Var.t, (Elo.var, Elo.ident) G.prim_exp) CCList.Assoc.t)
+        (sbs : (Elo.var, Elo.ident) G.sim_binding list)
+    : Tuple.t list = 
     let open List in
     match sbs with
-      | [] -> []
+      | [] -> assert false      (* nonempty list *)
+      | [(disj, vs, r)] -> 
+          (* compute the product of bounds for the head sim_binding, it yields a
+             list of combinations (= lists) of tuples *)
+          bounds_sim_binding fbound domain subst disj vs r
+          (* as we're done, we concat tuples in every combination *)
+          >|= Tuple.concat
       | (disj, vs, r)::tl ->
-          (* compute the range after substitution w/ previous bindings in the telescope *)
-          let r' = Elo.substitute#visit_exp subst r in
-          (* compute the product for the must and sup for *this* sim binding*)
-          let bnds = bounds_exp domain r' in
-          (* cast to create a substitution below *)
-          let vs_as_vars = map (fun (Elo.BVar v) -> v) vs in
-          (* list of tuple lists: one tuple list for each possibility of the head bound*)
-          let bnd_tuples_hd =
-            product_for_one_sim_binding disj vs_as_vars @@ bound bnds
+          (* compute the product of bounds for the head sim_binding, it yields a
+             list of combinations (= lists) of tuples *)
+          let hd_bnd =
+            bounds_sim_binding fbound domain subst disj vs r
           in
-          compute_for_bound bound domain subst vs_as_vars bnd_tuples_hd tl
-
-  and compute_for_bound bound domain subst vars bnd_hd remainder =
-    let open List in
-    (* Msg.debug (fun m -> *)
-    (*       m "compute_for_bound <--- %a %a %a " *)
-    (*         Fmtc.(brackets @@ list ~sep:sp @@ Var.pp) vars *)
-    (*         Fmtc.(brackets *)
-    (*               @@ list ~sep:sp @@ brackets @@ list ~sep:sp @@ Tuple.pp) bnd_hd *)
-    (*         Fmtc.(parens @@ list ~sep:(sp **> comma) *)
-    (*               @@ G.pp_sim_binding Elo.pp_var Elo.pp_ident) remainder *)
-    (*     ); *)
-    (* compute the products, *flat* produces the *union* of the said products *)
-    map (compute_products_for_hd bound domain subst vars remainder) bnd_hd
-    |> fold_left union []
-    (* |> Fun.tap *)
-    (* @@ fun res -> *)
-    (* Msg.debug (fun m -> *)
-    (*       m "compute_for_bound@ %a@ %a@ %a@ -->@ @[<hov>%a@]" *)
-    (*         Fmtc.(brackets @@ list ~sep:sp @@ Var.pp) vars *)
-    (*         Fmtc.(brackets *)
-    (*               @@ list ~sep:sp @@ brackets @@ list ~sep:sp @@ Tuple.pp) bnd_hd *)
-    (*         Fmtc.(parens @@ list ~sep:(sp **> comma) *)
-    (*               @@ G.pp_sim_binding Elo.pp_var Elo.pp_ident) remainder *)
-    (*         Fmtc.(brackets @@ list ~sep:sp @@ Tuple.pp) *)
-    (*         res) *)
+          (* cast to create a substitution below *)
+          let vars = map (fun (Elo.BVar v) -> v) vs in
+          (* as explained above in the example: for every possible combination
+             of tuples in [hd_bnd], we have to substitute *this* combination in
+             the tail, then compute the resulting product and add it to the
+             whole possibilities *)
+          fold_left
+            (fun acc combination ->
+               acc
+               @ (* we use @ instead of union because it should be faster and
+                    the end result will be converted back into a set anyway *)
+               product_for_one_hd_combination
+                 fbound domain subst vars tl combination)
+            []                  (* empty accumulator *)
+            hd_bnd
 
   (* given the list of tuples corresponding to the bound for the head sim
      binding (so it's a list of tuples, as there are multiple variables bound
      to a given range), compute all the products with all the results obtained
      by substituting in the tail according to the substitutions induced by the
-     said head tuples*)
-  and compute_products_for_hd bound domain subst vars remainder tuple_hd =
+     said head tuples *)
+  and product_for_one_hd_combination fbound domain subst vars
+        (tail : (Elo.var, Elo.ident) G.sim_binding list)
+        (hd_combination : Tuple.t list)
+    : Tuple.t list =
     let open List in
-      (* compute the corresponding substitution for this instance of the head bound *)
-      let hd_subst = Fun.(combine vars % tuples_to_idents) tuple_hd in
-      (* compute all the tuples for the tail with *this* subtitution *)
-      let tuples_tl =
-        walk_sim_bindings bound domain (hd_subst @ subst) remainder in
-      (* Msg.debug *)
-      (*   (fun m -> *)
-      (*      m "compute_for_bound %a: tuples_tl = %a" *)
-      (*        Fmtc.(brackets @@ list ~sep:sp @@ Tuple.pp) tuple_hd *)
-      (*        Fmtc.(brackets @@ list ~sep:sp @@ Tuple.pp) tuples_tl *)
-      (*   ); *)
-      (* make a single tuple for all the variables in the same head range *)
-      let hd_as_tuple = Tuple.concat tuple_hd in      
-      (* create all combinations with this instance of the head bound and the
-         tuples computed for the tail *)
-      if is_empty tuples_tl then
-        [hd_as_tuple]
-      else   (* product of lists (@@@ converts the results into plain tuples) *)
-        product Tuple.(@@@) [hd_as_tuple] tuples_tl
+    (* compute the corresponding substitution for this instance of the head bound *)
+    let subst2 = combine vars (tuples_to_idents hd_combination) @ subst in
+    (* compute all the tuples for the tail with *this* subtitution *)
+    let tl_bnd =
+      bounds_sim_bindings fbound domain subst2 tail
+    in
+    (* create all combinations with this instance of the head bound and the
+       tuples computed for the tail *)
+    product Tuple.(@@@) [Tuple.concat hd_combination] tl_bnd
 
+  (* for one sim_binding *)
+  and bounds_sim_binding 
+        fbound
+        domain
+        (subst : (Var.t, (Elo.var, Elo.ident) G.prim_exp) CCList.Assoc.t) 
+        disj
+        vars
+        (dom : (Elo.var, Elo.ident) G.exp)
+    : Tuple.t list list
+    =
+    let open List in
+    (* compute the range after substitution w/ previous bindings in the telescope *)
+    let range' = Elo.substitute#visit_exp subst dom in
+    (* compute the bound for the range of *this* sim binding. NOTE: [range_bnd]
+       is given as a [Tuple.t list] instead of a [TS.t] for technical purposes
+       only. As a consequence, the returned value for the whole function is a
+       set of sets of tuples represented by a list of lists... *)
+    let range_bnd = TS.to_list @@ fbound @@ bounds_exp domain range' in
+    (* compute the bound for the whole head sim binding  *)
+    let lg = length vars in
+    let prod =
+      (* create as many copies as necessary (= nb of variables) of the domain *)
+      init lg (fun _ -> range_bnd)
+      (* & compute product (NOTE: tuples are not concatenated, just put in the
+         same list representing a combination of tuples).  
+
+         E.g.: suppose `range_bnd = [(1, 2); (3, 4)]`. Then we obtain, for `lg = 3`:
+
+         [
+         [(3, 4); (3, 4); (3, 4)]; 
+         [(3, 4); (3, 4); (1, 2)]; 
+         [(3, 4); (1, 2); (3, 4)];
+         [(3, 4); (1, 2); (1, 2)]; 
+         [(1, 2); (3, 4); (3, 4)]; 
+         [(1, 2); (3, 4); (1, 2)];
+         [(1, 2); (1, 2); (3, 4)]; 
+         [(1, 2); (1, 2); (1, 2)]
+         ] *)
+      |> cartesian_product 
+    in
+    (* Remove lines where there are tuples in common if [disj = true].
+       [all_different] is defined below. *)
+    (if disj then filter all_different prod else prod)
+    (* |> Fun.tap *)
+    (* @@ fun res -> *)
+    (* Msg.debug *)
+    (*   (fun m -> *)
+    (*      m "bounds_sim_binding %B %a %a --> @[<hov>%a@]" *)
+    (*        disj *)
+    (*        Fmtc.(list ~sep:(const string ", ")@@ Elo.pp_var) vars *)
+    (*        Fmtc.(list ~sep:sp @@ Tuple.pp) range_bnd *)
+    (*        Fmtc.(brackets @@ list ~sep:sp @@ brackets @@ list ~sep:sp @@ Tuple.pp) res) *)
+
+
+  (* says whether all tuples in a list are diffferent form one another *)
+  and all_different (tuples : Tuple.t list) : bool = match tuples with
+    | [] -> true
+    | hd::tl when List.mem ~eq:Tuple.equal hd tl -> false
+    | _::tl -> all_different tl
+
+
+
+
+
+
+  
   (***************************************************************** 
    * Semantic function
    ***************************************************************************************)
@@ -538,16 +547,16 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         List.flat_map (fun (_, vs, _) ->
               List.map (fun (Elo.BVar v) -> v) vs) sbs in
       let sub = List.combine all_vars split in
-      Msg.debug (fun m ->
-            m "build_Compr: tuple = %a split = %a sub = %a "
-              Tuple.pp tuple
-              Fmtc.(brackets
-                    @@ list ~sep:sp
-                    @@ G.pp_prim_exp Elo.pp_var Elo.pp_ident) split
-              Fmtc.(list @@ brackets 
-                    @@ pair ~sep:(const string " <- ") Var.pp
-                    @@ G.pp_prim_exp Elo.pp_var Elo.pp_ident) sub
-          );
+      (* Msg.debug (fun m -> *)
+      (*       m "build_Compr: tuple = %a split = %a sub = %a " *)
+      (*         Tuple.pp tuple *)
+      (*         Fmtc.(brackets *)
+      (*               @@ list ~sep:sp *)
+      (*               @@ G.pp_prim_exp Elo.pp_var Elo.pp_ident) split *)
+      (*         Fmtc.(list @@ brackets  *)
+      (*               @@ pair ~sep:(const string " <- ") Var.pp *)
+      (*               @@ G.pp_prim_exp Elo.pp_var Elo.pp_ident) sub *)
+      (*     ); *)
       (* semantics of [b] is [[ b [atoms / variables] ]] *)
       let b' = self#visit_prim_fml env
         @@ Elo.substitute#visit_prim_fml sub
