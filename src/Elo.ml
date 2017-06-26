@@ -1,6 +1,7 @@
 
 open Containers
 
+module G = GenGoal
 
 (* variables introduced by a binder *)
 type var = BVar of Var.t
@@ -30,7 +31,7 @@ let equal_ident id1 id2 = match id1, id2 with
   | (Var _, _)
   | (Tuple _, _)-> false
 
-type goal = (var, ident) GenGoal.t
+type goal = (var, ident) G.t
 
 type t = {
   file : string option;
@@ -51,35 +52,53 @@ let pp_ident out = function
   | Var v -> Fmtc.(styled `Yellow pp_var) out (BVar v)
   | Tuple at -> Fmtc.(styled `Cyan Tuple.pp) out at
 
+let pp_goal = G.pp pp_var pp_ident
+
+let pp_fml = G.pp_fml pp_var pp_ident
+
+let pp_prim_fml = G.pp_prim_fml pp_var pp_ident
+
+let pp_exp = G.pp_exp pp_var pp_ident
+
+let pp_prim_exp = G.pp_prim_exp pp_var pp_ident
+
+let pp_iexp = G.pp_iexp pp_var pp_ident
+
+let pp_prim_iexp = G.pp_prim_iexp pp_var pp_ident
+
+let pp_block = G.pp_block pp_var pp_ident
+
+let pp_sim_binding = G.pp_sim_binding pp_var pp_ident
+
 let pp out { file; domain; instance; goal } =
   let open Fmtc in
   pf out "%a@\n%a@\n%a"
     Domain.pp domain
     Instance.pp instance
-    (vbox @@ GenGoal.pp pp_var pp_ident) goal
+    (vbox @@ pp_goal) goal
 
   
 let substitute = object (self : 'self)
-  inherit [_] GenGoal.map as super
+  inherit [_] G.map as super
 
   method visit_'v _ = Fun.id
 
   method visit_'i _ = Fun.id
 
   method visit_Ident
-           (env : (Var.t, (var, ident) GenGoal.prim_exp) CCList.Assoc.t )
+           (env : (Var.t, (var, ident) G.prim_exp) CCList.Assoc.t )
            (id : ident) =
     (* Msg.debug *)
     (*   (fun m -> m "Elo.substitute.visit_Ident: %a [%a]" *)
     (*               pp_ident id *)
     (*               (List.pp *)
     (*                @@ Fmt.pair ~sep:Fmtc.(const string "<-") Var.pp *)
-    (*                @@ GenGoal.pp_prim_exp pp_var pp_ident) *)
+    (*                @@ pp_prim_exp) *)
     (*               env); *)
     match id with
       | Var var when List.Assoc.mem ~eq:Var.equal var env ->
           List.Assoc.get_exn ~eq:Var.equal var env
-      | Var _ | Name _ | Tuple _ -> GenGoal.ident id
+      | Var _ | Name _ | Tuple _ -> G.ident id
 
 end
 

@@ -103,8 +103,7 @@ let main style_renderer verbosity infile =
           m "After conversion to SMV formulas:@\n%a"
             (Fmtc.list ~sep:Fmtc.hardline
              @@ Fmt.pair ~sep:Fmtc.hardline
-                  Fmtc.(const string "// "
-                        **< GenGoal.pp_fml Elo.pp_var Elo.pp_ident)
+                  Fmtc.(const string "// " **< Elo.pp_fml)
                   Elo_to_SMV1.Logic.pp) trad);
 
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"

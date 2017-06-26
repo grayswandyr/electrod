@@ -32,7 +32,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
   (* |> Fun.tap @@ fun res -> *)
   (* Msg.debug (fun m -> *)
   (*       m "bounds_exp %a: must = %a may = %a" *)
-  (*         (G.pp_exp Elo.pp_var Elo.pp_ident) exp *)
+  (*         (Elo.pp_exp) exp *)
   (*         TS.pp res.must *)
   (*         TS.pp res.may *)
   (*     ) *)
@@ -125,11 +125,11 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
                    @\nmust(%a) = @[<hov>%a@]\
                    @\nsup(%a) = @[<hov>%a@]"
                   (Fmtc.(list ~sep:(const string ": "))
-                   @@ G.pp_sim_binding Elo.pp_var Elo.pp_ident)
+                   @@ Elo.pp_sim_binding)
                   sim_bindings
                   TS.pp pmust
                   (Fmtc.(list ~sep:(const string ": "))
-                   @@ G.pp_sim_binding Elo.pp_var Elo.pp_ident)
+                   @@ Elo.pp_sim_binding)
                   sim_bindings
                   TS.pp psup);
           make_bounds pmust psup
@@ -144,6 +144,14 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
      must(s) -> { UNION_(tuple in must(s)) must( x.t [tuple/x] ) }
 
      as every pair in the comprehension is s.t. the range for y depends on the value for x.
+
+     E.g.: Taking must(s) = { a b }, must(r) = { (a b) (b c) (a c) (a d) }:
+
+     x : s, y : x.r
+
+     should yield:
+
+     (a x a.r) union (b x b.r) = {(a b) (a c) (a d) (b c)}
 
      So what we do is the following: Walk left-to-right along some sim_bindings
      and compute the corresponding bound, while accumulating already computed
@@ -316,7 +324,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_Quant (env : 'env) quant sim_bindings blk _ sim_bindings' _ =
       (* Msg.debug *)
       (*   (fun m -> m "Elo_to_LTL1.build_Quant <-- %a" *)
-      (*               (G.pp_prim_fml Elo.pp_var Elo.pp_ident) *)
+      (*               (Elo.pp_prim_fml) *)
       (*               (G.quant quant sim_bindings blk) *)
       (*   ); *)
       match quant with
@@ -356,7 +364,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
               (*               (Fmtc.(brackets *)
               (*                      @@ list *)
               (*                      @@ pair ~sep:(const string "→") Var.pp *)
-              (*                      @@ G.pp_prim_exp Elo.pp_var Elo.pp_ident)) res *)
+              (*                      @@ Elo.pp_prim_exp)) res *)
               (*           )) *)
             in
 
@@ -371,7 +379,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
               | G.Lone | G.One -> assert false (* SIMPLIFIED *)
             in
             (* Msg.debug (fun m -> *)
-            (*       m "must(%a) = %a" (G.pp_exp Elo.pp_var Elo.pp_ident) s *)
+            (*       m "must(%a) = %a" (Elo.pp_exp) s *)
             (*         TS.pp (env#may s)); *)
             let { must; may; _ } = env#must_may_sup s in
             let mustpart =
@@ -384,7 +392,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
                          @@ G.block blk)) (* b [as / xs] *)
             in
             (* Msg.debug (fun m -> *)
-            (*       m "may(%a) = %a" (G.pp_exp Elo.pp_var Elo.pp_ident) s *)
+            (*       m "may(%a) = %a" (Elo.pp_exp) s *)
             (*         TS.pp (env#may s)); *)
             let maypart =
               lazy 
@@ -552,10 +560,10 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       (*         Tuple.pp tuple *)
       (*         Fmtc.(brackets *)
       (*               @@ list ~sep:sp *)
-      (*               @@ G.pp_prim_exp Elo.pp_var Elo.pp_ident) split *)
+      (*               @@ Elo.pp_prim_exp) split *)
       (*         Fmtc.(list @@ brackets  *)
       (*               @@ pair ~sep:(const string " <- ") Var.pp *)
-      (*               @@ G.pp_prim_exp Elo.pp_var Elo.pp_ident) sub *)
+      (*               @@ Elo.pp_prim_exp) sub *)
       (*     ); *)
       (* semantics of [b] is [[ b [atoms / variables] ]] *)
       let b' = self#visit_prim_fml env
@@ -637,11 +645,11 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       (* Msg.debug *)
       (*   (fun m -> m "Elo_to_LTL1.build_Join <-- \ *)
            (*                %a.%a@\nsup(%a) = %a@\nsup(%a) = %a@\neligible_pairs =@ %a" *)
-      (*               (G.pp_exp Elo.pp_var Elo.pp_ident) r *)
-      (*               (G.pp_exp Elo.pp_var Elo.pp_ident) s *)
-      (*               (G.pp_exp Elo.pp_var Elo.pp_ident) r *)
+      (*               (Elo.pp_exp) r *)
+      (*               (Elo.pp_exp) s *)
+      (*               (Elo.pp_exp) r *)
       (*               TupleSet.pp (env#sup r) *)
-      (*               (G.pp_exp Elo.pp_var Elo.pp_ident) s *)
+      (*               (Elo.pp_exp) s *)
       (*               TupleSet.pp (env#sup s) *)
       (*               (Sequence.pp_seq  *)
       (*                @@ Fmtc.brackets @@ Fmt.pair ~sep:Fmtc.sp Tuple.pp Tuple.pp) *)
@@ -706,15 +714,14 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       plus must_card may_card
 
 
-  end
+  end                           (* end converter *)
 
 
   class environment (elo : Elo.t) = object (self : 'self)
     method domain = Elo.(elo.domain)
-    
+
     method must_may_sup (e : (Elo.var, Elo.ident) G.exp) =
-      (* TODO add hash for expressions ? *)
-      CCCache.(with_cache (lru 256)) bounds_exp Elo.(elo.domain) e
+      bounds_exp Elo.(elo.domain) e
   end
 
 
