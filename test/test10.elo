@@ -2,14 +2,11 @@
 
 univ : { a b c d e f g };
 
-r : { (a a) (a b) (a c) };
+r : { (a a) (a b) (b c) };
 
-s : { (b c) (c d) (c e) };
-
-t : { a}
 
 sat
 
 
-some (none -> none) + (univ->univ);
+some x:univ | x in x.(^r);
 

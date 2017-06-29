@@ -265,6 +265,58 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       else   (* product of lists (@@@ converts the results into plain tuples) *)
         product Tuple.(@@@) [hd_as_tuple] tuples_tl
 
+
+
+  (* given a 2-tuple set ts, this function computes the domain and the
+  co-domain of ts, i.e., the set (sequence) of atoms that are the
+  first elements of a 2-tuple in ts, and the set (sequence) of atoms
+  thare are the second elements of a 2-tuple in ts *)
+  let compute_domain_codomain ts =
+    assert (TS.inferred_arity ts = 2);
+    let open Sequence in
+    let s = TS.to_seq ts in
+    let split_seq (s1_acc, s2_acc) tup =
+      (cons (Tuple.ith 0 tup) s1_acc),  
+      (cons (Tuple.ith 1 tup) s2_acc)
+    in
+    fold split_seq (empty, empty) s
+    
+  (* given a 2-tuple set, this function computes the maximum length of
+  a path (x1, ... xn) such that each 2-tuple (xi, xi+1) is in the
+  tuple set.  Used to compute the number of iterations needed for
+  transitive closure term. *)
+  let compute_tc_length ts =
+    (* Printf.printf "arity of relation : %d\n" (TS.inferred_arity ts); *)    
+    assert (TS.inferred_arity ts = 2);
+    let open Sequence in
+    let s1, s2 = compute_domain_codomain ts in    
+    let core_ats = inter ~eq:Atom.equal s1 s2 in
+    let core_length = length core_ats in
+    (* is it possible that x1 is not in the core (intersection of the
+    domain and the codomain) ? *)
+    let first_elt_in_core = subset ~eq:Atom.equal s1 core_ats in
+    let last_elt_in_core = subset ~eq:Atom.equal s2 core_ats in
+    match first_elt_in_core, last_elt_in_core with
+    | true, true -> core_length
+    | false, false -> core_length + 2
+    | _ -> core_length + 1 
+
+
+  (* computes the transitive closuer of the term acc_term by k iterative
+  squares (t+t.t)+(t+t.t)(t+t.t) + ... *)
+                           
+  let rec iter_squares (acc_term : (Elo.var, Elo.ident) G.exp) k =
+    let open Location in
+    match k with
+    | 0 -> G.(exp dummy none)
+    | 1 -> acc_term
+    | _ ->
+       let new_exp =
+         G.(exp dummy @@ rbinary acc_term union
+                              (exp dummy @@ rbinary acc_term join acc_term))
+       in
+       iter_squares new_exp (max (k lsr 1) ((k+1) lsr 1))
+      
   (***************************************************************** 
    * Semantic function
    ***************************************************************************************)
@@ -500,7 +552,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     (************************** exp  ********************************)
 
-    method build_exp (env : 'env) _ exp _ _ = exp
+    method build_exp (env : 'env) _ pe' _ _ = pe'
 
 
     (* re-defining this method to avoid going down in the block as a
@@ -670,7 +722,13 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_Transpose (env : 'env) _ r' = fun tuple -> 
       r' @@ Tuple.transpose tuple
 
-    method build_TClos (env : 'env) r r' = failwith "build_TClos BRUNEL !!!"
+    method build_TClos (env : 'env) r r' =
+      let {sup ; may ; _ } =  env#must_may_sup r in
+      let k = compute_tc_length sup in
+      let tc_exp = iter_squares r k in
+      self#visit_exp  env tc_exp
+      
+
 
     (*********************************** iexp **************************************)
 
@@ -695,17 +753,19 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         count @@ List.map r' @@ TS.to_list may
       in
       plus must_card may_card
-
-
   end
 
 
   class environment (elo : Elo.t) = object (self : 'self)
+    val mutable tc_formula : ('a,'b) G.fml = G.(fml Location.dummy True)
     method domain = Elo.(elo.domain)
     
     method must_may_sup (e : (Elo.var, Elo.ident) G.exp) =
       (* TODO add hash for expressions ? *)
       CCCache.(with_cache (lru 256)) bounds_exp Elo.(elo.domain) e
+             
+    (* method add_tc_formula (f: ('a,'b) G.fml) = *)
+    (*   tc_formula <- G.(fml Location.dummy @@ lbinary tc_formula and_ f) *)
   end
 
 
