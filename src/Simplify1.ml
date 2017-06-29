@@ -99,7 +99,7 @@ class simplify = object (self : 'self)
   (* split multiple simultaneous All/Some/No bindings into many quantifications *)
   method visit_Quant env q sim_bindings blk = 
     (* Msg.debug (fun m -> m "Simplify1.visit_Quant <-- %a" *)
-    (*                       Elo.(pp_prim_fml pp_var pp_ident) *)
+    (*                       Elo.pp_prim_fml *)
     (*             @@ quant q sim_bindings blk); *)
     match q with
       | One -> self#visit_Quant_One env q sim_bindings blk
@@ -118,7 +118,7 @@ class simplify = object (self : 'self)
                 quant q [b] [fml e.exp_loc @@ self#visit_Quant env q bs blk]
           in
           (* Msg.debug (fun m -> m "Simplify1.visit_Quant --> %a" *)
-          (*                       Elo.(pp_prim_fml pp_var pp_ident) *)
+          (*                       Elo.pp_prim_fml *)
           (*                       res); *)
           res
 
@@ -128,7 +128,7 @@ class simplify = object (self : 'self)
     (* substitute from right to left as a binding on the left may apply in the
        range of a binding on the right *)
     (* Msg.debug (fun m -> m "Simplify1.visit_Let <-- %a" *)
-    (*                       Elo.(pp_prim_fml pp_var pp_ident) *)
+    (*                       Elo.pp_prim_fml *)
     (*             @@ let_ bindings fmls); *)
     List.fold_right
       (function (Elo.BVar v, e) ->
@@ -139,12 +139,12 @@ class simplify = object (self : 'self)
     (* |> Fun.tap *)
     (* @@ fun res -> *)
     (* Msg.debug (fun m -> m "Simplify1.visit_Let --> %a" *)
-    (*                       (pp_prim_fml Elo.pp_var Elo.pp_ident) res) *)
+    (*                       Elo.pp_prim_fml res) *)
 
   (* change relation qualifiers into formulas *)
   method visit_Qual env q expr =
     (* Msg.debug (fun m -> m "Simplify1.visit_Qual <-- %a" *)
-    (*                       Elo.(pp_prim_fml pp_var pp_ident) *)
+    (*                       Elo.pp_prim_fml *)
     (*             @@ qual q expr); *)
     let prim_fml = match q with
       | ROne ->
@@ -170,13 +170,13 @@ class simplify = object (self : 'self)
     (* |> Fun.tap *)
     (* @@ fun res -> *)
     (* Msg.debug (fun m -> m "Simplify1.visit_Qual --> %a" *)
-    (*                       (pp_prim_fml Elo.pp_var Elo.pp_ident) res) *)
+    (*                       Elo.pp_prim_fml res) *)
 
   (* change box join in join *)
   method visit_BoxJoin env call args =
     (* Msg.debug (fun m -> m "Simplify1.visit_BoxJoin <-- %a[%a]" *)
-    (*                       Elo.(pp_exp pp_var pp_ident) call *)
-    (*                       Elo.(Fmtc.list @@ pp_exp pp_var pp_ident) args); *)
+    (*                       Elo.pp_exp call *)
+    (*                       (Fmtc.list Elo.pp_exp) args); *)
     let res =
       List.fold_right
         (fun arg r ->
@@ -190,13 +190,13 @@ class simplify = object (self : 'self)
     (* |> Fun.tap *)
     (* @@ fun res -> *)
     (* Msg.debug (fun m -> m "Simplify1.visit_BoxJoin --> %a" *)
-    (*                       (pp_prim_exp Elo.pp_var Elo.pp_ident) *)
+    (*                       Elo.pp_prim_exp *)
     (*                       res) *)
 
 
   (* method visit_Compr env sbs b = *)
   (*   (\* Msg.debug (fun m -> m "Simplify1.visit_Compr <-- %a" *\) *)
-  (*   (\*                       (pp_prim_exp Elo.pp_var Elo.pp_ident) *\) *)
+  (*   (\*                       Elo.pp_prim_exp *\) *)
   (*   (\*                       (compr sbs b)); *\) *)
   (*   (\* a function to compute all relevant pairs of disjoint variables for *)
   (*      which a subformula will have to be generated. The function takes the *)
@@ -252,7 +252,7 @@ class simplify = object (self : 'self)
   (*   (\* |> Fun.tap *\) *)
   (*   (\* @@ fun res -> *\) *)
   (*   (\* Msg.debug (fun m -> m "Simplify1.visit_Compr --> %a" *\) *)
-  (*   (\*                       (pp_prim_exp Elo.pp_var Elo.pp_ident) *\) *)
+  (*   (\*                       Elo.pp_prim_exp *\) *)
   (*   (\*                       res) *\) *)
 
 end

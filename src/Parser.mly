@@ -454,7 +454,7 @@ iexpr:
   e1 = iexpr COMMA e2 = iexpr
   { (e1, e2) }
   
-  icomp_op:
+icomp_op:
   | LT
 	{ G.lt}
 	| LTE
@@ -464,9 +464,9 @@ iexpr:
 	| GTE
 	{ G.gte }
   | EQ
-	{ G.ieq } // TODO 
+	{ G.ieq } 
   | NEQ
- 	{ G.ineq } // TODO
+ 	{ G.ineq }
 
 
     ////////////////////////////////////////////////////////////////////////

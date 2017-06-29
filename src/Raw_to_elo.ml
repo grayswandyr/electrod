@@ -426,7 +426,7 @@ let join_arity ar1 ar2 = match ar1, ar2 with
   | None, None -> None
 
 let str_exp =
-  Fmtc.to_to_string (Fmtc.hbox2 @@ GenGoal.pp_exp Elo.pp_var Elo.pp_ident)
+  Fmtc.to_to_string (Fmtc.hbox2 Elo.pp_exp)
 
 let check_arities elo =
   let open Elo in

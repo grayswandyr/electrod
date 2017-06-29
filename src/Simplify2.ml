@@ -21,7 +21,7 @@ class simplify = object (self : 'self)
   (* change relation qualifiers into formulas *)
   method visit_Qual env qual exp =
     Msg.debug (fun m -> m "Simplify2.visit_Qual <-- %a"
-                          Elo.(pp_prim_fml pp_var pp_ident)
+                          Elo.pp_prim_fml
                 @@ GenGoal.qual qual exp);
     let prim_fml = match qual with
       | ROne ->
@@ -37,7 +37,7 @@ class simplify = object (self : 'self)
     |> Fun.tap
     @@ fun res ->
     Msg.debug (fun m -> m "Simplify2.visit_Qual --> %a"
-                          (pp_prim_fml Elo.pp_var Elo.pp_ident) res)
+                          Elo.pp_prim_fml res)
 
 end
 
