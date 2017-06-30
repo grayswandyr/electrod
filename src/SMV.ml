@@ -35,7 +35,6 @@ module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL = struct
         | Imp (p, q)-> infix string pp pp out ("->", p, q)
         | Iff (p, q)-> infix string pp pp out ("<->", p, q)
         | Xor (p, q)-> infix string pp pp out ("xor", p, q)
-        | Ite (c, t, e) -> pf out "@[<hov 2>(%a@ ?@ %a@ :@ %a)@]" pp c pp t pp e
         | X p -> prefix string pp out ("X ", p)
         | F p -> prefix string pp out ("F ", p)
         | G p -> prefix string pp out ("G ", p)
@@ -46,6 +45,8 @@ module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL = struct
         | R (p, q)-> infix string pp pp out ("V", p, q)
         | S (p, q)-> infix string pp pp out ("S", p, q)
         | T (p, q)-> infix string pp pp out ("T", p, q)
+        | Ite (c, t, e) ->
+            pf out "@[<hov 2>(@[%a@]@ ?@ @[%a@]@ :@ @[%a@])@]" pp c pp t pp e
 
     and pp_term out (t : term) = match t with
       | Num n -> pf out "%d" n

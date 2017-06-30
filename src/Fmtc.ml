@@ -124,28 +124,17 @@ let repeat n pp =
   in walk n pp
 
 
-let infix ?(indent = 2) ?(par = true) middle left right out (m, l, r) =
-  Format.pp_open_hovbox out indent;
-  Format.pp_open_hovbox out indent;
-  if par then string out "(";
-  left out l;
-  sp out ();
-  middle out m;
-  Format.pp_close_box out ();
-  Format.pp_open_hovbox out indent;
-  sp out ();
-  right out r;
-  if par then string out ")";
-  Format.pp_close_box out ();
-  Format.pp_close_box out ()
+let infix ?(indent = 0) ?(par = true) middle left right out (m, l, r) =
+  if par then
+     pf out "(@[<hov%d>@[%a@]@ %a@ @[%a@]@])" indent left l middle m right r 
+   else
+     pf out "@[<hov%d>@[%a@]@ %a@ @[%a@]@]" indent left l middle m right r
 
-let prefix ?(indent = 2) ?(par = true) pprefix pbody out (prefix, body) =
-  Format.pp_open_hovbox out indent;
-  if par then string out "(";
-  pprefix out prefix;
-  pbody out body;
-  if par then string out ")";
-  Format.pp_close_box out ()
+let prefix ?(indent = 0) ?(par = true) pprefix pbody out (prefix, body) =
+  if par then
+     pf out "(@[<hov%d>%a@[%a@]@])" indent pprefix prefix pbody body
+   else
+     pf out "@[<hov%d>%a@[%a@]@]" indent pprefix prefix pbody body
   
 let tuple2 = pair
 
@@ -164,10 +153,3 @@ let hbox2 out v = hbox out v
 let vbox2 out v = vbox ~indent:2 out v
 let hvbox2 out v = hvbox ~indent:2 out v
 
-let infixl ?(indent = 2) ?(ctx = 0) ?(prio = -1) ?(surround = parens)
-      out pop pleft pright op left right =
-  let f =
-    if prio < ctx then fmt "@[<hov2>(@[%a@]@ %a@ @[%a@])@]"
-    else fmt "@[<hov2>@[%a@]@ %a@ @[%a@]@]"
-  in
-  f out (pleft @@ prio + 1) left pop op (pright prio) right
