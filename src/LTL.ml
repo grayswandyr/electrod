@@ -204,7 +204,10 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
   let disj =
     List.fold_left (fun a b -> or_ a (lazy b)) false_
 
-  let ifthenelse c t e = Ite (c, t, e)
+  let ifthenelse c t e = match c with
+    | True -> t
+    | False -> e
+    | _ -> Ite (c, t, e)
 
   let next p = X p
   let always p = G p
@@ -240,9 +243,15 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
 
   let comp op t1 t2 = match op, t1, t2 with
     | Eq, Num n, Num m when n = m -> true_
+    | Lt, Num n, Num m when n < m -> true_
+    | Lte, Num n, Num m when n <= m -> true_
+    | Gt, Num n, Num m when n > m -> true_
+    | Gte, Num n, Num m when n >= m -> true_
+    | Neq, Num n, Num m when n <> m -> true_
     | (Lt | Lte | Gt | Gte | Neq), Num n, Num m when n = m -> false_
     | Eq, Num n, Num m when n <> m -> false_
     | _ -> Comp (op, t1, t2)
+             
   let lt = Lt
   let lte = Lte
   let gt = Gt
@@ -258,6 +267,7 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
   let or_ p (lazy q) = Or (p, q)
   let implies p (lazy q) = Imp (p, q)
   let iff p q = Iff (p, q)
+  let ifthenelse c t e = Ite (c, t, e)
   let plus t1 t2 = Plus (t1, t2)
   let minus t1 t2 = Minus (t1, t2)
   let neg t = Neg t

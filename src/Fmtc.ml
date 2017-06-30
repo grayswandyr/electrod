@@ -130,7 +130,7 @@ let infix ?(indent = 2) ?(par = true) middle left right out (m, l, r) =
   if par then string out "(";
   left out l;
   sp out ();
-  styled `Bold middle out m;
+  middle out m;
   Format.pp_close_box out ();
   Format.pp_open_hovbox out indent;
   sp out ();
@@ -142,14 +142,14 @@ let infix ?(indent = 2) ?(par = true) middle left right out (m, l, r) =
 let prefix ?(indent = 2) ?(par = true) pprefix pbody out (prefix, body) =
   Format.pp_open_hovbox out indent;
   if par then string out "(";
-  styled `Bold pprefix out prefix;
+  pprefix out prefix;
   pbody out body;
   if par then string out ")";
   Format.pp_close_box out ()
   
 let tuple2 = pair
 
-let tuple3 ?sep1:(pp_sep1 = cut) ?sep2:(pp_sep2 = cut)
+let tuple3 ?sep1:(pp_sep1 = sp) ?sep2:(pp_sep2 = sp)
       pp1 pp2 pp3 ppf (x1, x2, x3) =
   pp1 ppf x1;
   pp_sep1 ppf ();
@@ -157,8 +157,17 @@ let tuple3 ?sep1:(pp_sep1 = cut) ?sep2:(pp_sep2 = cut)
   pp_sep2 ppf ();
   pp3 ppf x3
 
+let triple = tuple3
 
 let box2 out v = box ~indent:2 out v
 let hbox2 out v = hbox out v
 let vbox2 out v = vbox ~indent:2 out v
 let hvbox2 out v = hvbox ~indent:2 out v
+
+let infixl ?(indent = 2) ?(ctx = 0) ?(prio = -1) ?(surround = parens)
+      out pop pleft pright op left right =
+  let f =
+    if prio < ctx then fmt "@[<hov2>(@[%a@]@ %a@ @[%a@])@]"
+    else fmt "@[<hov2>@[%a@]@ %a@ @[%a@]@]"
+  in
+  f out (pleft @@ prio + 1) left pop op (pright prio) right
