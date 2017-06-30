@@ -321,7 +321,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       | _ -> core_length + 1 
 
 
-  (* computes the transitive closuer of the term acc_term by k iterative
+  (* computes the transitive closure of the term acc_term by k iterative
      squares (t+t.t)+(t+t.t)(t+t.t) + ... *)
 
   let rec iter_squares (acc_term : (Elo.var, Elo.ident) G.exp) k =
@@ -336,7 +336,20 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
           in
           iter_squares new_exp (max (k lsr 1) ((k+1) lsr 1))
 
-  
+  (* computes the transitive closure of the term t by k joins
+  (alternative to iter_squares) t + t.t + t.t.t + ... *)
+                       
+  let iter_tc (t : (Elo.var, Elo.ident) G.exp) k =
+    let open Location in
+    let t_to_the_k = ref t in
+    let tc = ref t in
+    for i=2 to k do
+      t_to_the_k := G.(exp dummy @@ rbinary !t_to_the_k join t);
+      tc := G.(exp dummy @@ rbinary !tc union !t_to_the_k);
+    done;
+    !tc
+      
+                       
   class ['env] converter = object (self : 'self)
     inherit ['self] GenGoalRecursor.recursor as super
 
@@ -741,8 +754,29 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_TClos (env : 'env) r r' =
       let { sup ; _ } = env#must_may_sup r in
       let k = compute_tc_length sup in
-      let tc_exp = iter_squares r k in
-      self#visit_exp env tc_exp
+      (* let tc_naif = iter_tc r k in *)
+      let tc_square = iter_squares r k in
+      (* let suptc =  *)
+      (*   (env#must_may_sup (G.exp Location.dummy @@ G.runary G.tclos r)).sup *)
+      (* in *)
+      (* let suptc2 = *)
+      (*   (env#must_may_sup tc_square).sup *)
+      (* in *)
+      (* Msg.debug (fun m -> *)
+      (*     m "borne de TC: (%d)" k); *)
+      (* Msg.debug (fun m -> *)
+      (*     m "terme de TC naif : (%a)" (Elo.pp_exp) (tc_naif)); *)
+      (* Msg.debug (fun m -> *)
+      (*     m "terme de TC avec carrés itétarifs : (%a)" (Elo.pp_exp) (tc_square));    *)
+      (* Msg.debug (fun m -> *)
+      (*     m "sup(%a) = %a" (Elo.pp_prim_exp) (G.runary G.tclos r) *)
+      (*       TS.pp suptc); *)
+      (* Msg.debug (fun m -> *)
+      (*     m "sup(%a) = %a" (Elo.pp_exp) (tc_square) *)
+      (*       TS.pp suptc2); *)
+
+      self#visit_exp env tc_square
+                    
 
 
 

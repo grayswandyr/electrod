@@ -109,11 +109,16 @@ let transitive_closure b =
   assert (inferred_arity b = 2);
   let old = ref b in
   let cur = ref (union b (join b b)) in
-  let b_to_the_k = ref b in
+  let b_to_the_k = ref (join b b) in
   while not @@ TS.equal !old !cur do
     old := !cur;
     b_to_the_k := join b !b_to_the_k;
     cur := union !cur !b_to_the_k;
+    (* Msg.debug (fun m -> *)
+    (*     m "current 2 =  %a " pp !cur); *)
+    (* Msg.debug (fun m -> *)
+    (*     m "old 2 =  %a " pp !old); *)
+    (* Msg.debug (fun m -> m "egalité? %b " (TS.equal !old !cur)) *)
   done;
   !cur
 
