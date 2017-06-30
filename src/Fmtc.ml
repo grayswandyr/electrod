@@ -125,27 +125,27 @@ let repeat n pp =
 
 
 let infix ?(indent = 2) ?(par = true) middle left right out (m, l, r) =
-  Format.pp_open_hovbox out indent;
-  Format.pp_open_hovbox out indent;
+  (* Format.pp_open_hovbox out indent; *)
+  (* Format.pp_open_hovbox out indent; *)
   if par then string out "(";
   left out l;
   sp out ();
   styled `Bold middle out m;
-  Format.pp_close_box out ();
-  Format.pp_open_hovbox out indent;
+  (* Format.pp_close_box out (); *)
+  (* Format.pp_open_hovbox out indent; *)
   sp out ();
   right out r;
-  if par then string out ")";
-  Format.pp_close_box out ();
-  Format.pp_close_box out ()
+  if par then string out ")"(* ; *)
+  (* Format.pp_close_box out (); *)
+  (* Format.pp_close_box out () *)
 
 let prefix ?(indent = 2) ?(par = true) pprefix pbody out (prefix, body) =
-  Format.pp_open_hovbox out indent;
+  (* Format.pp_open_hovbox out indent; *)
   if par then string out "(";
   styled `Bold pprefix out prefix;
   pbody out body;
-  if par then string out ")";
-  Format.pp_close_box out ()
+  if par then string out ")"(* ; *)
+  (* Format.pp_close_box out () *)
   
 let tuple2 = pair
 

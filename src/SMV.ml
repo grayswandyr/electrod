@@ -35,7 +35,7 @@ module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL = struct
         | Imp (p, q)-> infix string pp pp out ("->", p, q)
         | Iff (p, q)-> infix string pp pp out ("<->", p, q)
         | Xor (p, q)-> infix string pp pp out ("xor", p, q)
-        | Ite (c, t, e) -> pf out "@[<hov 2>(%a@ ?@ %a@ :@ %a)@]" pp c pp t pp e
+        | Ite (c, t, e) -> pf out "(%a@ ?@ %a@ :@ %a)" pp c pp t pp e
         | X p -> prefix string pp out ("X ", p)
         | F p -> prefix string pp out ("F ", p)
         | G p -> prefix string pp out ("G ", p)
@@ -53,12 +53,11 @@ module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL = struct
       | Minus (t1, t2) -> infix string pp_term pp_term out ("-", t1, t2)
       | Neg t -> prefix string pp_term out ("- ", t)
       | Count ts ->
-          pf out "@[count(@[<hov 2>%a@])@]"
-            (list ~sep:(const string "+") pp) ts
+          pf out "@[count(%a@])" (list ~sep:(const string "+") pp) ts
   end
 
 
-  let pp = PP.pp
+  let pp out f = Fmtc.pf out "@[<hov2>%a@]" PP.pp f
 
   module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
   include P 
