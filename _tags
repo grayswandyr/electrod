@@ -29,4 +29,7 @@ true: use_menhir
 true: infer
 true: explain
 
+true: optimize(3), inlining_report
+
+
 <src/**>: include

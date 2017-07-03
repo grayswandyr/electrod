@@ -409,9 +409,6 @@ class virtual ['self] recursor = object (self : 'self)
       | RTClos ->
           self#visit_RTClos env
   method visit_Union env _visitors_c0 _visitors_c1 =
-    Msg.debug (fun m -> m " visit_Union %a + %a "
-                          Elo.pp_exp _visitors_c0
-                          Elo.pp_exp _visitors_c1);
     self#build_Union env _visitors_c0 _visitors_c1
   method visit_Inter env =
     self#build_Inter env
