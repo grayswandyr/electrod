@@ -372,9 +372,12 @@ and pp_prim_fml pp_v pp_i out =
           (list ~sep:(sp **> comma) @@ pp_binding ~sep:equal pp_v pp_i) bindings
           (pp_block pp_v pp_i) blk
     | FIte (c, t, e) ->
-        pf out "@[<2>(%a@ @[implies %a@]@ @[else %a@])@]"
+        (* pf out "@[<hv2>(%a@ @[implies %a@]@ @[else %a@])@]" *)
+          pf out "@[<hv>%a %a@;<1 2>@[%a@]@;%a@;<1 2>@[%a@]@]"
           (pp_fml pp_v pp_i) c
+          (kwd_styled string) "implies"
           (pp_fml pp_v pp_i) t
+          (kwd_styled string) "else"
           (pp_fml pp_v pp_i) e
     | Block fmls ->
         pp_block pp_v pp_i out fmls
@@ -484,7 +487,7 @@ and pp_prim_exp pp_v pp_i out =
           pp_rbinop op
           (pp_exp pp_v pp_i) e2
     | RIte (c, t, e) ->
-        pf out "@[<2>(%a@ @[%a@ %a@]@ @[%a@ %a@])@]"
+          pf out "@[<hv>%a %a@;<1 2>@[%a@]@;%a@;<1 2>@[%a@]@]"
           (pp_fml pp_v pp_i) c
           (kwd_styled string) "implies"
           (pp_exp pp_v pp_i) t
@@ -520,7 +523,7 @@ and pp_rbinop out =
     | RProj -> pf out ":>"
     | Prod -> pf out "->"
     | Diff -> pf out "-"
-    | Join -> pf out "."
+    | Join -> pf out "-"
 
 and pp_iexp pp_v pp_i out iexp =  
   let open Fmtc in

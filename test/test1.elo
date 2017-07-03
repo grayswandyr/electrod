@@ -26,9 +26,6 @@ some disj x,y : r, disj s: x | true;
 { disj a,b : univ | a->b in t } not in u->u;
 all x : r { true ; false; }; -- optional last semicolon
 
---------- many goals are allowed in a same file
--- 2
-sat -- btw, in the future, we may allow other goals than 'sat' ones
 some r;
-all x, y : univ | #x < #y implies some r implies true else univ in none;
+all x, y : univ | #x < #y implies (some r implies true or true or true or true or true or true or true or true or true or true or true or true or true or true or true or true or true or true or true or true or true) else univ in none;
 #r > 1
