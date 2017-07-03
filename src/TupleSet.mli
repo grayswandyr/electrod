@@ -69,7 +69,10 @@ val join : t -> t -> t
 
 (** Guess. *)
 val transitive_closure : t -> t
-  
+
+(** Computes the transitive closure of a tuple set using iterative sqaures *)
+val transitive_closure_is : t -> t
+
 (** Filters tuples depending on a predicate.  *)
 val filter : (Tuple.t -> bool) -> t -> t
 

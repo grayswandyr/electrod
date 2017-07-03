@@ -396,7 +396,7 @@ class virtual ['self] recursor = object (self : 'self)
           self#visit_RNo env
   method visit_Transpose env =
     self#build_Transpose env
-  method visit_TClos env =
+  method visit_TClos env  =
     self#build_TClos env
   method visit_RTClos env =
     self#build_RTClos env
@@ -408,8 +408,11 @@ class virtual ['self] recursor = object (self : 'self)
           self#visit_TClos env
       | RTClos ->
           self#visit_RTClos env
-  method visit_Union env =
-    self#build_Union env
+  method visit_Union env _visitors_c0 _visitors_c1 =
+    Msg.debug (fun m -> m " visit_Union %a + %a "
+                          Elo.pp_exp _visitors_c0
+                          Elo.pp_exp _visitors_c1);
+    self#build_Union env _visitors_c0 _visitors_c1
   method visit_Inter env =
     self#build_Inter env
   method visit_Over env =

@@ -3,10 +3,8 @@ open Containers
 module G = GenGoal
 module TS = TupleSet
 
-
 let tuples_to_idents =
   List.map @@ fun tuple -> G.ident @@ Elo.tuple_ident tuple
-
 
 module MakeLtlConverter (Ltl : LTL.S) = struct
   open Ltl
@@ -66,7 +64,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
           make_bounds (transpose b.must) (transpose b.sup)
       | RUn (TClos, e) -> 
           let b = bounds_exp domain e in
-          make_bounds (transitive_closure b.must) (transitive_closure b.sup)
+          make_bounds (transitive_closure b.must) (transitive_closure_is b.sup)
       | RUn (RTClos, e) -> 
           let iden = Domain.get_exn Name.iden domain in
           let b = bounds_exp domain e in
@@ -386,11 +384,11 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         _visitors_r0 _visitors_r1 _visitors_r2
 
     method build_Quant (env : 'env) quant sim_bindings blk _ sim_bindings' _ =
-      (* Msg.debug *)
-      (*   (fun m -> m "Elo_to_LTL1.build_Quant <-- %a" *)
-      (*               (Elo.pp_prim_fml) *)
-      (*               (G.quant quant sim_bindings blk) *)
-      (*   ); *)
+      Msg.debug
+        (fun m -> m "Elo_to_LTL1.build_Quant <-- %a"
+                    (Elo.pp_prim_fml)
+                    (G.quant quant sim_bindings blk)
+        );
       match quant with
         | G.Lone | G.One ->
             assert false        (* SIMPLIFIED *)
@@ -465,7 +463,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
                    (fun tuples ->
                       (* concat because semantics of expressions expects *one* tuple *)
                       let premise = s' (List.fold_left Tuple.(@@@)
-                                          (List.hd tuples) (List.tl tuples)) in
+                                                       (List.hd tuples) (List.tl tuples)) in
                       let test =
                         lazy
                           (pos_or_neg
@@ -752,6 +750,11 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       r' @@ Tuple.transpose tuple
 
     method build_TClos (env : 'env) r r' =
+        Msg.debug
+        (fun m -> m "Elo_to_LTL1.build_TClos <-- %a"
+                    Elo.pp_exp r)
+      ;
+        
       let { sup ; _ } = env#must_may_sup r in
       let k = compute_tc_length sup in
       (* let tc_naif = iter_tc r k in *)

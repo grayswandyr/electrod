@@ -94,6 +94,12 @@ let main style_renderer verbosity infile =
     Msg.debug
       (fun m -> m "After simplify1 =@\n%a" (Elo.pp) elo);
 
+    (* let sup_r = Domain.sup (Name.name "r") elo.domain in *)
+    (* let tc_r = TupleSet.transitive_closure sup_r in *)
+    (* Msg.debug (fun m -> *)
+    (*     m "Borne sup de la tc de r : %a " TupleSet.pp tc_r); *)
+    
+    
     let test_f =
       Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) elo
     in

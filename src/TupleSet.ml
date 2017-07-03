@@ -105,6 +105,23 @@ let join b1 b2 =
           else None)
   |> of_seq
 
+
+(* computes the transitive closure of tue tuple set b using iterative squares *)        
+let transitive_closure_is b =
+  assert (inferred_arity b = 2);
+  let old = ref b in
+  let cur = ref (union b (join b b)) in
+  while not @@ TS.equal !old !cur do
+    old := !cur;
+    cur := union !cur (join !cur !cur);
+    (* Msg.debug (fun m -> *)
+    (*     m "current 2 =  %a " pp !cur); *)
+    (* Msg.debug (fun m -> *)
+    (*     m "old 2 =  %a " pp !old); *)
+    (* Msg.debug (fun m -> m "egalité? %b " (TS.equal !old !cur)) *)
+  done;
+  !cur
+
 let transitive_closure b =
   assert (inferred_arity b = 2);
   let old = ref b in
