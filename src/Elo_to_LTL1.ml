@@ -28,7 +28,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
 
   let rec bounds_exp domain exp =
-    bounds_prim_exp domain exp.G.prim_exp
+    lazy (bounds_prim_exp domain exp.G.prim_exp)
   (* |> Fun.tap @@ fun res -> *)
   (* Msg.debug (fun m -> *)
   (*       m "bounds_exp %a: must = %a may = %a" *)
@@ -62,54 +62,64 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
           let iden = Domain.get_exn Name.iden domain in
           make_bounds (Relation.must iden) (Relation.sup iden)
       | RUn (Transpose, e) ->
-          let b = bounds_exp domain e in
+          let b = Lazy.force @@ bounds_exp domain e in
           make_bounds (transpose b.must) (transpose b.sup)
       | RUn (TClos, e) -> 
-          let b = bounds_exp domain e in
+          let b = Lazy.force @@ bounds_exp domain e in
           make_bounds (transitive_closure b.must) (transitive_closure b.sup)
+          |> Fun.tap
+               (fun res -> 
+                  Msg.debug (fun m ->
+                        m
+                          "Elo_to_LTL1.bounds_exp(TClos):@\n\
+                           must(%a) = %a@\nmay(%a) = %a"
+                          Elo.pp_prim_exp pe
+                          TS.pp res.must
+                          Elo.pp_prim_exp pe
+                          TS.pp res.may))
       | RUn (RTClos, e) -> 
           let iden = Domain.get_exn Name.iden domain in
-          let b = bounds_exp domain e in
+          let b = Lazy.force @@ bounds_exp domain e in
           make_bounds (union b.must @@ Relation.must iden)
             (union b.sup @@ Relation.sup iden)
       | RBin (e1, Union ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
+          let b1 = Lazy.force @@ bounds_exp domain e1 in
+          let b2 = Lazy.force @@ bounds_exp domain e2 in
           make_bounds (union b1.must b2.must) (union b1.sup b2.sup)
       | RBin (e1, Inter ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
+          let b1 = Lazy.force @@ bounds_exp domain e1 in
+          let b2 = Lazy.force @@ bounds_exp domain e2 in
           make_bounds (inter b1.must b2.must) (inter b1.sup b2.sup)
       | RBin (e1, Over ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
+          let b1 = Lazy.force @@ bounds_exp domain e1 in
+          let b2 = Lazy.force @@ bounds_exp domain e2 in
           make_bounds (override b1.must b2.must) (override b1.sup b2.sup)
       | RBin (e1, LProj ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
+          let b1 = Lazy.force @@ bounds_exp domain e1 in
+          let b2 = Lazy.force @@ bounds_exp domain e2 in
           make_bounds (lproj b1.must b2.must) (lproj b1.sup b2.sup)
       | RBin (e1, RProj ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
+          let b1 = Lazy.force @@ bounds_exp domain e1 in
+          let b2 = Lazy.force @@ bounds_exp domain e2 in
           make_bounds (rproj b1.must b2.must) (rproj b1.sup b2.sup)
       | RBin (e1, Prod ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
+          let b1 = Lazy.force @@ bounds_exp domain e1 in
+          let b2 = Lazy.force @@ bounds_exp domain e2 in
           make_bounds (product b1.must b2.must) (product b1.sup b2.sup)
       | RBin (e1, Diff ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
+          let b1 = Lazy.force @@ bounds_exp domain e1 in
+          let b2 = Lazy.force @@ bounds_exp domain e2 in
           make_bounds (diff b1.must b2.must) (diff b1.sup b2.sup)
       | RBin (e1, Join ,e2) -> 
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
+          let b1 = Lazy.force @@ bounds_exp domain e1 in
+          let b2 = Lazy.force @@ bounds_exp domain e2 in
           make_bounds (join b1.must b2.must) (join b1.sup b2.sup)
       | RIte (_, e1, e2) ->
-          let b1 = bounds_exp domain e1 in
-          let b2 = bounds_exp domain e2 in
+          let b1 = Lazy.force @@ bounds_exp domain e1 in
+          let b2 = Lazy.force @@ bounds_exp domain e2 in
           make_bounds (inter b1.must b2.must) (union b1.sup b2.sup) 
       | Prime e ->
-          bounds_exp domain e
+          Lazy.force @@ bounds_exp domain e
       | Compr (sim_bindings, _) ->
           let pmust =
             TS.of_tuples
@@ -119,19 +129,19 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
             TS.of_tuples
             @@ bounds_sim_bindings (fun { sup; _} -> sup) domain [] sim_bindings
           in
-          Msg.debug (fun m ->
-                m
-                  "Elo_to_LTL1.bounds_exp(Compr):\
-                   @\nmust(%a) = @[<hov>%a@]\
-                   @\nsup(%a) = @[<hov>%a@]"
-                  (Fmtc.(list ~sep:(const string ": "))
-                   @@ Elo.pp_sim_binding)
-                  sim_bindings
-                  TS.pp pmust
-                  (Fmtc.(list ~sep:(const string ": "))
-                   @@ Elo.pp_sim_binding)
-                  sim_bindings
-                  TS.pp psup);
+          (* Msg.debug (fun m -> *)
+          (*       m *)
+          (*         "Elo_to_LTL1.bounds_exp(Compr):\ *)
+                     (*          @\nmust(%a) = @[<hov>%a@]\ *)
+                     (*          @\nsup(%a) = @[<hov>%a@]" *)
+          (*         (Fmtc.(list ~sep:(const string ": ")) *)
+          (*          @@ Elo.pp_sim_binding) *)
+          (*         sim_bindings *)
+          (*         TS.pp pmust *)
+          (*         (Fmtc.(list ~sep:(const string ": ")) *)
+          (*          @@ Elo.pp_sim_binding) *)
+          (*         sim_bindings *)
+          (*         TS.pp psup); *)
           make_bounds pmust psup
 
   (* The whole idea of this function (and the following auxiliary ones) is to
@@ -233,7 +243,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
        is given as a [Tuple.t list] instead of a [TS.t] for technical purposes
        only. As a consequence, the returned value for the whole function is a
        set of sets of tuples represented by a list of lists... *)
-    let range_bnd = TS.to_list @@ fbound @@ bounds_exp domain range' in
+    let range_bnd = TS.to_list @@ fbound @@ Lazy.force @@ bounds_exp domain range' in
     (* compute the bound for the whole head sim binding  *)
     let lg = length vars in
     let prod =
@@ -321,7 +331,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       | _ -> core_length + 1 
 
 
-  (* computes the transitive closuer of the term acc_term by k iterative
+  (* computes the transitive closure of the term acc_term by k iterative
      squares (t+t.t)+(t+t.t)(t+t.t) + ... *)
 
   let rec iter_squares (acc_term : (Elo.var, Elo.ident) G.exp) k =
@@ -336,7 +346,20 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
           in
           iter_squares new_exp (max (k lsr 1) ((k+1) lsr 1))
 
-  
+  (* computes the transitive closure of the term t by k joins
+  (alternative to iter_squares) t + t.t + t.t.t + ... *)
+                       
+  let iter_tc (t : (Elo.var, Elo.ident) G.exp) k =
+    let open Location in
+    let t_to_the_k = ref t in
+    let tc = ref t in
+    for i=2 to k do
+      t_to_the_k := G.(exp dummy @@ rbinary !t_to_the_k join t);
+      tc := G.(exp dummy @@ rbinary !tc union !t_to_the_k);
+    done;
+    !tc
+      
+                       
   class ['env] converter = object (self : 'self)
     inherit ['self] GenGoalRecursor.recursor as super
 
@@ -430,9 +453,9 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
               | G.Lone | G.One -> assert false (* SIMPLIFIED *)
             in
             let { must; may; _ } = env#must_may_sup s in
-            Msg.debug (fun m ->
-                  m "must(%a) = %a" (Elo.pp_exp) s
-                    TS.pp must);
+            (* Msg.debug (fun m -> *)
+            (*       m "must(%a) = %a" (Elo.pp_exp) s *)
+            (*         TS.pp must); *)
             let mustpart =
               bigop
                 ~range:(tuples_of_sim_binding ~disj xs @@ TS.to_list must)
@@ -442,9 +465,9 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
                          @@ Elo.substitute#visit_prim_fml (sub_for tuples)
                          @@ G.block blk)) (* b [as / xs] *)
             in
-            Msg.debug (fun m ->
-                  m "may(%a) = %a" (Elo.pp_exp) s
-                    TS.pp may);
+            (* Msg.debug (fun m -> *)
+            (*       m "may(%a) = %a" (Elo.pp_exp) s *)
+            (*         TS.pp may); *)
             let maypart =
               lazy 
                 (bigop
@@ -741,8 +764,29 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method build_TClos (env : 'env) r r' =
       let { sup ; _ } = env#must_may_sup r in
       let k = compute_tc_length sup in
-      let tc_exp = iter_squares r k in
-      self#visit_exp env tc_exp
+      (* let tc_naif = iter_tc r k in *)
+      let tc_square = iter_squares r k in
+      (* let suptc =  *)
+      (*   (env#must_may_sup (G.exp Location.dummy @@ G.runary G.tclos r)).sup *)
+      (* in *)
+      (* let suptc2 = *)
+      (*   (env#must_may_sup tc_square).sup *)
+      (* in *)
+      (* Msg.debug (fun m -> *)
+      (*     m "borne de TC: (%d)" k); *)
+      (* Msg.debug (fun m -> *)
+      (*     m "terme de TC naif : (%a)" (Elo.pp_exp) (tc_naif)); *)
+      (* Msg.debug (fun m -> *)
+      (*     m "terme de TC avec carrés itétarifs : (%a)" (Elo.pp_exp) (tc_square));    *)
+      (* Msg.debug (fun m -> *)
+      (*     m "sup(%a) = %a" (Elo.pp_prim_exp) (G.runary G.tclos r) *)
+      (*       TS.pp suptc); *)
+      (* Msg.debug (fun m -> *)
+      (*     m "sup(%a) = %a" (Elo.pp_exp) (tc_square) *)
+      (*       TS.pp suptc2); *)
+
+      self#visit_exp env tc_square
+                    
 
 
 
@@ -779,7 +823,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method domain = Elo.(elo.domain)
 
     method must_may_sup (e : (Elo.var, Elo.ident) G.exp) =
-      bounds_exp Elo.(elo.domain) e
+      Lazy.force @@ bounds_exp Elo.(elo.domain) e
   end
 
 
