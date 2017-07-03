@@ -66,7 +66,7 @@ let union b1 b2 =
   TS.union b1 b2 
 
 let diff b1 b2 = 
-  TS.diff b1 b2
+  CCCache.(with_cache (lru 256) TS.diff b1) b2
 
 let transpose b =
   let ar = inferred_arity b in
