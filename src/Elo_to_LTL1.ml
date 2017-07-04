@@ -7,6 +7,7 @@ let tuples_to_idents =
   List.map @@ fun tuple -> G.ident @@ Elo.tuple_ident tuple
 
 module MakeLtlConverter (Ltl : LTL.S) = struct
+  [@@@landmark "auto"] 
   open Ltl
   open Ltl.Infix
 
@@ -43,7 +44,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
           let rel = Domain.get_exn n domain in
           make_bounds (Relation.must rel) (Relation.sup rel)
       | None_  ->
-          make_bounds empty empty 
+          make_bounds (empty ()) (empty ())
       | Univ  ->
           let univ = Domain.univ_atoms domain in
           make_bounds univ univ
@@ -233,7 +234,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
        only. As a consequence, the returned value for the whole function is a
        set of sets of tuples represented by a list of lists... *)
     let range_bnd =
-      TS.to_list @@ fbound @@ bounds_prim_exp domain range'.prim_exp
+      TS.to_list @@ fbound @@ bounds_prim_exp domain range'.G.prim_exp
     in
     (* compute the bound for the whole head sim binding  *)
     let lg = length vars in
@@ -277,10 +278,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     | hd::tl when List.mem ~eq:Tuple.equal hd tl -> false
     | _::tl -> all_different tl
 
-
-  let bounds_exp domain exp =
-    bounds_prim_exp domain exp.G.prim_exp
-
+  
   
   (***************************************************************** 
    * Semantic function
@@ -447,19 +445,19 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
             in
             let { must; may; _ } = env#must_may_sup s in
             Msg.debug (fun m ->
-                  m "must(%a) = %a" (Elo.pp_exp) s
+                  m "Elo_to_LTL1.build_Quant: must(%a) = %a" (Elo.pp_exp) s
                     TS.pp must);
             let mustpart =
               bigop
                 ~range:(tuples_of_sim_binding ~disj xs @@ TS.to_list must)
                 (fun tuples -> 
                    lazy (pos_or_neg
-                         @@ self#visit_prim_fml env (* [[...]] *)
-                         @@ Elo.substitute#visit_prim_fml (sub_for tuples)
-                         @@ G.block blk)) (* b [as / xs] *)
+                         @@ (self#visit_prim_fml env [@landmark "must/[[...]]"]) (* [[...]] *)
+                         @@ (Elo.substitute#visit_prim_fml (sub_for tuples)
+                         @@ G.block blk [@landmark "must/subst"]))) (* b [as / xs] *)
             in
             Msg.debug (fun m ->
-                  m "may(%a) = %a" (Elo.pp_exp) s
+                  m "Elo_to_LTL1.build_Quant: may(%a) = %a" (Elo.pp_exp) s
                     TS.pp may);
             let maypart =
               lazy 
@@ -467,19 +465,21 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
                    ~range:(tuples_of_sim_binding ~disj xs @@ TS.to_list may)
                    (fun tuples ->
                       (* concat because semantics of expressions expects *one* tuple *)
-                      let premise = s' (List.fold_left Tuple.(@@@)
-                                          (List.hd tuples) (List.tl tuples)) in
-                      let test =
+                      let[@landmark] premise = s' (List.fold_left Tuple.(@@@)
+                                          (List.hd tuples) (List.tl tuples))
+                                      [@landmark "may/s'"]
+                      in
+                      let[@landmark] test =
                         lazy
                           (pos_or_neg
-                           @@ self#visit_prim_fml env (* [[...]] *)
-                           @@ Elo.substitute#visit_prim_fml (sub_for tuples)
-                           @@ G.block blk) (* b [as / xs] *)
+                           @@ (self#visit_prim_fml env [@landmark "may/[[...]]"]) (* [[...]] *)
+                           @@ (Elo.substitute#visit_prim_fml (sub_for tuples) 
+                               @@ G.block blk [@landmark "may/subst"])) (* b [as / xs] *)
                       in
-                      lazy (link premise test)
+                      lazy (link premise test [@landmark "may/link-premise-and-test"])
                    ))
             in
-            smallop mustpart maypart 
+            (smallop mustpart maypart [@landmark "combine_must_may_parts"])
 
     method build_One (env : 'env) = G.One
 
@@ -694,14 +694,14 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     (* rbinop *)
 
-    method build_RBin (env : 'env) f1 _ f2 f1' op' f2' = op' f1 f2 f1' f2'
+    method build_RBin (env : 'env) f1 _ f2 f1' op' f2' = op' f1 f2 f1' f2' [@landmark "build_RBin"]
 
-    method build_Union (env : 'env) _ _ e1 e2 = fun x -> e1 x +|| lazy (e2 x)
+    method build_Union (env : 'env) _ _ e1 e2 = (fun x -> e1 x +|| lazy (e2 x))[@landmark "build_Union"]
 
     method build_Inter (env : 'env) _ _ e1 e2 = fun x -> e1 x +&& lazy (e2 x)
 
     method build_Join (env : 'env) r s r' s' =  fun tuple ->
-      let eligible_pairs =
+      let[@landmark] eligible_pairs =
         let sup_r = (env#must_may_sup r).sup in
         let sup_s = (env#must_may_sup s).sup in
         let s1 = TS.to_seq sup_r in
@@ -723,6 +723,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       (*               eligible_pairs *)
       (*   ); *)
       vee ~range:eligible_pairs (fun (bs, cs) -> lazy (r' bs +&& lazy (s' cs)))
+        [@landmark "build_Join"]
 
 
     method build_LProj (env : 'env) _ _ s' r' = fun tuple -> 
@@ -761,9 +762,9 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       ;
 
       let { sup ; _ } = env#must_may_sup r in
-      let k = compute_tc_length sup in
+      let[@landmark] k = compute_tc_length sup in
       (* let tc_naif = iter_tc r k in *)
-      let tc_square = iter_squares r k in
+      let[@landmark] tc_square = iter_squares r k in
       (* let suptc =  *)
       (*   (env#must_may_sup (G.exp Location.dummy @@ G.runary G.tclos r)).sup *)
       (* in *)
@@ -783,7 +784,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       (*     m "sup(%a) = %a" (Elo.pp_exp) (tc_square) *)
       (*       TS.pp suptc2); *)
 
-      self#visit_exp env tc_square
+      self#visit_exp env tc_square [@landmark "build_TClos/visit_exp"]
 
 
 
@@ -822,11 +823,12 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     method domain = Elo.(elo.domain)
 
     val cached_bounds_exp =
-      CCCache.(with_cache (lru ~eq:Elo.equal_exp 256)
-               @@ bounds_exp Elo.(elo.domain))
+      CCCache.(with_cache (unbounded ~eq:Elo.equal_prim_exp 2973)
+               @@ bounds_prim_exp Elo.(elo.domain))
 
     method must_may_sup (e : (Elo.var, Elo.ident) G.exp) =
-      cached_bounds_exp e
+      cached_bounds_exp e.G.prim_exp
+        [@landmark "must_may_sup"]
 
   end
 
@@ -837,4 +839,5 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     let G.Sat fmls = elo.goal in
     List.map ((new converter)#visit_fml env) fmls
 
+  [@@@landmark "auto-off"] 
 end

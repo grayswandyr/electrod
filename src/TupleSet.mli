@@ -5,7 +5,7 @@
 type t
 
 (** The empty tuple set. *)
-val empty : t
+val empty : unit -> t
 
 (** Requires: [tuples] is a nonempty list for tuples of the same arity. *)
 val of_tuples : Tuple.t list -> t

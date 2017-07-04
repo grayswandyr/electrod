@@ -1,4 +1,4 @@
-
+[@@@landmark "auto"]
 module Location = struct
   include Location
   let equal _ _ = true

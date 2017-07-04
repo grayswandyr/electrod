@@ -11,6 +11,8 @@ val of_raw_ident : Raw_ident.t -> t
 
 (** Prints a list of atoms as a bound. *)
 val pp_list : t list CCFormat.printer
+
+val hash : t -> int
   
 module Set : Set.S with type elt = t
 

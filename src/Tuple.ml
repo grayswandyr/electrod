@@ -8,6 +8,10 @@ let of_list1 xs =
   assert (xs <> []);
   Array.of_list xs
 
+
+let hash tuple =
+  Hash.array Atom.hash tuple
+
 let to_list = Array.to_list
 
 let tuple1 at =
@@ -97,7 +101,13 @@ include P
 
 
 
-module Set = CCSet.Make(struct
+(* module Set = CCSet.Make(struct *)
+(*     type nonrec t = t *)
+(*     let compare = compare *)
+(*   end) *)
+
+module Set = CCHashSet.Make(struct
     type nonrec t = t
-    let compare = compare
+    let equal = equal
+    let hash = hash
   end)

@@ -10,6 +10,8 @@ sat
 
 (*all a:univ, b: s | a in b.r;*)
 all a:univ, b: a.(^r) | a in b.r ;
+
 (*all a:univ, b: a.(((r+r.r)+(r+r.r).(r+r.r))+((r+r.r)+(r+r.r).(r+r.r)).((r+r.r)+(r+r.r).(r+r.r))) | a in b.r ;*)
+
 (* some x:univ | x in x.(^r);*)
 

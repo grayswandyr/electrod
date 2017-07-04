@@ -1,4 +1,4 @@
-
+[@@@landmark "auto"]
 open Containers
 
 module G = GenGoal
@@ -107,6 +107,28 @@ let substitute = object (self : 'self)
           List.Assoc.get_exn ~eq:Var.equal var env
       | Var _ | Name _ | Tuple _ -> G.ident id
 
+
+  method visit_exp env exp = 
+    Msg.debug
+      (fun m -> m "Elo.substitute.visit_exp: %a [%a]"
+                  pp_exp exp
+                  (List.pp
+                   @@ Fmt.pair ~sep:Fmtc.(const string "<-") Var.pp
+                   @@ pp_prim_exp)
+                  env);
+    super#visit_exp env exp
+
+
+  method visit_prim_fml env pfml = 
+    Msg.debug
+      (fun m -> m "Elo.substitute.visit_prim_fml: %a [%a]"
+                  pp_prim_fml pfml
+                  (List.pp
+                   @@ Fmt.pair ~sep:Fmtc.(const string "<-") Var.pp
+                   @@ pp_prim_exp)
+                  env);
+    super#visit_prim_fml env pfml
+      
 end
 
 

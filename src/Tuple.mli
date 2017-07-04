@@ -20,6 +20,7 @@ val concat : t list -> t
 
 val compare : t -> t -> int
 val equal : t -> t -> bool
+val hash : t -> int
 
 (** Transposes a pair. *)
 val transpose : t -> t
@@ -52,5 +53,5 @@ val to_list : t -> Atom.t list
 
 include Intf.Print.S with type t := t
 
-module Set : CCSet.S with type elt = t
+module Set : CCHashSet.S with type elt = t
 
