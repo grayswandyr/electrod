@@ -62,7 +62,8 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     | RUn (Transpose, e) ->
        let b = Lazy.force @@ bounds_exp domain e in
        make_bounds (transpose b.must) (transpose b.sup)
-    | RUn (TClos, e) -> 
+    | RUn (TClos, e) ->
+       Msg.debug (fun m-> m "Appel à bounds_prim_exp sur TClos de : %a" Elo.pp_exp e);
        let b = Lazy.force @@ bounds_exp domain e in
        make_bounds (transitive_closure b.must) (transitive_closure b.sup)
        |> Fun.tap
