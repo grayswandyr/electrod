@@ -4,7 +4,8 @@ open Containers
 module Basis = struct
   type t = {
     name : string;
-    loc : Location.t option
+    loc : Location.t option;
+    hash : int
   }
 
   let compare at1 at2 = CCString.compare at1.name at2.name
@@ -14,15 +15,13 @@ end
 
 include Basis
 
-let atom ?loc name = { name; loc }
+let atom ?loc name = { name; loc; hash = Hash.string name}
 
-let of_raw_ident id = {
-  name = Raw_ident.basename id;
-  loc = Some (Raw_ident.location id)
-}
+let of_raw_ident id =
+  atom ~loc:(Raw_ident.location id) (Raw_ident.basename id)
+ 
 
-
-let hash atom = Hash.string atom.name
+let hash atom = atom.hash
 
 (** Generic interface implementations *)
 

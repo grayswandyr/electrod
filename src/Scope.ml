@@ -37,12 +37,19 @@ let may_aux sc =
   assert (TupleSet.subset (inf sc) (sup sc));
   match sc with
     | Exact _ ->
-        TupleSet.empty ()
+        TupleSet.empty 
     | Inexact (inf, sup) ->
         TupleSet.diff sup inf
 
+let equal sc1 sc2 = match sc1, sc2 with
+  | Exact ts1, Exact ts2 -> TupleSet.equal ts1 ts2
+  | Inexact (inf1, sup1), Inexact (inf2, sup2) ->
+      TupleSet.(equal inf1 inf2 && equal sup1 sup2)
+  | Exact _, Inexact _
+  | Inexact _, Exact _ -> false
+
 let may =
-  CCCache.(with_cache (unbounded 79) may_aux) 
+  CCCache.(with_cache (lru ~eq:equal 253) may_aux) 
 
 
 let pp out = function

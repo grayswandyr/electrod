@@ -2,7 +2,7 @@
 
 univ : { a b c d e f g h i j k l m n o p q r s };
 
-r : {(a b)} { (a b) (b c) (c d) (d e) (e f) (f g)  (g h) (h i) (i j) (j k) (k l)  (l m)  (n o) (p q) (r s )} ;
+r : {(a b)} { (a b) (b c) (c d) (d e) (e f) (f g)  (g h) (h i)   (n o) (p q) (r s )} ;
 s : {} {c d e f g h i j};
 
 

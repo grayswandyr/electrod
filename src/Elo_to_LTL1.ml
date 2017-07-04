@@ -7,7 +7,6 @@ let tuples_to_idents =
   List.map @@ fun tuple -> G.ident @@ Elo.tuple_ident tuple
 
 module MakeLtlConverter (Ltl : LTL.S) = struct
-  [@@@landmark "auto"] 
   open Ltl
   open Ltl.Infix
 
@@ -42,7 +41,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
           let rel = Domain.get_exn n domain in
           make_bounds (Relation.must rel) (Relation.sup rel)
       | None_  ->
-          make_bounds (empty ()) (empty ())
+          make_bounds empty empty
       | Univ  ->
           let univ = Domain.univ_atoms domain in
           make_bounds univ univ
@@ -362,14 +361,14 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
           |> rev_append acc) empty rlist
     |> to_seq
 
-  let eligible_pairs =
-    CCCache.(with_cache
-               (lru ~eq:(fun (t1, r1, s1, _, _) (t2, r2, s2, _, _) ->
-                      Tuple.equal t1 t2
-                      && Elo.equal_exp r1 r2
-                      && Elo.equal_exp s1 s2)
-                   256)
-               eligible_pairs)
+  (* let eligible_pairs = *)
+  (*   CCCache.(with_cache *)
+  (*              (lru ~eq:(fun (t1, r1, s1, _, _) (t2, r2, s2, _, _) -> *)
+  (*                     Tuple.equal t1 t2 *)
+  (*                     && Elo.equal_exp r1 r2 *)
+  (*                     && Elo.equal_exp s1 s2) *)
+  (*                  256) *)
+  (*              eligible_pairs) *)
 
 
 
@@ -931,5 +930,4 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     let G.Sat fmls = elo.goal in
     List.map ((new converter)#visit_fml env) fmls
 
-  [@@@landmark "auto-off"] 
 end
