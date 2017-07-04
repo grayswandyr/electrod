@@ -25,16 +25,14 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
   let make_bounds must sup =
     { must; sup; may = TS.diff sup must }
 
-  let rec bounds_prim_exp domain =
+  let rec bounds_prim_exp domain pe =
     let open G in
     let open TS in
-    CCCache.(with_cache_rec (lru ~eq:(Elo.equal_prim_exp) 256))
-    @@ fun bounds_prim_exp_rec pe ->
     match pe with         
       | BoxJoin (_,_) -> assert false (* SIMPLIFIED *)
       | Ident (Elo.Var v) ->          (* impossible: substituted *)
           failwith
-          @@ Fmtc.strf "Elo_to_LTL1.bounds_prim_exp_rec: \
+          @@ Fmtc.strf "Elo_to_LTL1.bounds_prim_exp domain: \
                         %a should have been substituted"
                Var.pp v
       | Ident (Elo.Tuple t) ->
@@ -52,10 +50,10 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
           let iden = Domain.get_exn Name.iden domain in
           make_bounds (Relation.must iden) (Relation.sup iden)
       | RUn (Transpose, e) ->
-          let b = bounds_prim_exp_rec e.prim_exp in
+          let b = bounds_prim_exp domain e.prim_exp in
           make_bounds (transpose b.must) (transpose b.sup)
       | RUn (TClos, e) -> 
-          let b = bounds_prim_exp_rec e.prim_exp in
+          let b = bounds_prim_exp domain e.prim_exp in
           make_bounds (transitive_closure b.must) (transitive_closure b.sup)
           |> Fun.tap
                (fun res -> 
@@ -69,47 +67,47 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
                           TS.pp res.may))
       | RUn (RTClos, e) -> 
           let iden = Domain.get_exn Name.iden domain in
-          let b = bounds_prim_exp_rec e.prim_exp in
+          let b = bounds_prim_exp domain e.prim_exp in
           make_bounds (union b.must @@ Relation.must iden)
             (union b.sup @@ Relation.sup iden)
       | RBin (e1, Union ,e2) -> 
-          let b1 = bounds_prim_exp_rec e1.prim_exp in
-          let b2 = bounds_prim_exp_rec e2.prim_exp in
+          let b1 = bounds_prim_exp domain e1.prim_exp in
+          let b2 = bounds_prim_exp domain e2.prim_exp in
           make_bounds (union b1.must b2.must) (union b1.sup b2.sup)
       | RBin (e1, Inter ,e2) -> 
-          let b1 = bounds_prim_exp_rec e1.prim_exp in
-          let b2 = bounds_prim_exp_rec e2.prim_exp in
+          let b1 = bounds_prim_exp domain e1.prim_exp in
+          let b2 = bounds_prim_exp domain e2.prim_exp in
           make_bounds (inter b1.must b2.must) (inter b1.sup b2.sup)
       | RBin (e1, Over ,e2) -> 
-          let b1 = bounds_prim_exp_rec e1.prim_exp in
-          let b2 = bounds_prim_exp_rec e2.prim_exp in
+          let b1 = bounds_prim_exp domain e1.prim_exp in
+          let b2 = bounds_prim_exp domain e2.prim_exp in
           make_bounds (override b1.must b2.must) (override b1.sup b2.sup)
       | RBin (e1, LProj ,e2) -> 
-          let b1 = bounds_prim_exp_rec e1.prim_exp in
-          let b2 = bounds_prim_exp_rec e2.prim_exp in
+          let b1 = bounds_prim_exp domain e1.prim_exp in
+          let b2 = bounds_prim_exp domain e2.prim_exp in
           make_bounds (lproj b1.must b2.must) (lproj b1.sup b2.sup)
       | RBin (e1, RProj ,e2) -> 
-          let b1 = bounds_prim_exp_rec e1.prim_exp in
-          let b2 = bounds_prim_exp_rec e2.prim_exp in
+          let b1 = bounds_prim_exp domain e1.prim_exp in
+          let b2 = bounds_prim_exp domain e2.prim_exp in
           make_bounds (rproj b1.must b2.must) (rproj b1.sup b2.sup)
       | RBin (e1, Prod ,e2) -> 
-          let b1 = bounds_prim_exp_rec e1.prim_exp in
-          let b2 = bounds_prim_exp_rec e2.prim_exp in
+          let b1 = bounds_prim_exp domain e1.prim_exp in
+          let b2 = bounds_prim_exp domain e2.prim_exp in
           make_bounds (product b1.must b2.must) (product b1.sup b2.sup)
       | RBin (e1, Diff ,e2) -> 
-          let b1 = bounds_prim_exp_rec e1.prim_exp in
-          let b2 = bounds_prim_exp_rec e2.prim_exp in
+          let b1 = bounds_prim_exp domain e1.prim_exp in
+          let b2 = bounds_prim_exp domain e2.prim_exp in
           make_bounds (diff b1.must b2.must) (diff b1.sup b2.sup)
       | RBin (e1, Join ,e2) -> 
-          let b1 = bounds_prim_exp_rec e1.prim_exp in
-          let b2 = bounds_prim_exp_rec e2.prim_exp in
+          let b1 = bounds_prim_exp domain e1.prim_exp in
+          let b2 = bounds_prim_exp domain e2.prim_exp in
           make_bounds (join b1.must b2.must) (join b1.sup b2.sup)
       | RIte (_, e1, e2) ->
-          let b1 = bounds_prim_exp_rec e1.prim_exp in
-          let b2 = bounds_prim_exp_rec e2.prim_exp in
+          let b1 = bounds_prim_exp domain e1.prim_exp in
+          let b2 = bounds_prim_exp domain e2.prim_exp in
           make_bounds (inter b1.must b2.must) (union b1.sup b2.sup) 
       | Prime e ->
-          bounds_prim_exp_rec e.prim_exp
+          bounds_prim_exp domain e.prim_exp
       | Compr (sim_bindings, _) ->
           let pmust =
             TS.of_tuples
@@ -349,6 +347,30 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       tc := G.(exp dummy @@ rbinary !tc union !t_to_the_k);
     done;
     !tc
+
+
+  (* utility function for build_Join *)
+  let eligible_pairs (tuple, r, s, lazy rlist, lazy slist) = 
+    let open List in
+    fold_left (fun acc rtuple ->
+          filter_map
+            (fun stuple ->
+               if Tuple.is_in_join tuple rtuple stuple then
+                 Some (rtuple, stuple)
+               else
+                 None) slist
+          |> rev_append acc) empty rlist
+    |> to_seq
+
+  let eligible_pairs =
+    CCCache.(with_cache
+               (lru ~eq:(fun (t1, r1, s1, _, _) (t2, r2, s2, _, _) ->
+                      Tuple.equal t1 t2
+                      && Elo.equal_exp r1 r2
+                      && Elo.equal_exp s1 s2)
+                   256)
+               eligible_pairs)
+
 
 
   class ['env] converter = object (self : 'self)
@@ -700,30 +722,100 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     method build_Inter (env : 'env) _ _ e1 e2 = fun x -> e1 x +&& lazy (e2 x)
 
+    (* method build_Join (env : 'env) r s r' s' =  fun tuple -> *)
+    (*   let sup_r = (env#must_may_sup r).sup in *)
+    (*   let sup_s = (env#must_may_sup s).sup in *)
+    (*   let s1 = TS.to_seq sup_r in *)
+    (*   let s2 = TS.to_seq sup_s in *)
+    (*   let[@landmark] eligible_pairs = *)
+    (*     Sequence.product s1 s2 *)
+    (*     |> Sequence.filter (fun (t1, t2) -> Tuple.is_in_join tuple t1 t2) *)
+    (*   in *)
+    (*   Msg.debug *)
+    (*     (fun m -> m "Elo_to_LTL1.build_Join <-- \ *)
+           (*                  %a.%a@\nsup(%a) = %a@\nsup(%a) = %a@\neligible_pairs =@ %a" *)
+    (*                 (Elo.pp_exp) r *)
+    (*                 (Elo.pp_exp) s *)
+    (*                 (Elo.pp_exp) r *)
+    (*                 TupleSet.pp sup_r *)
+    (*                 (Elo.pp_exp) s *)
+    (*                 TupleSet.pp sup_s *)
+    (*                 (Sequence.pp_seq *)
+    (*                  @@ Fmtc.brackets @@ Fmt.pair ~sep:Fmtc.sp Tuple.pp Tuple.pp) *)
+    (*                 eligible_pairs *)
+    (*     ); *)
+    (*   vee ~range:eligible_pairs (fun (bs, cs) -> lazy (r' bs +&& lazy (s' cs))) *)
+    (*     [@landmark "build_Join"] *)
+
+
+    (* method build_Join (env : 'env) r s r' s' =  fun tuple -> *)
+    (*   let open Sequence in *)
+    (*   let rseq = (env#must_may_sup r).sup |> TS.to_seq in *)
+    (*   let sseq = (env#must_may_sup s).sup |> TS.to_seq in *)
+    (*   let[@landmark] eligible_pairs = *)
+    (*     fold (fun acc rtuple -> *)
+    (*           filter_map *)
+    (*             (fun stuple -> *)
+    (*                if Tuple.is_in_join tuple rtuple stuple then *)
+    (*                  Some (rtuple, stuple) *)
+    (*                else *)
+    (*                  None) sseq *)
+    (*           |> append acc) empty rseq *)
+    (*   in *)
+
+    (*   (\* Msg.debug *\) *)
+    (*   (\*   (fun m -> m "Elo_to_LTL1.build_Join <-- \ *\) *)
+         (*             (\*                %a.%a@\nsup(%a) = %a@\nsup(%a) = %a@\neligible_pairs =@ %a" *\) *)
+    (*   (\*               (Elo.pp_exp) r *\) *)
+    (*   (\*               (Elo.pp_exp) s *\) *)
+    (*   (\*               (Elo.pp_exp) r *\) *)
+    (*   (\*               TupleSet.pp (env#sup r) *\) *)
+    (*   (\*               (Elo.pp_exp) s *\) *)
+    (*   (\*               TupleSet.pp (env#sup s) *\) *)
+    (*   (\*               (Sequence.pp_seq  *\) *)
+    (*   (\*                @@ Fmtc.brackets @@ Fmt.pair ~sep:Fmtc.sp Tuple.pp Tuple.pp) *\) *)
+    (*   (\*               eligible_pairs *\) *)
+    (*   (\*   ); *\) *)
+    (*   vee ~range:eligible_pairs (fun (bs, cs) -> lazy (r' bs +&& lazy (s' cs))) *)
+    (*     [@landmark "build_Join"] *)
+
+
+
+
     method build_Join (env : 'env) r s r' s' =  fun tuple ->
-      let[@landmark] eligible_pairs =
-        let sup_r = (env#must_may_sup r).sup in
-        let sup_s = (env#must_may_sup s).sup in
-        let s1 = TS.to_seq sup_r in
-        let s2 = TS.to_seq sup_s in
-        Sequence.product s1 s2
-        |> Sequence.filter (fun (t1, t2) -> Tuple.is_in_join tuple t1 t2)
-      in
+      let open List in
+      let rlist = lazy (TS.to_list (env#must_may_sup r).sup) in
+      let slist = lazy (TS.to_list (env#must_may_sup s).sup) in
+      (* let[@landmark] eligible_pairs = *)
+      (*   fold_left (fun acc rtuple -> *)
+      (*         filter_map *)
+      (*           (fun stuple -> *)
+      (*              if Tuple.is_in_join tuple rtuple stuple then *)
+      (*                Some (rtuple, stuple) *)
+      (*              else *)
+      (*                None) slist *)
+      (*         |> rev_append acc) empty rlist *)
+      (*   |> to_seq *)
+      (* in *)
+      let pairs = eligible_pairs (tuple, r, s, rlist, slist) in
       (* Msg.debug *)
       (*   (fun m -> m "Elo_to_LTL1.build_Join <-- \ *)
-           (*                %a.%a@\nsup(%a) = %a@\nsup(%a) = %a@\neligible_pairs =@ %a" *)
+      (*                %a.%a(%a)\nsup(%a) = %a@\nsup(%a) = %a@\n\ *)
+      (*                eligible_pairs =@ %a" *)
       (*               (Elo.pp_exp) r *)
       (*               (Elo.pp_exp) s *)
+      (*               Tuple.pp tuple *)
       (*               (Elo.pp_exp) r *)
-      (*               TupleSet.pp (env#sup r) *)
+      (*               TupleSet.pp rsup *)
       (*               (Elo.pp_exp) s *)
-      (*               TupleSet.pp (env#sup s) *)
-      (*               (Sequence.pp_seq  *)
-      (*                @@ Fmtc.brackets @@ Fmt.pair ~sep:Fmtc.sp Tuple.pp Tuple.pp) *)
-      (*               eligible_pairs *)
+      (*               TupleSet.pp ssup *)
+      (*               (Sequence.pp_seq *)
+      (*                @@ Fmtc.brackets *)
+      (*                @@ Fmt.pair ~sep:Fmtc.sp Tuple.pp Tuple.pp) eligible_pairs *)
       (*   ); *)
-      vee ~range:eligible_pairs (fun (bs, cs) -> lazy (r' bs +&& lazy (s' cs)))
+      vee ~range:pairs (fun (bs, cs) -> lazy (r' bs +&& lazy (s' cs)))
         [@landmark "build_Join"]
+
 
 
     method build_LProj (env : 'env) _ _ s' r' = fun tuple -> 
