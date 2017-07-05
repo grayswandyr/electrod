@@ -139,7 +139,7 @@ let join b1 b2 =
 
 (* computes the transitive closure of tue tuple set b using iterative squares *)        
 let transitive_closure_is b =
-  assert (inferred_arity b = 2);
+  assert (inferred_arity b = 2 || inferred_arity b = 0);
   let old = ref b in
   let cur = ref (union b (join b b)) in
   while not @@ TS.equal !old !cur do
@@ -154,7 +154,8 @@ let transitive_closure_is b =
   !cur
 
 let transitive_closure b =
-  assert (inferred_arity b = 2);
+  Msg.debug (fun m -> m "arité: %d" (inferred_arity b));
+  assert (inferred_arity b = 2 || inferred_arity b = 0);
   let old = ref b in
   let cur = ref (union b (join b b)) in
   let b_to_the_k = ref (join b b) in
