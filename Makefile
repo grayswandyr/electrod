@@ -30,6 +30,9 @@ byte:
 profile: 
 	$(OCB) -tag profile $(MAIN).native
 
+landmarks:
+	$(OCB) -pkg landmarks.ppx -pkg landmarks $(MAIN).native
+
 test: test-requisites
 	find src/ -name '*.ml' -printf "%f\n" | grep -v electrod.ml \
 		| grep -v Main.ml | xargs -r basename -s .ml > ./run_tests.qtestpack

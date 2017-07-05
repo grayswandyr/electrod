@@ -1,4 +1,4 @@
-
+[@@@landmark "auto"]
 open Containers
 
 module G = GenGoal
@@ -30,6 +30,13 @@ let equal_ident id1 id2 = match id1, id2 with
   | (Name _, _)
   | (Var _, _)
   | (Tuple _, _)-> false
+
+let equal_prim_exp = G.equal_prim_exp equal_var equal_ident
+                       
+let equal_exp = G.equal_exp equal_var equal_ident
+
+
+
 
 type goal = (var, ident) G.t
 
@@ -88,18 +95,40 @@ let substitute = object (self : 'self)
   method visit_Ident
            (env : (Var.t, (var, ident) G.prim_exp) CCList.Assoc.t )
            (id : ident) =
-    (* Msg.debug *)
-    (*   (fun m -> m "Elo.substitute.visit_Ident: %a [%a]" *)
-    (*               pp_ident id *)
-    (*               (List.pp *)
-    (*                @@ Fmt.pair ~sep:Fmtc.(const string "<-") Var.pp *)
-    (*                @@ pp_prim_exp) *)
-    (*               env); *)
+    Msg.debug
+      (fun m -> m "Elo.substitute.visit_Ident: %a [%a]"
+                  pp_ident id
+                  (List.pp
+                   @@ Fmt.pair ~sep:Fmtc.(const string "<-") Var.pp
+                   @@ pp_prim_exp)
+                  env);
     match id with
       | Var var when List.Assoc.mem ~eq:Var.equal var env ->
           List.Assoc.get_exn ~eq:Var.equal var env
       | Var _ | Name _ | Tuple _ -> G.ident id
 
+
+  method visit_exp env exp = 
+    Msg.debug
+      (fun m -> m "Elo.substitute.visit_exp: %a [%a]"
+                  pp_exp exp
+                  (List.pp
+                   @@ Fmt.pair ~sep:Fmtc.(const string "<-") Var.pp
+                   @@ pp_prim_exp)
+                  env);
+    super#visit_exp env exp
+
+
+  method visit_prim_fml env pfml = 
+    Msg.debug
+      (fun m -> m "Elo.substitute.visit_prim_fml: %a [%a]"
+                  pp_prim_fml pfml
+                  (List.pp
+                   @@ Fmt.pair ~sep:Fmtc.(const string "<-") Var.pp
+                   @@ pp_prim_exp)
+                  env);
+    super#visit_prim_fml env pfml
+      
 end
 
 

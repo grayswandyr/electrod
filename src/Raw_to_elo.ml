@@ -97,7 +97,7 @@ let compute_tuples infile domain = function
 
 
 let check_tuples_arities_and_duplicates infile id = function
-  | [] -> TS.empty
+  | [] -> TS.empty ()
   | t::ts as tuples ->
       let ar = Tuple.arity t in
       (* List.iter (fun t -> Msg.debug (fun m -> m "ar(%a) = %d" Tuple.pp t ar)) tuples; *)

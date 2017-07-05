@@ -22,6 +22,8 @@ let of_raw_ident id = {
 }
 
 
+let hash atom = Hash.string atom.name
+
 (** Generic interface implementations *)
 
 let pp out { name; _ } =

@@ -32,7 +32,7 @@ let span (loc1, loc2) =
     then loc1.endp else loc2.endp
   in
   from_positions begp endp                       
-  
+
 
 let dummy = { begp = Lexing.dummy_pos; endp = Lexing.dummy_pos }
 

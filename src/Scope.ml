@@ -37,7 +37,7 @@ let may_aux sc =
   assert (TupleSet.subset (inf sc) (sup sc));
   match sc with
     | Exact _ ->
-        TupleSet.empty
+        TupleSet.empty ()
     | Inexact (inf, sup) ->
         TupleSet.diff sup inf
 

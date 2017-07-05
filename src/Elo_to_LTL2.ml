@@ -10,7 +10,6 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     inherit ['env] M.converter as super
 
     method build_TClos (env : 'env) r r' = fun tuple ->
-      env#add @@ r' tuple;
       failwith "build_TClos BRUNEL method 2 !!!"
   end
 

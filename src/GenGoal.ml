@@ -1,19 +1,9 @@
+[@@@landmark "auto"]
+module Location = struct
+  include Location
+  let equal _ _ = true
+end
 
-(* type 'a located = { *)
-(*   data : 'a; *)
-(*   loc : Location.t; *)
-(* } *)
-
-(* let pp_located pp_data out { data; _ } = *)
-(*   Fmtc.pf out "%a" pp_data data *)
-
-(* class virtual ['self] fold_methods = object (self : 'self) *)
-(*   method virtual visit_fmls : _ *)
-(*   method virtual visit_sim_bindings : _ *)
-(*   method virtual visit_bindings : _ *)
-(*   method virtual visit_exps : _ *)
-(*   method virtual visit_variables : _ *)
-(* end *)
 
 (* ['v] is the type of variables introduced in quantifiers, ['i] is the type of
    any identifier (a variable like in the former case or a relation name) *)
@@ -151,7 +141,8 @@ and ibinop =
   | Sub
 [@@deriving visitors { variety = "fold" ; ancestors = ["VisitorsRuntime.map"] },
             visitors { variety = "map"},
-            visitors { variety = "reduce" }
+            visitors { variety = "reduce" },
+            eq
 ]
 
 let true_ = True
