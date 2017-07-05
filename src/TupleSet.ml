@@ -1,6 +1,6 @@
 [@@@landmark "auto"]
 open Containers
-    
+
 module TS = Tuple.Set
 
 type t = TS.t
@@ -14,11 +14,11 @@ module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 
 
 let to_list = TS.elements
-                
+
 let to_seq = TS.to_seq
 
 let of_seq = TS.of_seq
-               
+
 (* let empty = TS.empty *)
 let empty () = TS.create 29
 
@@ -58,12 +58,12 @@ let equal b1 b2 =
 
 (* let compare b1 b2 = *)
 (*   TS.compare b1 b2 *)
-    
+
 let compare b1 b2 =
   if equal b1 b2 then 0
   else if subset b1 b2 then -1
   else 1
-    
+
 let product b1 b2 =
   if is_empty b1 then
     b2
@@ -183,4 +183,4 @@ let transitive_closure b =
 let mem t bnd =
   TS.mem bnd t
 
-  
+
