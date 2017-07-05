@@ -409,11 +409,11 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         _visitors_r0 _visitors_r1 _visitors_r2
 
     method build_Quant (env : 'env) quant sim_bindings blk _ sim_bindings' _ =
-      Msg.debug
-        (fun m -> m "Elo_to_LTL1.build_Quant <-- %a"
-                    (Elo.pp_prim_fml)
-                    (G.quant quant sim_bindings blk)
-        );
+      (* Msg.debug *)
+      (*   (fun m -> m "Elo_to_LTL1.build_Quant <-- %a" *)
+      (*               (Elo.pp_prim_fml) *)
+      (*               (G.quant quant sim_bindings blk) *)
+      (*   ); *)
       match quant with
         | G.Lone | G.One ->
             assert false        (* SIMPLIFIED *)
@@ -466,9 +466,9 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
               | G.Lone | G.One -> assert false (* SIMPLIFIED *)
             in
             let { must; may; _ } = env#must_may_sup s in
-            Msg.debug (fun m ->
-                  m "Elo_to_LTL1.build_Quant: must(%a) = %a" (Elo.pp_exp) s
-                    TS.pp must);
+            (* Msg.debug (fun m -> *)
+            (*       m "Elo_to_LTL1.build_Quant: must(%a) = %a" (Elo.pp_exp) s *)
+            (*         TS.pp must); *)
             let mustpart =
               bigop
                 ~range:(tuples_of_sim_binding ~disj xs @@ TS.to_list must)
@@ -478,9 +478,9 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
                          @@ (Elo.substitute#visit_prim_fml (sub_for tuples)
                          @@ G.block blk [@landmark "must/subst"]))) (* b [as / xs] *)
             in
-            Msg.debug (fun m ->
-                  m "Elo_to_LTL1.build_Quant: may(%a) = %a" (Elo.pp_exp) s
-                    TS.pp may);
+            (* Msg.debug (fun m -> *)
+            (*       m "Elo_to_LTL1.build_Quant: may(%a) = %a" (Elo.pp_exp) s *)
+            (*         TS.pp may); *)
             let maypart =
               lazy 
                 (bigop
@@ -848,11 +848,10 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       r' @@ Tuple.transpose tuple
 
     method build_TClos (env : 'env) r r' =
-      Msg.debug
-        (fun m -> m "Elo_to_LTL1.build_TClos <-- %a"
-                    Elo.pp_exp r)
-      ;
-
+      (* Msg.debug *)
+      (*   (fun m -> m "Elo_to_LTL1.build_TClos <-- %a" *)
+      (*               Elo.pp_exp r) *)
+      (* ; *)
       let { sup ; _ } = env#must_may_sup r in
       let[@landmark] k = compute_tc_length sup in
       (* let tc_naif = iter_tc r k in *)

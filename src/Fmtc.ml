@@ -148,6 +148,12 @@ let tuple3 ?sep1:(pp_sep1 = sp) ?sep2:(pp_sep2 = sp)
 
 let triple = tuple3
 
+let bbox ?(indent = 0) pp ppf =
+  Format.pp_open_box ppf indent;
+  pf ppf "%a@]" pp
+
+let bbox2 out v = bbox ~indent:2 out v
+
 let box2 out v = box ~indent:2 out v
 let hbox2 out v = hbox out v
 let vbox2 out v = vbox ~indent:2 out v

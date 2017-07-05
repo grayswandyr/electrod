@@ -9,97 +9,124 @@ module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL = struct
   module PP = struct
     open Fmtc
 
-    type atom = At.t
 
-    let pp_atom = Fmtc.(styled Name.style) At.pp
+    (* From NuXmv documentation, from high to low (excerpt, some precedences are ignored because they are not used)
 
-    let pp_tcomp out (t : tcomp) =
-      pf out "%s"
-      @@ match t with
-      | Lte  -> "<="
-      | Lt  -> "<"
-      | Gte  -> ">="
-      | Gt  -> ">"
-      | Eq  -> "="
-      | Neq  -> "!="
+       !
 
-    let rec pp out f =
-      match f with
-        | Comp (op, t1, t2) -> infix pp_tcomp pp_term pp_term out (op, t1, t2)
-        | True  -> pf out "true"
-        | False  -> pf out "false"
-        | Atom at -> pp_atom out at
-        | Not p -> prefix string pp out ("!", p)
-        | And (p, q) -> infix string pp pp out ("&", p, q)
-        | Or (p, q)-> infix string pp pp out ("|", p, q)
-        | Imp (p, q)-> infix string pp pp out ("->", p, q)
-        | Iff (p, q)-> infix string pp pp out ("<->", p, q)
-        | Xor (p, q)-> infix string pp pp out ("xor", p, q)
-        | Ite (c, t, e) -> pf out "(%a@ ?@ %a@ :@ %a)" pp c pp t pp e
-        | X p -> prefix string pp out ("X ", p)
-        | F p -> prefix string pp out ("F ", p)
-        | G p -> prefix string pp out ("G ", p)
-        | Y p -> prefix string pp out ("Y ", p)
-        | O p -> prefix string pp out ("O ", p)
-        | H p -> prefix string pp out ("H ", p)
-        | U (p, q)-> infix string pp pp out ("U", p, q)
-        | R (p, q)-> infix string pp pp out ("V", p, q)
-        | S (p, q)-> infix string pp pp out ("S", p, q)
-        | T (p, q)-> infix string pp pp out ("T", p, q)
+       - (unary minus)
 
-    and pp_term out (t : term) = match t with
-      | Num n -> pf out "%d" n
-      | Plus (t1, t2) -> infix string pp_term pp_term out ("+", t1, t2)
-      | Minus (t1, t2) -> infix string pp_term pp_term out ("-", t1, t2)
-      | Neg t -> prefix string pp_term out ("- ", t)
-      | Count ts ->
-          pf out "@[count(%a@])" (list ~sep:(const string "+") pp) ts
-  end
+       + -
 
+       = != < > <= >=
 
-  module PPP = struct
-    open Fmtc
+       &
 
-    let infixl ?(indent = 2) upper this middle left right out (m, l, r) =
-      let par = this < upper in
-      if par then string out "(";
-      left this out l;
-      sp out ();
-      styled `Bold middle out m;
-      sp out ();
-      right this out r;
-      if par then string out ")"
+       | xor xnor
 
-    let infixr ?(indent = 2) upper this middle left right out (m, l, r) =
-      let par = this < upper in
-      if par then string out "(";
-      left this out l;
-      sp out ();
-      styled `Bold middle out m;
-      sp out ();
-      right this out r;
-      if par then string out ")"
+       (... ? ... : ...)
 
-    let infixn ?(indent = 2) upper this middle left right out (m, l, r) =
-      let par = this < upper in
-      if par then string out "(";
-      left this out l;
-      sp out ();
-      styled `Bold middle out m;
-      sp out ();
-      right this out r;
-      if par then string out ")"
+       <->
 
-    let prefix ?(indent = 2) upper this pprefix pbody out (prefix, body) =
-      let par = this <= upper in
-      if par then string out "(";
-      styled `Bold pprefix out prefix;
-      pbody this out body;
-      if par then string out ")"
+       -> (the only right associative op)
+
+    
+NOTE: precedences for LTL connectives are not specified, hence we force parenthesising of these.
+*)
+
+    
+    let rainbow =
+      let r = ref 0 in
+      fun () ->
+        let cur = !r in
+        incr r;
+        match cur with
+          | 0 -> `Magenta
+          | 1 -> `Yellow
+          | 2 -> `Cyan
+          | 3 -> `Green
+          | 4 -> `Red
+          | 5 -> r := 0; `Blue
+          | _ -> assert false
+
+    (* [upper] is the precedence of the context we're in, [this] is the priority
+       for printing to do, [pr] is the function to make the printing of the expression *)
+    let rainbow_paren ?(paren = false) ?(align_par = true)
+          upper this out pr =
+      (* parenthesize if specified so or if  forced by the current context*)
+      let par = paren || this < upper in
+      (* if parentheses are specified, they'll be numerous so avoid alignment  of closing parentheses *)
+      let align_par = not paren && align_par in
+      if par then               (* add parentheses *)
+        let color = rainbow () in
+        if align_par then
+          Format.pp_open_box out 0
+        else
+          Format.pp_open_box out 2;
+        styled color string out "(";
+        if align_par then Format.pp_open_box out 2;
+        (* we're adding parenthese so precedence goes back to 0 inside of them *)
+        pr 0;
+        if align_par then 
+          begin
+            Format.pp_close_box out ();
+            cut out ()
+          end ;
+        styled color string out ")";
+        Format.pp_close_box out ()
+      else                      (* no paremtheses *)
+        (* so keep [this] precedence *)
+        pr this
+      
+    let infixl ?(paren = false) ?(align_par = true)
+          upper this middle left right out (m, l, r) =
+      rainbow_paren ~paren ~align_par upper this out @@
+      fun new_this ->           (* new_this is this or 0 if parentheses were added *)
+      begin
+        left new_this out l;
+        sp out ();
+        styled `Bold middle out m;
+        sp out ();
+        right (new_this + 1) out r (* left associativity => increment the precedence *)
+      end
+                    
+
+    let infixr ?(paren = false) ?(align_par = true)
+          upper this middle left right out (m, l, r) =
+      rainbow_paren ~paren ~align_par upper this out @@
+      fun new_this ->
+      begin
+        left (new_this + 1) out l;
+        sp out ();
+        styled `Bold middle out m;
+        sp out ();
+        right new_this out r
+      end
+
+    let infixn ?(paren = false) ?(align_par = true)
+          upper this middle left right out (m, l, r) =
+      rainbow_paren ~paren ~align_par upper this out @@
+      fun new_this ->
+      begin
+        left (new_this + 1) out l;
+        sp out ();
+        styled `Bold middle out m;
+        sp out ();
+        right (new_this + 1) out r
+      end
+
+    let prefix ?(paren = false) ?(align_par = true)
+          upper this pprefix pbody out (prefix, body) =
+      rainbow_paren ~paren ~align_par upper this out @@
+      fun new_this ->
+      begin
+        styled `Bold pprefix out prefix;
+        pbody (new_this + 1) out body
+      end
                     
     type atom = At.t
 
-    let pp_atom = Fmtc.(styled Name.style) At.pp
+    let pp_atom = At.pp
 
     let pp_tcomp out (t : tcomp) =
       pf out "%s"
@@ -111,41 +138,69 @@ module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL = struct
       | Eq  -> "="
       | Neq  -> "!="
 
+    let styled_parens st ppv_v out v =
+      surround (styled st lparen) (styled st rparen) ppv_v out v
+    
     let rec pp upper out f =
+      assert (upper >= 0);
       match f with
-        | True  -> pf out "true"
-        | False  -> pf out "false"
-        | Atom at -> pp_atom out at
-        | Iff (p, q)-> infixl upper 1 string pp pp out ("<->", p, q)
-        | Or (p, q)-> infixl upper 2 string pp pp out ("|", p, q)
-        | Xor (p, q)-> infixl upper 2 string pp pp out ("xor", p, q)
-        | Imp (p, q)-> infixr upper 3 string pp pp out ("->", p, q)
-        | And (p, q) -> infixl upper 4 string pp pp out ("&", p, q)
-        | U (p, q)-> infixl upper 5 string pp pp out ("U", p, q)
-        | R (p, q)-> infixl upper 5 string pp pp out ("V", p, q)
-        | S (p, q)-> infixl upper 5 string pp pp out ("S", p, q)
-        | T (p, q)-> infixl upper 5 string pp pp out ("T", p, q)
-        | Not p -> prefix upper 6 string pp out ("!", p)
-        | X p -> prefix upper 6 string pp out ("X ", p)
-        | F p -> prefix upper 6 string pp out ("F ", p)
-        | G p -> prefix upper 6 string pp out ("G ", p)
-        | Y p -> prefix upper 6 string pp out ("Y ", p)
-        | O p -> prefix upper 6 string pp out ("O ", p)
-        | H p -> prefix upper 6 string pp out ("H ", p)
+        | True  -> pf out "TRUE"
+        | False  -> pf out "FALSE"
+        | Atom at -> pf out "%a" pp_atom at
+        (* tweaks, here, to force parenthese around immediate subformulas of Imp
+           and Iff as their precedence may not be easily remembered*)
+        | Imp (p, q) ->
+            let c = rainbow () in
+            infixr ~paren:false upper 1 string
+              (fun _ -> styled_parens c @@ bbox2 @@ pp 0)
+              (fun _ -> styled_parens c @@ bbox2 @@ pp 0) out ("->", p, q)
+        | Iff (p, q) ->
+            let c = rainbow () in
+            infixl ~paren:false upper 2
+              string
+              (fun _ -> styled_parens c @@ bbox2 @@ pp 0)
+              (fun _ -> styled_parens c @@ bbox2 @@ pp 0) out ("<->", p, q)
         | Ite (c, t, e) ->
-            pf out "(%a@ ?@ %a@ :@ %a)" (pp 0) c (pp 0) t (pp 4) e
-        | Comp (op, t1, t2) -> infixn upper 7 pp_tcomp pp_term pp_term out (op, t1, t2)
+            pf out "(%a@ ?@ %a@ :@ %a)" (pp 3) c (pp 3) t (pp 3) e
+        | Or (p, q) -> infixl ~paren:false upper 4 string pp pp out ("|", p, q)
+        (* force parenthses as we're not used to see the Xor connective and so its precedence may be unclear *)
+        | Xor (p, q) -> infixl ~paren:true upper 4 string pp pp out ("xor", p, q)
+        | And (p, q) -> infixl ~paren:false upper 5 string pp pp out ("&", p, q)
+        | Comp (op, t1, t2) ->
+            infixn upper 6 pp_tcomp pp_term pp_term out (op, t1, t2)
+        | Not p -> prefix upper 9 string pp out ("!", p)
+        (* no known precedence for temporal operators so we force parenthses and
+           use as the "this" precedence that of the upper context*)
+        | U (p, q) -> infixl ~paren:true upper upper string pp pp out ("U", p, q)
+        | R (p, q) -> infixl ~paren:true upper upper string pp pp out ("V", p, q)
+        | S (p, q) -> infixl ~paren:true upper upper string pp pp out ("S", p, q)
+        | T (p, q) -> infixl ~paren:true upper upper string pp pp out ("T", p, q)
+        | X p -> prefix ~paren:true upper upper string pp out ("X ", p)
+        | F p -> prefix ~paren:true upper upper string pp out ("F ", p)
+        | G p -> prefix ~paren:true upper upper string pp out ("G ", p)
+        | Y p -> prefix ~paren:true upper upper string pp out ("Y ", p)
+        | O p -> prefix ~paren:true upper upper string pp out ("O ", p)
+        | H p -> prefix ~paren:true upper upper string pp out ("H ", p)
 
     and pp_term upper out (t : term) = match t with
       | Num n -> pf out "%d" n
-      | Plus (t1, t2) -> infixl upper 8 string pp_term pp_term out ("+", t1, t2)
-      | Minus (t1, t2) -> infixl upper 8 string pp_term pp_term out ("-", t1, t2)
-      | Neg t -> prefix upper 9 string pp_term out ("- ", t)
+      | Plus (t1, t2) ->
+          infixl ~paren:false upper 7 string pp_term pp_term out ("+", t1, t2)
+      | Minus (t1, t2) ->
+          infixl ~paren:false upper 7 string pp_term pp_term out ("-", t1, t2)
+      | Neg t -> prefix upper 8 string pp_term out ("- ", t)
       | Count ts ->
           pf out "@[count(%a@])" (list ~sep:(const string "+") (pp 0)) ts
   end
 
-  let pp out f = Fmtc.pf out "@[<hov2>%a@]" (PPP.pp 0) f
+  let pp out f =
+    let old_max_indent = Format.pp_get_max_indent out () in
+    let old_margin = Format.pp_get_margin out () in
+    Format.pp_set_max_indent out 20;
+    Format.pp_set_margin out 78;
+    Fmtc.pf out "@[<hov2>%a@]@." (PP.pp 0) f;
+    Format.pp_set_max_indent out old_max_indent;
+    Format.pp_set_margin out old_margin
 
   module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
   include P 
