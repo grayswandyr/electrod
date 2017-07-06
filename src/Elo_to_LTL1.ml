@@ -131,6 +131,7 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
           (*         TS.pp psup); *)
           make_bounds pmust psup
 
+
   (* The whole idea of this function (and the following auxiliary ones) is to
      apply the following scheme.  Say we want to compute: 
 
@@ -275,8 +276,8 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     | hd::tl when List.mem ~eq:Tuple.equal hd tl -> false
     | _::tl -> all_different tl
 
-  
-  
+
+
   (***************************************************************** 
    * Semantic function
    ***************************************************************************************)
@@ -308,11 +309,15 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
     let open Sequence in
     let s1, s2 = compute_domain_codomain ts in    
     let core_ats = inter ~eq:Atom.equal s1 s2 in
-    let core_length = length core_ats in
+    let core_length = (length core_ats) - 1  in
     (* is it possible that x1 is not in the core (intersection of the
        domain and the codomain) ? *)
     let first_elt_in_core = subset ~eq:Atom.equal s1 core_ats in
+
+    (* is it possible that xn is not in the core (intersection of the
+       domain and the codomain) ? *)
     let last_elt_in_core = subset ~eq:Atom.equal s2 core_ats in
+
     match first_elt_in_core, last_elt_in_core with
       | true, true -> core_length
       | false, false -> core_length + 2
@@ -408,11 +413,11 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         _visitors_r0 _visitors_r1 _visitors_r2
 
     method build_Quant (env : 'env) quant sim_bindings blk _ sim_bindings' _ =
-      Msg.debug
-        (fun m -> m "Elo_to_LTL1.build_Quant <-- %a"
-                    (Elo.pp_prim_fml)
-                    (G.quant quant sim_bindings blk)
-        );
+      (* Msg.debug *)
+      (*   (fun m -> m "Elo_to_LTL1.build_Quant <-- %a" *)
+      (*               (Elo.pp_prim_fml) *)
+      (*               (G.quant quant sim_bindings blk) *)
+      (*   ); *)
       match quant with
         | G.Lone | G.One ->
             assert false        (* SIMPLIFIED *)
@@ -465,9 +470,9 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
               | G.Lone | G.One -> assert false (* SIMPLIFIED *)
             in
             let { must; may; _ } = env#must_may_sup s in
-            Msg.debug (fun m ->
-                  m "Elo_to_LTL1.build_Quant: must(%a) = %a" (Elo.pp_exp) s
-                    TS.pp must);
+            (* Msg.debug (fun m -> *)
+            (*       m "Elo_to_LTL1.build_Quant: must(%a) = %a" (Elo.pp_exp) s *)
+            (*         TS.pp must); *)
             let mustpart =
               bigop
                 ~range:(tuples_of_sim_binding ~disj xs @@ TS.to_list must)
@@ -475,11 +480,11 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
                    lazy (pos_or_neg
                          @@ (self#visit_prim_fml env [@landmark "must/[[...]]"]) (* [[...]] *)
                          @@ (Elo.substitute#visit_prim_fml (sub_for tuples)
-                         @@ G.block blk [@landmark "must/subst"]))) (* b [as / xs] *)
+                             @@ G.block blk [@landmark "must/subst"]))) (* b [as / xs] *)
             in
-            Msg.debug (fun m ->
-                  m "Elo_to_LTL1.build_Quant: may(%a) = %a" (Elo.pp_exp) s
-                    TS.pp may);
+            (* Msg.debug (fun m -> *)
+            (*       m "Elo_to_LTL1.build_Quant: may(%a) = %a" (Elo.pp_exp) s *)
+            (*         TS.pp may); *)
             let maypart =
               lazy 
                 (bigop
@@ -487,8 +492,8 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
                    (fun tuples ->
                       (* concat because semantics of expressions expects *one* tuple *)
                       let[@landmark] premise = s' (List.fold_left Tuple.(@@@)
-                                          (List.hd tuples) (List.tl tuples))
-                                      [@landmark "may/s'"]
+                                                     (List.hd tuples) (List.tl tuples))
+                                                 [@landmark "may/s'"]
                       in
                       let[@landmark] test =
                         lazy
@@ -799,8 +804,8 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       let pairs = eligible_pairs (tuple, r, s, rlist, slist) in
       (* Msg.debug *)
       (*   (fun m -> m "Elo_to_LTL1.build_Join <-- \ *)
-      (*                %a.%a(%a)\nsup(%a) = %a@\nsup(%a) = %a@\n\ *)
-      (*                eligible_pairs =@ %a" *)
+           (*                %a.%a(%a)\nsup(%a) = %a@\nsup(%a) = %a@\n\ *)
+           (*                eligible_pairs =@ %a" *)
       (*               (Elo.pp_exp) r *)
       (*               (Elo.pp_exp) s *)
       (*               Tuple.pp tuple *)
@@ -847,11 +852,10 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       r' @@ Tuple.transpose tuple
 
     method build_TClos (env : 'env) r r' =
-      Msg.debug
-        (fun m -> m "Elo_to_LTL1.build_TClos <-- %a"
-                    Elo.pp_exp r)
-      ;
-
+      (* Msg.debug *)
+      (*   (fun m -> m "Elo_to_LTL1.build_TClos <-- %a" *)
+      (*               Elo.pp_exp r) *)
+      (* ; *)
       let { sup ; _ } = env#must_may_sup r in
       let[@landmark] k = compute_tc_length sup in
       (* let tc_naif = iter_tc r k in *)
@@ -862,12 +866,12 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       (* let suptc2 = *)
       (*   (env#must_may_sup tc_square).sup *)
       (* in *)
-      (* Msg.debug (fun m -> *)
-      (*     m "borne de TC: (%d)" k); *)
+      Msg.debug (fun m ->
+            m "borne de TC: (%d)" k);
       (* Msg.debug (fun m -> *)
       (*     m "terme de TC naif : (%a)" (Elo.pp_exp) (tc_naif)); *)
-      (* Msg.debug (fun m -> *)
-      (*     m "terme de TC avec carrés itétarifs : (%a)" (Elo.pp_exp) (tc_square));    *)
+      Msg.debug (fun m ->
+            m "terme de TC avec carrés itératifs : (%a)" (Elo.pp_exp) (tc_square));
       (* Msg.debug (fun m -> *)
       (*     m "sup(%a) = %a" (Elo.pp_prim_exp) (G.runary G.tclos r) *)
       (*       TS.pp suptc); *)
