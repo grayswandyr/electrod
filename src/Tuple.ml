@@ -121,12 +121,6 @@ module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 
 
 
-
-(* module Set = CCSet.Make(struct *)
-(*     type nonrec t = t *)
-(*     let compare = compare *)
-(*   end) *)
-
 module Set = CCSet.Make(struct
     type nonrec t = t
     let compare = compare
