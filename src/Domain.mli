@@ -33,5 +33,9 @@ val must : Name.t -> t -> TupleSet.t
 val may : Name.t -> t -> TupleSet.t
 val sup : Name.t -> t -> TupleSet.t
 
+(** For every entry in [inst], [update_domain_with_instance dom inst] replaces
+    the corresponding relation in [dom] with the exact scope given by [inst]. *)
+val update_domain_with_instance : t -> Instance.t -> t
+
 include Intf.Print.S with type t := t
 

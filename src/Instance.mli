@@ -1,7 +1,7 @@
 (** An instance is a set of relations whose value is a fixed tuple set. *)
 
 (** Virtually: a map between relation names and sets of tuples. *)
-type t 
+type t = private TupleSet.t Name.Map.t
 
 (** Constructor. *)
 val empty : t

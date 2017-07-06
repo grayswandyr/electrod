@@ -17,6 +17,8 @@ val var : Name.t -> int -> Scope.t -> Scope.t option -> t
 (** Arity of the relation. (> 0) *)
 val arity : t -> int
 
+val name : t -> Name.t
+
 (** Tells whether the relation is a set or a relation of arity > 1. *)
 val is_set : t -> bool
   

@@ -56,5 +56,28 @@ let sup name domain =
   |> Relation.scope
   |> Scope.sup
 
+
+
+
+let update_domain_with_instance domain instance =
+  let module R = Relation in
+  let module I = Instance in
+  let relation_of_instance_item inst_item rel =
+    if R.is_const rel then
+      R.const (R.name rel) (R.arity rel) (Scope.exact I.(inst_item))
+    else R.var (R.name rel) (R.arity rel) (Scope.exact I.(inst_item)) None
+  in
+  let keep_instance name = function
+    | `Both (dom_entry, inst_entry) ->
+        Some (relation_of_instance_item inst_entry dom_entry)
+    | `Left dom_entry -> Some dom_entry
+    | `Right _ ->
+        (* cannot happen: Raw_to_elo checked that every 
+           instance is in the domain *)
+        assert false
+  in
+  Map.merge_safe keep_instance domain instance
+  
+
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 
