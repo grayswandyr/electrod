@@ -16,6 +16,9 @@ let arity = function
   | Const { arity; _ }
   | Var { arity; _ } -> arity
 
+let name = function
+  | Const { name; _ }
+  | Var { name; _ } -> name
 
 let is_set rel =
   arity rel = 1

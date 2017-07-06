@@ -720,9 +720,11 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
     (* rbinop *)
 
-    method build_RBin (env : 'env) f1 _ f2 f1' op' f2' = op' f1 f2 f1' f2' [@landmark "build_RBin"]
+    method build_RBin (env : 'env) f1 _ f2 f1' op' f2' =
+      op' f1 f2 f1' f2' [@landmark "build_RBin"]
 
-    method build_Union (env : 'env) _ _ e1 e2 = (fun x -> e1 x +|| lazy (e2 x))[@landmark "build_Union"]
+    method build_Union (env : 'env) _ _ e1 e2 =
+      (fun x -> e1 x +|| lazy (e2 x))[@landmark "build_Union"]
 
     method build_Inter (env : 'env) _ _ e1 e2 = fun x -> e1 x +&& lazy (e2 x)
 
@@ -915,21 +917,39 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
   class environment (elo : Elo.t) = object (self : 'self)
     val mutable tc_formula : ('a,'b) G.fml = G.(fml Location.dummy True)
 
-    method domain = Elo.(elo.domain)
-
     val cached_bounds_exp =
-      CCCache.(with_cache (unbounded ~eq:Elo.equal_prim_exp 2973)
-               @@ bounds_prim_exp Elo.(elo.domain))
-
+      (* cancel caching as long as hashconsing is not implemented *)
+      (* CCCache.(with_cache (unbounded ~eq:Elo.equal_prim_exp 2973) *)
+      (*          @@ bounds_prim_exp elo.domain) *)
+      bounds_prim_exp elo.Elo.domain
+          
     method must_may_sup (e : (Elo.var, Elo.ident) G.exp) =
       cached_bounds_exp e.G.prim_exp
         [@landmark "must_may_sup"]
+                    
+    method domain = elo.Elo.domain
 
   end
 
+  (* #781 Handle instance:
+
+     To handle the instance, one possibility would be to update the bound
+     computation (bounds_exp) and [build_Ident].
+
+     However, apparently, we won't need to differentiate the domain and the
+     instance in the future. So we take the simpler path that consists in update
+     the domain itself. As this is confined to the following functions, we do
+     this for the time being. If the need arises, a refactoring won't be too
+     painful. *)  
+  
 
   let convert elo =
     let open Elo in
+    let elo = {  (* #781 Handle instance: *)
+      elo with
+        domain = Domain.update_domain_with_instance elo.domain
+                   elo.instance } in
+    Msg.info (fun m -> m "Domain updated with instance.");
     let env = new environment elo in
     let G.Sat fmls = elo.goal in
     List.map ((new converter)#visit_fml env) fmls
