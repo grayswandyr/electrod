@@ -921,13 +921,13 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
       (* cancel caching as long as hashconsing is not implemented *)
       (* CCCache.(with_cache (unbounded ~eq:Elo.equal_prim_exp 2973) *)
       (*          @@ bounds_prim_exp elo.domain) *)
-      bounds_prim_exp elo.domain
+      bounds_prim_exp elo.Elo.domain
           
     method must_may_sup (e : (Elo.var, Elo.ident) G.exp) =
       cached_bounds_exp e.G.prim_exp
         [@landmark "must_may_sup"]
                     
-    method domain = elo.domain
+    method domain = elo.Elo.domain
 
   end
 
@@ -940,12 +940,16 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
      instance in the future. So we take the simpler path that consists in update
      the domain itself. As this is confined to the following functions, we do
      this for the time being. If the need arises, a refactoring won't be too
-     painful. *)
-    
+     painful. *)  
   
 
   let convert elo =
     let open Elo in
+    let elo = {  (* #781 Handle instance: *)
+      elo with
+        domain = Domain.update_domain_with_instance elo.domain
+                   elo.instance } in
+    Msg.info (fun m -> m "Domain updated with instance.");
     let env = new environment elo in
     let G.Sat fmls = elo.goal in
     List.map ((new converter)#visit_fml env) fmls

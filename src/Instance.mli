@@ -1,7 +1,7 @@
 (** An instance is a set of relations whose value is a fixed tuple set. *)
 
 (** Virtually: a map between relation names and sets of tuples. *)
-type t = private TupleSet.t Name.Map.t
+type t
 
 (** Constructor. *)
 val empty : t
@@ -27,6 +27,8 @@ val get : Name.t -> t -> TupleSet.t option
     EXACT SCOPE OR EVEN A RELATION (TO BE DECIDED WHEN INSTANCES ARE USED IN THE
     TRANSLATION)} *)
 val to_list : t -> (Name.t * TupleSet.t) list
+
+val to_map : t -> TupleSet.t Name.Map.t
 
 include Intf.Print.S with type t := t
 

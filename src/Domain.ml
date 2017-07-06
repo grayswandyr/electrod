@@ -76,7 +76,7 @@ let update_domain_with_instance domain instance =
            instance is in the domain *)
         assert false
   in
-  Map.merge_safe keep_instance domain instance
+  Map.merge_safe keep_instance domain (Instance.to_map instance)
   
 
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)

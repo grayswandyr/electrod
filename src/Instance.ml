@@ -19,6 +19,8 @@ let get = Map.get
 
 let to_list = Map.to_list
 
+let to_map x = x
+
 
 let pp out rels =
   let open Fmtc in
