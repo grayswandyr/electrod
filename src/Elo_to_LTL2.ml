@@ -1,7 +1,7 @@
 open Containers
 
 
-module MakeLtlConverter (Ltl : LTL.S) = struct
+module MakeLtlConverter (Ltl : LTL.PrintableLTL) = struct
   module M = Elo_to_LTL1.MakeLtlConverter(Ltl)
       
   open Ltl

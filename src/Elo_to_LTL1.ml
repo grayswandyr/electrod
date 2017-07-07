@@ -6,9 +6,13 @@ module TS = TupleSet
 let tuples_to_idents =
   List.map @@ fun tuple -> G.ident @@ Elo.tuple_ident tuple
 
-module MakeLtlConverter (Ltl : LTL.S) = struct
+module MakeLtlConverter (Ltl : LTL.PrintableLTL) = struct
   open Ltl
   open Ltl.Infix
+
+  type atom = Ltl.atom
+
+  type ltl = Ltl.t
 
   type goal = Elo.goal
 
@@ -701,10 +705,12 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
         | Tuple bs ->
             if Tuple.equal bs tuple then true_ else false_
         | Name r ->
-            if TS.mem tuple @@ Domain.must r env#domain then
+            let { must; may; _ } =
+              env#must_may_sup (G.exp Location.dummy @@ G.ident id) in
+            if TS.mem tuple must then
               true_
-            else if TS.mem tuple @@ Domain.may r env#domain then
-              atom r tuple
+            else if TS.mem tuple may then 
+              env#make_atom r tuple
             else
               false_
 
@@ -913,45 +919,49 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
 
   end                           (* end converter *)
 
-
+  (* set of atoms, to gather rigid and flexiblae variables *)
+  module AS =
+    Set.Make(struct
+      type t = Ltl.atom
+      let compare = Ltl.compare_atoms
+    end)
+      
   class environment (elo : Elo.t) = object (self : 'self)
-    val mutable tc_formula : ('a,'b) G.fml = G.(fml Location.dummy True)
+    val mutable flexible_atoms = AS.empty
+
+    val mutable rigid_atoms = AS.empty
 
     val cached_bounds_exp =
       (* cancel caching as long as hashconsing is not implemented *)
       (* CCCache.(with_cache (unbounded ~eq:Elo.equal_prim_exp 2973) *)
       (*          @@ bounds_prim_exp elo.domain) *)
       bounds_prim_exp elo.Elo.domain
-          
+
     method must_may_sup (e : (Elo.var, Elo.ident) G.exp) =
       cached_bounds_exp e.G.prim_exp
         [@landmark "must_may_sup"]
-                    
-    method domain = elo.Elo.domain
 
+    method make_atom (name : Name.t) (t : Tuple.t) =
+      assert (Domain.mem name elo.Elo.domain);
+      let atom = make_atom name t in
+      (if Domain.get_exn name elo.Elo.domain |> Relation.is_const then
+         rigid_atoms <- AS.add atom rigid_atoms
+       else
+         flexible_atoms <- AS.add atom flexible_atoms);
+      Ltl.atom atom
+
+    method atoms =              (* TODO remove seq and return set *)
+      Pair.map_same AS.to_seq (rigid_atoms, flexible_atoms)
   end
 
-  (* #781 Handle instance:
-
-     To handle the instance, one possibility would be to update the bound
-     computation (bounds_exp) and [build_Ident].
-
-     However, apparently, we won't need to differentiate the domain and the
-     instance in the future. So we take the simpler path that consists in update
-     the domain itself. As this is confined to the following functions, we do
-     this for the time being. If the need arises, a refactoring won't be too
-     painful. *)  
   
-
-  let convert elo =
+  (* Converts an Elo formula to an LTL formula, gathering at the same time the
+     rigid and flexible variables having appeared during the walk. *)
+  let convert elo elo_fml =
     let open Elo in
-    let elo = {  (* #781 Handle instance: *)
-      elo with
-        domain = Domain.update_domain_with_instance elo.domain
-                   elo.instance } in
-    Msg.info (fun m -> m "Domain updated with instance.");
     let env = new environment elo in
-    let G.Sat fmls = elo.goal in
-    List.map ((new converter)#visit_fml env) fmls
+    let ltl_fml = (new converter)#visit_fml env elo_fml in
+    let (rigid, flexible) = env#atoms in
+    (rigid, flexible, ltl_fml)
 
 end

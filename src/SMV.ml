@@ -1,7 +1,7 @@
 open Containers
 
 
-module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL = struct
+module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL with type atom = At.t = struct
   module I = LTL.LTL_from_Atom(At) 
 
   include I
@@ -193,6 +193,8 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
           pf out "@[count(%a@])" (list ~sep:(const string "+") (pp 0)) ts
   end
 
+  let pp_atom = PP.pp_atom
+
   let pp out f =
     let old_max_indent = Format.pp_get_max_indent out () in
     let old_margin = Format.pp_get_margin out () in
@@ -208,7 +210,45 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
 
 end
 
-module File (Logic : LTL.PrintableLTL) = struct
+module MakeFile (Ltl : LTL.PrintableLTL)
+  : LTL.PRINTABLE_MODEL with type ltl = Ltl.t and type atom = Ltl.atom = struct
 
-  (* TODO file format *)
+  type ltl = Ltl.t
+
+  type atom = Ltl.atom
+
+  type t = {
+    rigid : atom Sequence.t;
+    flexible : atom Sequence.t;    
+    invariant : ltl Sequence.t;
+    property : ltl
+  }
+
+  let make ~rigid ~flexible ~invariant ~property =
+    { rigid; flexible; invariant; property }
+
+  let pp_var_decl out atom =
+    Fmtc.pf out "%a : boolean;" Ltl.pp_atom atom
+
+  let pp_invar out inv = 
+    Fmtc.pf out "INVAR@\n%a@\n" Ltl.pp inv
+      
+  let pp out { rigid; flexible; invariant; property } =
+    let open Fmtc in
+    let module S = Sequence in
+    let rigid = Sequence.sort_uniq ~cmp:Ltl.compare_atoms rigid in
+    let flexible = Sequence.sort_uniq ~cmp:Ltl.compare_atoms flexible in
+    pf out "MODULE main@\n\
+            JUSTICE TRUE;@\n\
+            FROZENVAR@\n";
+    (vbox @@ S.pp_seq ~sep:"" pp_var_decl) out rigid;
+    pf out "VAR@\n";
+    (vbox @@ S.pp_seq ~sep:"" pp_var_decl) out flexible;
+    (vbox @@ S.pp_seq ~sep:"" pp_invar) out invariant;
+    pf out "@\nLTLSPEC@\n";
+    Ltl.pp out property
+    
+
+  module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
+  include P 
 end

@@ -6,6 +6,7 @@ module type ATOM =
   sig
     type t
     val make : Name.t -> Tuple.t -> t
+    val compare : t -> t -> int
     val pp : t Fmtc.t
     val to_string : t -> string
   end
@@ -15,6 +16,8 @@ module type ATOM =
 module type S =
   sig
     type atom
+    val make_atom : Name.t -> Tuple.t -> atom
+    val compare_atoms : atom -> atom -> int
     type tcomp = private Lte | Lt | Gte | Gt | Eq | Neq
     type t = private
         Comp of tcomp * term * term
@@ -46,7 +49,7 @@ module type S =
       | Count of t list
     val true_ : t
     val false_ : t
-    val atom : Name.t -> Tuple.t -> t
+    val atom : atom -> t
     val not_ : t -> t
     val and_ : t -> t Lazy.t -> t
     val or_ : t -> t Lazy.t -> t
@@ -98,6 +101,38 @@ module LTL_from_Atom :
 
 module type PrintableLTL = sig
   include S
+
+  val pp_atom : Format.formatter -> atom -> unit
+    
+  val pp : Format.formatter -> t -> unit
+  include Intf.Print.S with type t := t
+end
+
+(* Abstract type for a complete model to be given to a solver.  *)
+module type MODEL = sig
+  type ltl
+
+  type atom
+
+  type t = private {
+    rigid : atom Sequence.t;
+    flexible : atom Sequence.t;    
+    invariant : ltl Sequence.t;
+    property : ltl
+  }
+
+  val make :
+    rigid:atom Sequence.t
+    -> flexible:atom Sequence.t
+    -> invariant:ltl Sequence.t 
+    -> property:ltl -> t
+
+end
+
+
+
+module type PRINTABLE_MODEL = sig
+  include MODEL
 
   val pp : Format.formatter -> t -> unit
   include Intf.Print.S with type t := t

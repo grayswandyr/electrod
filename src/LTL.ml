@@ -4,14 +4,17 @@ module type ATOM = sig
   type t
 
   val make : Name.t -> Tuple.t -> t
+  val compare : t -> t -> int
 
   val pp : Format.formatter -> t -> unit
   include Intf.Print.S with type t := t
-
 end
 
 module type S = sig
   type atom
+
+  val make_atom : Name.t -> Tuple.t -> atom
+  val compare_atoms : atom -> atom -> int
     
   type tcomp = private
     | Lte 
@@ -54,7 +57,7 @@ module type S = sig
   val true_ : t
   val false_ : t
 
-  val atom : Name.t -> Tuple.t -> t
+  val atom : atom -> t
 
   val not_ : t -> t
 
@@ -155,10 +158,12 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
     | Neg of term 
     | Count of t list
 
+  let make_atom = At.make
+  let compare_atoms = At.compare
+  let atom at = Atom at
+
   let true_ = True
   let false_ = False
-
-  let atom r ts = Atom (At.make r ts)
 
   let and_ p q = match p, q with
     | False, _ -> False
@@ -293,6 +298,35 @@ end
 
 module type PrintableLTL = sig
   include S
+
+  val pp_atom : Format.formatter -> atom -> unit
+
+  val pp : Format.formatter -> t -> unit
+  include Intf.Print.S with type t := t
+end
+
+module type MODEL = sig 
+  type ltl
+
+  type atom
+
+  type t = private {
+    rigid : atom Sequence.t;
+    flexible : atom Sequence.t;    
+    invariant : ltl Sequence.t;
+    property : ltl
+  }
+
+  val make :
+    rigid:atom Sequence.t
+    -> flexible:atom Sequence.t
+    -> invariant:ltl Sequence.t 
+    -> property:ltl -> t
+end
+
+
+module type PRINTABLE_MODEL = sig
+  include MODEL
 
   val pp : Format.formatter -> t -> unit
   include Intf.Print.S with type t := t
