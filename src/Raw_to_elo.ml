@@ -264,7 +264,8 @@ let check_assignment_in_scope infile domain id tupleset =
     | None -> Msg.Fatal.undeclared_id (fun args -> args infile id)
     | Some Relation.Var _ ->
         Msg.Fatal.instance_is_var (fun args -> args infile id)
-    | Some Relation.Const { scope; _ } when not @@ Scope.included_in tupleset scope ->
+    | Some Relation.Const { scope; _ }
+      when not @@ Scope.included_in tupleset scope ->
         Msg.Fatal.instance_not_in_scope (fun args -> args infile id)
     | Some _ -> ()
         
@@ -288,7 +289,8 @@ let compute_instances domain (pb : Raw.raw_problem) =
        compute_assignment asgn
        |> fun (n, ts) ->
        if Instance.mem n acc then
-         Msg.Fatal.instance_already_declared (fun args -> args pb.file @@ fst asgn)
+         Msg.Fatal.instance_already_declared
+           (fun args -> args pb.file @@ fst asgn)
        else
          Instance.add n ts acc)
     Instance.empty pb.raw_inst

@@ -63,9 +63,8 @@ let update_domain_with_instance domain instance =
   let module R = Relation in
   let module I = Instance in
   let relation_of_instance_item inst_item rel =
-    if R.is_const rel then
-      R.const (R.name rel) (R.arity rel) (Scope.exact I.(inst_item))
-    else R.var (R.name rel) (R.arity rel) (Scope.exact I.(inst_item)) None
+    assert (R.is_const rel);
+    R.const (R.name rel) (R.arity rel) (Scope.exact I.(inst_item))
   in
   let keep_instance name = function
     | `Both (dom_entry, inst_entry) ->
