@@ -28,8 +28,12 @@ let hash atom = atom.hash
 let pp out { name; _ } =
   Fmtc.(string out name)
 
+
+
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
-include P
+include P 
+ 
+
 
 
 let pp_list atoms =

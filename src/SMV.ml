@@ -197,17 +197,7 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
   let pp_atomic = PP.pp_atomic
 
   let pp out f =
-    let old_max_indent = Format.pp_get_max_indent out () in
-    let old_margin = Format.pp_get_margin out () in
-    Format.pp_set_max_indent out 20;
-    Format.pp_set_margin out 78;
-    Fmtc.pf out "@[<hov2>%a@]@." (PP.pp 0) f;
-    Format.pp_set_max_indent out old_max_indent;
-    Format.pp_set_margin out old_margin
-
-  module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
-  include P 
-
+    Fmtc.pf out "@[<hov2>%a@]@." (PP.pp 0) f
 
 end
 
@@ -237,27 +227,33 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
   let pp_invar out inv = 
     Fmtc.pf out "INVAR@\n%a@\n" Ltl.pp inv
       
-  let pp out { rigid; flexible; invariant; property } =
+  let pp ?(margin = 78) out { rigid; flexible; invariant; property } =
     let open Fmtc in
     let module S = Sequence in
+    let old_margin = Format.pp_get_margin out () in
+    Format.pp_set_margin out margin;
     let rigid = Sequence.sort_uniq ~cmp:Ltl.compare_atomic rigid in
     let flexible = Sequence.sort_uniq ~cmp:Ltl.compare_atomic flexible in
-    pf out "MODULE main@\n\
-            JUSTICE TRUE;@\n\
-            ----------------------------------------------------------------------@\n\
-            FROZENVAR@\n";
+    pf out
+      "MODULE main@\n\
+       JUSTICE TRUE;@\n\
+       ----------------------------------------------------------------------@\n\
+       FROZENVAR@\n\
+       ----------------------------------------------------------------------@\n";
     (vbox @@ S.pp_seq ~sep:"" pp_var_decl) out rigid;
-    pf out "@\n\
-            ----------------------------------------------------------------------@\n\
-            VAR@\n";
+    pf out
+      "@\n\
+       ----------------------------------------------------------------------@\n\
+       VAR@\n\
+       ----------------------------------------------------------------------@\n";
     (vbox @@ S.pp_seq ~sep:"" pp_var_decl) out flexible;
     (vbox @@ S.pp_seq ~sep:"" pp_invar) out invariant;
-    pf out "@\n\
-            ----------------------------------------------------------------------@\n\
-            LTLSPEC@\n";
-    Ltl.pp out property
-    
-
-  module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
-  include P 
+    pf out
+      "@\n\
+       ----------------------------------------------------------------------@\n\
+       LTLSPEC@\n\
+       ----------------------------------------------------------------------@\n";
+    Ltl.pp out property;
+    Format.pp_set_margin out old_margin 
+   
 end

@@ -10,8 +10,8 @@ let pp out b =
   TS.pp (* ~start:"" ~stop:"" *) ~sep:" " Tuple.pp out b;
   Fmtc.pf out "}@]"
 
-module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
-include P 
+
+ 
 
 let to_list = TS.elements
                 
@@ -165,3 +165,8 @@ let mem t bnd =
   TS.mem t bnd
 
   
+
+module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
+include P 
+ 
+

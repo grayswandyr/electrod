@@ -98,7 +98,7 @@ let main style_renderer verbosity infile =
     (* Msg.debug (fun m -> *)
     (*     m "Borne sup de la tc de r : %a " TupleSet.pp tc_r); *)
 
-    Logs.app (fun m -> m "SMV model:@\n%a" Elo_to_SMV1.pp model);
+    Logs.app (fun m -> m "SMV model:@\n%a" (Elo_to_SMV1.pp ~margin:100) model);
 
 
 

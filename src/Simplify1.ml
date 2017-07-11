@@ -1,13 +1,13 @@
+(** Simplifies Electrod models. *)
+
+(** EXPECTED TO BE BE DONE AFTER CHECKING ARITIES. *)
+
 open Containers
 open GenGoal
 
 module TS = TupleSet
 
 module L = Location
-
-(*******************************************************************************
- *  Simplify formulas: EXPECTED TO BE BE DONE AFTER CHECKING ARITIES
- *******************************************************************************)
 
 let fresh_var base exp =
   Var.fresh ~loc:exp.exp_loc base 

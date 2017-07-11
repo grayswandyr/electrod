@@ -19,4 +19,4 @@ val location : t -> Location.t
 
 val eq_name : t -> t -> bool
 
-include Intf.Print.S with type t := t
+

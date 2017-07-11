@@ -1,5 +1,5 @@
-(** Abstraction of LTL w.r.t. any concrete implementation in a given
-    model-checker.  *)
+(** Abstraction of solver-specific LTL and models wrt any concrete
+    implementation in a given model-checker.  *)
 
 (** Abstract type for atomic propositions of LTL.  *)
 module type ATOMIC_PROPOSITION =
@@ -122,6 +122,6 @@ module type MODEL = sig
     -> invariant:ltl Sequence.t 
     -> property:ltl Sequence.t -> t
 
-  val pp : Format.formatter -> t -> unit
+  val pp : ?margin:int -> Format.formatter -> t -> unit
 
 end

@@ -1,3 +1,5 @@
+(** Definition of the type for Electrod models.  *)
+
 [@@@landmark "auto"]
 open Containers
 
@@ -35,14 +37,14 @@ let equal_prim_exp = G.equal_prim_exp equal_var equal_ident
                        
 let equal_exp = G.equal_exp equal_var equal_ident
 
-
-
-
 type goal = (var, ident) G.t
 
+
+(* type of (well-formed) Electrod models *)
 type t = {
   file : string option;
-  (* table of relations indexed by names (remark: a {!Relation.t} also knows its name) *)
+  (* table of relations indexed by names (remark: a {!Relation.t} also knows its
+     own name) *)
   domain : Domain.t;
   instance : Instance.t;
   sym : Symmetry.t list;
@@ -52,6 +54,8 @@ type t = {
 let make file domain instance sym goal =
   { file; domain; instance; sym; goal }
 
+
+(* pretty printers *)
 let pp_var out (BVar v) =
   Var.pp out v
 
@@ -85,7 +89,7 @@ let pp out { file; domain; instance; goal } =
     Instance.pp instance
     (vbox @@ pp_goal) goal
 
-  
+(* substitution *)
 let substitute = object (self : 'self)
   inherit [_] G.map as super
 
@@ -134,5 +138,5 @@ end
 
 
 
-module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
-include P 
+
+ 

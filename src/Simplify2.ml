@@ -1,15 +1,12 @@
+(** Compared to Simplify1, this version maps qualified relations to formulas
+    relying on cardinality arguments. *)
+
+(** EXPECTED TO BE BE DONE AFTER CHECKING ARITIES. *)
+
 open Containers
 open GenGoal
 
 module TS = TupleSet
-
-(*******************************************************************************
- *  Simplify formulas: EXPECTED TO BE BE DONE AFTER CHECKING ARITIES
- *******************************************************************************)
-
-(** Compared to Simplify1, this version maps qualified relations to formulas
-    relying on cardinality arguments. *)
-
 
 let fresh_var base exp =
   Var.fresh ~loc:exp.exp_loc base 

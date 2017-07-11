@@ -1,3 +1,5 @@
+(** Abstract type for a converter from Elo models to (abstract) LTL formulas.  *)
+
 open Containers
 
 module type S = sig

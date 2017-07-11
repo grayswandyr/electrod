@@ -23,8 +23,8 @@ let style = `Cyan
 let pp out name =
   Fmtc.(styled style string) out name
 
+
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 
-
 
 module Map = CCMap.Make(struct type t = string let compare = CCOrd.string end)

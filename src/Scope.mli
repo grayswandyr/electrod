@@ -28,4 +28,8 @@ val may : t -> TupleSet.t
 (** 0 if the arity cannot be inferred (= is unknown), [n > 0] otherwise. *)
 val inferred_arity : t -> int 
 
+
+
 include Intf.Print.S with type t := t
+
+

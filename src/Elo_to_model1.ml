@@ -1,3 +1,5 @@
+(** Provides a converter from Electrod models to (part of) a solver model.  *)
+
 open Containers
 
 module Make

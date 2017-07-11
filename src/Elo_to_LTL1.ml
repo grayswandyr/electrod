@@ -1,3 +1,6 @@
+(** Functor that provides a {!Elo_to_LTL_intf.S} converter given an
+    implementation of LTL *)
+
 open Containers
 
 module G = GenGoal

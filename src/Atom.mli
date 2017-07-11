@@ -17,6 +17,6 @@ val hash : t -> int
 module Set : Set.S with type elt = t
 
 include Intf.Print.S with type t := t
-
+  
 include Intf.COMPARE with type t := t
 

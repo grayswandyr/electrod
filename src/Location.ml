@@ -47,6 +47,5 @@ let pp_located pp out { data; _  } = pp out data
 let pp out loc =
   Fmtc.text_loc out @@ to_ints loc
 
-
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
-include P
+include P 

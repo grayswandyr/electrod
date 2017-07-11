@@ -1,3 +1,5 @@
+(** Provides a transformation from Electrod models to SMV models.  *)
+
 open Containers
 
 
