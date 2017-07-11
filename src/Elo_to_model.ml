@@ -1,13 +1,11 @@
 open Containers
 
 module Make
-    (Ltl : LTL.PrintableLTL)
-    (EtL : Elo_to_LTL.S with type atom = Ltl.atom and type ltl = Ltl.t)
-    (MakeFileFormat : functor (Ltl : LTL.PrintableLTL) ->
-        LTL.PRINTABLE_MODEL with type ltl = Ltl.t and type atom = Ltl.atom) =
+    (ConvertFormulas : Elo_to_LTL_intf.S)
+    (Model : Solver.MODEL
+     with type ltl = ConvertFormulas.ltl
+      and type atomic = ConvertFormulas.atomic) =
 struct
-
-  module ModelFormat = MakeFileFormat(Ltl)
 
   let run elo =
     let open Elo in
@@ -37,21 +35,21 @@ struct
       (* try *)
         List.fold_left
           (fun (acc_r, acc_f, acc_fml) fml ->
-             let (r, f, ltl) = EtL.convert elo fml in
+             let (r, f, ltl) = ConvertFormulas.convert elo fml in
              (* if ltl = Ltl.false_ then *)
              (*   raise Early_stop *)
              (* else *)
                (Sequence.append r acc_r,
                 Sequence.append f acc_f,
-                Ltl.and_ ltl @@ lazy acc_fml))
-          Sequence.(empty, empty, Ltl.true_) fmls
+                Sequence.cons ltl acc_fml))
+          Sequence.(empty, empty, empty) fmls
       (* with *)
       (*   Early_stop -> Sequence.(empty, empty, Ltl.false_) *)
     in
     (* TODO take care of the invariant and symmetries too *)
     let GenGoal.Sat goal_fmls = elo.goal in
     let (rigid, flexible, property) = convert_formulas goal_fmls in
-    ModelFormat.make ~rigid ~flexible ~invariant:Sequence.empty ~property
+    Model.make ~rigid ~flexible ~invariant:Sequence.empty ~property
 
 end
 

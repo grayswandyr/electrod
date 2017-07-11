@@ -2,7 +2,7 @@
     model-checker.  *)
 
 (** Abstract type for atomic propositions of LTL.  *)
-module type ATOM =
+module type ATOMIC_PROPOSITION =
   sig
     type t
     val make : Name.t -> Tuple.t -> t
@@ -13,17 +13,17 @@ module type ATOM =
 
 (** Abstract type of LTL (contains past connectives as well as basic counting
     capabilities).  *)
-module type S =
+module type LTL =
   sig
-    type atom
-    val make_atom : Name.t -> Tuple.t -> atom
-    val compare_atoms : atom -> atom -> int
+    type atomic
+    val make_atomic : Name.t -> Tuple.t -> atomic
+    val compare_atomic : atomic -> atomic -> int
     type tcomp = private Lte | Lt | Gte | Gt | Eq | Neq
     type t = private
         Comp of tcomp * term * term
       | True
       | False
-      | Atom of atom
+      | Atomic of atomic
       | Not of t
       | And of t * t
       | Or of t * t
@@ -49,7 +49,7 @@ module type S =
       | Count of t list
     val true_ : t
     val false_ : t
-    val atom : atom -> t
+    val atomic : atomic -> t
     val not_ : t -> t
     val and_ : t -> t Lazy.t -> t
     val or_ : t -> t Lazy.t -> t
@@ -84,56 +84,44 @@ module type S =
     val eq : tcomp
     val neq : tcomp
     module Infix :
-      sig
-        val ( !! ) : t -> t
-        val ( +|| ) : t -> t Lazy.t -> t
-        val ( +&& ) : t -> t Lazy.t -> t
-        val ( @=> ) : t -> t Lazy.t -> t
-        val ( @<=> ) : t -> t -> t
-      end
+    sig
+      val ( !! ) : t -> t
+      val ( +|| ) : t -> t Lazy.t -> t
+      val ( +&& ) : t -> t Lazy.t -> t
+      val ( @=> ) : t -> t Lazy.t -> t
+      val ( @<=> ) : t -> t -> t
+    end
+
+    val pp_atomic : Format.formatter -> atomic -> unit
+
+    val pp : Format.formatter -> t -> unit
   end
 
-(** Builds an LTL implementation out of an implementation of atomic
+(** Builds an LTL implementation out of an implementation of atomicic
     propositions. *)
-module LTL_from_Atom :
-  functor (At : ATOM) -> S with type atom = At.t
+module LTL_from_Atomic :
+  functor (At : ATOMIC_PROPOSITION) -> LTL with type atomic = At.t
 
-
-module type PrintableLTL = sig
-  include S
-
-  val pp_atom : Format.formatter -> atom -> unit
-    
-  val pp : Format.formatter -> t -> unit
-  include Intf.Print.S with type t := t
-end
 
 (* Abstract type for a complete model to be given to a solver.  *)
 module type MODEL = sig
   type ltl
 
-  type atom
+  type atomic
 
   type t = private {
-    rigid : atom Sequence.t;
-    flexible : atom Sequence.t;    
+    rigid : atomic Sequence.t;
+    flexible : atomic Sequence.t;    
     invariant : ltl Sequence.t;
-    property : ltl
+    property : ltl 
   }
 
   val make :
-    rigid:atom Sequence.t
-    -> flexible:atom Sequence.t
+    rigid:atomic Sequence.t
+    -> flexible:atomic Sequence.t
     -> invariant:ltl Sequence.t 
-    -> property:ltl -> t
-
-end
-
-
-
-module type PRINTABLE_MODEL = sig
-  include MODEL
+    -> property:ltl Sequence.t -> t
 
   val pp : Format.formatter -> t -> unit
-  include Intf.Print.S with type t := t
+
 end

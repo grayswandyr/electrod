@@ -1,7 +1,7 @@
 open Containers
 
 
-module Atom = struct
+module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
   type t = string
 
   let pp out at =
@@ -17,16 +17,18 @@ module Atom = struct
   include P 
 end
 
-module Logic = SMV.MakePrintableLTL(Atom)
+module SMV_LTL = SMV.Make_SMV_LTL(SMV_atom)
 
-module FormulaConverter = Elo_to_LTL1.MakeLtlConverter(Logic)
+module SMV_file_format = SMV.Make_SMV_file_format(SMV_LTL)
 
-module ModelConverter = Elo_to_model.Make (Logic) (FormulaConverter) (SMV.MakeFile)
+module Elo_to_SMV_LTL = Elo_to_LTL1.Make(SMV_LTL)
 
-let pp = ModelConverter.ModelFormat.pp
+module Elo_to_SMV_model = Elo_to_model.Make(Elo_to_SMV_LTL)(SMV_file_format)
+
+let pp = SMV_file_format.pp
            
 (* temporary *)
 let run elo =
-  ModelConverter.run elo
+  Elo_to_SMV_model.run elo
 
 let transfo = Transfo.make "to_smv1" run

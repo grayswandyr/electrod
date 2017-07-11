@@ -1,8 +1,9 @@
 open Containers
 
 
-module MakePrintableLTL (At : LTL.ATOM) : LTL.PrintableLTL with type atom = At.t = struct
-  module I = LTL.LTL_from_Atom(At) 
+module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
+  : Solver.LTL with type atomic = At.t = struct
+  module I = Solver.LTL_from_Atomic(At) 
 
   include I
 
@@ -124,9 +125,9 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
         pbody (new_this + 1) out body
       end
                     
-    type atom = At.t
+    type atomic = At.t
 
-    let pp_atom = At.pp
+    let pp_atomic = At.pp
 
     let pp_tcomp out (t : tcomp) =
       pf out "%s"
@@ -146,7 +147,7 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
       match f with
         | True  -> pf out "TRUE"
         | False  -> pf out "FALSE"
-        | Atom at -> pf out "%a" pp_atom at
+        | Atomic at -> pf out "%a" pp_atomic at
         (* tweaks, here, to force parenthese around immediate subformulas of Imp
            and Iff as their precedence may not be easily remembered*)
         | Imp (p, q) ->
@@ -193,7 +194,7 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
           pf out "@[count(%a@])" (list ~sep:(const string "+") (pp 0)) ts
   end
 
-  let pp_atom = PP.pp_atom
+  let pp_atomic = PP.pp_atomic
 
   let pp out f =
     let old_max_indent = Format.pp_get_max_indent out () in
@@ -210,25 +211,28 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
 
 end
 
-module MakeFile (Ltl : LTL.PrintableLTL)
-  : LTL.PRINTABLE_MODEL with type ltl = Ltl.t and type atom = Ltl.atom = struct
+module Make_SMV_file_format (Ltl : Solver.LTL)
+  : Solver.MODEL with type ltl = Ltl.t and type atomic = Ltl.atomic = struct
 
   type ltl = Ltl.t
 
-  type atom = Ltl.atom
+  type atomic = Ltl.atomic
 
   type t = {
-    rigid : atom Sequence.t;
-    flexible : atom Sequence.t;    
+    rigid : atomic Sequence.t;
+    flexible : atomic Sequence.t;    
     invariant : ltl Sequence.t;
-    property : ltl
+    property : ltl 
   }
 
   let make ~rigid ~flexible ~invariant ~property =
-    { rigid; flexible; invariant; property }
+    { rigid; flexible; invariant;
+      property =
+        Sequence.fold
+          (fun acc fml -> Ltl.and_ fml @@ lazy acc) Ltl.true_ property }
 
-  let pp_var_decl out atom =
-    Fmtc.pf out "%a : boolean;" Ltl.pp_atom atom
+  let pp_var_decl out atomic =
+    Fmtc.pf out "%a : boolean;" Ltl.pp_atomic atomic
 
   let pp_invar out inv = 
     Fmtc.pf out "INVAR@\n%a@\n" Ltl.pp inv
@@ -236,16 +240,21 @@ module MakeFile (Ltl : LTL.PrintableLTL)
   let pp out { rigid; flexible; invariant; property } =
     let open Fmtc in
     let module S = Sequence in
-    let rigid = Sequence.sort_uniq ~cmp:Ltl.compare_atoms rigid in
-    let flexible = Sequence.sort_uniq ~cmp:Ltl.compare_atoms flexible in
+    let rigid = Sequence.sort_uniq ~cmp:Ltl.compare_atomic rigid in
+    let flexible = Sequence.sort_uniq ~cmp:Ltl.compare_atomic flexible in
     pf out "MODULE main@\n\
             JUSTICE TRUE;@\n\
+            ----------------------------------------------------------------------@\n\
             FROZENVAR@\n";
     (vbox @@ S.pp_seq ~sep:"" pp_var_decl) out rigid;
-    pf out "VAR@\n";
+    pf out "@\n\
+            ----------------------------------------------------------------------@\n\
+            VAR@\n";
     (vbox @@ S.pp_seq ~sep:"" pp_var_decl) out flexible;
     (vbox @@ S.pp_seq ~sep:"" pp_invar) out invariant;
-    pf out "@\nLTLSPEC@\n";
+    pf out "@\n\
+            ----------------------------------------------------------------------@\n\
+            LTLSPEC@\n";
     Ltl.pp out property
     
 

@@ -6,11 +6,11 @@ module TS = TupleSet
 let tuples_to_idents =
   List.map @@ fun tuple -> G.ident @@ Elo.tuple_ident tuple
 
-module MakeLtlConverter (Ltl : LTL.PrintableLTL) = struct
+module Make (Ltl : Solver.LTL) = struct
   open Ltl
   open Ltl.Infix
 
-  type atom = Ltl.atom
+  type atomic = Ltl.atomic
 
   type ltl = Ltl.t
 
@@ -922,10 +922,10 @@ module MakeLtlConverter (Ltl : LTL.PrintableLTL) = struct
   (* set of atoms, to gather rigid and flexiblae variables *)
   module AS =
     Set.Make(struct
-      type t = Ltl.atom
-      let compare = Ltl.compare_atoms
+      type t = Ltl.atomic
+      let compare = Ltl.compare_atomic
     end)
-      
+
   class environment (elo : Elo.t) = object (self : 'self)
     val mutable flexible_atoms = AS.empty
 
@@ -943,18 +943,18 @@ module MakeLtlConverter (Ltl : LTL.PrintableLTL) = struct
 
     method make_atom (name : Name.t) (t : Tuple.t) =
       assert (Domain.mem name elo.Elo.domain);
-      let atom = make_atom name t in
+      let atom = make_atomic name t in
       (if Domain.get_exn name elo.Elo.domain |> Relation.is_const then
          rigid_atoms <- AS.add atom rigid_atoms
        else
          flexible_atoms <- AS.add atom flexible_atoms);
-      Ltl.atom atom
+      Ltl.atomic atom
 
     method atoms =              (* TODO remove seq and return set *)
       Pair.map_same AS.to_seq (rigid_atoms, flexible_atoms)
   end
 
-  
+
   (* Converts an Elo formula to an LTL formula, gathering at the same time the
      rigid and flexible variables having appeared during the walk. *)
   let convert elo elo_fml =
