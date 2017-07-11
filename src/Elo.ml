@@ -33,9 +33,6 @@ let equal_ident id1 id2 = match id1, id2 with
   | (Var _, _)
   | (Tuple _, _)-> false
 
-let equal_prim_exp = G.equal_prim_exp equal_var equal_ident
-                       
-let equal_exp = G.equal_exp equal_var equal_ident
 
 type goal = (var, ident) G.t
 

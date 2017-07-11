@@ -1,8 +1,4 @@
 [@@@landmark "auto"]
-module Location = struct
-  include Location
-  let equal _ _ = true
-end
 
 
 (* ['v] is the type of variables introduced in quantifiers, ['i] is the type of
@@ -141,9 +137,7 @@ and ibinop =
   | Sub
 [@@deriving visitors { variety = "fold" ; ancestors = ["VisitorsRuntime.map"] },
             visitors { variety = "map"},
-            visitors { variety = "reduce" },
-            eq
-]
+            visitors { variety = "reduce" }]
 
 let true_ = True
 
