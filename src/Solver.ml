@@ -1,17 +1,20 @@
 open Containers
 
-module type ATOM = sig
+module type ATOMIC_PROPOSITION = sig
   type t
 
   val make : Name.t -> Tuple.t -> t
+  val compare : t -> t -> int
 
   val pp : Format.formatter -> t -> unit
   include Intf.Print.S with type t := t
-
 end
 
-module type S = sig
-  type atom
+module type LTL = sig
+  type atomic
+
+  val make_atomic : Name.t -> Tuple.t -> atomic
+  val compare_atomic : atomic -> atomic -> int
     
   type tcomp = private
     | Lte 
@@ -25,7 +28,7 @@ module type S = sig
     | Comp of tcomp * term * term
     | True
     | False
-    | Atom of atom
+    | Atomic of atomic
     | Not of t
     | And of t * t
     | Or of t * t
@@ -54,7 +57,7 @@ module type S = sig
   val true_ : t
   val false_ : t
 
-  val atom : Name.t -> Tuple.t -> t
+  val atomic : atomic -> t
 
   val not_ : t -> t
 
@@ -111,10 +114,13 @@ module type S = sig
     val ( @<=> ) : t -> t -> t
   end
 
+  val pp_atomic : Format.formatter -> atomic -> unit
+
+  val pp : Format.formatter -> t -> unit
 end
 
 
-module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
+module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t = struct
   type tcomp = 
     | Lte 
     | Lt
@@ -122,14 +128,17 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
     | Gt
     | Eq 
     | Neq
+  [@@deriving show]  
+
+  let pp_atomic = Atom.pp
   
-  type atom = At.t
+  type atomic = At.t
 
   and t =
     | Comp of tcomp * term * term
     | True
     | False
-    | Atom of atom
+    | Atomic of atomic
     | Not of t
     | And of t * t
     | Or of t * t
@@ -154,11 +163,14 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
     | Minus of term * term
     | Neg of term 
     | Count of t list
+  [@@deriving show]             (* default impl. for pp; to override later *)
+
+  let make_atomic = At.make
+  let compare_atomic = At.compare
+  let atomic at = Atomic at
 
   let true_ = True
   let false_ = False
-
-  let atom r ts = Atom (At.make r ts)
 
   let and_ p q = match p, q with
     | False, _ -> False
@@ -291,9 +303,23 @@ module LTL_from_Atom (At : ATOM) : S with type atom = At.t = struct
   end
 end
 
-module type PrintableLTL = sig
-  include S
+module type MODEL = sig 
+  type ltl
+
+  type atomic
+
+  type t = private {
+    rigid : atomic Sequence.t;
+    flexible : atomic Sequence.t;    
+    invariant : ltl Sequence.t;
+    property : ltl 
+  }
+
+  val make :
+    rigid:atomic Sequence.t
+    -> flexible:atomic Sequence.t
+    -> invariant:ltl Sequence.t 
+    -> property:ltl Sequence.t -> t
 
   val pp : Format.formatter -> t -> unit
-  include Intf.Print.S with type t := t
 end

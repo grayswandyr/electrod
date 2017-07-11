@@ -1,10 +1,14 @@
 open Containers
 
 
-module MakeLtlConverter (Ltl : LTL.S) = struct
-  module M = Elo_to_LTL1.MakeLtlConverter(Ltl)
+module Make (Ltl : Solver.LTL) = struct
+  module M = Elo_to_LTL1.Make(Ltl)
       
   open Ltl
+
+  type atomic = Ltl.atomic
+
+  type ltl = Ltl.t
 
   class ['env] converter = object (self : 'self)
     inherit ['env] M.converter as super
@@ -23,10 +27,13 @@ module MakeLtlConverter (Ltl : LTL.S) = struct
   end
 
 
-  let convert elo =
+  (* Converts an Elo formula to an LTL formula, gathering at the same time the
+     rigid and flexible variables having appeared during the walk. *)
+  let convert elo elo_fml =
     let open Elo in
     let env = new environment elo in
-    let GenGoal.Sat fmls = elo.goal in
-    List.map ((new converter)#visit_fml env) fmls
+    let ltl_fml = (new converter)#visit_fml env elo_fml in
+    let (rigid, flexible) = env#atoms in
+    (rigid, flexible, ltl_fml)
   
 end

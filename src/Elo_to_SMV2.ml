@@ -1,9 +1,9 @@
 open Containers
 
 
-module Logic = Elo_to_SMV1.Logic
+module SMV_LTL = Elo_to_SMV1.SMV_LTL
 
-module FormulaConverter = Elo_to_LTL2.MakeLtlConverter(Logic)
+module FormulaConverter = Elo_to_LTL2.Make(SMV_LTL)
 
 open FormulaConverter
 

@@ -80,9 +80,9 @@ let main style_renderer verbosity infile =
     let raw_to_elo_t = Transfo.tlist [ Raw_to_elo.transfo ] in
     let elo_to_elo_t = Transfo.tlist [ Simplify1.transfo; Simplify2.transfo ] in
     let elo_to_smv_t = Transfo.tlist
-                         [ Elo_to_SMV1.transfo; Elo_to_SMV2.transfo] in
+                         [ Elo_to_SMV1.transfo; (* Elo_to_SMV2.transfo *)] in
 
-    let elo =
+    let model =
       Parser_main.parse_file infile
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Parsing OK."))
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
@@ -90,30 +90,17 @@ let main style_renderer verbosity infile =
       (* |> Fun.tap (fun elo -> Msg.debug (fun m -> m "After raw_to_elo =@\n%a@." (Elo.pp) elo)) *)
       |> Transfo.(get_exn elo_to_elo_t "simplify1" |> run)
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Simplification OK."))
+      |> Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) 
+      |> Fun.tap (fun _ -> Msg.info (fun m -> m "Conversion OK."))
     in
-
-
-    (* Msg.debug *)
-    (*   (fun m -> m "After simplify1 =@\n%a" (Elo.pp) elo); *)
-
     (* let sup_r = Domain.sup (Name.name "r") elo.domain in *)
     (* let tc_r = TupleSet.transitive_closure sup_r in *)
     (* Msg.debug (fun m -> *)
     (*     m "Borne sup de la tc de r : %a " TupleSet.pp tc_r); *)
 
+    Logs.app (fun m -> m "SMV model:@\n%a" Elo_to_SMV1.pp model);
 
-    let test_f =
-      Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) elo
-      |> Fun.tap (fun _ -> Msg.info (fun m -> m "Conversion OK."))
-    in
-    Msg.debug (fun m ->
-          let GenGoal.Sat fmls = elo.Elo.goal in
-          let trad = List.combine fmls test_f in
-          m "After conversion to SMV formulas:@.%a"
-            Fmtc.(list ~sep:hardline
-                  @@ pair ~sep:Format.pp_print_newline
-                       (const string "// " **< Elo.pp_fml)
-                       Elo_to_SMV1.Logic.pp) trad);
+
 
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
                          Mtime.Span.pp (Mtime_clock.elapsed ()))
