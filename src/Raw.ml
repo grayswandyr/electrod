@@ -10,6 +10,7 @@ type raw_problem = {
   raw_decls : raw_declaration list;     (** does not contain 'univ'  *)
   raw_goal : raw_goal;
   raw_inst : raw_assignment list;       (** may be empty *)
+  raw_syms : raw_symmetry list;          (** may be empty *)
 }
 
 and raw_urelements = 
@@ -40,7 +41,9 @@ and raw_tuple = Raw_ident.t list (** A n-tuple (incl. n = 1). inv: nonempty list
 and raw_interval = Raw_ident.t * Raw_ident.t
 
 and raw_assignment = Raw_ident.t * raw_tuple list
-
+                                             
+and raw_symmetry = ((Raw_ident.t * raw_tuple) list) *
+                     ((Raw_ident.t * raw_tuple) list)
 
 let interval id1 id2 = (id1, id2)
 
@@ -72,8 +75,8 @@ let uintvl intvl = UIntvl intvl
 
 let uplain atom = UPlain atom
 
-let problem file raw_univ raw_decls raw_goal raw_inst =
-  { file; raw_univ; raw_decls; raw_goal; raw_inst }
+let problem file raw_univ raw_decls raw_goal raw_inst raw_syms =
+  { file; raw_univ; raw_decls; raw_goal; raw_inst; raw_syms }
 
 
 let decl_id = function

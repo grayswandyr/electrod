@@ -8,6 +8,7 @@ type raw_problem = {
   raw_decls : raw_declaration list;     (** does not contain 'univ'  *)
   raw_goal : raw_goal;
   raw_inst : raw_assignment list;       (** may be empty *)
+  raw_syms : raw_symmetry list;         (** may be empty *)
 }
 
 and raw_urelements = private
@@ -42,6 +43,10 @@ and raw_interval = Raw_ident.t * Raw_ident.t
 (** asignemnt of tuples to a relation *)
 and raw_assignment = Raw_ident.t * raw_tuple list (** may be empty  *)
 
+and raw_symmetry = ((Raw_ident.t * raw_tuple) list) *
+                     ((Raw_ident.t * raw_tuple) list)
+
+      
 (** {1 Constructors} *)
 
 
@@ -75,7 +80,8 @@ val uintvl : raw_interval -> raw_urelements
 val uplain : Raw_ident.t -> raw_urelements
 
 val problem : string option -> raw_urelements list ->
-  raw_declaration list -> raw_goal -> raw_assignment list -> raw_problem
+              raw_declaration list -> raw_goal -> raw_assignment list ->
+              raw_symmetry list -> raw_problem
 
 (** {1 Accessors} *)
 

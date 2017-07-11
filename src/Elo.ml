@@ -45,11 +45,12 @@ type t = {
   (* table of relations indexed by names (remark: a {!Relation.t} also knows its name) *)
   domain : Domain.t;
   instance : Instance.t;
+  sym : Symmetry.t list;
   goal : goal;       
 }
 
-let make file domain instance goal =
-  { file; domain; instance; goal }
+let make file domain instance sym goal =
+  { file; domain; instance; sym; goal }
 
 let pp_var out (BVar v) =
   Var.pp out v

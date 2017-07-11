@@ -295,7 +295,28 @@ let compute_instances domain (pb : Raw.raw_problem) =
          Instance.add n ts acc)
     Instance.empty pb.raw_inst
 
-(*******************************************************************************
+(******************************************************************************
+ *  Compute the symmetries.
+ *****************************************************************************)
+(* Compute the symmetry contraints *)
+let compute_symmetries (pb : Raw.raw_problem) =
+  let compute_single_sym_term (id, raw_tuple) =
+    let name = Name.of_raw_ident id in
+    let tuple = Tuple.of_list1 @@ List.map Atom.of_raw_ident raw_tuple in
+    (name, tuple)
+  in
+      
+  let compute_single_sym (sym:(Raw_ident.t * Raw.raw_tuple) list
+                        * (Raw_ident.t * Raw.raw_tuple) list) =
+  match sym with
+  | [], [] -> [], []
+  | [], _ | _, [] -> assert false (* both lists must have the same length *) 
+  | l1, l2 -> List.map compute_single_sym_term l1,
+              List.map compute_single_sym_term l2
+  in
+  List.map compute_single_sym pb.raw_syms    
+           
+ (*******************************************************************************
  *  Walking along raw goals to get variables and relation names out of raw_idents
  *******************************************************************************)
 
@@ -736,9 +757,10 @@ let check_arities elo =
 
 let whole raw_pb =
   let domain = compute_domain raw_pb in
+  let syms = compute_symmetries raw_pb in
   let instance = compute_instances domain raw_pb in
   let goal = refine_identifiers raw_pb in
-  Elo.make raw_pb.file domain instance goal
+  Elo.make raw_pb.file domain instance syms goal
   |> Fun.tap @@ fun elo -> 
   (* begin *)
   (*   Msg.debug *)

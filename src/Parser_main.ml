@@ -5,9 +5,9 @@ let parse_file infile =
   fun ic ->
   let lexbuf = Lexing.from_channel ic in
   try 
-    let raw_univ, raw_decls, raw_goal, raw_assignments =
+    let raw_univ, raw_decls, raw_goal, raw_assignments, raw_syms =
       Parser.parse_problem (Scanner.main (Some infile)) lexbuf
-    in Raw.problem (Some infile) raw_univ raw_decls raw_goal raw_assignments
+    in Raw.problem (Some infile) raw_univ raw_decls raw_goal raw_assignments raw_syms
   with Parser.Error ->
     Msg.Fatal.syntax @@ fun args -> args infile lexbuf
 
@@ -24,8 +24,8 @@ let parse_file infile =
 *)
 let parse_string s = 
   let lexbuf = Lexing.from_string s in
-  let raw_univ, raw_decls, raw_goal, raw_assignments =
+  let raw_univ, raw_decls, raw_goal, raw_assignments, raw_syms =
     Parser.parse_problem (Scanner.main None) lexbuf in
-  Raw.problem None raw_univ raw_decls raw_goal raw_assignments
+  Raw.problem None raw_univ raw_decls raw_goal raw_assignments raw_syms
 
 

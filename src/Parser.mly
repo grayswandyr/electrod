@@ -9,7 +9,8 @@ module G = GenGoal
 %start <Raw.raw_urelements list
  * Raw.raw_declaration list
  * Raw.raw_goal
- * Raw.raw_assignment list> parse_problem
+ * Raw.raw_assignment list
+ * Raw.raw_symmetry list> parse_problem
 
 %token UNIV NONE VAR COLON SEMI EOF EQ IN NEQ AND OR HISTORICALLY
 %token IMPLIES IFF UNTIL RELEASE SINCE NEXT ONCE PREVIOUS LET
@@ -63,9 +64,10 @@ module G = GenGoal
 
 %public parse_problem:
   urelts_list = universe decls = possible_declarations
-    i = insts? syms? 
+    i = insts? sy = syms? 
     gs = goal EOF
-	  { (urelts_list, decls, gs, CCOpt.get_or ~default:[] i) }
+	  { (urelts_list, decls, gs,
+	  CCOpt.get_or ~default:[] i, CCOpt.get_or ~default:[] sy) }
 
 
  
@@ -181,16 +183,16 @@ inst:
   ////////////////////////////////////////////////////////////////////////
 
 syms:
-  SYM right_flexible_list(SEMI, sym)
-  {}
+  SYM sy = right_flexible_list(SEMI, sym)
+  {sy}
 
 sym:
-  sym_element+ LTE sym_element+ 
-  {}
+  syms1 = sym_element+ LTE syms2 = sym_element+ 
+  {syms1, syms2}
 
 sym_element:
-  brackets(atom+)
-  {}
+  atoms = brackets(atom+)
+  {List.hd atoms, List.tl atoms}
     
   ////////////////////////////////////////////////////////////////////////
   // goal
