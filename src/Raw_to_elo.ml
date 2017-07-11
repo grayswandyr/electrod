@@ -309,10 +309,10 @@ let compute_symmetries (pb : Raw.raw_problem) =
   let compute_single_sym (sym:(Raw_ident.t * Raw.raw_tuple) list
                         * (Raw_ident.t * Raw.raw_tuple) list) =
   match sym with
-  | [], [] -> [], []
+  | [], [] -> Symmetry.make [] []
   | [], _ | _, [] -> assert false (* both lists must have the same length *) 
-  | l1, l2 -> List.map compute_single_sym_term l1,
-              List.map compute_single_sym_term l2
+  | l1, l2 -> Symmetry.make (List.map compute_single_sym_term l1)
+                            (List.map compute_single_sym_term l2)
   in
   List.map compute_single_sym pb.raw_syms    
            
