@@ -4,7 +4,8 @@
 (* ['v] is the type of variables introduced in quantifiers, ['i] is the type of
    any identifier (a variable like in the former case or a relation name) *)
 type ('v, 'i) t =
-  | Sat of (('v, 'i) fml list)
+  | Run of (('v, 'i) fml)
+  | Check of (('v, 'i) fml)
 
 (** Formulas and expressions *)
 
@@ -296,7 +297,9 @@ let exp ?(arity = Some 0) exp_loc prim_exp =
 
 let iexp iexp_loc prim_iexp = { prim_iexp; iexp_loc }
 
-let sat fs = Sat fs
+let run fs = Run fs
+
+let check fs = Check fs
 
 
 
@@ -306,16 +309,21 @@ let sat fs = Sat fs
 
 let kwd_styled pf = Fmtc.(styled `Bold) pf
 
-let rec pp pp_v pp_i out (Sat fmls) =
+let rec pp pp_v pp_i out =
   let open Fmtc in
-  begin
-    (kwd_styled pf) out "run@ ";
-    pf out "  %a"
-    (vbox
-     @@ list ~sep:(sp **> semi)
-     @@ box2
-     @@ pp_fml pp_v pp_i) fmls
-  end
+  function 
+    | Run fml ->
+        begin
+          (kwd_styled pf) out "run@ ";
+          pf out "  %a"
+            (box2 @@ pp_fml pp_v pp_i) fml
+        end
+    | Check fml ->
+        begin
+          (kwd_styled pf) out "check@ ";
+          pf out "  %a"
+            (box2 @@ pp_fml pp_v pp_i) fml
+        end
 
 and pp_fml pp_v pp_i out fml =
   pp_prim_fml pp_v pp_i out fml.prim_fml

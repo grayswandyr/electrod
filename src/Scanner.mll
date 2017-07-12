@@ -52,10 +52,11 @@ rule main infile = parse
         @@ fun args -> args infile lexbuf ("invalid integer constant '" ^ i ^ "'")
     }   
 | "check" 
-    { Msg.Fatal.lexical
-      @@ fun args -> args infile lexbuf (Printf.sprintf "reserved keyword: 'check'")}
+    { CHECK }
 | "run"
-    { SAT }
+    { RUN }
+| "invariant"
+    { INVARIANT }
 (*| "int"
       { INT }*)
 | "true"

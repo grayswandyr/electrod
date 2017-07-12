@@ -319,7 +319,7 @@ module type MODEL = sig
     rigid:atomic Sequence.t
     -> flexible:atomic Sequence.t
     -> invariant:ltl Sequence.t 
-    -> property:ltl Sequence.t -> t
+    -> property:ltl -> t
 
   val pp : ?margin:int -> Format.formatter -> t -> unit
 end

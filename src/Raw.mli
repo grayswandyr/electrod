@@ -2,11 +2,14 @@
 
 type raw_goal = (Raw_ident.t, Raw_ident.t) GenGoal.t
 
+type raw_block = (Raw_ident.t, Raw_ident.t) GenGoal.block
+
 type raw_problem = {
   file : string option;
   raw_univ : raw_urelements list;
   raw_decls : raw_declaration list;     (** does not contain 'univ'  *)
   raw_goal : raw_goal;
+  raw_invar : raw_block;           (** may be empty *)
   raw_inst : raw_assignment list;       (** may be empty *)
   raw_syms : raw_symmetry list;         (** may be empty *)
 }
@@ -54,6 +57,8 @@ type raw_paragraph =
   | ParGoal of raw_goal
   | ParInst of raw_assignment list
   | ParSym of raw_symmetry list
+  | ParInv of raw_block
+  
 
 (** {1 Constructors} *)
 
@@ -90,7 +95,8 @@ val uplain : Raw_ident.t -> raw_urelements
 val problem : string option ->
   raw_urelements list ->
   raw_declaration list ->
-  raw_goal -> raw_assignment list -> raw_symmetry list -> raw_problem
+  raw_goal -> raw_block ->
+  raw_assignment list -> raw_symmetry list -> raw_problem
 
 (** {1 Accessors} *)
 

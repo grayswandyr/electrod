@@ -428,8 +428,9 @@ let refine_identifiers raw_pb =
     @ [ (Raw_ident.ident "univ" Lexing.dummy_pos Lexing.dummy_pos,
          Elo.name_ident Name.univ) ]
   in
-  let walk_goal (Sat blk) : Elo.goal = 
-    sat @@ snd @@ walk_block init_ctx blk
+  let walk_goal = function
+    | Run fml -> run @@ snd @@ walk_fml init_ctx fml
+    | Check fml -> check @@ snd @@ walk_fml init_ctx fml
   in
   walk_goal raw_pb.raw_goal
 
@@ -745,8 +746,9 @@ let check_arities elo =
           Relation.(Some (arity rel))      
   end
   in
-  let walk_goal (Sat blk) =
-    walk_block init blk
+  let walk_goal = function
+    | Run fml -> walk_fml init fml
+    | Check fml -> walk_fml init fml
   in
   walk_goal elo.goal
 

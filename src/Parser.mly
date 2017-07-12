@@ -11,14 +11,14 @@ module G = GenGoal
  * Raw.raw_declaration list
  * Raw.raw_paragraph list> parse_problem
 
-%token UNIV NONE VAR COLON SEMI EOF EQ IN NEQ AND OR HISTORICALLY
+%token UNIV NONE VAR COLON SEMI EOF EQ IN NEQ AND OR HISTORICALLY 
 %token IMPLIES IFF UNTIL RELEASE SINCE NEXT ONCE PREVIOUS LET
 %token LPAREN RPAREN LBRACKET RBRACKET DOTDOT PLUS ARROW
 %token ALL SOME DISJ ONE LONE NO COMMA LBRACE RBRACE BAR
 %token GT GTE LT LTE TRUE FALSE SOMETIME ALWAYS NOT
-%token SAT TILDE HAT STAR IDEN ELSE CONST
+%token TILDE HAT STAR IDEN ELSE CONST INVARIANT
 %token INTER OVERRIDE LPROJ RPROJ MINUS DOT PRIME
-%token THEN NOT_IN
+%token THEN NOT_IN RUN CHECK
 // for integer expressions
 %token NEG ADD SUB HASH //INT
 
@@ -72,6 +72,8 @@ paragraph:
     { R.ParSym sy }
     | gs = goal
     { R.ParGoal gs }
+    | f = invariant
+    { R.ParInv f }
  
   ////////////////////////////////////////////////////////////////////////
   // universe
@@ -189,18 +191,28 @@ symmetry:
 sym_element:
   atoms = parens(atom+)
   {List.hd atoms, List.tl atoms}
+      
+  ////////////////////////////////////////////////////////////////////////
+  // invariant
+  ////////////////////////////////////////////////////////////////////////
+ 
+%inline invariant:
+	INVARIANT fs = specification
+	{ fs }
+
+specification:
+	fs = formula_semi*
+  { fs }
   
   ////////////////////////////////////////////////////////////////////////
   // goal
   ////////////////////////////////////////////////////////////////////////
  
 %inline goal:
-	SAT fs = specification
-	{ G.sat fs }
-
-specification:
-	fs = formula_semi*
-  { fs }
+	RUN fs = formula_semi
+	{ G.run fs }
+	| CHECK fs = formula_semi
+	{ G.check fs }
 
 formula_semi:
   f = formula ioption(SEMI)

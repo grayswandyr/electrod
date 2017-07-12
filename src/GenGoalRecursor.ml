@@ -13,6 +13,7 @@ class virtual ['self] recursor = object (self : 'self)
   method virtual build_Block : _
   method virtual build_BoxJoin : _
   method virtual build_Card : _
+  method virtual build_Check : _
   method virtual build_Compr : _
   method virtual build_Diff : _
   method virtual build_F : _
@@ -70,7 +71,7 @@ class virtual ['self] recursor = object (self : 'self)
   method virtual build_RTClos : _
   method virtual build_RUn : _
   method virtual build_S : _
-  method virtual build_Sat : _
+  method virtual build_Run : _
   method virtual build_Some_ : _
   method virtual build_Sub : _
   method virtual build_TClos : _
@@ -85,14 +86,16 @@ class virtual ['self] recursor = object (self : 'self)
   method virtual build_iexp : _
   method virtual visit_'i : _
   method virtual visit_'v : _
-  method visit_Sat env _visitors_c0 =
-    let _visitors_r0 = self#visit_list self#visit_fml env _visitors_c0
-    in
-    self#build_Sat env _visitors_c0 _visitors_r0 [@landmark "build_Sat"]
+  method visit_Run env _visitors_c0 =
+    let _visitors_r0 = self#visit_fml env _visitors_c0  in
+    self#build_Run env _visitors_c0 _visitors_r0
+  method visit_Check env _visitors_c0 =
+    let _visitors_r0 = self#visit_fml env _visitors_c0  in
+    self#build_Check env _visitors_c0 _visitors_r0
   method visit_t env _visitors_this =
     match _visitors_this with
-      | Sat _visitors_c0 ->
-          self#visit_Sat env _visitors_c0
+      | Run _visitors_c0 -> self#visit_Run env _visitors_c0
+      | Check _visitors_c0 -> self#visit_Check env _visitors_c0
   method visit_fml env _visitors_this =
     let _visitors_r0 = self#visit_prim_fml env _visitors_this.prim_fml
     in
