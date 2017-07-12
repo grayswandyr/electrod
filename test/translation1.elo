@@ -1,14 +1,14 @@
 univ : { a b c d e f g h };
 
-exact : { a b c d};
+const exact : { a b c d};
 
-inexact1 : {} { a};
+const inexact1 : {} { a};
 
-inexact2 : { a b } { a b c d };
+const inexact2 : { a b } { a b c d };
 
-r : { (a b) } { (a b) (a c) (b d)}
+const r : { (a b) } { (a b) (a c) (b d)}
 
-sat
+run
 
 no exact;
 

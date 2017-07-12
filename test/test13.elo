@@ -1,9 +1,9 @@
 univ : { a b c d e f };
 
-r1 : { (a b) (a c)} { (a b) (a c) (b c) };
+const r1 : { (a b) (a c)} { (a b) (a c) (b c) };
 
-r2 : { (b d) (b e) (c f) (c d) };
+const r2 : { (b d) (b e) (c f) (c d) };
 
-sat
+run
 
 some { disj x, y : r1, z, t : x.r2, u : t | some univ }

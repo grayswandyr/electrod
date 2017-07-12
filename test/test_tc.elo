@@ -2,18 +2,18 @@
 
 univ : { a b c };
 
-a : {a};
-b : {b};
-c : {c};
-r : {} { (a b) (b c)};(* (c d) (d e) (e f) (f g) (g h)  } ;*)
+const a : {a};
+const b : {b};
+const c : {c};
+const r : {} { (a b) (b c)};(* (c d) (d e) (e f) (f g) (g h)  } ;*)
 (*s : {} {c d e f g h i };
 
-r2 : {(a b)} { (a b) (b c) (c d) (d e) (e f) (f g)  (g h) (h i) (i j) (j k) (k l)  (l m)  (n o) (p q) (r s )} ;
-s2 : {} {c d e f g h i j};
+const r2 : {(a b)} { (a b) (b c) (c d) (d e) (e f) (f g)  (g h) (h i) (i j) (j k) (k l)  (l m)  (n o) (p q) (r s )} ;
+const s2 : {} {c d e f g h i j};
 *)
 
 
-sat
+run
 
 (*all a:univ, b: s | a in b.r;*)
 all x:univ, y: x.(^r) | x = y;

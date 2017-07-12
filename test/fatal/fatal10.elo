@@ -1,7 +1,7 @@
 univ : { a  a$1 .. a$2 a$3 .. a$12 };
-r : { (a a$4)   };
-s   : {} { a};
+const r : { (a a$4)   };
+const s   : {} { a};
 var t : { a$1 .. a$2 } { a$1 .. a$3};
-v : r;
-sat
+const v : r;
+run
 true

@@ -309,7 +309,7 @@ let kwd_styled pf = Fmtc.(styled `Bold) pf
 let rec pp pp_v pp_i out (Sat fmls) =
   let open Fmtc in
   begin
-    (kwd_styled pf) out "sat@ ";
+    (kwd_styled pf) out "run@ ";
     pf out "  %a"
     (vbox
      @@ list ~sep:(sp **> semi)

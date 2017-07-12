@@ -2,13 +2,13 @@
 
 univ : { a b c d e f g };
 
-r : { (a a) (a b) (a c) };
+const r : { (a a) (a b) (a c) };
 
-s : { (b c) (c d) (c e) };
+const s : { (b c) (c d) (c e) };
 
-t : { a}
+const t : { a}
 
-sat
+run
 
 some r[univ.r];
 

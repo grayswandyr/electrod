@@ -7,7 +7,7 @@ univ : { a b c  e$2 .. e$4 };
 const r : univ; -- this one is "exact" (same lower and upper bounds)
 const t : { (a a) (a b) (c e$2)} (univ -> (univ + r)); -- outer parentheses not needed, but + < ->
 
-f : {} {a}; -- 'const' keyword is optional
+const f : {} {a}; -- 'const' keyword is optional
 
 const foo : { a b } {a b c}; 	 -- this one is inexact
 var u : {} foo;  -- as 'foo' is on upper bound position, we use foo's upper bound, i.e. {a b c}
@@ -19,5 +19,5 @@ var w : {} then { a } { (a) b }; -- last semicolon optional. +Optional parenthes
 
 ----------------
 -- 1
-sat
+run
 one r : r,  r: r | true;

@@ -2,10 +2,10 @@
 
 univ : { a b c d e f g };
 
-r : { (a a) (a b) (b c) };
+const r : { (a a) (a b) (b c) };
 
 
-sat
+run
 
 
 some x:univ | x in x.(^r);

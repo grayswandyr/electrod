@@ -1,14 +1,14 @@
 univ : { a b c d e f g };
 
-r : {} { (a a) (a b) (a c) };
+const r : {} { (a a) (a b) (a c) };
 
-E : { (a)  c  };
+const E : { (a)  c  };
 
-F : {a b} { a b e};
+const F : {a b} { a b e};
 
-G : {d} {d f};
+const G : {d} {d f};
 
-sat
+run
 lone { x, y : E, disj z, t : F, u : G | true};
 
 

@@ -245,7 +245,7 @@ module Fatal = struct
     fun infile id pp_bound inf sup ->
     let loc = Raw_ident.location id in
     m ~header:(code 11)
-      "%a%a: lower bound of %S is not included upper bound@\n%a@\n\
+      "%a%a: lower bound of %S is not included in upper bound@\n%a@\n\
       lower bound = %a@\nupper bound = %a"
       (option @@ colon **> string) infile
       Loc.pp loc

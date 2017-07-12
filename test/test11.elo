@@ -1,12 +1,12 @@
 univ : { a b c d e f g };
 
-r : {} { (a a) (a b) (a c) };
+const r : {} { (a a) (a b) (a c) };
 
-s : { (a a) (a b) };
+const s : { (a a) (a b) };
 
-t : { a}
+const t : { a}
 
-sat
+run
 
 r in s
 

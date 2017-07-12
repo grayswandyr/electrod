@@ -1,10 +1,10 @@
 univ : {a b c d };
 
-s : { a b };
+const s : { a b };
 
-r : { (a b) (b c) (a c) (a d) };
+const r : { (a b) (b c) (a c) (a d) };
 
-sat
+run
 
 -- sup = {(a b) (a c) (a d) (b c)}
 some { x : s, y : x.r | true };

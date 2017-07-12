@@ -64,10 +64,9 @@ module G = GenGoal
 
 %public parse_problem:
   urelts_list = universe decls = possible_declarations
-    i = insts? sy = syms? 
+    i = insts sy = syms
     gs = goal EOF
-	  { (urelts_list, decls, gs,
-	  CCOpt.get_or ~default:[] i, CCOpt.get_or ~default:[] sy) }
+	  { (urelts_list, decls, gs, i, sy) }
 
 
  
@@ -76,7 +75,7 @@ module G = GenGoal
   ////////////////////////////////////////////////////////////////////////
 
 universe:
-	UNIV COLON urelts_list = braces(urelements*)
+	UNIV COLON urelts_list = braces(urelements*) ioption(SEMI)
 	{ urelts_list }
 
 urelements:
@@ -89,18 +88,15 @@ urelements:
 /* One may only declare univ. However, if other relations are also declared,
   then the univ declaration must first be followed by a SEMI */
 possible_declarations:
-  /* empty */
-  { [] }
-  |
-  /* Besides, relation declarations must be separated by a SEMI, the last one being optional */
-   SEMI decls = right_flexible_list(SEMI, declaration)
+  decls = declaration*
   { decls }
   
 declaration:
-	CONST? id = PLAIN_ID ar = colon_w_or_wo_arity sc = scope 
+	CONST id = PLAIN_ID ar = colon_w_or_wo_arity sc = scope ioption(SEMI)
 	{ R.dconst (Raw_ident.ident id $startpos(id) $endpos(id)) ar sc }
   |
-	VAR id = PLAIN_ID ar = colon_w_or_wo_arity sc = scope fby = next_scope? 
+  VAR id = PLAIN_ID ar = colon_w_or_wo_arity sc = scope
+    fby = next_scope? ioption(SEMI)
 	{ R.dvar (Raw_ident.ident id $startpos(id) $endpos(id)) ar sc fby }
 
 colon_w_or_wo_arity:
@@ -167,12 +163,13 @@ atom:
   ////////////////////////////////////////////////////////////////////////
 
 insts:
- INST
- assignemnts = right_flexible_list(SEMI, inst)
- { assignemnts }
+  /* empty */
+  { [] }
+  | INST assignments = inst+
+  { assignments }
 
 inst:
- id = PLAIN_ID EQ tuples = braces(tuple*) 
+ id = PLAIN_ID EQ tuples = braces(tuple*) ioption(SEMI)
  { (Raw_ident.ident id $startpos(id) $endpos(id), tuples) }
 
  
@@ -182,18 +179,24 @@ inst:
   // symmetries
   ////////////////////////////////////////////////////////////////////////
 
-syms:
-  SYM sy = right_flexible_list(SEMI, sym)
-  {sy}
+syms:  
+  /* empty */
+    { [] }
+  | SYM sy = bracketed_symmetry+
+      { sy }
 
-sym:
+bracketed_symmetry:
+ sy = brackets(symmetry) SEMI?
+ {sy}
+
+symmetry:
   syms1 = sym_element+ LTE syms2 = sym_element+ 
   {syms1, syms2}
 
 sym_element:
-  atoms = brackets(atom+)
+  atoms = parens(atom+)
   {List.hd atoms, List.tl atoms}
-    
+  
   ////////////////////////////////////////////////////////////////////////
   // goal
   ////////////////////////////////////////////////////////////////////////
@@ -203,8 +206,12 @@ sym_element:
 	{ G.sat fs }
 
 specification:
-	fs = right_flexible_list(SEMI, formula)
-	{ fs }
+	fs = formula_semi*
+  { fs }
+
+formula_semi:
+  f = formula ioption(SEMI)
+  { f }
 
 formula :
      TRUE
@@ -282,7 +289,7 @@ formula :
 	{ block }
 
 %inline f_block:
-	 fs = braces(right_flexible_list(SEMI, formula))
+	 fs = braces(specification)
 	{  fs }
 
 %inline lbinop:
@@ -474,17 +481,8 @@ icomp_op:
     ////////////////////////////////////////////////////////////////////////
     // MENHIR MACROS
     ////////////////////////////////////////////////////////////////////////
-  
-(* Given by François Pottier on 2015-01-21
-   at http://gallium.inria.fr/blog/lr-lists/ *)
-%public right_flexible_list(delim, X):
-	| (* nothing *)
-	    { [] }
-	| x = X
-	    { [x] }
-	| x = X delim xs = right_flexible_list(delim, X)
-	    { x :: xs }
-
+        
+      
 %public %inline comma_sep1(X) :
   xs = separated_nonempty_list(COMMA, X)
     { xs }

@@ -1,4 +1,4 @@
 univ : {p$1 .. p$3 };
-sat 
+run 
 all p : univ | p in univ
 
