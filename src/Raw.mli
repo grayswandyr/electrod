@@ -46,7 +46,15 @@ and raw_assignment = Raw_ident.t * raw_tuple list (** may be empty  *)
 and raw_symmetry = ((Raw_ident.t * raw_tuple) list) *
                      ((Raw_ident.t * raw_tuple) list)
 
-      
+(** This definition is here just to be used in the parser ((to avoid cyclic
+    dependencies). The puprose of paragraphs is to deal easily and efficiently
+    with {i permutation} of these (see {!Parser_main} for more
+    information).)  *)
+type raw_paragraph =
+  | ParGoal of raw_goal
+  | ParInst of raw_assignment list
+  | ParSym of raw_symmetry list
+
 (** {1 Constructors} *)
 
 
@@ -79,9 +87,10 @@ val uintvl : raw_interval -> raw_urelements
 
 val uplain : Raw_ident.t -> raw_urelements
 
-val problem : string option -> raw_urelements list ->
-              raw_declaration list -> raw_goal -> raw_assignment list ->
-              raw_symmetry list -> raw_problem
+val problem : string option ->
+  raw_urelements list ->
+  raw_declaration list ->
+  raw_goal -> raw_assignment list -> raw_symmetry list -> raw_problem
 
 (** {1 Accessors} *)
 

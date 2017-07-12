@@ -12,11 +12,12 @@ r = { (a) };
 
 t = { (a a)  (a b) };
 
+
+run
+{ disj a,b : univ | a->b in t } not in u->u;
+
 sym
 
 [( a b ) <= ( b c )]
 
 [( a b ) ( e$2 e$3 b ) <= ( b c ) (e$4 b c)]
-
-run
-{ disj a,b : univ | a->b in t } not in u->u;

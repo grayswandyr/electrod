@@ -3,14 +3,13 @@
   
 module R = Raw
 
-module G = GenGoal  
+module G = GenGoal
+
 %}
   
 %start <Raw.raw_urelements list
  * Raw.raw_declaration list
- * Raw.raw_goal
- * Raw.raw_assignment list
- * Raw.raw_symmetry list> parse_problem
+ * Raw.raw_paragraph list> parse_problem
 
 %token UNIV NONE VAR COLON SEMI EOF EQ IN NEQ AND OR HISTORICALLY
 %token IMPLIES IFF UNTIL RELEASE SINCE NEXT ONCE PREVIOUS LET
@@ -63,12 +62,16 @@ module G = GenGoal
 %%
 
 %public parse_problem:
-  urelts_list = universe decls = possible_declarations
-    i = insts sy = syms
-    gs = goal EOF
-	  { (urelts_list, decls, gs, i, sy) }
+  urelts_list = universe decls = declaration* pars = paragraph+ EOF
+	  { (urelts_list, decls, pars) }
 
-
+paragraph:
+    i = insts
+    { R.ParInst i }
+    | sy = syms
+    { R.ParSym sy }
+    | gs = goal
+    { R.ParGoal gs }
  
   ////////////////////////////////////////////////////////////////////////
   // universe
@@ -84,12 +87,6 @@ urelements:
   | at = PLAIN_ID
   | at = IDX_ID
   { R.uplain @@ Raw_ident.ident at $startpos $endpos }
-
-/* One may only declare univ. However, if other relations are also declared,
-  then the univ declaration must first be followed by a SEMI */
-possible_declarations:
-  decls = declaration*
-  { decls }
   
 declaration:
 	CONST id = PLAIN_ID ar = colon_w_or_wo_arity sc = scope ioption(SEMI)
@@ -163,9 +160,7 @@ atom:
   ////////////////////////////////////////////////////////////////////////
 
 insts:
-  /* empty */
-  { [] }
-  | INST assignments = inst+
+  INST assignments = inst+
   { assignments }
 
 inst:
@@ -179,10 +174,8 @@ inst:
   // symmetries
   ////////////////////////////////////////////////////////////////////////
 
-syms:  
-  /* empty */
-    { [] }
-  | SYM sy = bracketed_symmetry+
+ syms:
+   SYM sy = bracketed_symmetry+
       { sy }
 
 bracketed_symmetry:

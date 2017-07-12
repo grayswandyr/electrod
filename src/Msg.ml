@@ -343,6 +343,13 @@ module Fatal = struct
       Loc.pp loc
       (Raw_ident.basename id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
+
+  let syntax_error_paragraphs args = err @@ fun m -> args @@
+    fun infile msg ->
+    m ~header:(code 20)
+      "%a%s"
+      (option @@ sp **> colon **> string) infile
+      msg
 end
 
   

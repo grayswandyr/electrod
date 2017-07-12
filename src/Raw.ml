@@ -1,7 +1,7 @@
 
 open Containers
 
-              
+                
 type raw_goal = (Raw_ident.t, Raw_ident.t) GenGoal.t
 
 type raw_problem = {
@@ -44,6 +44,13 @@ and raw_assignment = Raw_ident.t * raw_tuple list
                                              
 and raw_symmetry = ((Raw_ident.t * raw_tuple) list) *
                      ((Raw_ident.t * raw_tuple) list)
+
+        
+type raw_paragraph =
+  | ParGoal of raw_goal
+  | ParInst of raw_assignment list
+  | ParSym of raw_symmetry list
+
 
 let interval id1 id2 = (id1, id2)
 
