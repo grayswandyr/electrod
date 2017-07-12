@@ -440,7 +440,10 @@ let refine_identifiers raw_pb =
     | Run fml -> run @@ snd @@ walk_fml init_ctx fml
     | Check fml -> check @@ snd @@ walk_fml init_ctx fml
   in
-  walk_goal raw_pb.raw_goal
+  let walk_invariants invs =
+    snd @@ walk_block init_ctx invs
+  in
+  (walk_invariants raw_pb.raw_invar, walk_goal raw_pb.raw_goal)
 
 
 (*******************************************************************************
@@ -771,8 +774,8 @@ let whole raw_pb =
   let domain = compute_domain raw_pb in
   let syms = compute_symmetries raw_pb in
   let instance = compute_instances domain raw_pb in
-  let goal = refine_identifiers raw_pb in
-  Elo.make raw_pb.file domain instance syms goal
+  let (invars, goal) = refine_identifiers raw_pb in
+  Elo.make raw_pb.file domain instance syms invars goal
   |> Fun.tap @@ fun elo -> 
   (* begin *)
   (*   Msg.debug *)

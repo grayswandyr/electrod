@@ -261,7 +261,9 @@ end
 let run elo =
   let open Elo in
   (* Msg.debug (fun m -> m "Entering Simplify1.simplify_fml"); *)
-  { elo with goal = (new simplify)#visit_t () elo.goal }
+  let simpl = new simplify in
+  { elo with goal = simpl#visit_t () elo.goal;
+             invariants = simpl#visit_block () elo.invariants }
   (* |> Fun.tap (fun _ -> Msg.debug (fun m -> m "Finished Simplify1.simplify_fml")) *)
   
 

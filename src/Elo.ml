@@ -45,11 +45,12 @@ type t = {
   domain : Domain.t;
   instance : Instance.t;
   sym : Symmetry.t list;
+  invariants : (var, ident) G.fml list; 
   goal : goal;       
 }
 
-let make file domain instance sym goal =
-  { file; domain; instance; sym; goal }
+let make file domain instance sym invariants goal =
+  { file; domain; instance; sym; invariants; goal }
 
 
 (* pretty printers *)
