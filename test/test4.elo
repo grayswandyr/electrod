@@ -9,7 +9,7 @@ const s : { (b c) (c d) (c e) };
 const t : { a}
 
 run
-
+{
 some r[univ.r];
 
 some s.r[univ];
@@ -33,3 +33,4 @@ some t + none;
 some { disj x, y : t, u1, u2 : univ, disj z : t | true };
 
 all disj x, y, z : t, u, v : t | some univ
+}

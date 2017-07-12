@@ -8,7 +8,7 @@ const inexact2 : { a b } { a b c d };
 
 const r : { (a b) } { (a b) (a c) (b d)}
 
-run
+invariant
 
 no exact;
 
@@ -31,4 +31,5 @@ some inexact1;
 
 all x : inexact2 | x.r in inexact2;
 
+check
 some ^r;

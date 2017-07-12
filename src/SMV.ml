@@ -197,7 +197,7 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
   let pp_atomic = PP.pp_atomic
 
   let pp out f =
-    Fmtc.pf out "@[<hov2>%a@]@." (PP.pp 0) f
+    Fmtc.pf out "@[<hov2>%a@]" (PP.pp 0) f
 
 end
 
@@ -222,12 +222,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     Fmtc.pf out "%a : boolean;" Ltl.pp_atomic atomic
 
   let pp_invar out inv = 
-    Fmtc.pf out 
-      "----------------------------------------------------------------------@\n\
-       INVAR@\n\
-       ----------------------------------------------------------------------@\n\
-       %a@\n"
-      Ltl.pp inv
+    Fmtc.pf out "INVAR@ %a;" Ltl.pp inv
       
   let pp ?(margin = 78) out { rigid; flexible; invariant; property } =
     let open Fmtc in
@@ -241,20 +236,17 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
        JUSTICE TRUE;@\n\
        ----------------------------------------------------------------------@\n\
        FROZENVAR@\n\
-       ----------------------------------------------------------------------@\n\
        %a@\n\
        ----------------------------------------------------------------------@\n\
        VAR@\n\
-       ----------------------------------------------------------------------@\n\
        %a@\n\
-       %a\
+       %a@\n\
        ----------------------------------------------------------------------@\n\
        LTLSPEC@\n\
-       ----------------------------------------------------------------------@\n\
-       %a"
+       %a;"
       (vbox @@ S.pp_seq ~sep:"" pp_var_decl) rigid
       (vbox @@ S.pp_seq ~sep:"" pp_var_decl) flexible
-      (vbox @@ S.pp_seq ~sep:"" pp_invar) invariant
+      (vbox @@ S.pp_seq ~sep:"\n" @@ hvbox pp_invar) invariant
       Ltl.pp property;
     Format.pp_set_margin out old_margin 
    

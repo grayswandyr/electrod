@@ -20,7 +20,7 @@ var w : {} then { a } { (a) b }; -- last semicolon optional. +Optional parenthes
 ----------------
 -- 1
 run
-lone r  ; 
+{lone r  ; 
 some r  ;
 some disj x,y : r, disj s: x | true;
 { disj a,b : univ | a->b in t } not in u->u;
@@ -29,3 +29,4 @@ all x : r { true ; false; }; -- optional last semicolon
 some r;
 all x, y : univ | #x < #y implies (some r implies true or true or true or true or true or true or true or true or true or true or true or true or true or true or true or true or true or true or true or true or true) else univ in none;
 #r > 1
+}

@@ -14,7 +14,7 @@ const s2 : {} {c d e f g h i j};
 
 
 run
-
+{
 (*all a:univ, b: s | a in b.r;*)
 all x:univ, y: x.(^r) | x = y;
 a in b.r and a in c.r and b in c.r
@@ -28,3 +28,4 @@ a in b.r and a in c.r and b in c.r
 
 (*some x:univ | x in x.(^r);*)
 
+}
