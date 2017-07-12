@@ -222,7 +222,12 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     Fmtc.pf out "%a : boolean;" Ltl.pp_atomic atomic
 
   let pp_invar out inv = 
-    Fmtc.pf out "INVAR@\n%a@\n" Ltl.pp inv
+    Fmtc.pf out 
+      "----------------------------------------------------------------------@\n\
+       INVAR@\n\
+       ----------------------------------------------------------------------@\n\
+       %a@\n"
+      Ltl.pp inv
       
   let pp ?(margin = 78) out { rigid; flexible; invariant; property } =
     let open Fmtc in
@@ -236,21 +241,21 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
        JUSTICE TRUE;@\n\
        ----------------------------------------------------------------------@\n\
        FROZENVAR@\n\
-       ----------------------------------------------------------------------@\n";
-    (vbox @@ S.pp_seq ~sep:"" pp_var_decl) out rigid;
-    pf out
-      "@\n\
+       ----------------------------------------------------------------------@\n\
+       %a@\n\
        ----------------------------------------------------------------------@\n\
        VAR@\n\
-       ----------------------------------------------------------------------@\n";
-    (vbox @@ S.pp_seq ~sep:"" pp_var_decl) out flexible;
-    (vbox @@ S.pp_seq ~sep:"" pp_invar) out invariant;
-    pf out
-      "@\n\
+       ----------------------------------------------------------------------@\n\
+       %a@\n\
+       %a\
        ----------------------------------------------------------------------@\n\
        LTLSPEC@\n\
-       ----------------------------------------------------------------------@\n";
-    Ltl.pp out property;
+       ----------------------------------------------------------------------@\n\
+       %a"
+      (vbox @@ S.pp_seq ~sep:"" pp_var_decl) rigid
+      (vbox @@ S.pp_seq ~sep:"" pp_var_decl) flexible
+      (vbox @@ S.pp_seq ~sep:"" pp_invar) invariant
+      Ltl.pp property;
     Format.pp_set_margin out old_margin 
    
 end

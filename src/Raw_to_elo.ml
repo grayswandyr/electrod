@@ -310,9 +310,17 @@ let compute_symmetries (pb : Raw.raw_problem) =
                         * (Raw_ident.t * Raw.raw_tuple) list) =
   match sym with
   | [], [] -> Symmetry.make [] []
-  | [], _ | _, [] -> assert false (* both lists must have the same length *) 
-  | l1, l2 -> Symmetry.make (List.map compute_single_sym_term l1)
-                            (List.map compute_single_sym_term l2)
+  (* impossible case: only one side of the symmetry is empty *)
+  | [], _ | _, [] -> assert false 
+  | l1, l2 ->
+     let len1 = List.length l1 in
+     let len2 = List.length l2 in
+     if (len1 != len2) then
+       let (id, _) = List.hd l1 in     
+       Msg.Fatal.symmetry_wrongly_defined (fun args -> args pb.file id)
+     else
+       Symmetry.make (List.map compute_single_sym_term l1)
+                     (List.map compute_single_sym_term l2)
   in
   List.map compute_single_sym pb.raw_syms    
            
@@ -752,7 +760,9 @@ let check_arities elo =
   in
   walk_goal elo.goal
 
-
+(* Check Symmetries *)
+            
+            
 (*******************************************************************************
  *  Declaration of the whole transformation
  *******************************************************************************)
