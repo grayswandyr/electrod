@@ -343,6 +343,17 @@ module Fatal = struct
       Loc.pp loc
       (Raw_ident.basename id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
+
+  let symmetry_wrongly_defined args = err @@ fun m -> args @@
+    fun infile id ->
+    let loc = Raw_ident.location id in
+    m ~header:(code 20)
+      "%a%a: left-hand-side and right-hand-side of symmetry do
+       not have the same length%a"
+      (option @@ colon **> string) infile
+      Loc.pp loc
+      (hardline **< Extract.pp) (Extract.extract infile loc)
+
 end
 
   

@@ -18,18 +18,19 @@ module Make
       let open Ltl in
       let sym_to_ltl (sym : Symmetry.t) =
         Symmetry.fold
-          (fun (atoms_acc, fml_acc) (name1, tuple1) (name2, tuple2) ->
+          (fun (name1, tuple1) (name2, tuple2) ((atoms_acc, fml_acc) : atomic Sequence.t * Ltl.t) ->
             let at1 = make_atomic name1 tuple1 in
             let at_fml1 =  atomic at1 in
             let at2 = make_atomic name2 tuple2 in
             let at_fml2 = atomic at2 in
-            Sequence.cons at1 (Sequence.cons at2 atoms_acc)
+            (Sequence.cons at1 (Sequence.cons at2 atoms_acc)
             ,
             or_ (implies at_fml1 (lazy at_fml2))
                 (lazy (and_ (iff at_fml1 at_fml2) (lazy fml_acc)))
+            )
           )
-          (Sequence.empty, true_)
           sym
+          (Sequence.empty, true_)
       in
       
       List.fold_left
