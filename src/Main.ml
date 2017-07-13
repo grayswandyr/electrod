@@ -56,7 +56,7 @@ let main style_renderer verbosity infile =
 
   Logs.app
     (fun m ->
-       m "%a:@ processing file %S"
+       m "%a@\nProcessing file: %s"
          Fmtc.(styled `Bold string) "electrod (C) 2016-2017 ONERA"
          infile);
 
@@ -99,17 +99,19 @@ let main style_renderer verbosity infile =
     (* Msg.debug (fun m -> *)
     (*     m "Borne sup de la tc de r : %a " TupleSet.pp tc_r); *)
 
-    (* write in output file *)
-    (* let src_file = Filename.basename infile in *)
-    (* let tgt = Filename.temp_file ~temp_dir:"." (src_file ^ "-") ".smv" in *)
-    (* IO.with_out tgt @@ fun out -> *)
-    (* Format.with_out_chan out (Fmtc.styled `None Elo_to_SMV1.pp) model; *)
-    (* Logs.app (fun m -> m "Output file: %S" tgt); *)
+    let res = Elo_to_SMV1.analyze infile model in
+    (match res with
+      | Error (errcode, stderr) ->
+          Logs.app (fun m -> m "ERROR (code %d):@\n%s" errcode stderr)
+      | Ok stdout ->
+          Logs.app (fun m -> m "SUCCESS:@\n%s" stdout));
 
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
                          Mtime.Span.pp (Mtime_clock.elapsed ()));
 
-    Msg.debug (fun m -> m "@.%a" (Elo_to_SMV1.pp ~margin:78) model)
+    Msg.debug (fun m -> m "@.%a"
+                          (Elo_to_SMV1.pp ~margin:78) model)
+
   with
     | Exit ->
         Logs.app

@@ -30,6 +30,8 @@ module Elo_to_SMV_LTL = Elo_to_LTL1.Make(SMV_LTL)
 module Elo_to_SMV_model = Elo_to_model1.Make(SMV_LTL)(Elo_to_SMV_LTL)(SMV_file_format)
 
 let pp = SMV_file_format.pp
+
+let analyze = SMV_file_format.analyze
            
 (* temporary *)
 let run elo =

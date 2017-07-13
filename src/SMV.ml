@@ -256,12 +256,46 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
           sp **<
           Ltl.pp) invariant;
     (* SPEC *)
-    pf out "%a@\n"
+    pf out "%a@."
       (hvbox2
        @@ semi **>
           const string "LTLSPEC" **<
           sp **<
           Ltl.pp) property;
     Format.pp_set_margin out old_margin 
-   
+
+
+  (* write in temp file *)
+  let output_temp infile model =
+    let src_file = Filename.basename infile in
+    let tgt = Filename.temp_file ("electrod-" ^ src_file ^ "-") ".smv" in
+    IO.with_out tgt 
+      (fun out ->
+         Fmtc.styled `None pp
+           (Format.formatter_of_out_channel out) model);
+    Msg.info (fun m -> m "Output file: %s" tgt);
+    tgt
+
+  (* TODO pass script as argument *)
+  (* TODO allow to specify a user script *)
+  let analyze infile model =
+    (* TODO check whether nuXmv is installed first *)
+    let smv = output_temp infile model in
+    let (stdout, stderr, errcode) = CCUnix.call "nuXmv %s" smv in
+    if errcode <> 0 then
+      Result.fail (errcode, stderr)
+    else
+      let spec =
+        String.lines_gen stdout
+        |> Gen.drop_while
+             (fun line ->
+                not @@ String.suffix ~suf:"is false" line
+                && not @@ String.suffix ~suf:"is true" line)
+      in
+      if String.suffix ~suf:"is true" @@ Gen.get_exn spec then
+        Result.return "yes"     (* TODO do sthg else *)
+      else
+        Result.return @@ String.unlines_gen spec (* TODO get *XML* output *)
+        
+  
 end

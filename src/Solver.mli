@@ -121,6 +121,11 @@ module type MODEL = sig
     -> flexible:atomic Sequence.t
     -> invariant:ltl Sequence.t 
     -> property:ltl -> t
+    
+  (** [analyze filename model] runs the solver on [model] ([filename helps
+      creating a temporary file name]): in case of [Error], the result contains
+      the POSIX error code and the error string output by the solver. *)
+  val analyze : string -> t -> (Trace.t, int * string) result
 
   val pp : ?margin:int -> Format.formatter -> t -> unit
 

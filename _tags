@@ -1,6 +1,7 @@
 true: package(cmdliner)
 true: package(containers)
 true: package(containers.data)
+true: package(containers.unix)
 true: package(gen)
 true: package(sequence)
 true: package(mtime.clock.os)
