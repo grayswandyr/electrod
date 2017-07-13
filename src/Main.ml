@@ -89,6 +89,7 @@ let main style_renderer verbosity infile =
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Static analysis OK."))
       (* |> Fun.tap (fun elo -> Msg.debug (fun m -> m "After raw_to_elo =@\n%a@." (Elo.pp) elo)) *)
       |> Transfo.(get_exn elo_to_elo_t "simplify1" |> run)
+      (* |> Fun.tap (fun elo -> Msg.debug (fun m -> m "After simplify1 =@\n%a@." (Elo.pp) elo)) *)
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Simplification OK."))
       |> Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) 
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Conversion OK."))

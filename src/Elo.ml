@@ -68,7 +68,7 @@ let pp_fml = G.pp_fml pp_var pp_ident
 
 let pp_prim_fml = G.pp_prim_fml pp_var pp_ident
 
-let pp_exp = G.pp_exp pp_var pp_ident
+let pp_exp = G.pp_exp ~show_arity:true pp_var pp_ident
 
 let pp_prim_exp = G.pp_prim_exp pp_var pp_ident
 
@@ -80,11 +80,12 @@ let pp_block = G.pp_block pp_var pp_ident
 
 let pp_sim_binding = G.pp_sim_binding pp_var pp_ident
 
-let pp out { file; domain; instance; goal } =
+let pp out { file; domain; instance; sym; invariants; goal } =
   let open Fmtc in
-  pf out "%a@\n%a@\n%a"
+  pf out "%a@\n%a@\n%a@\n%a"
     Domain.pp domain
     Instance.pp instance
+    (vbox @@ Fmtc.list pp_fml) invariants
     (vbox @@ pp_goal) goal
 
 (* substitution *)

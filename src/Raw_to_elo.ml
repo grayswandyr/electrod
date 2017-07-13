@@ -741,27 +741,29 @@ let check_arities elo =
 
     val domain = elo.domain
 
-    method add_variable v arity (* must sup *) =
-      (* Msg.debug (fun m -> m "Raw_to_elo.check_arities.add_variable %a %a %a %a" *)
+    method add_variable v arity =
+      (* Msg.debug (fun m -> m "Raw_to_elo.check_arities.add_variable %a %a" *)
       (*                       Var.pp v *)
-      (*                       Fmtc.(option int) arity *)
-      (*                       TS.pp (Lazy.force must) *)
-      (*                       TS.pp (Lazy.force sup)); *)
+      (*                       Fmtc.(option int) arity); *)
       {< variables = (v, arity) :: variables >}
 
     method get ident = match ident with
       | Elo.Tuple _ -> assert false (* no tuples yet, only present when instantiating *)
       | Var v -> List.Assoc.get_exn ~eq:Var.equal v variables
       | Name name ->
-          let rel = Domain.get_exn name domain in
-          Relation.(Some (arity rel))      
+          let ar = Relation.arity @@ Domain.get_exn name domain in
+          (* Msg.debug (fun m -> m "Raw_to_elo.check_arities.get %a = %d" *)
+          (*                   Name.pp name ar); *)
+          Some ar      
   end
   in
   let walk_goal = function
     | Run fml -> walk_fml init fml
     | Check fml -> walk_fml init fml
   in
-  walk_goal elo.goal
+  (* check/update goal and invariant arities *)
+  walk_goal elo.goal;
+  List.iter (walk_fml init) elo.invariants
 
 (* Check Symmetries *)
             
@@ -781,7 +783,8 @@ let whole raw_pb =
   (*   Msg.debug *)
   (*     (fun m -> m "Entering Raw_to_elo.check_arities: <-- initial context =@\n%a" *)
   (*                 Domain.pp elo.Elo.domain); *)
-    check_arities elo(* ; *)
+  check_arities elo
+  (* ; *)
   (*   Msg.debug (fun m -> m "Raw_to_elo.check_arities -->@ %a" Elo.pp elo) *)
   (* end *)
   

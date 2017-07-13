@@ -35,8 +35,6 @@ Room#keys in (Room -> Key);
 one ordering##Ord#First
 one ordering##Ord#Last
 
-check
-{
 ordering##Ord#Last in Key
 Key = (ordering##Ord#First . *ordering##Ord#Next);
 no (ordering##Ord#Next . ordering##Ord#First)
@@ -101,4 +99,5 @@ always (some g: Guest, r: Room, k: Key |
     (r . (Room#currentKey)' ) = k and 
     some (r . FrontDesk#occupant)) implies 
    g in (r . FrontDesk#occupant)))
-}
+
+check true

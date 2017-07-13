@@ -580,8 +580,17 @@ module Make (Ltl : Solver.LTL) = struct
 
     method build_In (env : 'env) r s r' s' =
       let { must; may; _} = env#must_may_sup r in
+      (* Msg.debug (fun m -> m "build_In: %a in %a@\nmust(%a) = %a@\nmay(%a) = %a" *)
+      (*                       Elo.pp_exp r *)
+      (*                       Elo.pp_exp s *)
+      (*                       Elo.pp_exp r *)
+      (*                       TS.pp must *)
+      (*                       Elo.pp_exp r *)
+      (*                       TS.pp may *)
+      (*           ); *)
       wedge ~range:(TS.to_seq must) (fun t -> lazy (s' t))
-      +&& lazy (wedge ~range:(TS.to_seq may) (fun bs -> lazy (r' bs @=> lazy (s' bs))))
+      +&& lazy (wedge ~range:(TS.to_seq may)
+                  (fun bs -> lazy (r' bs @=> lazy (s' bs))))
 
     method build_NotIn (env : 'env) r s r' s' =
       not_ @@ self#build_In env r s r' s'
@@ -842,6 +851,18 @@ module Make (Ltl : Solver.LTL) = struct
       let ar_r = Option.get_exn r.G.arity in
       let t1, t2 = Tuple.split tuple ar_r in
       r' t1 +&& lazy (s' t2)
+      (* |> Fun.tap (fun res -> *)
+      (*       Msg.debug *)
+      (*         (fun m -> m "build_Prod [[%a->%a]](%a) (split as %a, %a) = %a (ar(%a) = %d)" *)
+      (*                     Elo.pp_exp r *)
+      (*                     Elo.pp_exp s *)
+      (*                     Tuple.pp tuple  *)
+      (*                     Tuple.pp t1  *)
+      (*                     Tuple.pp t2 *)
+      (*                     Ltl.pp res *)
+      (*                     Elo.pp_exp r *)
+      (*                     ar_r *)
+      (*         )) *)
 
 
     method build_RProj (env : 'env) _ _ r' s' = fun tuple -> 
