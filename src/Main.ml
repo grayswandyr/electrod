@@ -98,17 +98,17 @@ let main style_renderer verbosity infile =
     (* Msg.debug (fun m -> *)
     (*     m "Borne sup de la tc de r : %a " TupleSet.pp tc_r); *)
 
-    (* Logs.app (fun m -> m "SMV model:@\n%a" (Elo_to_SMV1.pp ~margin:100) model); *)
+    (* write in output file *)
+    (* let src_file = Filename.basename infile in *)
+    (* let tgt = Filename.temp_file ~temp_dir:"." (src_file ^ "-") ".smv" in *)
+    (* IO.with_out tgt @@ fun out -> *)
+    (* Format.with_out_chan out (Fmtc.styled `None Elo_to_SMV1.pp) model; *)
+    (* Logs.app (fun m -> m "Output file: %S" tgt); *)
 
-    let src_file = Filename.basename infile in
-    let tgt = Filename.temp_file ~temp_dir:"." (src_file ^ "-") ".smv" in
-    IO.with_out tgt @@ fun out ->
-    Format.with_out_chan out (Fmtc.styled `None Elo_to_SMV1.pp) model;
-
-    Logs.app (fun m -> m "Resulting SMV file: %S" tgt);
-    
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
-                         Mtime.Span.pp (Mtime_clock.elapsed ()))
+                         Mtime.Span.pp (Mtime_clock.elapsed ()));
+
+    Msg.debug (fun m -> m "@.%a" (Elo_to_SMV1.pp ~margin:78) model)
   with
     | Exit ->
         Logs.app

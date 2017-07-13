@@ -1,4 +1,5 @@
-
+open Containers
+    
 module P = Parser
 
 (* To allow paragraphs to appear in any order, or even, for some, not to appear,
@@ -43,7 +44,7 @@ let check_paragraphs file pars =
 
 
 let parse_file file = 
-  CCIO.with_in file @@
+  IO.with_in file @@
   fun ic ->
   let lexbuf = Lexing.from_channel ic in
   try 
