@@ -115,6 +115,12 @@ let angles_ ppv_v out v =
   surround_ langle rangle ppv_v out v
 
 
+let unless test ppf out v =
+  if test v then
+    pf out ""
+  else 
+    ppf out v
+
 
 let repeat n pp =
   assert (n >= 0);
