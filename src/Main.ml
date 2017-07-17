@@ -99,12 +99,12 @@ let main style_renderer verbosity infile =
     (* Msg.debug (fun m -> *)
     (*     m "Borne sup de la tc de r : %a " TupleSet.pp tc_r); *)
 
-    let res = Elo_to_SMV1.analyze infile model in
+    let res = Elo_to_SMV1.analyze None infile model in
     (match res with
-      | Error (errcode, stderr) ->
-          Logs.app (fun m -> m "ERROR (code %d):@\n%s" errcode stderr)
-      | Ok stdout ->
-          Logs.app (fun m -> m "SUCCESS:@\n%s" stdout));
+      | Error (errcode, errmsg) ->
+          Logs.app (fun m -> m "ERROR (code %d):@\n%s" errcode errmsg)
+      | Ok trace ->
+          Logs.app (fun m -> m "SUCCESS:@\n%a" Trace.pp trace));
 
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
                          Mtime.Span.pp (Mtime_clock.elapsed ()));
@@ -116,7 +116,7 @@ let main style_renderer verbosity infile =
     | Exit ->
         Logs.app
           (fun m -> m "Aborting (%a)." Mtime.Span.pp (Mtime_clock.elapsed ()));
-        exit 2
+        exit 1
     | e ->
         raise e
       

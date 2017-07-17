@@ -2,22 +2,59 @@
 
 open Containers
 
+  
 module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
-  type t = string
+  module H = Hashcons.Make(struct
+      type t = string
+      let hash = String.hash
+		  let equal = String.equal 
+    end)
+  
+  type t = string Hashcons.hash_consed
 
-  let pp out at =
-    Format.fprintf out "%s" at
+  (* table for hashconsing *)
+  let ht = H.create 297
+
+  (* table keeping trace of which pair (name, tuple) a string comes. Uses
+     hahsconsing to make this more efficient *)
+  module HT = Hashtbl.Make(struct
+      type nonrec t = t
+      let hash x = x.Hashcons.tag
+      let equal x1 x2 = x1.Hashcons.tag = x2.Hashcons.tag
+    end)
+      
+  let names_and_tuples = HT.create 297
+             
+  let rel_sep = "$"
+
+  let atom_sep = Fmtc.minus
+  
+  let make_aux name atoms =
+    let ats = Tuple.to_list atoms in
+    H.hashcons ht @@
+    Format.sprintf "%a%s%a"
+      Name.pp name
+      rel_sep
+      Fmtc.(list ~sep:atom_sep Atom.pp) ats
 
   let make name atoms =
-    let ats = Tuple.to_list atoms in
-    Format.sprintf "%a_%a" Name.pp name Fmtc.(list ~sep:underscore Atom.pp) ats
-
-  let compare = String.compare 
+    make_aux name atoms 
+    (* keep trace of creations to get original pairs back *)
+    |> Fun.tap (fun hs -> HT.add names_and_tuples hs (name, atoms))
 
   
-  module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
-  include P 
- 
+  let split str =
+    HT.find names_and_tuples @@ H.hashcons ht str
+    
+    
+
+  let compare s1 s2 =
+    let open Hashcons in
+    Int.compare s1.tag s2.tag
+
+  let pp out at =
+    let open Hashcons in
+    Format.fprintf out "%s" at.node 
    
 end
 

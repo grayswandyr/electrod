@@ -7,8 +7,10 @@ module type ATOMIC_PROPOSITION =
     type t
     val make : Name.t -> Tuple.t -> t
     val compare : t -> t -> int
+
+    val split : string -> Name.t * Tuple.t
+                                
     val pp : t Fmtc.t
-    val to_string : t -> string
   end
 
 (** Abstract type of LTL (contains past connectives as well as basic counting
@@ -17,6 +19,7 @@ module type LTL =
   sig
     type atomic
     val make_atomic : Name.t -> Tuple.t -> atomic
+    val split_atomic : string -> Name.t * Tuple.t
     val compare_atomic : atomic -> atomic -> int
     type tcomp = private Lte | Lt | Gte | Gt | Eq | Neq
     type t = private
@@ -122,10 +125,12 @@ module type MODEL = sig
     -> invariant:ltl Sequence.t 
     -> property:ltl -> t
     
-  (** [analyze filename model] runs the solver on [model] ([filename helps
-      creating a temporary file name]): in case of [Error], the result contains
-      the POSIX error code and the error string output by the solver. *)
-  val analyze : string -> t -> (Trace.t, int * string) result
+  (** [analyze script filename model] runs the solver on [model] ([filename
+      helps creating a temporary file name]): in case of [Error], the result
+      contains the POSIX error code and the error string output by the
+      solver. If [script] is [None], then a default command script is used;
+      otherwise it contains the name of a script file. *)
+  val analyze : string option -> string -> t -> (Trace.t, int * string) result
 
   val pp : ?margin:int -> Format.formatter -> t -> unit
 

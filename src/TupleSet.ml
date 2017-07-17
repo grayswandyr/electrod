@@ -36,6 +36,9 @@ let inferred_arity b =
   if is_empty b then 0
   else Tuple.arity @@ TS.choose b
 
+let singleton = TS.singleton
+
+let add = TS.add
 
 let tuples t = t
 

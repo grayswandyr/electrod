@@ -6,14 +6,16 @@ module type ATOMIC_PROPOSITION = sig
   val make : Name.t -> Tuple.t -> t
   val compare : t -> t -> int
 
+  val split : string -> Name.t * Tuple.t
+  
   val pp : Format.formatter -> t -> unit
-  include Intf.Print.S with type t := t
 end
 
 module type LTL = sig
   type atomic
 
   val make_atomic : Name.t -> Tuple.t -> atomic
+  val split_atomic : string -> Name.t * Tuple.t
   val compare_atomic : atomic -> atomic -> int
     
   type tcomp = private
@@ -167,6 +169,7 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
 
   let make_atomic = At.make
   let compare_atomic = At.compare
+  let split_atomic = At.split 
   let atomic at = Atomic at
 
   let true_ = True
@@ -321,7 +324,7 @@ module type MODEL = sig
     -> invariant:ltl Sequence.t 
     -> property:ltl -> t
 
-  val analyze : string -> t -> (Trace.t, int * string) result
+  val analyze : string option -> string -> t -> (Trace.t, int * string) result
 
   val pp : ?margin:int -> Format.formatter -> t -> unit
 end

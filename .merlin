@@ -14,3 +14,4 @@ PKG mtime.clock.os
 PKG visitors.runtime
 PKG visitors.ppx
 PKG ppx_deriving.std
+PKG hashcons

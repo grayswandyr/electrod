@@ -7,6 +7,9 @@ type t
 (** The empty tuple set. *)
 val empty : t
 
+val singleton : Tuple.t -> t
+val add : Tuple.t -> t -> t
+
 (** Requires: [tuples] is a nonempty list for tuples of the same arity. *)
 val of_tuples : Tuple.t list -> t
 
