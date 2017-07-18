@@ -7,7 +7,8 @@ OCB_FLAGS = -use-ocamlfind -j 0 #-classic-display
 
 OCB = ocamlbuild $(OCB_FLAGS)
 
-HTML_FLAGS = -docflags "-safe-string,-short-paths,-sort,-colorize-code,-short-functors,-css-style ../doc/style.css,-charset utf-8,-t Electrod,-intro ../../dot.html"
+HTML_FLAGS = -docflags "-safe-string,-short-paths,-sort,-colorize-code,\
+	-short-functors,-css-style ../doc/style.css,-charset utf-8,-t Electrod,-intro ../../dot.html"
 
 MAIN = electrod
 
@@ -86,7 +87,8 @@ check-config:
 	@which ocamlfind > /dev/null
 	@which ocamlbuild > /dev/null
 	@$(CHECK_INSTALL) cmdliner containers gen sequence logs logs.fmt \
-	logs.cli fmt fmt.tty fmt.cli menhirLib mtime.os ppx_deriving bisect_ppx > /dev/null
+	logs.cli fmt fmt.tty fmt.cli menhirLib mtime.os ppx_deriving bisect_ppx \
+	visitors hashcons > /dev/null
 
 
 .PHONY: all clean byte native profile debug check-config test doc doc-requisites test-requisites

@@ -324,7 +324,8 @@ module type MODEL = sig
     -> invariant:ltl Sequence.t 
     -> property:ltl -> t
 
-  val analyze : string option -> string -> t -> (Trace.t, int * string) result
+  val analyze : Domain.t ->
+    string option -> string -> t -> (Trace.t, int * string) result
 
   val pp : ?margin:int -> Format.formatter -> t -> unit
 end

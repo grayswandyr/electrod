@@ -302,18 +302,20 @@ quit -x
   
   (* TODO pass script as argument *)
   (* TODO allow to specify a user script *)
-  let analyze script infile model =
+  let analyze domain script infile model =
     (* TODO check whether nuXmv is installed first *)
     let scr = make_script_file script in
     let smv = output_temp infile model in
     (* TODO make things s.t. it's possible to set a time-out *)
     let (stdout, stderr, errcode) =
-      CCUnix.call "%s %s %s" calling_nuxmv scr smv in
-    if Option.is_none script then IO.File.remove_noerr scr;
-    IO.File.remove_noerr smv;
+      Fun.finally2 (CCUnix.call "%s %s %s" calling_nuxmv) scr smv
+        ~h:(fun () ->
+             if Option.is_none script then IO.File.remove_noerr scr;
+             IO.File.remove_noerr smv)
+    in
     if errcode <> 0 then
       Result.fail (errcode, stderr)
-    else
+    else (* running nuXmv goes well: parse its output *)
       let spec =
         String.lines_gen stdout
         |> Gen.drop_while
@@ -324,15 +326,29 @@ quit -x
       if String.suffix ~suf:"is true" @@ Gen.get_exn spec then
         Result.return @@ Trace.absent     (* TODO do sthg else *)
       else
+        (* nuXmv says there is a counterexample so we parse it on the standard
+           output *)
+        (* first create a trace parser (it is parameterized by [base] below
+           which tells the parser the "must" associated to every relation in the
+           domain, even the ones not present in the SMV file because they have
+           been simplified away in the translation. This goes this way because
+           the trace to return should reference all relations, not just the ones
+           grounded in the SMV file.). NOTE: the parser expects a nuXmv trace
+           using the "trace plugin" number 1 (classical output (i.e. no XML, no
+           table) with information on all variables, not just the ones that have
+           changed w.r.t. the previous state.). *)
+        let module P =
+          SMV_trace_parser.Make(struct let base = Domain.musts domain end)
+        in
         spec
+        (* With this trace output, nuXmv shows a few uninteresting lines first,
+           that we have to gloss over *)
         |> Gen.drop_while (fun line -> not @@ String.prefix "Trace" line)
         |> Gen.drop_while (String.prefix ~pre:"Trace")
         |> String.unlines_gen
-        |> Fun.tap print_endline
         |> fun trace ->
         (let lexbuf = Lexing.from_string trace in
-         (SMV_trace_parser.parse_problem
-            (SMV_trace_scanner.main Ltl.split_atomic) lexbuf))
+         (P.trace (SMV_trace_scanner.main Ltl.split_atomic) lexbuf))
         |> Result.return
         
   

@@ -125,12 +125,14 @@ module type MODEL = sig
     -> invariant:ltl Sequence.t 
     -> property:ltl -> t
     
-  (** [analyze script filename model] runs the solver on [model] ([filename
-      helps creating a temporary file name]): in case of [Error], the result
-      contains the POSIX error code and the error string output by the
+  (** [analyze domain script filename model] runs the solver on [model]
+      ([filename helps creating a temporary file name]): in case of [Error], the
+      result contains the POSIX error code and the error string output by the
       solver. If [script] is [None], then a default command script is used;
-      otherwise it contains the name of a script file. *)
-  val analyze : string option -> string -> t -> (Trace.t, int * string) result
+      otherwise it contains the name of a script file. [domain] is the Electrod
+      domain (used to interpret back a resulting trace). *)
+  val analyze : Domain.t ->
+    string option -> string -> t -> (Trace.t, int * string) result
 
   val pp : ?margin:int -> Format.formatter -> t -> unit
 

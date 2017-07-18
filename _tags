@@ -30,6 +30,9 @@ true: linkpkg
 true: use_menhir
 true: infer
 true: explain
+<src/SMV_trace_tokens.mlypack>: only_tokens
+<src/SMV_trace_parser.mlypack>: external_tokens(SMV_trace_tokens)
+
 
 true: optimize(3), inlining_report
 

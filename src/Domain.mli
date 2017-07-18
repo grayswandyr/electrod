@@ -1,5 +1,7 @@
 (** The domain represents the set of relation declarations. *)
 
+open Containers
+
 (** Virtually: a map between relation names and their definition as sets of
     tuples. *)
 type t 
@@ -32,6 +34,9 @@ val to_list : t -> (Name.t * Relation.t) list
 val must : Name.t -> t -> TupleSet.t
 val may : Name.t -> t -> TupleSet.t
 val sup : Name.t -> t -> TupleSet.t
+
+(** Returns the association list between relation names and their "must" set.  *)
+val musts : t -> (Name.t, TupleSet.t) List.Assoc.t 
 
 (** For every entry in [inst], [update_domain_with_instance dom inst] replaces
     the corresponding relation in [dom] with the exact scope given by [inst]. *)

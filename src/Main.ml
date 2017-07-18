@@ -82,7 +82,7 @@ let main style_renderer verbosity infile =
     let elo_to_smv_t = Transfo.tlist
                          [ Elo_to_SMV1.transfo; (* Elo_to_SMV2.transfo *)] in
 
-    let model =
+    let elo =
       Parser_main.parse_file infile
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Parsing OK."))
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
@@ -91,6 +91,9 @@ let main style_renderer verbosity infile =
       |> Transfo.(get_exn elo_to_elo_t "simplify1" |> run)
       (* |> Fun.tap (fun elo -> Msg.debug (fun m -> m "After simplify1 =@\n%a@." (Elo.pp) elo)) *)
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Simplification OK."))
+    in
+    let model =
+      elo
       |> Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) 
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Conversion OK."))
     in
@@ -99,7 +102,7 @@ let main style_renderer verbosity infile =
     (* Msg.debug (fun m -> *)
     (*     m "Borne sup de la tc de r : %a " TupleSet.pp tc_r); *)
 
-    let res = Elo_to_SMV1.analyze None infile model in
+    let res = Elo_to_SMV1.analyze elo.Elo.domain None infile model in
     (match res with
       | Error (errcode, errmsg) ->
           Logs.app (fun m -> m "ERROR (code %d):@\n%s" errcode errmsg)

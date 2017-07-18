@@ -57,7 +57,9 @@ let sup name domain =
   |> Scope.sup
 
 
-
+let musts domain =
+  Map.map Relation.must domain
+  |> to_list
 
 let update_domain_with_instance domain instance =
   let module R = Relation in

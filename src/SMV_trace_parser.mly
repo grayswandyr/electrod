@@ -1,6 +1,10 @@
 
-%{
+%parameter <D : sig
+  val base : (Name.t, TupleSet.t) CCList.Assoc.t 
+end>
 
+%{
+  open SMV_trace_tokens
   open Containers
 
   module LA = List.Assoc
@@ -23,19 +27,17 @@
            let acc2 = LA.update ~eq:Name.equal ~f:(upd tuple) name acc in
            walk acc2 tl
          end
-    in walk [] ntl
+    in walk D.base ntl
 
 %}
   
-%start <Trace.t> parse_problem
+%start <Trace.t> trace
 
-%token LOOP STATE FALSE TRUE EQUAL EOF
-%token <Name.t * Tuple.t> ATOMIC
 
 
 %%
 
-%public parse_problem:
+%public trace:
 states = state+ EOF 
     { Trace.make states }
 

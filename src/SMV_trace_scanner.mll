@@ -2,7 +2,7 @@
 { (* BEGIN HEADER *)
   
 open Lexing
-open SMV_trace_parser
+open SMV_trace_tokens
      
 } (* END HEADER *)
 
