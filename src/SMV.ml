@@ -1,5 +1,29 @@
 open Containers
 
+let nuXmv_default_script = {|
+set default_trace_plugin 1;
+set on_failure_script_quits 1;
+read_model;
+flatten_hierarchy;
+build_flat_model;
+encode_variables;
+build_boolean_model;
+check_ltlspec_klive;
+quit -x
+|}
+
+let nuSMV_default_script = {|
+set default_trace_plugin 1;
+set on_failure_script_quits 1;
+read_model;
+flatten_hierarchy;
+encode_variables;
+build_model;
+check_ltlspec;
+quit -x
+|}
+
+
 
 module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
   : Solver.LTL with type atomic = At.t = struct
@@ -241,7 +265,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
           Format.seq ~sep:cut pp_decl) rigid;
     (* VAR *)
     pf out "@[<v>%a@]@\n"
-      (unless S.is_empty
+      (unless S.is_empty 
        @@ hardline **>
           const string "VAR" **<
           cut **<
@@ -264,52 +288,36 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
           Ltl.pp) property;
     Format.pp_set_margin out old_margin 
 
-
-
-  let k_live_card_script = {|
-set default_trace_plugin 1;
-set on_failure_script_quits 1;
-read_model;
-flatten_hierarchy;
-build_flat_model;
-encode_variables;
-build_boolean_model;
-check_ltlspec_klive;
-quit -x
-|}
     
   (* write in temp file *)
-  let output_model_file infile model =
+  let make_model_file infile model =
     let src_file = Filename.basename infile in
     let tgt = Filename.temp_file ("electrod-" ^ src_file ^ "-") ".smv" in
     IO.with_out tgt 
       (fun out ->
          Fmtc.styled `None pp
            (Format.formatter_of_out_channel out) model);
-    Msg.info (fun m -> m "SMV file: %s" tgt);
     tgt
 
   
-  let output_script_file = function
-    | Some filename -> filename
-    | None ->
+  let make_script_file = function
+    | Solver.File filename -> filename (* script given on the command line *)
+    | Solver.Default default ->
         let tgt = Filename.temp_file "electrod-" ".scr" in
-        IO.with_out tgt (fun out -> IO.write_line out k_live_card_script);
-        Msg.info (fun m -> m "Script file: %s" tgt);
+        IO.with_out tgt (fun out -> IO.write_line out default);
         tgt
-
-  (* must end with "-source"! *)
-  let calling_nuxmv = "nuXmv -source"
   
   (* TODO pass script as argument *)
   (* TODO allow to specify a user script *)
-  let analyze domain script infile model =
+  let analyze ~cmd ~script ~keep_files ~elo ~file model =
     (* TODO check whether nuXmv is installed first *)
-    let scr = output_script_file script in
-    let smv = output_model_file infile model in
+    let scr = make_script_file script in
+    let smv = make_model_file file model in
     (* TODO make things s.t. it's possible to set a time-out *)
+    let to_call = Fmt.strf "%s -source %s %s" cmd scr smv in
+    Msg.info (fun m -> m "Running: %s" to_call);
     let (okout, errout, errcode) =
-      CCUnix.call "%s %s %s" calling_nuxmv scr smv
+      CCUnix.call "%s" to_call
     in
     if errcode <> 0 then
       Msg.Fatal.solver_failed (fun args -> args "nuXmv" scr smv errcode errout)
@@ -321,10 +329,16 @@ quit -x
                 not @@ String.suffix ~suf:"is false" line
                 && not @@ String.suffix ~suf:"is true" line)
       in
-      if Option.is_none script then IO.File.remove_noerr scr;
-      IO.File.remove_noerr smv;
+      if not keep_files then
+        ((match script with
+            | Solver.Default _ -> IO.File.remove_noerr scr
+            | Solver.File _ -> ());
+         IO.File.remove_noerr smv)
+      else
+        Logs.app (fun m -> m "Analysis files kept at %s and %s"
+                             scr smv);
       if String.suffix ~suf:"is true" @@ Gen.get_exn spec then
-        Solver.Unsat 
+        Solver.No_trace 
       else
         (* nuXmv says there is a counterexample so we parse it on the standard
            output *)
@@ -338,7 +352,9 @@ quit -x
            table) with information on all variables, not just the ones that have
            changed w.r.t. the previous state.). *)
         let module P =
-          SMV_trace_parser.Make(struct let base = Domain.musts domain end)
+          SMV_trace_parser.Make(struct
+            let base = Domain.musts elo.Elo.domain
+          end)
         in
         spec
         (* With this trace output, nuXmv shows a few uninteresting lines first,
@@ -346,9 +362,9 @@ quit -x
         |> Gen.drop_while (fun line -> not @@ String.prefix "Trace" line)
         |> Gen.drop_while (String.prefix ~pre:"Trace")
         |> String.unlines_gen
-        |> Fun.tap print_endline
-        |> fun trace ->
-        (let lexbuf = Lexing.from_string trace in
+        (* |> Fun.tap print_endline *)
+        |> fun trace_str ->
+        (let lexbuf = Lexing.from_string trace_str in
          (P.trace (SMV_trace_scanner.main Ltl.split_atomic) lexbuf))
         |> fun trace -> Solver.Trace trace
         

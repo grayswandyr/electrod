@@ -1,5 +1,8 @@
 (** Represents SMV files and how to produce them *)
 
+val nuXmv_default_script : string
+val nuSMV_default_script : string
+
 (** Given an implementation for atoms, provides a LTL implementation with a
     pretty printing function for Solver formulas.  *)
 module Make_SMV_LTL :

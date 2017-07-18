@@ -46,7 +46,14 @@ let pp_header ppf (l, h) =
         @@ CCOpt.map_or ~default:(keyword l) (fun s -> short l ^ s) h
 
 
-let main style_renderer verbosity infile =
+
+
+type tool =
+  | NuXmv
+  | NuSMV
+
+
+let main style_renderer verbosity tool file scriptfile keep_files =
   Printexc.record_backtrace true;
 
   Fmt_tty.setup_std_outputs ?style_renderer ();
@@ -56,24 +63,24 @@ let main style_renderer verbosity infile =
 
   Logs.app
     (fun m ->
-       m "%a@\nProcessing file: %s"
-         Fmtc.(styled `Bold string) "electrod (C) 2016-2017 ONERA"
-         infile);
+       m "%a" Fmtc.(styled `Bold string) "electrod (C) 2016-2017 ONERA");
 
-  (try
-     let inch = Unix.open_process_in "tput cols" in
-     let cols =
-       inch
-       |> IO.read_line
-       |> Fun.tap (fun _ -> ignore @@ Unix.close_process_in inch)
-       |> Option.get_or ~default:"80"
-       |> int_of_string in
-     (* Msg.debug (fun m -> m "Columns: %d" cols); *)
-     Format.(pp_set_margin stdout) cols;
-     Format.(pp_set_margin stderr) cols
-   with _ ->
-     Msg.debug
-       (fun m -> m "Columns not found, leaving terminal as is..."));
+  Logs.app (fun m -> m "Processing file: %s" file);
+
+  (* (try *)
+  (*    let inch = Unix.open_process_in "tput cols" in *)
+  (*    let cols = *)
+  (*      inch *)
+  (*      |> IO.read_line *)
+  (*      |> Fun.tap (fun _ -> ignore @@ Unix.close_process_in inch) *)
+  (*      |> Option.get_or ~default:"80" *)
+  (*      |> int_of_string in *)
+  (*    (\* Msg.debug (fun m -> m "Columns: %d" cols); *\) *)
+  (*    Format.(pp_set_margin stdout) cols; *)
+  (*    Format.(pp_set_margin stderr) cols *)
+  (*  with _ -> *)
+  (*    Msg.debug *)
+  (*      (fun m -> m "Columns not found, leaving terminal as is...")); *)
 
   (* begin work *)
   try
@@ -83,7 +90,7 @@ let main style_renderer verbosity infile =
                          [ Elo_to_SMV1.transfo; (* Elo_to_SMV2.transfo *)] in
 
     let elo =
-      Parser_main.parse_file infile
+      Parser_main.parse_file file
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Parsing OK."))
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Static analysis OK."))
@@ -102,14 +109,22 @@ let main style_renderer verbosity infile =
     (* Msg.debug (fun m -> *)
     (*     m "Borne sup de la tc de r : %a " TupleSet.pp tc_r); *)
 
-    let res = Elo_to_SMV1.analyze elo.Elo.domain None infile model in
-    Logs.app (fun m -> m "%a" Solver.pp_outcome res);
+    let cmd, script = match tool, scriptfile with
+      | NuXmv, None -> ("nuXmv", Solver.Default SMV.nuXmv_default_script)
+      | NuXmv, Some s -> ("nuXmv", Solver.File s)
+      | NuSMV, None -> ("NuSMV", Solver.Default SMV.nuSMV_default_script)
+      | NuSMV, Some s -> ("NuSMV", Solver.File s)
+    in
+    
+    Msg.debug (fun m -> m "@.%a"
+                          (Elo_to_SMV1.pp ~margin:78) model);
+      
+    let res = Elo_to_SMV1.analyze ~cmd ~keep_files
+                ~elo:elo ~script ~file model in
+    Logs.app (fun m -> m "Analysis yields:@\n%a" Solver.pp_outcome res);
 
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
-                         Mtime.Span.pp (Mtime_clock.elapsed ()));
-
-    Msg.debug (fun m -> m "@.%a"
-                          (Elo_to_SMV1.pp ~margin:78) model)
+                         Mtime.Span.pp (Mtime_clock.elapsed ()))
 
   with
     | Exit ->

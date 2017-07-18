@@ -12,7 +12,7 @@ module G = GenGoal
  * Raw.raw_paragraph list> parse_problem
 
 %token UNIV NONE VAR COLON SEMI EOF EQ IN NEQ AND OR HISTORICALLY 
-%token IMPLIES IFF UNTIL RELEASE SINCE NEXT ONCE PREVIOUS LET
+%token IMPLIES IFF UNTIL RELEASES SINCE NEXT ONCE PREVIOUS LET
 %token LPAREN RPAREN LBRACKET RBRACKET DOTDOT PLUS ARROW
 %token ALL SOME DISJ ONE LONE NO COMMA LBRACE RBRACE BAR
 %token GT GTE LT LTE TRUE FALSE SOMETIME ALWAYS NOT
@@ -43,7 +43,7 @@ module G = GenGoal
 %right IMPLIES
 %right ELSE
 %left AND
-%left RELEASE SINCE UNTIL 
+%left RELEASES SINCE UNTIL 
 %nonassoc NOT NEXT ALWAYS SOMETIME PREVIOUS HISTORICALLY ONCE
 %nonassoc /*LT LTE GT GTE*/ EQ NEQ IN NOT_IN
 //%nonassoc NO SOME LONE ONE      (* for formulas as 'some E' (= E != none) *)
@@ -308,7 +308,7 @@ formula :
 	{ G.iff }
 	| UNTIL
 	{ G.until }
-	| RELEASE
+	| RELEASES
 	{ G.release }
 	| SINCE
 	{ G.since }
