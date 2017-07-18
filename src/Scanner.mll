@@ -72,6 +72,8 @@ rule main infile = parse
     { SOMETIME }
 | "until"
     { UNTIL }
+| "releases"
+    { RELEASES }
                     (* PAST OPERATORS *)
 | "previous"
     { PREVIOUS }

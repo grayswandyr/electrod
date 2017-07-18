@@ -307,17 +307,19 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
 end
 
 type outcome =
-  | Unsat
+  | No_trace
   | Trace of Trace.t
 
 let pp_outcome out =
   let open Fmtc in
   function
-    | Unsat -> pf out "Specification is UNSAT."
-    | Trace t ->
-        pf out "Specification is SAT as showed by the \
-                folloving witness:@\n%a" Trace.pp t
+    | No_trace -> pf out "{}"
+    | Trace t -> pf out "{ %a }" Trace.pp t
     
+type script_type =
+  | Default of string
+  | File of string
+      
 module type MODEL = sig 
   type ltl
 
@@ -336,7 +338,11 @@ module type MODEL = sig
     -> invariant:ltl Sequence.t 
     -> property:ltl -> t
 
-  val analyze : Domain.t -> string option -> string -> t -> outcome
+  val analyze : cmd:string 
+    -> script:script_type
+    -> keep_files:bool
+    -> elo:Elo.t
+    -> file:string -> t -> outcome
 
   val pp : ?margin:int -> Format.formatter -> t -> unit
 end
