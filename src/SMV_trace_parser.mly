@@ -42,7 +42,7 @@ states = state+ EOF
     { Trace.make states }
 
 state:
-    loop = iboption(LOOP) STATE ntl = atomic+
+    loop = iboption(LOOP) STATE ntl = atomic*
     {
       let valu = Trace.valuation @@ convert_name_tuple_l ntl in
       if loop then

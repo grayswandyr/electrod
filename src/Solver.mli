@@ -105,6 +105,11 @@ module type LTL =
 module LTL_from_Atomic :
   functor (At : ATOMIC_PROPOSITION) -> LTL with type atomic = At.t
 
+type outcome =
+  | Unsat
+  | Trace of Trace.t
+
+val pp_outcome : Format.formatter -> outcome -> unit
 
 (* Abstract type for a complete model to be given to a solver.  *)
 module type MODEL = sig
@@ -131,8 +136,7 @@ module type MODEL = sig
       solver. If [script] is [None], then a default command script is used;
       otherwise it contains the name of a script file. [domain] is the Electrod
       domain (used to interpret back a resulting trace). *)
-  val analyze : Domain.t ->
-    string option -> string -> t -> (Trace.t, int * string) result
+  val analyze : Domain.t -> string option -> string -> t -> outcome
 
   val pp : ?margin:int -> Format.formatter -> t -> unit
 

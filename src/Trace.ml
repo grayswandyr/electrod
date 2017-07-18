@@ -19,8 +19,6 @@ let plain_state v = Plain v
 
 let loop_state v = Loop v
 
-let absent = []
-
 let make states =
   assert (states <> []);
   states
@@ -36,5 +34,6 @@ let pp_state out = function
   | Plain v -> brackets pp_valuation out v 
   | Loop v -> (angles pp_valuation) out v
 
-let pp =
-  vbox @@ list pp_state
+let pp out trace =
+  assert (trace <> []);
+  (vbox @@ list pp_state) out trace

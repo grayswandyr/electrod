@@ -360,6 +360,14 @@ module Fatal = struct
       (option @@ colon **> string) infile
       Loc.pp loc
       (hardline **< Extract.pp) (Extract.extract infile loc)
+
+  let solver_failed args = err @@ fun m -> args @@
+    fun solver scr smv errcode erroutput ->
+    m ~header:(code 22)
+      "%s failed with error code %d and error output:@\n%s@\n\
+       Script and model files kept at %S and %S, remember to remove them."
+      solver errcode erroutput
+      scr smv
 end
 
   

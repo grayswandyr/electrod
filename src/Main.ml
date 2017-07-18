@@ -103,11 +103,7 @@ let main style_renderer verbosity infile =
     (*     m "Borne sup de la tc de r : %a " TupleSet.pp tc_r); *)
 
     let res = Elo_to_SMV1.analyze elo.Elo.domain None infile model in
-    (match res with
-      | Error (errcode, errmsg) ->
-          Logs.app (fun m -> m "ERROR (code %d):@\n%s" errcode errmsg)
-      | Ok trace ->
-          Logs.app (fun m -> m "SUCCESS:@\n%a" Trace.pp trace));
+    Logs.app (fun m -> m "%a" Solver.pp_outcome res);
 
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
                          Mtime.Span.pp (Mtime_clock.elapsed ()));

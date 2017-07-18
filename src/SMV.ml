@@ -265,17 +265,6 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     Format.pp_set_margin out old_margin 
 
 
-  (* write in temp file *)
-  let output_temp infile model =
-    let src_file = Filename.basename infile in
-    let tgt = Filename.temp_file ("electrod-" ^ src_file ^ "-") ".smv" in
-    IO.with_out tgt 
-      (fun out ->
-         Fmtc.styled `None pp
-           (Format.formatter_of_out_channel out) model);
-    Msg.info (fun m -> m "SMV file: %s" tgt);
-    tgt
-
 
   let k_live_card_script = {|
 set default_trace_plugin 1;
@@ -288,9 +277,20 @@ build_boolean_model;
 check_ltlspec_klive;
 quit -x
 |}
+    
+  (* write in temp file *)
+  let output_model_file infile model =
+    let src_file = Filename.basename infile in
+    let tgt = Filename.temp_file ("electrod-" ^ src_file ^ "-") ".smv" in
+    IO.with_out tgt 
+      (fun out ->
+         Fmtc.styled `None pp
+           (Format.formatter_of_out_channel out) model);
+    Msg.info (fun m -> m "SMV file: %s" tgt);
+    tgt
 
   
-  let make_script_file = function
+  let output_script_file = function
     | Some filename -> filename
     | None ->
         let tgt = Filename.temp_file "electrod-" ".scr" in
@@ -299,36 +299,32 @@ quit -x
         tgt
 
   (* must end with "-source"! *)
-  let calling_nuxmv = "nuXmv -reorder -source"
+  let calling_nuxmv = "nuXmv -source"
   
   (* TODO pass script as argument *)
   (* TODO allow to specify a user script *)
   let analyze domain script infile model =
     (* TODO check whether nuXmv is installed first *)
-    let scr = make_script_file script in
-    let smv = output_temp infile model in
+    let scr = output_script_file script in
+    let smv = output_model_file infile model in
     (* TODO make things s.t. it's possible to set a time-out *)
-    let (stdout, stderr, errcode) =
-      Fun.finally2
-        (CCUnix.call "%s %s %s" calling_nuxmv)
-        scr
-        smv
-        ~h:(fun () -> ()
-             (* if Option.is_none script then IO.File.remove_noerr scr; *)
-             (* IO.File.remove_noerr smv *))
+    let (okout, errout, errcode) =
+      CCUnix.call "%s %s %s" calling_nuxmv scr smv
     in
     if errcode <> 0 then
-      Result.fail (errcode, stderr)
+      Msg.Fatal.solver_failed (fun args -> args "nuXmv" scr smv errcode errout)
     else (* running nuXmv goes well: parse its output *)
       let spec =
-        String.lines_gen stdout
+        String.lines_gen okout
         |> Gen.drop_while
              (fun line ->
                 not @@ String.suffix ~suf:"is false" line
                 && not @@ String.suffix ~suf:"is true" line)
       in
+      if Option.is_none script then IO.File.remove_noerr scr;
+      IO.File.remove_noerr smv;
       if String.suffix ~suf:"is true" @@ Gen.get_exn spec then
-        Result.return @@ Trace.absent     (* TODO do sthg else *)
+        Solver.Unsat 
       else
         (* nuXmv says there is a counterexample so we parse it on the standard
            output *)
@@ -354,7 +350,7 @@ quit -x
         |> fun trace ->
         (let lexbuf = Lexing.from_string trace in
          (P.trace (SMV_trace_scanner.main Ltl.split_atomic) lexbuf))
-        |> Result.return
+        |> fun trace -> Solver.Trace trace
         
   
 end
