@@ -42,7 +42,7 @@ struct
                    (lazy (and_ (iff at_fml1 at_fml2) (lazy fml_acc))))
             else
               (rigid_atoms_acc,
-               Sequence.cons at1 (Sequence.cons at2 rigid_atoms_acc),              
+               Sequence.cons at1 (Sequence.cons at2 flex_atoms_acc),
                or_ (implies at_fml1 (lazy at_fml2))
                    (lazy (and_ (iff at_fml1 at_fml2) (lazy fml_acc))))
         )
