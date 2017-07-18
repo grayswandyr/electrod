@@ -259,7 +259,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     pf out "%a@."
       (hvbox2
        @@ semi **>
-          const string "LTLSPEC" **<
+          const string "LTLSPEC NAME spec :=" **<
           sp **<
           Ltl.pp) property;
     Format.pp_set_margin out old_margin 
@@ -289,6 +289,7 @@ check_ltlspec_klive;
 quit -x
 |}
 
+  
   let make_script_file = function
     | Some filename -> filename
     | None ->
@@ -308,10 +309,13 @@ quit -x
     let smv = output_temp infile model in
     (* TODO make things s.t. it's possible to set a time-out *)
     let (stdout, stderr, errcode) =
-      Fun.finally2 (CCUnix.call "%s %s %s" calling_nuxmv) scr smv
-        ~h:(fun () ->
-             if Option.is_none script then IO.File.remove_noerr scr;
-             IO.File.remove_noerr smv)
+      Fun.finally2
+        (CCUnix.call "%s %s %s" calling_nuxmv)
+        scr
+        smv
+        ~h:(fun () -> ()
+             (* if Option.is_none script then IO.File.remove_noerr scr; *)
+             (* IO.File.remove_noerr smv *))
     in
     if errcode <> 0 then
       Result.fail (errcode, stderr)
@@ -346,6 +350,7 @@ quit -x
         |> Gen.drop_while (fun line -> not @@ String.prefix "Trace" line)
         |> Gen.drop_while (String.prefix ~pre:"Trace")
         |> String.unlines_gen
+        |> Fun.tap print_endline
         |> fun trace ->
         (let lexbuf = Lexing.from_string trace in
          (P.trace (SMV_trace_scanner.main Ltl.split_atomic) lexbuf))

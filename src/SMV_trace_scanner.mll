@@ -60,14 +60,15 @@ rule main split_atomic = parse
     { ATOMIC (split_atomic v) }
 
   | '='
-    { EQUAL }
+      { EQUAL }
 
   | eof 
       { EOF } 
   | _ as c
     { Msg.Fatal.lexical
-      @@ fun args -> args None lexbuf ("unexpected character(s): " 
-                                         ^ (String.make 1 c)) }
+      @@ fun args -> args None lexbuf
+                       ("SMV trace scanning: unexpected character(s): " 
+                        ^ (String.make 1 c)) }
     (* and comment openingp tokens = parse *)
 
 
