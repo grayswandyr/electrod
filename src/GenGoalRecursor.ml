@@ -87,10 +87,10 @@ class virtual ['self] recursor = object (self : 'self)
   method virtual visit_'i : _
   method virtual visit_'v : _
   method visit_Run env _visitors_c0 =
-    let _visitors_r0 = self#visit_fml env _visitors_c0  in
+    let _visitors_r0 = self#visit_list self#visit_fml env _visitors_c0  in
     self#build_Run env _visitors_c0 _visitors_r0
   method visit_Check env _visitors_c0 =
-    let _visitors_r0 = self#visit_fml env _visitors_c0  in
+    let _visitors_r0 = self#visit_list self#visit_fml env _visitors_c0  in
     self#build_Check env _visitors_c0 _visitors_r0
   method visit_t env _visitors_this =
     match _visitors_this with

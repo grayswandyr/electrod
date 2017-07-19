@@ -75,37 +75,43 @@ struct
       Elo.{ elo with
               domain = Domain.update_domain_with_instance elo.domain
                          elo.instance } in
-    
+
     (* walk through formulas, convert them to LTL and accumulate rigid
        and flexible variables. TODO: replace sequences by sets. *)
     (* let exception Early_stop in *)
     let translate_formulas fmls =
       (* try *)
-        List.fold_left
-          (fun (acc_r, acc_f, acc_fml) fml ->
-             let (r, f, ltl) = ConvertFormulas.convert elo fml in
-             (* if ltl = Ltl.false_ then *)
-             (*   raise Early_stop *)
-             (* else *)
-               (Sequence.append r acc_r,
-                Sequence.append f acc_f,
-                Sequence.cons ltl acc_fml))
-          Sequence.(empty, empty, empty) fmls
-      (* with *)
-      (*   Early_stop -> Sequence.(empty, empty, Ltl.false_) *)
+      List.fold_left
+        (fun (acc_r, acc_f, acc_fml) fml ->
+           let (r, f, ltl) = ConvertFormulas.convert elo fml in
+           (* if ltl = Ltl.false_ then *)
+           (*   raise Early_stop *)
+           (* else *)
+           (Sequence.append r acc_r,
+            Sequence.append f acc_f,
+            Sequence.cons ltl acc_fml))
+        Sequence.(empty, empty, empty) fmls
+        (* with *)
+        (*   Early_stop -> Sequence.(empty, empty, Ltl.false_) *)
     in
 
-    
+
     (* handling the goal *)
     let goal_fml = match elo.goal with GenGoal.Run g | GenGoal.Check g -> g in
-    let (rigid_goal, flex_goal, property) = ConvertFormulas.convert elo goal_fml in
+    let (rigid_goal, flex_goal, property) =
+      ConvertFormulas.convert elo
+      @@ GenGoal.(List.fold_left
+                    (fun x y -> fml (Location.span (x.fml_loc, y.fml_loc))
+                      @@ lbinary x and_ y)
+                    (fml Location.dummy true_) goal_fml)
+    in
 
     (* handling symmetries *)
     let (rigid_syms, flex_syms, syms_fmls) = syms_to_ltl elo in
-    
+
     (* handling invariants *)
     let (rigid_inv, flex_inv, invars) = translate_formulas elo.Elo.invariants in
-    
+
     let rigid = Sequence.(append rigid_syms (append rigid_inv rigid_goal)) in
     let flexible = Sequence.(append flex_syms (append flex_goal flex_inv)) in 
     Model.make ~rigid ~flexible

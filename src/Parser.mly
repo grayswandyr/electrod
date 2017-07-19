@@ -209,9 +209,9 @@ specification:
   ////////////////////////////////////////////////////////////////////////
  
 %inline goal:
-	RUN fs = formula_semi
+	RUN fs = formula_semi+
 	{ G.run fs }
-	| CHECK fs = formula_semi
+	| CHECK fs = formula_semi+
 	{ G.check fs }
 
 formula_semi:
