@@ -176,12 +176,12 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
            and Iff as their precedence may not be easily remembered*)
         | Imp (p, q) ->
             let c = rainbow () in
-            infixr ~paren:false upper 1 string
+            infixr ~paren:true upper 1 string
               (fun _ -> styled_parens c @@ bbox2 @@ pp 0)
               (fun _ -> styled_parens c @@ bbox2 @@ pp 0) out ("->", p, q)
         | Iff (p, q) ->
             let c = rainbow () in
-            infixl ~paren:false upper 2
+            infixl ~paren:true upper 2
               string
               (fun _ -> styled_parens c @@ bbox2 @@ pp 0)
               (fun _ -> styled_parens c @@ bbox2 @@ pp 0) out ("<->", p, q)
