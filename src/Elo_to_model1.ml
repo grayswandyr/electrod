@@ -24,7 +24,9 @@ struct
         (fun (name1, tuple1) (name2, tuple2)
              ((rigid_atoms_acc, flex_atoms_acc, fml_acc)
               : atomic Sequence.t *atomic Sequence.t* Ltl.t)
-         ->
+         ->         
+          (*We assume that a symmetry is well-formed (each pair of
+          name tuple share the same name) *)         
           if not (Name.equal name1 name2) then
             assert false
           else           
