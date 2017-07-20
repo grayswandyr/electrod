@@ -68,7 +68,7 @@ let pp_fml = G.pp_fml pp_var pp_ident
 
 let pp_prim_fml = G.pp_prim_fml pp_var pp_ident
 
-let pp_exp = G.pp_exp ~show_arity:true pp_var pp_ident
+let pp_exp = G.pp_exp pp_var pp_ident
 
 let pp_prim_exp = G.pp_prim_exp pp_var pp_ident
 
@@ -85,7 +85,11 @@ let pp out { file; domain; instance; sym; invariants; goal } =
   pf out "%a@\n%a@\n%a@\n%a"
     Domain.pp domain
     Instance.pp instance
-    (vbox @@ Fmtc.list pp_fml) invariants
+    (vbox2
+     @@ styled `Bold
+     @@ const string "invariant"
+        **< cut
+        **< (Fmtc.list pp_fml)) invariants
     (vbox @@ pp_goal) goal
 
 (* substitution *)
@@ -123,16 +127,25 @@ let substitute = object (self : 'self)
   (*   super#visit_exp env exp *)
 
 
-  (* method visit_prim_fml env pfml =  *)
-  (*   Msg.debug *)
-  (*     (fun m -> m "Elo.substitute.visit_prim_fml: %a [%a]" *)
-  (*                 pp_prim_fml pfml *)
-  (*                 (List.pp *)
-  (*                  @@ Fmt.pair ~sep:Fmtc.(const string "<-") Var.pp *)
-  (*                  @@ pp_prim_exp) *)
-  (*                 env); *)
-  (*   super#visit_prim_fml env pfml *)
-      
+  method visit_prim_fml env pfml =
+    Msg.debug
+      (fun m -> m "%a [%a]"
+                  pp_prim_fml pfml
+                  (List.pp
+                   @@ Fmt.pair ~sep:Fmtc.(const string ":=") Var.pp
+                   @@ pp_prim_exp)
+                  env);
+    super#visit_prim_fml env pfml
+    |> Fun.tap (fun res ->
+          Msg.debug (fun m ->
+                m "%a [%a] --> %a"
+                  pp_prim_fml pfml
+                  (List.pp
+                   @@ Fmt.pair ~sep:Fmtc.(const string ":=") Var.pp
+                   @@ pp_prim_exp) env
+                  pp_prim_fml res
+              ))
+
 end
 
 

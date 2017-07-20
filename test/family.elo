@@ -1,0 +1,18 @@
+univ : { M1 M2 M3 W1 W2 W3 }
+
+const Man : {} { M1   }
+const Woman : {} { W1 W2  }
+
+const wife : {} Man->Woman
+const husband : {} Woman->Man
+
+invariant
+all m : Man | one m.wife
+
+-- all w : Woman | lone w.husband
+
+-- correct
+-- husband = ~wife
+
+
+run true

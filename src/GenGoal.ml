@@ -137,8 +137,7 @@ and ibinop =
   | Add
   | Sub
 [@@deriving visitors { variety = "fold" ; ancestors = ["VisitorsRuntime.map"] },
-            visitors { variety = "map"},
-            visitors { variety = "reduce" }]
+            visitors { variety = "map"}]
 
 let true_ = True
 
@@ -150,7 +149,23 @@ let rcomp exp1 rcomp exp2 = RComp (exp1, rcomp, exp2)
 
 let icomp exp1 rcomp exp2 = IComp (exp1, rcomp, exp2)
 
-let lbinary fml1 binop fml2 = LBin (fml1, binop, fml2)
+let lbinary fml1 binop fml2 = match fml1.prim_fml, binop, fml2.prim_fml with
+  (* And *)
+  | (False | Block [ { prim_fml = False }]), And, _
+  | _, And, (False | Block [ { prim_fml = False }]) -> false_
+  | (True | Block [ { prim_fml = True }]), And, _ -> fml2.prim_fml
+  | _, And, (True | Block [ { prim_fml = True }]) -> fml1.prim_fml
+  (* Or *)
+  | (False | Block [ { prim_fml = False }]), Or, _ -> fml2.prim_fml
+  | _, Or, (False | Block [ { prim_fml = False }]) -> fml1.prim_fml
+  | (True | Block [ { prim_fml = True }]), Or, _ 
+  | _, Or, (True | Block [ { prim_fml = True }]) -> True
+  (* Implies *)
+  | (False | Block [ { prim_fml = False }]), Imp, _
+  | _, Imp, (True | Block [ { prim_fml = True }]) -> true_
+  | (True | Block [ { prim_fml = True }]), Imp, _ -> fml2.prim_fml
+  
+  | _ -> LBin (fml1, binop, fml2)
 
 let quant quant decls block = 
   assert (decls <> [] && block <> []);
@@ -292,7 +307,7 @@ let sub = Sub
 
 let fml fml_loc prim_fml = { prim_fml; fml_loc }
 
-let exp ?(arity = Some 0) exp_loc prim_exp =
+let exp arity exp_loc prim_exp =
   { prim_exp; exp_loc; arity; }
 
 let iexp iexp_loc prim_iexp = { prim_iexp; iexp_loc }

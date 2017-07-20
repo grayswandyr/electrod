@@ -578,7 +578,7 @@ let check_arities elo =
         else
           Result.return
           @@ update_exp exp ar(*  (lazy (TS.transpose @@ Lazy.force e.must)) *)
-               (* (lazy (TS.transpose @@ Lazy.force e.sup)) *)
+    (* (lazy (TS.transpose @@ Lazy.force e.sup)) *)
     | RBin (e1, op, e2) ->
         let ar1 = arity_exp ctx e1 in
         let ar2 = arity_exp ctx e2 in
@@ -586,11 +586,11 @@ let check_arities elo =
           | Union when ar1 = ar2 || ar2 = None ->
               Result.return
               @@ update_exp exp ar1(*  (lazy (TS.union (Lazy.force e1.must) (Lazy.force e2.must))) *)
-                   (* (lazy (TS.union (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+          (* (lazy (TS.union (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
           | Union when ar1 = None ->
               Result.return
               @@ update_exp exp ar2(*  (lazy (TS.union (Lazy.force e1.must) (Lazy.force e2.must))) *)
-                   (* (lazy (TS.union (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+          (* (lazy (TS.union (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
           | Union ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
@@ -602,7 +602,7 @@ let check_arities elo =
           | Diff when ar1 = ar2 || ar2 = None ->
               Result.return
               @@ update_exp exp ar1(*  (lazy (TS.diff (Lazy.force e1.must) (Lazy.force e2.must))) *)
-                   (* (lazy (TS.diff (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+          (* (lazy (TS.diff (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
           | Diff ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
@@ -611,11 +611,11 @@ let check_arities elo =
           | Inter when ar1 = None || ar2 = None ->
               Result.return
               @@ update_exp exp None (* (lazy (TS.inter (Lazy.force e1.must) (Lazy.force e2.must))) *)
-                   (* (lazy (TS.inter (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+          (* (lazy (TS.inter (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
           | Inter when ar1 = ar2 -> 
               Result.return
               @@ update_exp exp ar1 (* (lazy (TS.inter (Lazy.force e1.must) (Lazy.force e2.must))) *)
-                   (* (lazy (TS.inter (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+          (* (lazy (TS.inter (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
           | Inter ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
@@ -628,7 +628,7 @@ let check_arities elo =
               else
                 Result.return
                 @@ update_exp exp ar1(*  (lazy (TS.override (Lazy.force e1.must) (Lazy.force e2.must))) *)
-                     (* (lazy (TS.override (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+          (* (lazy (TS.override (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
           | Over when ar1 = None ->
               Result.return @@ update_exp exp ar2 (* e2.must e2.sup *)
           | Over when ar2 = None ->
@@ -642,14 +642,14 @@ let check_arities elo =
               Result.return @@ update_exp exp None (* (lazy TS.empty) (lazy TS.empty) *)
           | LProj when ar1 = Some 1 ->
               Result.return @@ update_exp exp ar2 (* (lazy (TS.lproj (Lazy.force e1.must) (Lazy.force e2.must))) *)
-                                 (* (lazy (TS.lproj (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+          (* (lazy (TS.lproj (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
           | LProj ->
               Result.fail "left projection should be on a set"
           | RProj when ar2 = None ->
               Result.return @@ update_exp exp None (* (lazy TS.empty) (lazy TS.empty) *)
           | RProj when ar2 = Some 1 ->
               Result.return @@ update_exp exp ar1 (* (lazy (TS.rproj (Lazy.force e1.must) (Lazy.force e2.must))) *)
-                                 (* (lazy (TS.rproj (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+          (* (lazy (TS.rproj (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
           | RProj -> 
               Result.fail "right projection should be on a set"
           | Prod ->
@@ -658,7 +658,7 @@ let check_arities elo =
                     let ar = Some (a1 + a2) in
                     Result.return
                     @@ update_exp exp ar (* (lazy (TS.product (Lazy.force e1.must) (Lazy.force e2.must))) *)
-                         (* (lazy (TS.product (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+                (* (lazy (TS.product (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
                 | None, _
                 | _, None -> Result.return None)
           | Join ->
@@ -670,7 +670,7 @@ let check_arities elo =
               else
                 Result.return
                 @@ update_exp exp ar_join(*  (lazy (TS.join (Lazy.force e1.must) (Lazy.force e2.must))) *)
-                     (* (lazy (TS.join (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+                (* (lazy (TS.join (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
         )
     | RIte (c, t, e) -> 
         begin
@@ -691,10 +691,8 @@ let check_arities elo =
           List.fold_right
             (fun arg r ->
                GenGoal.exp
-                 Location.(span (arg.exp_loc, r.exp_loc))
-                 ~arity:Option.(map2 (+) (pure (-2)) @@ map2 (+) arg.arity r.arity)
-                 (* ~must:(lazy (TS.join (Lazy.force arg.must) (Lazy.force r.must))) *)
-                 (* ~sup:(lazy (TS.join (Lazy.force arg.sup) (Lazy.force r.sup))) *)
+                 Option.(map2 (+) (pure (-2)) @@ map2 (+) arg.arity r.arity)
+                 Location.(span (arg.exp_loc, r.exp_loc))                 
                @@ rbinary arg join r
             ) args call
         in
