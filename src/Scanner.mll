@@ -136,8 +136,6 @@ rule main infile = parse
   { (IDX_ID id) }
 | plain_id as id
   { (PLAIN_ID id) }
-| ("not")
-    { NOT }
 | ":" (positive as ca)
   { (COLON_ARITY (int_of_string ca)) }
 | "#"

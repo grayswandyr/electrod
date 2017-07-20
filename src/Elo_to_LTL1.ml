@@ -486,14 +486,14 @@ module Make (Ltl : Solver.LTL) = struct
                     @@ (Elo.substitute#visit_prim_fml
                           (sub_for tuples)
                           (G.block blk)
-                        (* |> Fun.tap (fun s -> *)
-                        (*       Msg.debug (fun m -> *)
-                        (*             m "%a[%a] -->@   %a" *)
-                        (*               Elo.pp_block blk *)
-                        (*               Fmtc.(list @@ pair ~sep:(const string " := ") *)
-                        (*                               Var.pp Elo.pp_prim_exp) *)
-                        (*               (sub_for tuples) *)
-                        (*               Elo.pp_prim_fml s)) *)
+                          (* |> Fun.tap (fun s -> *)
+                          (*       Msg.debug (fun m -> *)
+                          (*             m "%a[%a] -->@   %a" *)
+                          (*               Elo.pp_block blk *)
+                          (*               Fmtc.(list @@ pair ~sep:(const string " := ") *)
+                          (*                               Var.pp Elo.pp_prim_exp) *)
+                          (*               (sub_for tuples) *)
+                          (*               Elo.pp_prim_fml s)) *)
                        )) (* blk [tuples / xs] *)
             in
             (* Msg.debug (fun m -> *)
@@ -512,10 +512,7 @@ module Make (Ltl : Solver.LTL) = struct
                 (bigop
                    ~range:(tuples_of_sim_binding ~disj xs @@ TS.to_list may)
                    (fun tuples ->
-                      (* concat because semantics of expressions expects *one* tuple *)
-                      let premise = s' (List.fold_left Tuple.(@@@)
-                                          (List.hd tuples) (List.tl tuples))
-                      in
+                      let premise = conj @@ List.map s' tuples in
                       Msg.debug (fun m -> m "(build_Quant.premise) %a" Ltl.pp premise);
                       lazy (link premise @@ sem_of_substituted_blk tuples)
                    ))
@@ -767,6 +764,11 @@ module Make (Ltl : Solver.LTL) = struct
               env#must_may_sup @@
               G.exp (Some (env#arity r)) Location.dummy @@ G.ident id
             in
+            Msg.debug (fun m ->
+                  m "build_Ident: must/may Woman = %a / %a | tuple = %a"
+                    TS.pp must
+                    TS.pp may
+                    Tuple.pp tuple);
             if TS.mem tuple must then
               true_
             else if TS.mem tuple may then 
