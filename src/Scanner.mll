@@ -120,7 +120,7 @@ rule main infile = parse
     { INST }
 | "sym"
     { SYM }
-| ("!")
+| ("not")
     { NOT }
 | "var"
     { VAR }
