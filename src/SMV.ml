@@ -261,7 +261,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
   }
 
   let make ~rigid ~flexible ~invariant ~property =
-    { rigid; flexible; invariant; property }
+    { rigid; flexible; invariant = Sequence.rev invariant; property }
 
   let pp_decl out atomic =
     Fmtc.pf out "%a : boolean;" Ltl.pp_atomic atomic

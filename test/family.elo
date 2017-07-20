@@ -1,23 +1,22 @@
 univ : { M1 M2 M3 W1 W2 W3 }
 
-const Man : { M1  }
---const Woman : {} { W1 W2  }
+const Man :{} { M1  }
+const Woman : {} { W1 W2  }
 
 const wife : {} { (M1 W1) (M1 W2)}
---const husband : {} Woman->Man
+const husband : {} Woman->Man
 
 invariant
---all m : Man | one m.wife
+all m : Man | lone m.wife
 
--- all w : Woman | lone w.husband
+husband = ~wife
 
--- correct
--- husband = ~wife
+some x, y : Woman | x != y
 
---some x, y : Woman | x != y
-
---some m : Man | some m.wife
+some m : Man | some m.wife
 
 all w1, w2 : Man.wife | w1 = w2
+
+
 
 run true

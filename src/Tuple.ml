@@ -59,29 +59,6 @@ let compare t1 t2 = Array.compare Atom.compare t1.contents t2.contents
 
 let equal t1 t2 = Array.equal Atom.equal t1.contents t2.contents
 
-
-let is_in_join tup tuple1 tuple2 =
-  let tuple = tup.contents in 
-  let t1 = tuple1.contents in
-  let t2 = tuple2.contents in
-  let lg1 = Array.length t1 in
-  let lg2 = Array.length t2 in
-  (* convert in lists *)
-  let ltup = Array.to_list tuple in
-  let ltuple1 = Array_slice.(make t1 0 ~len:(lg1 - 1)
-                             |> to_list) in
-  let ltuple2 = Array_slice.(make t2 1 ~len:(lg2 - 1)
-                             |> to_list) in
-  List.equal Atom.equal ltup (ltuple1 @ ltuple2) 
-  |> Fun.tap (fun res -> Msg.debug (fun m ->
-        m "is_in_join: %a in %a.%a --> %B"
-          pp tup
-          pp tuple1
-          pp tuple2
-          res
-      ))
-
-
   
     
 let join tuple1 tuple2 =
@@ -95,6 +72,44 @@ let join tuple1 tuple2 =
   Array.blit t2 1 res (lg1 - 1) (lg2 - 1);
   of_array res
 
+
+(* let is_in_join tup tuple1 tuple2 = *)
+(*   let tuple = tup.contents in  *)
+(*   let t1 = tuple1.contents in *)
+(*   let t2 = tuple2.contents in *)
+(*   let lg1 = Array.length t1 in *)
+(*   let lg2 = Array.length t2 in *)
+(*   (\* convert in lists *\) *)
+(*   let ltup = Array.to_list tuple in *)
+(*   let ltuple1 = Array_slice.(make t1 0 ~len:(lg1 - 1) *)
+(*                              |> to_list) in *)
+(*   let ltuple2 = Array_slice.(make t2 1 ~len:(lg2 - 1) *)
+(*                              |> to_list) in *)
+(*   List.equal Atom.equal ltup (ltuple1 @ ltuple2)  *)
+(*   |> Fun.tap (fun res -> Msg.debug (fun m -> *)
+(*         m "is_in_join: %a in %a.%a --> %B" *)
+(*           pp tup *)
+(*           pp tuple1 *)
+(*           pp tuple2 *)
+(*           res *)
+(*       )) *)
+
+
+let is_in_join tup tuple1 tuple2 =
+  let t1 = tuple1.contents in
+  let t2 = tuple2.contents in
+  let lg1 = Array.length t1 in
+  Atom.equal t1.(lg1 - 1) t2.(0) &&
+  equal tup @@ join tuple1 tuple2
+  |> Fun.tap (fun res -> Msg.debug (fun m ->
+        m "is_in_join: %a in %a.%a --> %B"
+          pp tup
+          pp tuple1
+          pp tuple2
+          res))
+
+
+  
 let split tuple len =
   let t = tuple.contents in
   let full_len = Array.length t in
