@@ -383,6 +383,17 @@ module Make (Ltl : Solver.LTL) = struct
   (*              eligible_pairs) *)
 
 
+(*   class ['env] invarComputation = object (self : 'self) *)
+(*     inherit ['self] GenGoal.fold as super *)
+(*     method build_Ident *)
+(*              (env : (Var.t, (Elo.var, Elo.ident) G.prim_exp) CCList.Assoc.t ) *)
+(*              (id : Elo.ident) = *)
+(*       match id with *)
+(*       | Var var when List.Assoc.mem ~eq:Var.equal var env -> *)
+(*          List.Assoc.get_exn ~eq:Var.equal var env *)
+(*       | Var _ | Name _ | Tuple _ -> G.ident id *)
+
+(* end *)
 
   class ['env] converter = object (self : 'self)
     inherit ['self] GenGoalRecursor.recursor as super
