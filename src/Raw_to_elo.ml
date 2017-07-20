@@ -437,8 +437,8 @@ let refine_identifiers raw_pb =
          Elo.name_ident Name.univ) ]
   in
   let walk_goal = function
-    | Run fml -> run @@ snd @@ walk_fml init_ctx fml
-    | Check fml -> check @@ snd @@ walk_fml init_ctx fml
+    | Run fml -> run @@ List.map Fun.(snd % walk_fml init_ctx) fml
+    | Check fml -> check @@ List.map Fun.(snd % walk_fml init_ctx) fml
   in
   let walk_invariants invs =
     snd @@ walk_block init_ctx invs
@@ -758,8 +758,8 @@ let check_arities elo =
   end
   in
   let walk_goal = function
-    | Run fml -> walk_fml init fml
-    | Check fml -> walk_fml init fml
+    | Run fml -> List.iter (walk_fml init)  fml
+    | Check fml -> List.iter (walk_fml init)  fml
   in
   (* check/update goal and invariant arities *)
   walk_goal elo.goal;

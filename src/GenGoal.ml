@@ -4,8 +4,8 @@
 (* ['v] is the type of variables introduced in quantifiers, ['i] is the type of
    any identifier (a variable like in the former case or a relation name) *)
 type ('v, 'i) t =
-  | Run of (('v, 'i) fml)
-  | Check of (('v, 'i) fml)
+  | Run of (('v, 'i) block)
+  | Check of (('v, 'i) block)
 
 (** Formulas and expressions *)
 
@@ -316,13 +316,13 @@ let rec pp pp_v pp_i out =
         begin
           (kwd_styled pf) out "run@ ";
           pf out "  %a"
-            (box2 @@ pp_fml pp_v pp_i) fml
+            (box2 @@ list @@ pp_fml pp_v pp_i) fml
         end
     | Check fml ->
         begin
           (kwd_styled pf) out "check@ ";
           pf out "  %a"
-            (box2 @@ pp_fml pp_v pp_i) fml
+            (box2 @@ list @@ pp_fml pp_v pp_i) fml
         end
 
 and pp_fml pp_v pp_i out fml =

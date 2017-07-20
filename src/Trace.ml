@@ -27,7 +27,7 @@ let make states =
 open Fmtc
     
 let pp_valuation =
-  list ~sep:(const string ", ")
+  list ~sep:sp
   @@ pair ~sep:equal Name.pp TupleSet.pp
 
 let pp_state out = function

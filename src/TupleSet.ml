@@ -59,14 +59,9 @@ let compare b1 b2 =
     
     
 let product b1 b2 =
-  (* if is_empty b1 then *)
-  (*   b2 *)
-  (* else if is_empty b2 then *)
-  (*   b1 *)
-  (* else *)
-    Sequence.product (TS.to_seq @@ tuples b1) (TS.to_seq @@ tuples b2)
-    |> Sequence.map Fun.(uncurry Tuple.(@@@))
-    |> TS.of_seq
+  Sequence.product (TS.to_seq b1) (TS.to_seq b2)
+  |> Sequence.map Fun.(uncurry Tuple.(@@@))
+  |> TS.of_seq
 
 let union b1 b2 =
   TS.union b1 b2 

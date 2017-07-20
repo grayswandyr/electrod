@@ -106,10 +106,14 @@ module LTL_from_Atomic :
   functor (At : ATOMIC_PROPOSITION) -> LTL with type atomic = At.t
 
 type outcome =
-  | Unsat
+  | No_trace
   | Trace of Trace.t
 
 val pp_outcome : Format.formatter -> outcome -> unit
+
+type script_type =
+  | Default of string
+  | File of string
 
 (* Abstract type for a complete model to be given to a solver.  *)
 module type MODEL = sig
@@ -134,9 +138,13 @@ module type MODEL = sig
       ([filename helps creating a temporary file name]): in case of [Error], the
       result contains the POSIX error code and the error string output by the
       solver. If [script] is [None], then a default command script is used;
-      otherwise it contains the name of a script file. [domain] is the Electrod
-      domain (used to interpret back a resulting trace). *)
-  val analyze : Domain.t -> string option -> string -> t -> outcome
+      otherwise it contains the name of a script file. [elo] is the Electrod
+      model (used to interpret back a resulting trace). *)
+  val analyze : cmd:string 
+    -> script:script_type
+    -> keep_files:bool
+    -> elo:Elo.t
+    -> file:string -> t -> outcome
 
   val pp : ?margin:int -> Format.formatter -> t -> unit
 
