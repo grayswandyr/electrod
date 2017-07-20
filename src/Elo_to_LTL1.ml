@@ -765,7 +765,8 @@ module Make (Ltl : Solver.LTL) = struct
               G.exp (Some (env#arity r)) Location.dummy @@ G.ident id
             in
             Msg.debug (fun m ->
-                  m "build_Ident: must/may Woman = %a / %a | tuple = %a"
+                  m "build_Ident: must/may(%a) = %a / %a | tuple = %a"
+                    Name.pp r
                     TS.pp must
                     TS.pp may
                     Tuple.pp tuple);
