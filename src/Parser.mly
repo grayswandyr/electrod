@@ -5,6 +5,8 @@ module R = Raw
 
 module G = GenGoal
 
+let exp_no_arity = G.exp (Some 0)
+
 %}
   
 %start <Raw.raw_urelements list
@@ -336,47 +338,47 @@ formula :
   
 expr:
   NONE 
-	{ G.exp (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.none }
   
 	| UNIV
-	{ G.exp (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.univ}
   
 	| IDEN
-	{ G.exp (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.iden }
   
 /*	| INT
-	{ G.exp (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.int }*/
   
   | id = PLAIN_ID
-	{ G.exp (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.ident @@ Raw_ident.ident id $startpos $endpos}
       
 	| op = runop e = expr
-	{ G.exp (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.runary op e }
   
 	| e1 = expr op  = rbinop e2 = expr
-	{ G.exp (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.rbinary e1 op e2 }
   
 	| f = formula IMPLIES t = expr ELSE e = expr
-	{ G.exp (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.rite f t e}
   
 	| exp = expr args = brackets(comma_sep1(expr))
-	{ G.exp (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.boxjoin exp args }
   
 	| compr = braces(compr_body)
-	{ G.exp (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ compr}
   
 	| e = expr PRIME
-	{ G.exp (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.prime e}
   
 	| e = parens(expr)

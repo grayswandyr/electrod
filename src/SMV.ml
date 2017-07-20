@@ -81,7 +81,7 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
       (* parenthesize if specified so or if  forced by the current context*)
       let par = paren || this < upper in
       (* if parentheses are specified, they'll be numerous so avoid alignment  of closing parentheses *)
-      let align_par = not paren && align_par in
+      (* let align_par = not paren && align_par in *)
       if par then               (* add parentheses *)
         let color = rainbow () in
         if align_par then
@@ -187,10 +187,10 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
               (fun _ -> styled_parens c @@ bbox2 @@ pp 0) out ("<->", p, q)
         | Ite (c, t, e) ->
             pf out "(%a@ ?@ %a@ :@ %a)" (pp 3) c (pp 3) t (pp 3) e
-        | Or (p, q) -> infixl ~paren:false upper 4 string pp pp out ("|", p, q)
+        | Or (p, q) -> infixl ~paren:true upper 4 string pp pp out ("|", p, q)
         (* force parenthses as we're not used to see the Xor connective and so its precedence may be unclear *)
         | Xor (p, q) -> infixl ~paren:true upper 4 string pp pp out ("xor", p, q)
-        | And (p, q) -> infixl ~paren:false upper 5 string pp pp out ("&", p, q)
+        | And (p, q) -> infixl ~paren:true upper 5 string pp pp out ("&", p, q)
         | Comp (op, t1, t2) ->
             infixn upper 6 pp_tcomp pp_term pp_term out (op, t1, t2)
         | Not p -> prefix upper 9 string pp out ("!", p)
@@ -315,13 +315,17 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     let smv = make_model_file file model in
     (* TODO make things s.t. it's possible to set a time-out *)
     let to_call = Fmt.strf "%s -source %s %s" cmd scr smv in
-    Msg.info (fun m -> m "Running: %s" to_call);
+    Msg.info (fun m -> m "Starting analysis:@ @[<h>%s@]" to_call);
+    let before_run = Mtime_clock.now () in
     let (okout, errout, errcode) =
       CCUnix.call "%s" to_call
     in
+    let after_run = Mtime_clock.now () in
     if errcode <> 0 then
       Msg.Fatal.solver_failed (fun args -> args "nuXmv" scr smv errcode errout)
     else (* running nuXmv goes well: parse its output *)
+      Msg.info (fun m -> m "Analysis done in %a" Mtime.Span.pp
+                 @@ Mtime.span before_run after_run);
       let spec =
         String.lines_gen okout
         |> Gen.drop_while

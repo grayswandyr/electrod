@@ -29,7 +29,7 @@ class simplify = object (self : 'self)
     (* from the var list [x1, x2, ...] 
        create [x1', x2', ...] and the assoc list [(x1, x1'), (x2, x2') ...] 
        and the formula x1!=x1' or x2!=x2' or ...  *)
-    let create_new_vars_and_assoc_list_and_comp_fml vs =
+    let create_new_vars_and_assoc_list_and_comp_fml vs ar =
       List.fold_right
         (fun (Elo.BVar var) (new_vars, assoc, prim_fml) ->
            let new_var = Var.fresh_copy var in
@@ -39,10 +39,10 @@ class simplify = object (self : 'self)
             lbinary
               (fml L.dummy
                @@ rcomp
-                    (exp L.dummy
+                    (exp ar L.dummy
                      @@ ident @@ Elo.var_ident var)
                     REq
-                    (exp L.dummy new_var_as_ident)
+                    (exp ar L.dummy new_var_as_ident)
               )
               and_
               (fml L.dummy prim_fml))
@@ -55,7 +55,7 @@ class simplify = object (self : 'self)
       List.fold_right
         (fun (disj, vars, e) (sim_bindings, acc_assoc, acc_fml) -> 
            let (new_vars, assoc, prim_fml) =
-             create_new_vars_and_assoc_list_and_comp_fml vars in
+             create_new_vars_and_assoc_list_and_comp_fml vars e.arity in
            ((disj, new_vars, e) :: sim_bindings,
             assoc @ acc_assoc,
             lbinary (fml L.dummy prim_fml) and_ (fml L.dummy acc_fml)))
@@ -136,10 +136,10 @@ class simplify = object (self : 'self)
       bindings
       (block fmls)
     |> self#visit_prim_fml env
-    (* |> Fun.tap *)
-    (* @@ fun res -> *)
-    (* Msg.debug (fun m -> m "Simplify1.visit_Let --> %a" *)
-    (*                       Elo.pp_prim_fml res) *)
+  (* |> Fun.tap *)
+  (* @@ fun res -> *)
+  (* Msg.debug (fun m -> m "Simplify1.visit_Let --> %a" *)
+  (*                       Elo.pp_prim_fml res) *)
 
   (* change relation qualifiers into formulas *)
   method visit_Qual env q expr =
@@ -164,13 +164,13 @@ class simplify = object (self : 'self)
             [fml expr.exp_loc true_]
       | RNo ->
           rcomp expr in_
-          @@ exp ~arity:None expr.exp_loc none
+          @@ exp None expr.exp_loc none
     in
     self#visit_prim_fml env prim_fml
-    (* |> Fun.tap *)
-    (* @@ fun res -> *)
-    (* Msg.debug (fun m -> m "Simplify1.visit_Qual --> %a" *)
-    (*                       Elo.pp_prim_fml res) *)
+  (* |> Fun.tap *)
+  (* @@ fun res -> *)
+  (* Msg.debug (fun m -> m "Simplify1.visit_Qual --> %a" *)
+  (*                       Elo.pp_prim_fml res) *)
 
   (* change box join in join *)
   method visit_BoxJoin env call args =
@@ -181,8 +181,8 @@ class simplify = object (self : 'self)
       List.fold_right
         (fun arg r ->
            exp
-             L.(span (arg.exp_loc, r.exp_loc))
-             ~arity:Option.(return @@ get_exn arg.arity + get_exn r.arity - 2)
+             Option.(return @@ get_exn arg.arity + get_exn r.arity - 2)
+             L.(span (arg.exp_loc, r.exp_loc))             
            @@ rbinary arg join r
         ) args call
     in
