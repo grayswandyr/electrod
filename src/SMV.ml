@@ -33,32 +33,6 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
 
   module PP = struct
     open Fmtc
-
-
-    (* From NuXmv documentation, from high to low (excerpt, some precedences are ignored because they are not used)
-
-       !
-
-       - (unary minus)
-
-       + -
-
-       = != < > <= >=
-
-       &
-
-       | xor xnor
-
-       (... ? ... : ...)
-
-       <->
-
-       -> (the only right associative op)
-
-    
-NOTE: precedences for LTL connectives are not specified, hence we force parenthesising of these.
-*)
-
     
     let rainbow =
       let r = ref 0 in
@@ -75,12 +49,14 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
           | _ -> assert false
 
     (* [upper] is the precedence of the context we're in, [this] is the priority
-       for printing to do, [pr] is the function to make the printing of the expression *)
+       for printing to do, [pr] is the function to make the printing of the
+       expression *)
     let rainbow_paren ?(paren = false) ?(align_par = true)
           upper this out pr =
       (* parenthesize if specified so or if  forced by the current context*)
       let par = paren || this < upper in
-      (* if parentheses are specified, they'll be numerous so avoid alignment  of closing parentheses *)
+      (* if parentheses are specified, they'll be numerous so avoid alignment of
+         closing parentheses *)
       (* let align_par = not paren && align_par in *)
       if par then               (* add parentheses *)
         let color = rainbow () in
@@ -90,7 +66,8 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
           Format.pp_open_box out 2;
         styled color string out "(";
         if align_par then Format.pp_open_box out 2;
-        (* we're adding parenthese so precedence goes back to 0 inside of them *)
+        (* we're adding parentheses so precedence goes back to 0 inside of
+           them *)
         pr 0;
         if align_par then 
           begin
@@ -106,7 +83,7 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
     let infixl ?(paren = false) ?(align_par = true)
           upper this middle left right out (m, l, r) =
       rainbow_paren ~paren ~align_par upper this out @@
-      fun new_this ->           (* new_this is this or 0 if parentheses were added *)
+      fun new_this ->      (* new_this is this or 0 if parentheses were added *)
       begin
         left new_this out l;
         sp out ();
@@ -166,6 +143,32 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
     let styled_parens st ppv_v out v =
       surround (styled st lparen) (styled st rparen) ppv_v out v
     
+
+
+    (* From NuXmv documentation, from high to low (excerpt, some precedences are ignored because they are not used)
+
+       !
+
+       - (unary minus)
+
+       + -
+
+       = != < > <= >=
+
+       &
+
+       | xor xnor
+
+       (... ? ... : ...)
+
+       <->
+
+       -> (the only right associative op)
+
+    
+NOTE: precedences for LTL connectives are not specified, hence we force parenthesising of these.
+*)
+
     let rec pp upper out f =
       assert (upper >= 0);
       match f with
@@ -201,9 +204,9 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
     and pp_term upper out (t : term) = match t with
       | Num n -> pf out "%d" n
       | Plus (t1, t2) ->
-          infixl ~paren:false upper 7 string pp_term pp_term out ("+", t1, t2)
+          infixl ~paren:true upper 7 string pp_term pp_term out ("+", t1, t2)
       | Minus (t1, t2) ->
-          infixl ~paren:false upper 7 string pp_term pp_term out ("-", t1, t2)
+          infixl ~paren:true upper 7 string pp_term pp_term out ("-", t1, t2)
       | Neg t -> prefix upper 8 string pp_term out ("- ", t)
       | Count ts ->
           pf out "@[count(%a@])" (list ~sep:(const string "+") (pp 0)) ts
@@ -214,6 +217,33 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
   let pp out f =
     Fmtc.pf out "@[<hov2>%a@]" (PP.pp 0) f
 
+
+  (* let () =  *)
+  (*   begin *)
+  (*     let p = atomic @@ make_atomic (Name.name "P") (Tuple.of_list1 [Atom.atom "p"]) in *)
+  (*     let q = atomic @@ make_atomic (Name.name "Q") (Tuple.of_list1 [Atom.atom "q"]) in *)
+  (*     let r = atomic @@ make_atomic (Name.name "R") (Tuple.of_list1 [Atom.atom "r"]) in *)
+  (*     let s = atomic @@ make_atomic (Name.name "S") (Tuple.of_list1 [Atom.atom "s"]) in *)
+  (*     let f1 = and_ (and_ p @@ lazy q) (lazy r) in *)
+  (*     let f2 = implies (and_ p @@ lazy q) (lazy r) in *)
+  (*     let f3 = implies r (lazy (and_ p @@ lazy q)) in *)
+  (*     let f4 = implies (and_ p @@ lazy q) (lazy (and_ r (lazy s))) in *)
+  (*     let f5 = and_ (implies p @@ lazy q) (lazy (implies r @@ lazy s)) in *)
+  (*     let f6 = implies p (lazy (and_ (implies q @@ lazy r) (lazy (implies r @@ lazy s)))) in *)
+  (*     let f7 = implies p (lazy (and_ (implies (and_ q (lazy p)) @@ lazy r) (lazy (implies r @@ lazy s)))) in *)
+  (*     Fmt.epr "TEST PP@\n"; *)
+  (*     Fmt.epr "and_ (and_ p @@ lazy q) (lazy r) -->@  %a@\n" pp f1; *)
+  (*     Fmt.epr "implies (and_ p @@ lazy q) (lazy r) -->@  %a@\n" pp f2; *)
+  (*     Fmt.epr "implies r (lazy (and_ p @@ lazy q)) -->@  %a@\n" pp f3; *)
+  (*     Fmt.epr "implies (and_ p @@ lazy q) (lazy (and_ r (lazy s))) -->@  %a@\n" pp f4; *)
+  (*     Fmt.epr "and_ (implies_ p @@ lazy q) (implies_ r @@ lazy s) -->@  %a@\n" pp f5; *)
+  (*     Fmt.epr "implies p (lazy (and_ (implies q @@ lazy r) (lazy (implies r @@ lazy s)))) -->@  %a@\n" pp f6; *)
+  (*     Fmt.epr "implies p (lazy (and_ (implies (and_ q (lazy p)) @@ lazy r) (lazy (implies r @@ lazy s)))) -->@  %a@\n" pp f7; *)
+      
+  (*     flush_all () *)
+  (*   end *)
+
+  
 end
 
 module Make_SMV_file_format (Ltl : Solver.LTL)

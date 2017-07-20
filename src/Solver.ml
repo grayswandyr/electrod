@@ -207,10 +207,10 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
     | p -> Not p
 
   and implies p q = match p, q with
-    (* | False, _ -> True *)
-    (* | _, lazy True -> True *)
-    (* | True, lazy q2 -> q2 *)
-    (* | _, lazy False -> not_ p *)
+    | False, _ -> True
+    | _, lazy True -> True
+    | True, lazy q2 -> q2
+    | _, lazy False -> not_ p
     | _, lazy q2 -> Imp (p, q2)
 
   
