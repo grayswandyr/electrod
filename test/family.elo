@@ -1,18 +1,21 @@
 univ : { M1 M2 M3 W1 W2 W3 }
 
-const Man : {} { M1   }
-const Woman : {} { W1 W2  }
+const Man : { M1   }
+const Woman :{}{ W1 W2  }
 
 const wife : {} Man->Woman
 const husband : {} Woman->Man
 
 invariant
-all m : Man | one m.wife
+--not all m1,m2: Man |  m1 = m2
+-- not   some w1, w2 : Man.wife | w1 != w2
 
+-- all w1, w2: Man.wife | w1 = w2
+all w1:Man.wife | all w2:Man.wife | w1 = w2
 -- all w : Woman | lone w.husband
 
+-- some w1:Woman | some w2:Woman | w1!=w2
 -- correct
 -- husband = ~wife
-
 
 run true
