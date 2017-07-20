@@ -174,17 +174,8 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
         | Atomic at -> pf out "%a" pp_atomic at
         (* tweaks, here, to force parenthese around immediate subformulas of Imp
            and Iff as their precedence may not be easily remembered*)
-        | Imp (p, q) ->
-            let c = rainbow () in
-            infixr ~paren:true upper 1 string
-              (fun _ -> styled_parens c @@ bbox2 @@ pp 0)
-              (fun _ -> styled_parens c @@ bbox2 @@ pp 0) out ("->", p, q)
-        | Iff (p, q) ->
-            let c = rainbow () in
-            infixl ~paren:true upper 2
-              string
-              (fun _ -> styled_parens c @@ bbox2 @@ pp 0)
-              (fun _ -> styled_parens c @@ bbox2 @@ pp 0) out ("<->", p, q)
+        | Imp (p, q) -> infixr ~paren:true upper 1 string pp pp out ("->", p, q)
+        | Iff (p, q) -> infixl ~paren:true upper 2 string pp pp out ("<->", p, q)
         | Ite (c, t, e) ->
             pf out "(%a@ ?@ %a@ :@ %a)" (pp 3) c (pp 3) t (pp 3) e
         | Or (p, q) -> infixl ~paren:true upper 4 string pp pp out ("|", p, q)
