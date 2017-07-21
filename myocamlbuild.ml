@@ -27,8 +27,7 @@ let import_qtestpack build packfile =
 let qtest_many target packfile env build =
   let packfile = env packfile and target = env target in
   let tags, files = import_qtestpack build packfile in
-  Cmd(S[A "qtest";
-        A "-p"; A "let qtest_exn f x = CCOpt.(wrap f x |> is_some)";
+  Cmd(S[A "qtest"; 
         A "extract"; T tags;
         A "-o"; A target; Command.atomize_paths files]);;
 

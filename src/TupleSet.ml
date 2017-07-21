@@ -1,6 +1,8 @@
 [@@@landmark "auto"]
 open Containers
-    
+
+(*$inject open Testing *)
+
 module TS = Tuple.Set
 
 type t = TS.t
@@ -11,7 +13,9 @@ let pp out b =
   Fmtc.pf out "}@]"
 
 
- 
+module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
+include P 
+
 
 let to_list = TS.elements
                 
@@ -78,7 +82,12 @@ let map f ts =
 let filter = TS.filter
 
 
-
+(*$Q transpose
+  any_tupleset (fun ts -> \
+  let ar = inferred_arity ts in\
+  Q.assume (ar = 2 || ar = 0);\
+  equal ts (transpose @@ transpose ts))
+*)
 let transpose b =
   let ar = inferred_arity b in
   assert (ar = 2 || ar = 0);
@@ -103,6 +112,13 @@ let rproj r s = lproj s @@ transpose r
 let diagonal b =
   map Tuple.(fun e -> e @@@ e) b
 
+
+(*$Q join
+  any_tupleset1 (fun ts -> \
+  let diag = diagonal ts in\
+  equal diag @@ join diag diag\
+  )
+*)
 let join b1 b2 =
   let open Sequence in
   let lg1 = inferred_arity b1 in
@@ -163,8 +179,3 @@ let mem t bnd =
   TS.mem t bnd
 
   
-
-module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
-include P 
- 
-
