@@ -306,7 +306,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
        @@ semi **>
           const string "LTLSPEC NAME spec :=" **<
           sp **<
-          Ltl.pp) property;
+          Ltl.pp) (Ltl.not_ property);
     Format.pp_set_margin out old_margin 
 
     
@@ -378,7 +378,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
            changed w.r.t. the previous state.). *)
         let module P =
           SMV_trace_parser.Make(struct
-            let base = Domain.musts elo.Elo.domain
+            let base = Domain.musts ~with_univ_and_ident:false elo.Elo.domain
           end)
         in
         spec
