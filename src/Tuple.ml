@@ -105,12 +105,12 @@ let is_in_join tup tuple1 tuple2 =
   let lg1 = Array.length t1 in
   Atom.equal t1.(lg1 - 1) t2.(0) &&
   equal tup @@ join tuple1 tuple2
-  |> Fun.tap (fun res -> Msg.debug (fun m ->
-        m "is_in_join: %a in %a.%a --> %B"
-          pp tup
-          pp tuple1
-          pp tuple2
-          res))
+  (* |> Fun.tap (fun res -> Msg.debug (fun m -> *)
+  (*       m "is_in_join: %a in %a.%a --> %B" *)
+  (*         pp tup *)
+  (*         pp tuple1 *)
+  (*         pp tuple2 *)
+  (*         res)) *)
 
 (* split "inverse" to (@@@) *)
 (*$Q split

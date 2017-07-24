@@ -448,15 +448,15 @@ module Make (Ltl : Solver.LTL) = struct
               (* remove lines where there are tuples in common if [disj = true] *)
               |> (if disj then
                     filter (fun l -> length l = length @@ sort_uniq l) else Fun.id)
-              |> Fun.tap (fun res -> Msg.debug (fun m->
-                    m "tuples_of_sim_binding (disj:%B) vars:%a domain:%a@\n  -->@ %a "
-                      disj
-                      Fmtc.(brackets @@ list ~sep:sp Elo.pp_var) vars
-                      Fmtc.(braces @@ list ~sep:comma Tuple.pp) dom
-                      Fmtc.(vbox @@ list ~sep:cut
-                            @@ hvbox2 @@ brackets
-                            @@ list ~sep:comma Tuple.pp) res
-                  ))
+              (* |> Fun.tap (fun res -> Msg.debug (fun m-> *)
+              (*       m "tuples_of_sim_binding (disj:%B) vars:%a domain:%a@\n  -->@ %a " *)
+              (*         disj *)
+              (*         Fmtc.(brackets @@ list ~sep:sp Elo.pp_var) vars *)
+              (*         Fmtc.(braces @@ list ~sep:comma Tuple.pp) dom *)
+              (*         Fmtc.(vbox @@ list ~sep:cut *)
+              (*               @@ hvbox2 @@ brackets *)
+              (*               @@ list ~sep:comma Tuple.pp) res *)
+              (*     )) *)
               |> to_seq
             in
             let sub_for tuples =
@@ -466,15 +466,15 @@ module Make (Ltl : Solver.LTL) = struct
               (* we zip the bound variables and the 1-tuples to get a list of
                  substitutions *)
               List.combine xs_as_vars tuples_as_idents
-              |> Fun.tap (fun res ->
-                    Msg.debug (fun m ->
-                          m "sub_for %a = %a"
-                            (Fmtc.(list Tuple.pp)) tuples
-                            (Fmtc.(brackets
-                                   @@ list
-                                   @@ pair ~sep:(const string "→") Var.pp
-                                   @@ Elo.pp_prim_exp)) res
-                        ))
+              (* |> Fun.tap (fun res -> *)
+              (*       Msg.debug (fun m -> *)
+              (*             m "sub_for %a = %a" *)
+              (*               (Fmtc.(list Tuple.pp)) tuples *)
+              (*               (Fmtc.(brackets *)
+              (*                      @@ list *)
+              (*                      @@ pair ~sep:(const string "→") Var.pp *)
+              (*                      @@ Elo.pp_prim_exp)) res *)
+              (*           )) *)
             in
 
             (* [pos_or_neg] tells whether the quantifier was a [no ...], in
@@ -494,14 +494,14 @@ module Make (Ltl : Solver.LTL) = struct
                     @@ (Elo.substitute#visit_prim_fml
                           (sub_for tuples)
                           (G.block blk)
-                          |> Fun.tap (fun s ->
-                                Msg.debug (fun m ->
-                                      m "%a[%a] -->@   %a"
-                                        Elo.pp_block blk
-                                        Fmtc.(list @@ pair ~sep:(const string " := ")
-                                                        Var.pp Elo.pp_prim_exp)
-                                        (sub_for tuples)
-                                        Elo.pp_prim_fml s))
+                          (* |> Fun.tap (fun s -> *)
+                          (*       Msg.debug (fun m -> *)
+                          (*             m "%a[%a] -->@   %a" *)
+                          (*               Elo.pp_block blk *)
+                          (*               Fmtc.(list @@ pair ~sep:(const string " := ") *)
+                          (*                               Var.pp Elo.pp_prim_exp) *)
+                          (*               (sub_for tuples) *)
+                          (*               Elo.pp_prim_fml s)) *)
                        )) (* blk [tuples / xs] *)
             in
             Msg.debug (fun m ->
@@ -535,7 +535,7 @@ module Make (Ltl : Solver.LTL) = struct
                           List.(to_seq @@ sort_uniq ~cmp:Tuple.compare tuples)
                           (fun tuple -> lazy (s' tuple))
                       in
-                      Msg.debug (fun m -> m "(build_Quant.premise) %a" Ltl.pp premise);
+                      (* Msg.debug (fun m -> m "(build_Quant.premise) %a" Ltl.pp premise); *)
                       lazy (link premise @@ sem_of_substituted_blk tuples)
                    ))
             in
@@ -568,14 +568,14 @@ module Make (Ltl : Solver.LTL) = struct
 
     method build_LBin (env : 'env) f1 op f2 f1' op' f2' =
       op' f1 f2 f1' f2'
-      |> Fun.tap (fun res ->
-            Msg.debug (fun m ->
-                  m "build_LBin [[%a %a %a]] -->@ %a"
-                    Elo.pp_fml f1
-                    G.pp_lbinop op
-                    Elo.pp_fml f2
-                    Ltl.pp res
-                ))
+      (* |> Fun.tap (fun res -> *)
+      (*       Msg.debug (fun m -> *)
+      (*             m "build_LBin [[%a %a %a]] -->@ %a" *)
+      (*               Elo.pp_fml f1 *)
+      (*               G.pp_lbinop op *)
+      (*               Elo.pp_fml f2 *)
+      (*               Ltl.pp res *)
+      (*           )) *)
 
     method build_And (env : 'env) _ _ = fun a b -> and_ a (lazy b)
 
@@ -595,13 +595,13 @@ module Make (Ltl : Solver.LTL) = struct
 
     method build_LUn (env : 'env) op f op' f' =
       op' f f'
-      |> Fun.tap (fun res ->
-            Msg.debug (fun m ->
-                  m "[[%a %a]] -->@ %a"
-                    G.pp_lunop op
-                    Elo.pp_fml f
-                    Ltl.pp res
-                ))
+      (* |> Fun.tap (fun res -> *)
+      (*       Msg.debug (fun m -> *)
+      (*             m "[[%a %a]] -->@ %a" *)
+      (*               G.pp_lunop op *)
+      (*               Elo.pp_fml f *)
+      (*               Ltl.pp res *)
+      (*           )) *)
 
     method build_X (env : 'env) _ = next
 
@@ -621,14 +621,14 @@ module Make (Ltl : Solver.LTL) = struct
 
     method build_RComp (env : 'env) f1 op f2 f1' op' f2' =
       op' f1 f2 f1' f2'
-      |> Fun.tap (fun res ->
-            Msg.debug 
-              (fun m -> m "build_RComp [[%a %a %a]] --> %a"
-                          Elo.pp_exp f1
-                          G.pp_comp_op op
-                          Elo.pp_exp f2
-                          Ltl.pp res)
-          )
+      (* |> Fun.tap (fun res -> *)
+      (*       Msg.debug  *)
+      (*         (fun m -> m "build_RComp [[%a %a %a]] --> %a" *)
+      (*                     Elo.pp_exp f1 *)
+      (*                     G.pp_comp_op op *)
+      (*                     Elo.pp_exp f2 *)
+      (*                     Ltl.pp res) *)
+      (*     ) *)
 
 
     (* method build_REq (env : 'env) r s r' s' = *)
@@ -886,31 +886,31 @@ module Make (Ltl : Solver.LTL) = struct
 
     method build_Join (env : 'env) r s r' s' =  fun tuple ->
       let open List in
-      Msg.debug (fun m ->
-            m "build_Join <-- [[%a . %a]](%a) "
-              Elo.pp_exp r
-              Elo.pp_exp s
-              Tuple.pp tuple);
+      (* Msg.debug (fun m -> *)
+      (*       m "build_Join <-- [[%a . %a]](%a) " *)
+      (*         Elo.pp_exp r *)
+      (*         Elo.pp_exp s *)
+      (*         Tuple.pp tuple); *)
       let rlist = lazy (TS.to_list (env#must_may_sup r).sup) in
       let slist = lazy (TS.to_list (env#must_may_sup s).sup) in
       let pairs = eligible_pairs (tuple, rlist, slist) in
-      Msg.debug (fun m ->
-            m "build_Join: eligible pairs: %a"
-              (Sequence.pp_seq ~sep:","
-               @@ Fmtc.parens @@
-               Fmtc.(pair ~sep:comma) Tuple.pp Tuple.pp)
-              pairs
-          );
+      (* Msg.debug (fun m -> *)
+      (*       m "build_Join: eligible pairs: %a" *)
+      (*         (Sequence.pp_seq ~sep:"," *)
+      (*          @@ Fmtc.parens @@ *)
+      (*          Fmtc.(pair ~sep:comma) Tuple.pp Tuple.pp) *)
+      (*         pairs *)
+      (*     ); *)
       vee ~range:pairs (fun (bs, cs) ->
             lazy (r' bs +&& lazy (s' cs)))
-      |> Fun.tap (fun res ->
-            Msg.debug (fun m ->
-                  m "build_Join [[%a . %a]](%a) --> %a"
-                    Elo.pp_exp r
-                    Elo.pp_exp s
-                    Tuple.pp tuple
-                    Ltl.pp res
-                ))
+      (* |> Fun.tap (fun res -> *)
+      (*       Msg.debug (fun m -> *)
+      (*             m "build_Join [[%a . %a]](%a) --> %a" *)
+      (*               Elo.pp_exp r *)
+      (*               Elo.pp_exp s *)
+      (*               Tuple.pp tuple *)
+      (*               Ltl.pp res *)
+      (*           )) *)
 
 
 
