@@ -114,7 +114,7 @@ rule main infile = parse
     { AND }
 | "in"
     { IN }
-| "not" (whitespace | newline)+ "in" (* TODO: take comments into account *)
+| ("not" | "!") (whitespace | newline)+ "in" (* TODO: take comments into account *)
     { NOT_IN}
 | "inst"
     { INST }
@@ -142,6 +142,8 @@ rule main infile = parse
   { HASH }
 | "!="
     { NEQ }
+| "!"
+    { NOT }
 | "'"
     { PRIME }
 | ";"
