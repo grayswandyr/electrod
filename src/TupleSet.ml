@@ -1,7 +1,7 @@
 [@@@landmark "auto"]
 open Containers
 
-(*$inject open Testing *)
+(*$inject open Test *)
 
 module TS = Tuple.Set
 

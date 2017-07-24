@@ -1,6 +1,6 @@
 (*${*) open Containers (*$}*)
 
-(*$inject open Testing *)
+(*$inject open Test *)
 
 type t = {
   contents : Atom.t Array.t;

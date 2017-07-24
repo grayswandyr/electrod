@@ -204,6 +204,7 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
     | And (p, q) -> or_ (not_ p) (lazy (not_ q))
     | Or (p, q) -> and_ (not_ p) (lazy (not_ q))
     | Imp (p, q) -> and_ p (lazy (not_ q))
+    | Not q -> q
     | p -> Not p
 
   and implies p q = match p, q with
