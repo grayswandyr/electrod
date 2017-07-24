@@ -52,7 +52,7 @@ and lbinop =
   | Imp 
   | Iff 
   | U
-  | R                           (* release *)
+  | R                           (* releases *)
   | S                           (* since *)
 
 and lunop = 
@@ -200,7 +200,7 @@ let iff = Iff
 
 let until = U
 
-let release = R
+let releases = R
 
 let since = S
 
@@ -440,7 +440,7 @@ and pp_lbinop out x =
   | Imp -> "implies"
   | Iff -> "iff"
   | U -> "until"
-  | R -> "release"
+  | R -> "releases"
   | S -> "since"
 
 and pp_quant out x =

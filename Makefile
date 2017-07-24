@@ -17,7 +17,7 @@ all: byte
 clean:
 	$(OCB) -clean
 	$(OCB) -clean -build-dir _coverage
-	rm bisect*.out run_tests.qtestpack 2> /dev/null || true
+	rm bisect*.out run_tests.qtestpack doc/intro.text 2> /dev/null || true
 
 native: 
 	$(OCB) $(MAIN).native
