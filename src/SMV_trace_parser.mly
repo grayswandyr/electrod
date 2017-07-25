@@ -29,6 +29,15 @@ end>
          end
     in walk D.base ntl
 
+
+  let met_one_loop = ref false
+
+  let rec tag_last_as_loop = function
+    | [] -> assert false
+    | [ st ] -> [ Trace.to_loop st ]
+    | hd::tl -> hd :: tag_last_as_loop tl
+       
+
 %}
   
 %start <Trace.t> trace
@@ -39,14 +48,20 @@ end>
 
 %public trace:
 states = state+ EOF 
-    { Trace.make states }
+    {
+      Trace.make
+      (if !met_one_loop
+       then states
+       else tag_last_as_loop states)
+    }
 
-state:
+ state:
     loop = iboption(LOOP) STATE ntl = atomic*
     {
       let valu = Trace.valuation @@ convert_name_tuple_l ntl in
       if loop then
-        Trace.loop_state valu
+        (met_one_loop := true;
+         Trace.loop_state valu)
       else
         Trace.plain_state valu
     }

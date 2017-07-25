@@ -17,6 +17,8 @@ val iden : t
 
 (** Tells whether two names are the same *)
 val equal : t -> t -> bool
+  
+val compare : t -> t -> int
 
 val style : Fmt.style
 

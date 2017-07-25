@@ -17,7 +17,7 @@ all: byte
 clean:
 	$(OCB) -clean
 	$(OCB) -clean -build-dir _coverage
-	rm bisect*.out run_tests.qtestpack 2> /dev/null || true
+	rm bisect*.out run_tests.qtestpack doc/intro.text 2> /dev/null || true
 
 native: 
 	$(OCB) $(MAIN).native
@@ -35,8 +35,8 @@ landmarks:
 	$(OCB) -pkg landmarks.ppx -pkg landmarks $(MAIN).native
 
 test: test-requisites
-	find src/ -name '*.ml' -printf "%f\n" | grep -v electrod.ml \
-		| grep -v Main.ml | xargs -r basename -s .ml > ./run_tests.qtestpack
+	ocamldep -one-line -all -sort src/*.ml | sed 's/.ml//g' | sed 's/src\///g' \
+	| sed 's/electrod//' | sed 's/Main//'> ./run_tests.qtestpack
 	$(OCB) -pkgs bisect_ppx,oUnit,qcheck run_tests.byte
 	./run_tests.byte
 	bisect-ppx-report -I _build -html _coverage/ bisect*.out
@@ -70,9 +70,7 @@ doc: all doc-requisites
 
 
 test-requisites:
-	@which find > /dev/null
-	@which xargs > /dev/null
-	@which grep > /dev/null
+	@which sed > /dev/null
 
 doc-requisites:
 	@which echo > /dev/null

@@ -91,18 +91,24 @@ let main style_renderer verbosity tool file scriptfile keep_files =
 
     let elo =
       Parser_main.parse_file file
-      |> Fun.tap (fun _ -> Msg.info (fun m -> m "Parsing OK."))
+      |> Fun.tap (fun _ -> Msg.info (fun m -> m "Parsing done"))
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
-      |> Fun.tap (fun _ -> Msg.info (fun m -> m "Static analysis OK."))
+      |> Fun.tap (fun _ -> Msg.info (fun m -> m "Static analysis done"))
       (* |> Fun.tap (fun elo -> Msg.debug (fun m -> m "After raw_to_elo =@\n%a@." (Elo.pp) elo)) *)
       |> Transfo.(get_exn elo_to_elo_t "simplify1" |> run)
       |> Fun.tap (fun elo -> Msg.debug (fun m -> m "After simplify1 =@\n%a@." (Elo.pp) elo))
-      |> Fun.tap (fun _ -> Msg.info (fun m -> m "Simplification OK."))
+      |> Fun.tap (fun _ -> Msg.info (fun m -> m "Simplification done"))
     in
+    let before_conversion = Mtime_clock.now () in
     let model =
       elo
       |> Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) 
-      |> Fun.tap (fun _ -> Msg.info (fun m -> m "Conversion OK."))
+      |> Fun.tap (fun _ ->
+            Msg.info (fun m ->
+                  m "Conversion done in %a"
+                    Mtime.Span.pp
+                    (Mtime.span before_conversion @@ Mtime_clock.now ())
+                ))
     in
     (* let sup_r = Domain.sup (Name.name "r") elo.domain in *)
     (* let tc_r = TupleSet.transitive_closure sup_r in *)

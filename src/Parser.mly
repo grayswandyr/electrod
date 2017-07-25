@@ -311,7 +311,7 @@ formula :
 	| UNTIL
 	{ G.until }
 	| RELEASES
-	{ G.release }
+	{ G.releases }
 	| SINCE
 	{ G.since }
 
