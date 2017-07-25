@@ -212,7 +212,7 @@ specification:
  
 %inline goal:
 	RUN fs = formula_semi+
-	{ G.run fs }
+{G.run fs  }
 	| CHECK fs = formula_semi+
 	{ G.check fs }
 

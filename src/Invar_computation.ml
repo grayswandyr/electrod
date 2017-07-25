@@ -29,17 +29,27 @@ let max_color_wi c1 c2 =
   | _ , _ -> Temporal
 
 (* removes the top level always operator in an invariant elo formula *)
-let rec remove_always_in_invar f =
+let rec remove_always_to_invar f =
   let open GenGoal in
   let {prim_fml; fml_loc} = f in
   match prim_fml with
   | LUn (G, subfml) -> subfml
   | LBin (fml1, And, fml2) ->
-     let fml1' = remove_always_in_invar fml1 in
-     let fml2' = remove_always_in_invar fml2 in
+     let fml1' = remove_always_to_invar fml1 in
+     let fml2' = remove_always_to_invar fml2 in
      {prim_fml= lbinary fml1' And fml2'; fml_loc}
   | _ -> f
-               
+
+(* adds an always operator to an (invariant) elo formula if the
+outermost operator is not an always *)
+let rec add_always_to_invar f =
+  let open GenGoal in
+  let {prim_fml; fml_loc} = f in
+  match prim_fml with
+  | LUn (G, _) -> f
+  | _ -> {prim_fml = lunary G f; fml_loc}
+
+           
   class ['env] invarComputation = object (self : 'self)
     inherit ['self] GenGoal.fold as super
                                       
