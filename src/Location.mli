@@ -14,6 +14,9 @@ val begc : t -> int
 val endl : t -> int
 val endc : t -> int
 
+val to_ints : t -> (int * int) * (int * int)
+
+
 (** Merge two positions *)
 val span : t * t -> t
 

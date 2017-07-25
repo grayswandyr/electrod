@@ -53,13 +53,11 @@ module Extract = struct
   let lines file loc = match file with
     | None -> []
     | Some f ->
-        CCIO.(
-          with_in f @@ fun ic ->
-          CCIO.read_lines ic
-          |> Gen.drop (Int.max 0 Location.(begl loc - 1))
-          |> Gen.take (Int.max 1 Location.(1 + endl loc - begl loc))
-          |> Gen.to_list
-        )
+        IO.(with_in f @@ fun ic ->
+            IO.read_lines ic
+            |> Gen.drop (Int.max 0 Location.(begl loc - 1))
+            |> Gen.take (Int.max 1 Location.(1 + endl loc - begl loc))
+            |> Gen.to_list)
 
   (* splits the string into 2 parts, the first containing [nb] characters *)
   let split_string s nb =
@@ -81,12 +79,12 @@ module Extract = struct
           @@ list ~sep:Format.pp_force_newline string)
          string) 
   
-  let extract file loc =
+  let extract file loc = 
     let lines = lines file loc in
     let innocent_first_last_idx = Int.max 0 (Location.begc loc) in
     let suspect_last_last_idx = Int.max 0 (Location.endc loc) in
     match lines with
-      | [] -> assert false
+      | [] -> ("", ([], ""))
       | [line] ->
           (* trick : cut first the last part *)
           let first_part, innocent_last =
@@ -142,7 +140,7 @@ module Fatal = struct
                 (Lexing.lexeme_start_p lexbuf)
                 (Lexing.lexeme_end_p lexbuf) in
     m ~header:(code 2)
-      "%s:%a: syntax error: %a%a"
+      "%s:%a: syntax error %a%a"
       file
       Loc.pp loc
       (* (print_extract ~color:error_color) (file, loc); *)
