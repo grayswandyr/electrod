@@ -8,7 +8,9 @@ var wife : {} Man->Woman
 var husband : {} Woman->Man
 
 
+
 invariant
+
 -- husband in Woman -> lone Man
 husband in Woman->Man
 all w : Woman | lone w.husband
@@ -23,3 +25,4 @@ husband = ~wife
 run
 no husband
 sometime some husband
+
