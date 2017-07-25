@@ -103,9 +103,9 @@ struct
 
     (* handling the goal *)
     let goal_blk = match elo.goal with GenGoal.Run g | GenGoal.Check g -> g in
-
+    
     (* Partition blk fmls into invars and non invars *)
-    let general_fmls, invar_init_fmls =
+    let tmp_general_fmls, tmp_invar_fmls =
       let open Invar_computation in
       List.partition_map
         (fun fml ->
@@ -113,7 +113,7 @@ struct
           Msg.debug (fun m -> m
                     "Color of formula %a : %a\n" Elo.pp_fml fml Invar_computation.pp color);
           match color with
-          | Invar | Static_prop | Init -> `Right (remove_always_in_invar fml)
+          | Invar | Static_prop -> `Right (remove_always_to_invar fml)
           | _ -> `Left (fml)
         )
         goal_blk
@@ -121,21 +121,52 @@ struct
     Msg.debug (fun m ->
         m
         "Detected invariants : %a"
-        Elo.pp_block invar_init_fmls
+        Elo.pp_block tmp_invar_fmls
       );
-    
-    let (rigid_goal, flex_goal, property) =
-      ConvertFormulas.convert elo
-      @@ GenGoal.(List.fold_left
-                    (fun x y -> fml (Location.span (x.fml_loc, y.fml_loc))
-                      @@ lbinary x and_ y)
-                    (fml Location.dummy true_) general_fmls(*goal_blk*))
+
+    (* From the list f1;f2; ...fn of the goal formulas that are not
+    invariant, the LTLSPEC formula is "f1 and f2 ... and fn-1 implies
+    not fn".  spec_fml is "not fn" *)
+ 
+    let general_fmls, invar_fmls, tmp_spec_fml =
+      match (List.rev tmp_general_fmls), tmp_invar_fmls with
+      | hd::tl, _ -> (tl, tmp_invar_fmls, hd)
+      | [], hd::tl -> (tmp_general_fmls, tl,
+                       Invar_computation.add_always_to_invar hd)
+      |  _ -> assert false;
     in
 
+    (* build "f1 and ... and fn-1" *)
+    let premise_ltlspec_fml =
+      GenGoal.(List.fold_left
+                    (fun x y -> fml (Location.span (x.fml_loc, y.fml_loc))
+                      @@ lbinary x and_ y)
+                    (fml Location.dummy true_) general_fmls)
+    in
+
+    (* build "not fn" *)  
+    let spec_fml =
+      let open GenGoal in
+      match tmp_spec_fml.prim_fml with
+      | LUn (Not, subfml) -> subfml
+      | _ -> fml tmp_spec_fml.fml_loc @@ lunary Not tmp_spec_fml 
+    in
+
+    Msg.debug (fun m ->
+        m "Right hand-side of LTLSPEC : %a" Elo.pp_fml spec_fml);
+                       
+    let ltlspec_fml =
+      GenGoal.(fml premise_ltlspec_fml.fml_loc @@
+                   lbinary premise_ltlspec_fml Imp spec_fml)
+    in
+    
+    let (rigid_goal, flex_goal, property) =
+      ConvertFormulas.convert elo ltlspec_fml
+    in
 
     (* handling invariants *)
     let (rigid_inv, flex_inv, invars) =
-      translate_formulas invar_init_fmls (* elo.Elo.invariants*)
+      translate_formulas invar_fmls (* elo.Elo.invariants *)
     in
 
 
