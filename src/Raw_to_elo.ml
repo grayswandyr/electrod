@@ -716,29 +716,29 @@ let compute_arities elo =
     val arities =
       Domain.arities elo.Elo.domain
       |> List.map (fun (n, a) -> (Elo.Name n, Some a))
-      |> Fun.tap (fun ars ->
-            Msg.debug (fun m ->
-                  m "compute_arities.initial arities = %a"
-                    Fmtc.(brackets @@
-                          list ~sep:sp
-                          @@ pair ~sep:(const string "→")
-                               Elo.pp_ident (option int)) ars ))
+      (* |> Fun.tap (fun ars -> *)
+      (*       Msg.debug (fun m -> *)
+      (*             m "compute_arities.initial arities = %a" *)
+      (*               Fmtc.(brackets @@ *)
+      (*                     list ~sep:sp *)
+      (*                     @@ pair ~sep:(const string "→") *)
+      (*                          Elo.pp_ident (option int)) ars )) *)
 
     val domain = elo.Elo.domain
 
     method update pairs =
-      Msg.debug (fun m ->
-            m "compute_arities.update %a"
-              Fmtc.(list ~sep:sp @@ pair Var.pp (option int)) pairs);
+      (* Msg.debug (fun m -> *)
+      (*       m "compute_arities.update %a" *)
+      (*         Fmtc.(list ~sep:sp @@ pair Var.pp (option int)) pairs); *)
       {< arities = (List.map (fun (v, ar) -> (Elo.Var v, ar)) pairs) @ arities >}
 
     method arity ident =
       List.Assoc.get_exn ~eq:Elo.equal_ident ident arities
-      |> Fun.tap (fun ar ->
-            Msg.debug (fun m -> m "compute_arities.arity %a --> %a"
-                                  Elo.pp_ident ident
-                                  Fmtc.(option int) ar
-                      ))
+      (* |> Fun.tap (fun ar -> *)
+      (*       Msg.debug (fun m -> m "compute_arities.arity %a --> %a" *)
+      (*                             Elo.pp_ident ident *)
+      (*                             Fmtc.(option int) ar *)
+      (*                 )) *)
   end
   in
   let walk_goal ctx = function
