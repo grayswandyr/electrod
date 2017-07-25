@@ -333,7 +333,24 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
   let analyze ~cmd ~script ~keep_files ~elo ~file model =
     (* TODO check whether nuXmv is installed first *)
     let scr = make_script_file script in
+    let before_generation = Mtime_clock.now () in
     let smv = make_model_file file model in
+    let after_generation = Mtime_clock.now () in
+    Msg.info (fun m ->
+          let size, unit_ =
+            let s = Unix.((stat smv).st_size) in
+            if s < 1_000 then
+              (s, "B")
+            else if s < 1_000_000 then
+              (s / 1_000, "KB")
+            else if s < 1_000_000_000 then
+              (s / 1_000_000, "MB")
+            else
+              (s / 1_000_000_000, "GB")
+          in
+          m "SMV file (size: %d%s) generated in %a"
+            size unit_
+            Mtime.Span.pp (Mtime.span before_generation after_generation));
     (* TODO make things s.t. it's possible to set a time-out *)
     let to_call = Fmt.strf "%s -source %s %s" cmd scr smv in
     Msg.info (fun m -> m "Starting analysis:@ @[<h>%s@]" to_call);
@@ -347,37 +364,37 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     else (* running nuXmv goes well: parse its output *)
       Msg.info (fun m -> m "Analysis done in %a" Mtime.Span.pp
                  @@ Mtime.span before_run after_run);
-      let spec =
-        String.lines_gen okout
-        |> Gen.drop_while
-             (fun line ->
-                not @@ String.suffix ~suf:"is false" line
-                && not @@ String.suffix ~suf:"is true" line)
-      in
-      if not keep_files then
-        ((match script with
-            | Solver.Default _ -> IO.File.remove_noerr scr
-            | Solver.File _ -> ());
-         IO.File.remove_noerr smv)
-      else
-        Logs.app (fun m -> m "Analysis files kept at %s and %s"
-                             scr smv);
-      if String.suffix ~suf:"is true" @@ Gen.get_exn spec then
-        Solver.No_trace 
-      else
-        (* nuXmv says there is a counterexample so we parse it on the standard
-           output *)
-        (* first create a trace parser (it is parameterized by [base] below
-           which tells the parser the "must" associated to every relation in the
-           domain, even the ones not present in the SMV file because they have
-           been simplified away in the translation. This goes this way because
-           the trace to return should reference all relations, not just the ones
-           grounded in the SMV file.). NOTE: the parser expects a nuXmv trace
-           using the "trace plugin" number 1 (classical output (i.e. no XML, no
-           table) with information on all variables, not just the ones that have
-           changed w.r.t. the previous state.). *)
-        let module P =
-          SMV_trace_parser.Make(struct
+    let spec =
+      String.lines_gen okout
+      |> Gen.drop_while
+           (fun line ->
+              not @@ String.suffix ~suf:"is false" line
+              && not @@ String.suffix ~suf:"is true" line)
+    in
+    if not keep_files then
+      ((match script with
+          | Solver.Default _ -> IO.File.remove_noerr scr
+          | Solver.File _ -> ());
+       IO.File.remove_noerr smv)
+    else
+      Logs.app (fun m -> m "Analysis files kept@\nScript: %s@\nSMV file: %s"
+                           scr smv);
+    if String.suffix ~suf:"is true" @@ Gen.get_exn spec then
+      Solver.No_trace 
+    else
+      (* nuXmv says there is a counterexample so we parse it on the standard
+         output *)
+      (* first create a trace parser (it is parameterized by [base] below
+         which tells the parser the "must" associated to every relation in the
+         domain, even the ones not present in the SMV file because they have
+         been simplified away in the translation. This goes this way because
+         the trace to return should reference all relations, not just the ones
+         grounded in the SMV file.). NOTE: the parser expects a nuXmv trace
+         using the "trace plugin" number 1 (classical output (i.e. no XML, no
+         table) with information on all variables, not just the ones that have
+         changed w.r.t. the previous state.). *)
+      let module P =
+        SMV_trace_parser.Make(struct
             let base = Domain.musts ~with_univ_and_ident:false elo.Elo.domain
           end)
         in

@@ -1,8 +1,8 @@
 -- ~15s with 20
-univ : { M$1 .. M$4 W$1 .. W$4 }
+univ : { M$1 .. M$20 W$1 .. W$20 }
 
-const Man :{} { M$1 .. M$4 }
-const Woman : {} { W$1 .. W$4  }
+const Man :{} { M$1 .. M$20 }
+const Woman : {} { W$1 .. W$20  }
 
 var wife : {} Man->Woman
 var husband : {} Woman->Man

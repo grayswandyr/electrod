@@ -314,8 +314,8 @@ type outcome =
 let pp_outcome out =
   let open Fmtc in
   function
-    | No_trace -> pf out "{}"
-    | Trace t -> pf out "{ %a }" Trace.pp t
+    | No_trace -> pf out "--no trace--"
+    | Trace t -> pf out "@[<v>%a@]" Trace.pp t
     
 type script_type =
   | Default of string

@@ -32,14 +32,14 @@ open Fmtc
     
 let pp_valuation out valu =
   pf out "%a"
-    (list ~sep:sp
+    (hvbox @@ list ~sep:sp
      @@ pair ~sep:equal Name.pp TupleSet.pp)
   @@ List.sort (fun (n1, _) (n2, _) -> Name.compare n1 n2) valu
 
 let pp_state out = function
-  | Plain v -> (const string "  " **< brackets pp_valuation) out v 
-  | Loop v -> (const string "->" **< brackets pp_valuation) out v
+  | Plain v -> (const string "  " **< brackets_ pp_valuation) out v 
+  | Loop v -> (const string "->" **< brackets_ pp_valuation) out v
 
 let pp out trace =
   assert (trace <> []);
-  (vbox @@ list pp_state) out trace
+  list ~sep:sp pp_state out trace
