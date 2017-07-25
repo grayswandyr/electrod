@@ -1,5 +1,7 @@
 open Containers
 
+module H = Hashcons
+
 let nuXmv_default_script = {|
 set default_trace_plugin 1;
 set on_failure_script_quits 1;
@@ -132,7 +134,7 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
 
     let pp_tcomp out (t : tcomp) =
       pf out "%s"
-      @@ match t with
+      @@ match t.H.node with
       | Lte  -> "<="
       | Lt  -> "<"
       | Gte  -> ">="
@@ -170,6 +172,9 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
 *)
 
     let rec pp upper out f =
+      pp_t_node upper out f.H.node
+
+    and pp_t_node upper out f =
       assert (upper >= 0);
       match f with
         | True  -> pf out "TRUE"
@@ -201,7 +206,10 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
         | O p -> prefix ~paren:true upper upper string pp out ("O ", p)
         | H p -> prefix ~paren:true upper upper string pp out ("H ", p)
 
-    and pp_term upper out (t : term) = match t with
+    and pp_term upper out (t : term) = 
+      pp_term_node upper out t.H.node
+        
+    and pp_term_node upper out (t : term_node) = match t with
       | Num n -> pf out "%d" n
       | Plus (t1, t2) ->
           infixl ~paren:true upper 7 string pp_term pp_term out ("+", t1, t2)
@@ -338,17 +346,17 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     let after_generation = Mtime_clock.now () in
     Msg.info (fun m ->
           let size, unit_ =
-            let s = Unix.((stat smv).st_size) in
-            if s < 1_000 then
+            let s = float_of_int @@ Unix.((stat smv).st_size) in
+            if s < 1_000. then
               (s, "B")
-            else if s < 1_000_000 then
-              (s / 1_000, "KB")
-            else if s < 1_000_000_000 then
-              (s / 1_000_000, "MB")
+            else if s < 1_000_000. then
+              (s /. 1_000., "KB")
+            else if s < 1_000_000_000. then
+              (s /. 1_000_000., "MB")
             else
-              (s / 1_000_000_000, "GB")
+              (s /. 1_000_000_000., "GB")
           in
-          m "SMV file (size: %d%s) generated in %a"
+          m "SMV file (size: %.3f%s) generated in %a"
             size unit_
             Mtime.Span.pp (Mtime.span before_generation after_generation));
     (* TODO make things s.t. it's possible to set a time-out *)

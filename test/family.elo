@@ -9,20 +9,20 @@ var husband : {} Woman->Man
 
 
 
-invariant
+run
 
 -- husband in Woman -> lone Man
-husband in Woman->Man
-all w : Woman | lone w.husband
+always husband in Woman->Man
+always all w : Woman | lone w.husband
 
 
 -- wife in Man -> lone Woman
-wife in Man->Woman
-all m : Man | lone m.wife
+always wife in Man->Woman
+always all m : Man | lone m.wife
 
-husband = ~wife
+always husband = ~wife
 
-run
+
 no husband
 sometime some husband
 

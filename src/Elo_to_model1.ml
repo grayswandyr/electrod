@@ -104,6 +104,8 @@ struct
     (* handling the goal *)
     let goal_blk = match elo.goal with GenGoal.Run g | GenGoal.Check g -> g in
     
+    let before_invariant_detect = Mtime_clock.now () in
+    
     (* Partition blk fmls into invars and non invars *)
     let tmp_general_fmls, tmp_invar_fmls =
       let open Invar_computation in
@@ -118,10 +120,11 @@ struct
         )
         goal_blk
     in
-    Msg.debug (fun m ->
+    Msg.info (fun m ->
         m
-        "Detected invariants : %a"
+        "Detected invariants : %a (%a)"
         Elo.pp_block tmp_invar_fmls
+        Mtime.Span.pp (Mtime.span before_invariant_detect @@ Mtime_clock.now ())
       );
 
     (* From the list f1;f2; ...fn of the goal formulas that are not

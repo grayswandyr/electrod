@@ -1,10 +1,13 @@
 open Containers
 
+module H = Hashcons
+
 module type ATOMIC_PROPOSITION = sig
   type t
 
   val make : Name.t -> Tuple.t -> t
   val compare : t -> t -> int
+  val equal : t -> t -> bool
 
   val split : string -> Name.t * Tuple.t
   
@@ -18,7 +21,9 @@ module type LTL = sig
   val split_atomic : string -> Name.t * Tuple.t
   val compare_atomic : atomic -> atomic -> int
     
-  type tcomp = private
+  type tcomp = tcomp_node Hashcons_util.hash_consed
+
+  and tcomp_node = private
     | Lte 
     | Lt
     | Gte
@@ -26,7 +31,9 @@ module type LTL = sig
     | Eq 
     | Neq
 
-  type t = private
+  type t = t_node Hashcons_util.hash_consed
+
+  and t_node = private
     | Comp of tcomp * term * term
     | True
     | False
@@ -49,7 +56,9 @@ module type LTL = sig
     | S of t * t
     | T of t * t               
 
-  and term = private
+  and term = term_node Hashcons_util.hash_consed
+
+  and term_node = private
     | Num of int 
     | Plus of term * term
     | Minus of term * term
@@ -123,20 +132,34 @@ end
 
 
 module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t = struct
-  type tcomp = 
+  
+  type atomic = At.t
+                  
+  let pp_atomic at = At.pp at 
+
+  let equal_atomic at = At.equal at
+
+
+  let make_atomic at = At.make at
+  let compare_atomic at = At.compare at
+  let split_atomic at = At.split at
+
+  type tcomp =
+    tcomp_node Hashcons_util.hash_consed
+      [@equal fun a b -> equal_tcomp_node a.H.node b.H.node]
+
+  and tcomp_node = 
     | Lte 
     | Lt
     | Gte
     | Gt
     | Eq 
     | Neq
-  [@@deriving show]  
-
-  let pp_atomic = Atom.pp
-  
-  type atomic = At.t
 
   and t =
+    t_node Hashcons_util.hash_consed
+
+  and t_node = 
     | Comp of tcomp * term * term
     | True
     | False
@@ -151,15 +174,18 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
     | X of t
     | F of t
     | G of t
-    | Y of t                    (* yesterday *)
-    | O of t                    (* once *)
+    | Y of t
+    | O of t
     | H of t
-    | U of t * t                (* until *)
-    | R of t * t                (* releases *)
-    | S of t * t                (* since *)
-    | T of t * t                (* triggered *)  
+    | U of t * t
+    | R of t * t
+    | S of t * t
+    | T of t * t               
 
-  and term = 
+  and term =
+    term_node Hashcons_util.hash_consed
+
+  and term_node = 
     | Num of int 
     | Plus of term * term
     | Minus of term * term
@@ -167,52 +193,92 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
     | Count of t list
   [@@deriving show]             (* default impl. for pp; to override later *)
 
-  let make_atomic = At.make
-  let compare_atomic = At.compare
-  let split_atomic = At.split 
-  let atomic at = Atomic at
+  (* BEGIN tcomp hashconsing *)
+  module TComp = Hashcons.Make(struct
+    type t = tcomp_node
+    let hash x = Hashtbl.hash x
+		let equal x y = match x, y with 
+    | Lte, Lte
+    | Lt, Lt
+    | Gte, Gte
+    | Gt, Gt
+    | Eq, Eq 
+    | Neq, Neq -> true
+    | _ -> false
+  end)
 
-  let true_ = True
-  let false_ = False
+  let tcomp_table = TComp.create 29
 
-  let and_ p q = match p, q with
-    | False, _ -> False
-    | True, lazy q -> q
-    | _, lazy False -> False
-    | _, lazy True -> p
-    | _, lazy q -> And (p, q)
-
-  let or_ p1 p2 = match p1, p2 with
-    | True, _
-    | _, lazy True -> True
-    | False, lazy p
-    | p, lazy False -> p
-    | _, lazy q -> Or (p1, q)
+  let make_tcomp x = TComp.hashcons tcomp_table x
   
-  let xor p1 p2 = Xor (p1, p2)
+  let lt = make_tcomp Lt
+  let lte = make_tcomp Lte
+  let gt = make_tcomp Gt
+  let gte = make_tcomp Gte
+  let eq = make_tcomp Eq
+  let neq = make_tcomp Neq
+  (* END tcomp hashconsing *)
 
-  let iff p q = match p, q with
+
+  (* BEGIN t hashconsing *)
+  module T = Hashcons.Make(struct
+    type t = t_node
+    let hash x = Hashtbl.hash x
+		let equal x y = failwith "equal t TODO"
+  end)
+
+  let t_table = T.create 297
+
+  let make_t x = T.hashcons t_table x
+  
+  let atomic at = make_t @@ Atomic at
+  let true_ = make_t @@ True
+  let false_ = make_t @@ False
+
+  let and_ p q = match p.H.node, q with
+    | False, _ -> false_
+    | True, lazy q -> q
+    | _, lazy q ->
+        match q.H.node with
+          | False -> false_
+          | True -> p
+          | _ -> make_t @@ And (p, q)
+
+  let or_ p1 p2 = match p1.H.node, p2 with
+    | True, _ -> true_
+    | False, lazy p -> p
+    | p, lazy q ->
+        match q.H.node with
+          | False -> p1
+          | True -> true_
+          | _ -> make_t @@ Or (p1, q)
+  
+  let xor p1 p2 = make_t @@ Xor (p1, p2)
+
+  let iff p q = match p.H.node, q.H.node with
     | False, False
-    | True, True -> True
+    | True, True -> true_
     | False, True
-    | True, False -> False
-    | _, _ -> Iff (p, q)
+    | True, False -> false_
+    | _, _ -> make_t @@ Iff (p, q)
 
-  let rec not_ = function
-    | True -> False
-    | False -> True
+  let rec not_ p = match p.H.node with
+    | True -> false_
+    | False -> true_ 
     | And (p, q) -> or_ (not_ p) (lazy (not_ q))
     | Or (p, q) -> and_ (not_ p) (lazy (not_ q))
     | Imp (p, q) -> and_ p (lazy (not_ q))
     | Not q -> q
-    | p -> Not p
+    | _ -> make_t @@ Not p
 
-  and implies p q = match p, q with
-    | False, _ -> True
-    | _, lazy True -> True
+  and implies p q = match p.H.node, q with
+    | False, _ -> true_
     | True, lazy q2 -> q2
-    | _, lazy False -> not_ p
-    | _, lazy q2 -> Imp (p, q2)
+    | _, lazy q2 ->
+        match q2.H.node with
+          | True -> true_
+          | False -> not_ p
+          | _ -> make_t @@ Imp (p, q2)
 
   
 
@@ -227,50 +293,31 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
   (* let neg t = Neg t *)
   (* let comp op t1 t2 = Comp (op, t1, t2) *)
 
-  let conj =
-    List.fold_left (fun a b -> and_ a (lazy b)) true_
+  let conj fmls =
+    List.fold_left (fun a b -> and_ a (lazy b)) true_ fmls
 
-  let disj =
-    List.fold_left (fun a b -> or_ a (lazy b)) false_
+  let disj fmls =
+    List.fold_left (fun a b -> or_ a (lazy b)) false_ fmls
 
-  let ifthenelse c t e = match c with
+  let ifthenelse c t e = match c.H.node with
     | True -> t
     | False -> e
-    | _ -> Ite (c, t, e)
+    | _ -> make_t @@ Ite (c, t, e)
 
-  let next p = X p
-  let always p = G p
-  let eventually p = F p
+  let next p = make_t @@ X p
+  let always p = make_t @@ G p
+  let eventually p = make_t @@ F p
 
-  let yesterday p = Y p 
-  let once p = O p
-  let historically p = H p
+  let yesterday p = make_t @@ Y p 
+  let once p = make_t @@ O p
+  let historically p = make_t @@ H p
 
-  let until p1 p2 = U (p1, p2)
-  let releases p1 p2 = R (p1, p2)
-  let since p1 p2 = S (p1, p2)
-  let trigerred p1 p2 = T (p1, p2)
+  let until p1 p2 = make_t @@ U (p1, p2)
+  let releases p1 p2 = make_t @@ R (p1, p2)
+  let since p1 p2 = make_t @@ S (p1, p2)
+  let trigerred p1 p2 = make_t @@ T (p1, p2)
 
-  let num n = Num n
-  let plus t1 t2 = match t1, t2 with
-    | Num 0, _ -> t2
-    | _, Num 0 -> t1
-    | _ -> Plus (t1, t2)
-             
-  let minus t1 t2 = match t2 with
-    | Num 0 -> t1
-    | _ -> Minus (t1, t2)
-             
-  let neg t = match t with
-    | Neg _ -> t
-    | _ -> Neg t
-             
-  let count ps =
-    match List.filter (function False -> false | _ -> true) ps with
-      | [] -> num 0
-      | props -> Count props
-
-  let comp op t1 t2 = match op, t1, t2 with
+  let comp op t1 t2 = match op.H.node, t1.H.node, t2.H.node with
     | Eq, Num n, Num m when n = m -> true_
     | Lt, Num n, Num m when n < m -> true_
     | Lte, Num n, Num m when n <= m -> true_
@@ -279,14 +326,47 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
     | Neq, Num n, Num m when n <> m -> true_
     | (Lt | Lte | Gt | Gte | Neq), Num n, Num m when n = m -> false_
     | Eq, Num n, Num m when n <> m -> false_
-    | _ -> Comp (op, t1, t2)
+    | _ -> make_t @@ Comp (op, t1, t2)
+  (* END t hashconsing *)
+
+  (* BEGIN term hashconsing *)
+  module Term = Hashcons.Make(struct
+    type t = term_node
+    let hash x = Hashtbl.hash x
+		let equal x y = match x, y with
+      | Num n, Num m -> n = m 
+      | Plus (n1, m1), Plus (n2, m2) -> n1 == n2 && m1 == m2
+      | Minus (n1, m1), Minus (n2, m2) -> n1 == n2 && m1 == m2
+      | Neg n, Neg m -> n == m
+      | Count ps, Count qs ->
+          List.fold_left2 (fun acc p q -> p == q && acc) true ps qs
+      | _ -> false
+  end)
+
+  let term_table = Term.create 29
+
+  let make_term x = Term.hashcons term_table x
+                    
+  let num n = make_term @@ Num n
+                          
+  let plus t1 t2 = match t1.H.node, t2.H.node with
+    | Num 0, _ -> t2
+    | _, Num 0 -> t1
+    | _ -> make_term @@ Plus (t1, t2)
              
-  let lt = Lt
-  let lte = Lte
-  let gt = Gt
-  let gte = Gte
-  let eq = Eq
-  let neq = Neq
+  let minus t1 t2 = match t2.H.node with
+    | Num 0 -> t1
+    | _ -> make_term @@ Minus (t1, t2)
+             
+  let neg t = match t.H.node with
+    | Neg _ -> t
+    | _ -> make_term @@ Neg t
+             
+  let count ps =
+    match List.filter (fun p -> p.H.node != False) ps with
+      | [] -> num 0
+      | props -> make_term @@ Count props
+  (* END term hashconsing *)
                         
   let wedge ~range f =
     Sequence.fold (fun fml tuple -> and_ fml @@ f tuple) true_ range
@@ -297,13 +377,13 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
   module Infix = struct
     (* precedence: from strongest to weakest *)
     (* 1 *)
-    let ( !! ) = not_
+    let ( !! ) x = not_ x
     (* 2 *)
-    let ( +|| ) = or_
-    let ( +&& ) = and_
+    let ( +|| ) x y = or_ x y
+    let ( +&& ) x y = and_ x y
     (* 3 *)
-    let ( @=> ) = implies
-    let ( @<=> ) = iff
+    let ( @=> ) x y = implies x y
+    let ( @<=> ) x y = iff x y
   end
 end
 

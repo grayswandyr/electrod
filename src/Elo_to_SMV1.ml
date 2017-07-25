@@ -10,6 +10,8 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
 
   let pp = Symbol.pp
 
+  let equal = Symbol.equal
+
 
   (* table tracking which pair (name, tuple) a string comes from. Uses
      hahsconsing to make this more efficient *)

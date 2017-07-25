@@ -1,15 +1,7 @@
 open Containers
 
-(* to allow deriving show, we must make this special redefinition *)
-module M = struct
-  type +'a hash_consed = 'a Hashcons.hash_consed = private {
-    hkey : int;
-    tag : int;
-    node : 'a }
-  [@@deriving show]
-end;;
-
-type t = string M.hash_consed
+(* Hashcons_util stands for Hashcons, see Hashcons_util.ml *)
+type t = string Hashcons_util.hash_consed
 
 module H = Hashcons.Make(struct
     type t = string
@@ -26,13 +18,17 @@ let table = H.create 297
 let make s =
   H.hashcons table s
 
-let hash sym = sym.M.tag
+let hash sym =
+  let open Hashcons in
+  sym.tag
 
 let compare s1 s2 =
   let open Hashcons in
   Int.compare s1.tag s2.tag
 
-let equal x1 x2 = x1.M.tag = x2.M.tag
+let equal x1 x2 =
+  let open Hashcons in
+  x1.tag = x2.tag
 
 let pp out at =
   let open Hashcons in
