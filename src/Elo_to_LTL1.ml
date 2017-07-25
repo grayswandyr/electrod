@@ -384,18 +384,6 @@ module Make (Ltl : Solver.LTL) = struct
   (*              eligible_pairs) *)
 
 
-(*   class ['env] invarComputation = object (self : 'self) *)
-(*     inherit ['self] GenGoal.fold as super *)
-(*     method build_Ident *)
-(*              (env : (Var.t, (Elo.var, Elo.ident) G.prim_exp) CCList.Assoc.t ) *)
-(*              (id : Elo.ident) = *)
-(*       match id with *)
-(*       | Var var when List.Assoc.mem ~eq:Var.equal var env -> *)
-(*          List.Assoc.get_exn ~eq:Var.equal var env *)
-(*       | Var _ | Name _ | Tuple _ -> G.ident id *)
-
-(* end *)
-
   class ['env] converter = object (self : 'self)
     inherit ['self] GenGoalRecursor.recursor as super
 
@@ -1032,16 +1020,29 @@ module Make (Ltl : Solver.LTL) = struct
 
     method atoms =              (* TODO remove seq and return set *)
       Pair.map_same AS.to_seq (rigid_atoms, flexible_atoms)
+
+    method is_const (name : Name.t) =
+      assert (Domain.mem name elo.Elo.domain);
+      Domain.get_exn name elo.Elo.domain |> Relation.is_const
   end
 
-
+  (* Computes the color (Invar, Static_prop, Init or Temporal) of an
+  elo formula *)                                     
+  let color elo elo_fml =
+    let open Elo in
+    let open Invar_computation in
+    let env = new environment elo in
+    let color = (new invarComputation)#visit_fml env elo_fml in
+    color
+      
   (* Converts an Elo formula to an LTL formula, gathering at the same time the
      rigid and flexible variables having appeared during the walk. *)
   let convert elo elo_fml =
     let open Elo in
-    let env = new environment elo in
+    let env = new environment elo in    
     let ltl_fml = (new converter)#visit_fml env elo_fml in
     let (rigid, flexible) = env#atoms in
     (rigid, flexible, ltl_fml)
 
+      
 end

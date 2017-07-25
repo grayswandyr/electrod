@@ -99,20 +99,43 @@ struct
 
 
     (* handling the goal *)
-    let goal_fml = match elo.goal with GenGoal.Run g | GenGoal.Check g -> g in
+    let goal_blk = match elo.goal with GenGoal.Run g | GenGoal.Check g -> g in
+
+    (* Partition blk fmls into invars and non invars *)
+    let general_fmls, invar_init_fmls =
+      let open Invar_computation in
+      List.partition_map
+        (fun fml ->
+          let color = ConvertFormulas.color elo fml in
+          Msg.debug (fun m -> m
+                    "Color of formula %a : %a\n" Elo.pp_fml fml Invar_computation.pp color);
+          match color with
+          | Invar | Static_prop | Init -> `Right (remove_always_in_invar fml)
+          | _ -> `Left (fml)
+        )
+        goal_blk
+    in
+    Msg.debug (fun m ->
+        m
+        "Detected invariants : %a"
+        Elo.pp_block invar_init_fmls
+      );
+    
     let (rigid_goal, flex_goal, property) =
       ConvertFormulas.convert elo
       @@ GenGoal.(List.fold_left
                     (fun x y -> fml (Location.span (x.fml_loc, y.fml_loc))
                       @@ lbinary x and_ y)
-                    (fml Location.dummy true_) goal_fml)
+                    (fml Location.dummy true_) general_fmls(*goal_blk*))
     in
 
     (* handling symmetries *)
     let (rigid_syms, flex_syms, syms_fmls) = syms_to_ltl elo in
 
     (* handling invariants *)
-    let (rigid_inv, flex_inv, invars) = translate_formulas elo.Elo.invariants in
+    let (rigid_inv, flex_inv, invars) =
+      translate_formulas invar_init_fmls (* elo.Elo.invariants*)
+    in
 
     let rigid = Sequence.(append rigid_syms (append rigid_inv rigid_goal)) in
     let flexible = Sequence.(append flex_syms (append flex_goal flex_inv)) in 
