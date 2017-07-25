@@ -293,7 +293,7 @@ module Fatal = struct
     fun infile id ->
     let loc = Raw_ident.location id in
     m ~header:(code 15)
-      "%a%a: the arity of %S cannot be inferred, please specify it explicitly%a"
+      "%a%a: the arity of %S cannot be inferred, specify it explicitly%a"
       (option @@ colon **> string) infile
       Loc.pp loc
       (Raw_ident.basename id)

@@ -306,7 +306,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
        @@ semi **>
           const string "LTLSPEC NAME spec :=" **<
           sp **<
-          Ltl.pp) (Ltl.not_ property);
+          Ltl.pp) property;
     Format.pp_set_margin out old_margin 
 
     

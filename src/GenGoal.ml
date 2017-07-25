@@ -81,7 +81,7 @@ and icomp_op =
 and ('v, 'i) exp = {
   prim_exp : ('v, 'i) prim_exp;
   exp_loc : (Location.t [@opaque]);
-  mutable arity : (int option [@opaque]);   (* None for none or Some n where n > 0 *)
+  arity : (int option [@opaque]);   (* None for none or Some n where n > 0 *)
 }
 
 and ('v, 'i) prim_exp =

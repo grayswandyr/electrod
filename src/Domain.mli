@@ -38,6 +38,10 @@ val sup : Name.t -> t -> TupleSet.t
 (** Returns the association list between relation names and their "must" set.  *)
 val musts : ?with_univ_and_ident:bool -> t -> (Name.t, TupleSet.t) List.Assoc.t 
 
+
+(** Returns the association list between relation names and their arity.  *)
+val arities : t -> (Name.t, int) List.Assoc.t 
+
 (** For every entry in [inst], [update_domain_with_instance dom inst] replaces
     the corresponding relation in [dom] with the exact scope given by [inst]. *)
 val update_domain_with_instance : t -> Instance.t -> t

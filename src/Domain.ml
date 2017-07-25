@@ -63,6 +63,9 @@ let musts ?(with_univ_and_ident = true) domain =
   |>  Map.map Relation.must 
   |> to_list
 
+let arities =
+  Fun.(Map.map Relation.arity %> to_list)
+
 let update_domain_with_instance domain instance =
   let module R = Relation in
   let module I = Instance in
