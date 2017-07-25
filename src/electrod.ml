@@ -11,17 +11,17 @@ let infile =
 
 
 let tool =
-  let doc = {|Analysis tool to rely upon. TOOL must be one of `nuXmv' or \
+  let doc = {|Analysis tool to rely upon. TOOL must be one of `nuXmv' or 
               `NuSMV'.|}
   in
   Arg.(value & opt (enum [ ("nuXmv", Main.NuXmv); ("NuSMV", Main.NuSMV)]) Main.NuXmv
        & info ["t"; "tool"] ~docv:"TOOL" ~doc)
 
 let script =
-  let doc = {|Script to pass to the analysis tool (default: homemade nuXmv \
-              script calling 'check_ltlspec_klive'). A script file for nuXmv \
-              or NuSMV MUST set both options `default_trace_plugin' and \
-              `on_failure_script_quits' to '1'. NOTICE: no verification \
+  let doc = {|Script to pass to the analysis tool (default: homemade nuXmv 
+              script calling 'check_ltlspec_klive'). A script file for nuXmv 
+              or NuSMV MUST set both options `default_trace_plugin' and 
+              `on_failure_script_quits' to '1'. NOTICE: no verification 
               of the script file is made whatsoever. |} in
   Arg.(value & opt (some non_dir_file) None
        & info ["s"; "script"] ~docv:"FILE" ~doc)
@@ -50,10 +50,10 @@ let main_term =
         $ keep_files)
 
 let third_party_blurb =
-  {|Electrod relies on the following third-party free software, \
-    released under their respective licence (see the respective \
-    OPAM repositories for the full text of the licences): cmdliner, \
-    mtime, fmt, logs, containers, sequence, gen, hashcons, \
+  {|Electrod relies on the following third-party free software, 
+    released under their respective licence (see the respective 
+    OPAM repositories for the full text of the licences): cmdliner, 
+    mtime, fmt, logs, containers, sequence, gen, hashcons, 
     ppx_deriving, visitors.|}
 
 let author_blurb = {|Julien BRUNEL (ONERA), David CHEMOUIL (ONERA).|}

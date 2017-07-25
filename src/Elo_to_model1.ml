@@ -97,6 +97,9 @@ struct
         (*   Early_stop -> Sequence.(empty, empty, Ltl.false_) *)
     in
 
+    (* handling symmetries *)
+    let (rigid_syms, flex_syms, syms_fmls) = syms_to_ltl elo in
+
 
     (* handling the goal *)
     let goal_blk = match elo.goal with GenGoal.Run g | GenGoal.Check g -> g in
@@ -129,13 +132,12 @@ struct
                     (fml Location.dummy true_) general_fmls(*goal_blk*))
     in
 
-    (* handling symmetries *)
-    let (rigid_syms, flex_syms, syms_fmls) = syms_to_ltl elo in
 
     (* handling invariants *)
     let (rigid_inv, flex_inv, invars) =
       translate_formulas invar_init_fmls (* elo.Elo.invariants*)
     in
+
 
     let rigid = Sequence.(append rigid_syms (append rigid_inv rigid_goal)) in
     let flexible = Sequence.(append flex_syms (append flex_goal flex_inv)) in 

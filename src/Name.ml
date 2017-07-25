@@ -18,6 +18,8 @@ let iden = "iden"
 
 let equal = String.equal
 
+let compare = String.compare
+
 let style = `Cyan
 
 let pp out name =

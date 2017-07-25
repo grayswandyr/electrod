@@ -57,17 +57,6 @@ let parse_file file =
   with P.Error ->
     Msg.Fatal.syntax @@ fun args -> args file lexbuf
 
-(*$inject   
-  let str = "univ : { a a a a$1 .. a$4 a$3 .. a$22 }; sat true"
-
-*)
-
-(*$T parse_string 
-
-  qtest_exn parse_string str 
-
-  try ignore (parse_string "univ : { a a a a$1 .. a$4 a$3 .. a$22 } sat true"); true with P.Error -> false
-*)
 let parse_string s = 
   let lexbuf = Lexing.from_string s in
   let raw_univ, raw_decls, raw_paragraphs =

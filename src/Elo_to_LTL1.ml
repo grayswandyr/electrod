@@ -447,7 +447,15 @@ module Make (Ltl : Solver.LTL) = struct
               (* remove lines where there are tuples in common if [disj = true] *)
               |> (if disj then
                     filter (fun l -> length l = length @@ sort_uniq l) else Fun.id)
-              (* Cast. This ain't cool as we lose all the benefit of the lazy nature of sequences *)
+              (* |> Fun.tap (fun res -> Msg.debug (fun m-> *)
+              (*       m "tuples_of_sim_binding (disj:%B) vars:%a domain:%a@\n  -->@ %a " *)
+              (*         disj *)
+              (*         Fmtc.(brackets @@ list ~sep:sp Elo.pp_var) vars *)
+              (*         Fmtc.(braces @@ list ~sep:comma Tuple.pp) dom *)
+              (*         Fmtc.(vbox @@ list ~sep:cut *)
+              (*               @@ hvbox2 @@ brackets *)
+              (*               @@ list ~sep:comma Tuple.pp) res *)
+              (*     )) *)
               |> to_seq
             in
             let sub_for tuples =
@@ -495,27 +503,46 @@ module Make (Ltl : Solver.LTL) = struct
                           (*               Elo.pp_prim_fml s)) *)
                        )) (* blk [tuples / xs] *)
             in
-            (* Msg.debug (fun m -> *)
-            (*       m "Elo_to_LTL1.build_Quant: must(%a) = %a" (Elo.pp_exp) s *)
-            (*         TS.pp must); *)
+            Msg.debug (fun m ->
+                  m "build_Quant: ENTERING MUSTPART" );
             let mustpart =
               bigop
                 ~range:(tuples_of_sim_binding ~disj xs @@ TS.to_list must)
                 (fun tuples -> sem_of_substituted_blk tuples)
             in
-            (* Msg.debug (fun m -> *)
-            (*       m "Elo_to_LTL1.build_Quant: may(%a) = %a" (Elo.pp_exp) s *)
-            (*         TS.pp may); *)
+            Msg.debug (fun m ->
+                  m "build_Quant: must(%a) = %a@\nmustpart = %a@\nENTERING MAYPART"
+                    (Elo.pp_exp) s
+                    TS.pp must
+                    Ltl.pp mustpart);
             let maypart =
               lazy 
                 (bigop
                    ~range:(tuples_of_sim_binding ~disj xs @@ TS.to_list may)
                    (fun tuples ->
-                      let premise = conj @@ List.map s' tuples in
-                      Msg.debug (fun m -> m "(build_Quant.premise) %a" Ltl.pp premise);
+                      (* if several variables were bound to the same range, then
+                         we must apply the characteristic function thereof to
+                         every candidate tuples for these variables; and then
+                         take the conjunction. Note: if several variables range
+                         in the same set, then we will apply the characteristic
+                         function many times to the same tuples: as an
+                         optimization, we keep --only in the computation of the
+                         premise-- only unique tuples to avoid this superfluous
+                         repetition. *)
+                      let premise = 
+                        wedge
+                          List.(to_seq @@ sort_uniq ~cmp:Tuple.compare tuples)
+                          (fun tuple -> lazy (s' tuple))
+                      in
+                      (* Msg.debug (fun m -> m "(build_Quant.premise) %a" Ltl.pp premise); *)
                       lazy (link premise @@ sem_of_substituted_blk tuples)
                    ))
             in
+            Msg.debug (fun m ->
+                  m "build_Quant: may(%a) = %a@\nmaypart = %a"
+                    (Elo.pp_exp) s
+                    TS.pp may
+                    Ltl.pp (Lazy.force maypart));
             (smallop mustpart maypart)
             |> Fun.tap (fun res ->
                   Msg.debug (fun m ->
@@ -540,14 +567,14 @@ module Make (Ltl : Solver.LTL) = struct
 
     method build_LBin (env : 'env) f1 op f2 f1' op' f2' =
       op' f1 f2 f1' f2'
-      |> Fun.tap (fun res ->
-            Msg.debug (fun m ->
-                  m "build_LBin [[%a %a %a]] -->@ %a"
-                    Elo.pp_fml f1
-                    G.pp_lbinop op
-                    Elo.pp_fml f2
-                    Ltl.pp res
-                ))
+      (* |> Fun.tap (fun res -> *)
+      (*       Msg.debug (fun m -> *)
+      (*             m "build_LBin [[%a %a %a]] -->@ %a" *)
+      (*               Elo.pp_fml f1 *)
+      (*               G.pp_lbinop op *)
+      (*               Elo.pp_fml f2 *)
+      (*               Ltl.pp res *)
+      (*           )) *)
 
     method build_And (env : 'env) _ _ = fun a b -> and_ a (lazy b)
 
@@ -567,13 +594,13 @@ module Make (Ltl : Solver.LTL) = struct
 
     method build_LUn (env : 'env) op f op' f' =
       op' f f'
-      |> Fun.tap (fun res ->
-            Msg.debug (fun m ->
-                  m "[[%a %a]] -->@ %a"
-                    G.pp_lunop op
-                    Elo.pp_fml f
-                    Ltl.pp res
-                ))
+      (* |> Fun.tap (fun res -> *)
+      (*       Msg.debug (fun m -> *)
+      (*             m "[[%a %a]] -->@ %a" *)
+      (*               G.pp_lunop op *)
+      (*               Elo.pp_fml f *)
+      (*               Ltl.pp res *)
+      (*           )) *)
 
     method build_X (env : 'env) _ = next
 
@@ -593,14 +620,14 @@ module Make (Ltl : Solver.LTL) = struct
 
     method build_RComp (env : 'env) f1 op f2 f1' op' f2' =
       op' f1 f2 f1' f2'
-      |> Fun.tap (fun res ->
-            Msg.debug 
-              (fun m -> m "build_RComp [[%a %a %a]] --> %a"
-                          Elo.pp_exp f1
-                          G.pp_comp_op op
-                          Elo.pp_exp f2
-                          Ltl.pp res)
-          )
+      (* |> Fun.tap (fun res -> *)
+      (*       Msg.debug  *)
+      (*         (fun m -> m "build_RComp [[%a %a %a]] --> %a" *)
+      (*                     Elo.pp_exp f1 *)
+      (*                     G.pp_comp_op op *)
+      (*                     Elo.pp_exp f2 *)
+      (*                     Ltl.pp res) *)
+      (*     ) *)
 
 
     (* method build_REq (env : 'env) r s r' s' = *)
@@ -763,12 +790,12 @@ module Make (Ltl : Solver.LTL) = struct
               env#must_may_sup @@
               G.exp (Some (env#arity r)) Location.dummy @@ G.ident id
             in
-            Msg.debug (fun m ->
-                  m "build_Ident: must/may(%a) = %a / %a | tuple = %a"
-                    Name.pp r
-                    TS.pp must
-                    TS.pp may
-                    Tuple.pp tuple);
+            (* Msg.debug (fun m -> *)
+            (*       m "build_Ident: must/may(%a) = %a / %a | tuple = %a" *)
+            (*         Name.pp r *)
+            (*         TS.pp must *)
+            (*         TS.pp may *)
+            (*         Tuple.pp tuple); *)
             if TS.mem tuple must then
               true_
             else if TS.mem tuple may then 
@@ -858,26 +885,31 @@ module Make (Ltl : Solver.LTL) = struct
 
     method build_Join (env : 'env) r s r' s' =  fun tuple ->
       let open List in
+      (* Msg.debug (fun m -> *)
+      (*       m "build_Join <-- [[%a . %a]](%a) " *)
+      (*         Elo.pp_exp r *)
+      (*         Elo.pp_exp s *)
+      (*         Tuple.pp tuple); *)
       let rlist = lazy (TS.to_list (env#must_may_sup r).sup) in
       let slist = lazy (TS.to_list (env#must_may_sup s).sup) in
       let pairs = eligible_pairs (tuple, rlist, slist) in
+      (* Msg.debug (fun m -> *)
+      (*       m "build_Join: eligible pairs: %a" *)
+      (*         (Sequence.pp_seq ~sep:"," *)
+      (*          @@ Fmtc.parens @@ *)
+      (*          Fmtc.(pair ~sep:comma) Tuple.pp Tuple.pp) *)
+      (*         pairs *)
+      (*     ); *)
       vee ~range:pairs (fun (bs, cs) ->
-            Msg.debug (fun m ->
-                  m "(build_Join) ([[%a]] %a) /\\ ([[%a]] %a) --> %a"
-                                  Elo.pp_exp r
-                                  Elo.pp_exp s
-                                  Tuple.pp bs
-                                  Tuple.pp cs
-                                  Ltl.pp (r' bs +&& lazy (s' cs))
-                      );
             lazy (r' bs +&& lazy (s' cs)))
-      |> Fun.tap (fun res ->
-            Msg.debug (fun m ->
-                  m "build_Join [[%a . %a]] --> %a"
-                    Elo.pp_exp r
-                    Elo.pp_exp s
-                    Ltl.pp res
-                ))
+      (* |> Fun.tap (fun res -> *)
+      (*       Msg.debug (fun m -> *)
+      (*             m "build_Join [[%a . %a]](%a) --> %a" *)
+      (*               Elo.pp_exp r *)
+      (*               Elo.pp_exp s *)
+      (*               Tuple.pp tuple *)
+      (*               Ltl.pp res *)
+      (*           )) *)
 
 
 

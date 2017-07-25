@@ -204,13 +204,14 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
     | And (p, q) -> or_ (not_ p) (lazy (not_ q))
     | Or (p, q) -> and_ (not_ p) (lazy (not_ q))
     | Imp (p, q) -> and_ p (lazy (not_ q))
+    | Not q -> q
     | p -> Not p
 
   and implies p q = match p, q with
-    (* | False, _ -> True *)
-    (* | _, lazy True -> True *)
-    (* | True, lazy q2 -> q2 *)
-    (* | _, lazy False -> not_ p *)
+    | False, _ -> True
+    | _, lazy True -> True
+    | True, lazy q2 -> q2
+    | _, lazy False -> not_ p
     | _, lazy q2 -> Imp (p, q2)
 
   
@@ -313,8 +314,8 @@ type outcome =
 let pp_outcome out =
   let open Fmtc in
   function
-    | No_trace -> pf out "{}"
-    | Trace t -> pf out "{ %a }" Trace.pp t
+    | No_trace -> pf out "--no trace--"
+    | Trace t -> pf out "@[<v>%a@]" Trace.pp t
     
 type script_type =
   | Default of string

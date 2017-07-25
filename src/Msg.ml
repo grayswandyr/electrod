@@ -364,8 +364,8 @@ module Fatal = struct
   let solver_failed args = err @@ fun m -> args @@
     fun solver scr smv errcode erroutput ->
     m ~header:(code 22)
-      "%s failed with error code %d and error output:@\n%s@\n\
-       Script and model files kept at %S and %S, remember to remove them."
+      "%s@ failed@ with@ error@ code@ %d@ and@ error@ output:@\n%s@\n\
+       Script@ and@ model@ files@ kept@ at@ %S@ and@ %S,@ remember@ to@ remove@ them."
       solver errcode erroutput
       scr smv
 end

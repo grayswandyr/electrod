@@ -57,8 +57,10 @@ let sup name domain =
   |> Scope.sup
 
 
-let musts domain =
-  Map.map Relation.must domain
+let musts ?(with_univ_and_ident = true) domain =
+  (if with_univ_and_ident then domain
+   else (domain |> Map.remove Name.univ |> Map.remove Name.iden))
+  |>  Map.map Relation.must 
   |> to_list
 
 let update_domain_with_instance domain instance =

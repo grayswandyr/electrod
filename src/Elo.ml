@@ -127,24 +127,24 @@ let substitute = object (self : 'self)
   (*   super#visit_exp env exp *)
 
 
-  method visit_prim_fml env pfml =
-    Msg.debug
-      (fun m -> m "%a [%a]"
-                  pp_prim_fml pfml
-                  (List.pp
-                   @@ Fmt.pair ~sep:Fmtc.(const string ":=") Var.pp
-                   @@ pp_prim_exp)
-                  env);
-    super#visit_prim_fml env pfml
-    |> Fun.tap (fun res ->
-          Msg.debug (fun m ->
-                m "%a [%a] --> %a"
-                  pp_prim_fml pfml
-                  (List.pp
-                   @@ Fmt.pair ~sep:Fmtc.(const string ":=") Var.pp
-                   @@ pp_prim_exp) env
-                  pp_prim_fml res
-              ))
+  (* method visit_prim_fml env pfml = *)
+  (*   Msg.debug *)
+  (*     (fun m -> m "%a [%a]" *)
+  (*                 pp_prim_fml pfml *)
+  (*                 (List.pp *)
+  (*                  @@ Fmt.pair ~sep:Fmtc.(const string ":=") Var.pp *)
+  (*                  @@ pp_prim_exp) *)
+  (*                 env); *)
+  (*   super#visit_prim_fml env pfml *)
+  (*   |> Fun.tap (fun res -> *)
+  (*         Msg.debug (fun m -> *)
+  (*               m "%a [%a] --> %a" *)
+  (*                 pp_prim_fml pfml *)
+  (*                 (List.pp *)
+  (*                  @@ Fmt.pair ~sep:Fmtc.(const string ":=") Var.pp *)
+  (*                  @@ pp_prim_exp) env *)
+  (*                 pp_prim_fml res *)
+  (*             )) *)
 
 end
 
