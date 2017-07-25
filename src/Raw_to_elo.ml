@@ -349,7 +349,8 @@ let refine_identifiers raw_pb =
     | RComp (e1, op, e2) -> (ctx, rcomp (walk_exp ctx e1) op (walk_exp ctx e2))
     | IComp (e1, op, e2) -> (ctx, icomp (walk_iexp ctx e1) op (walk_iexp ctx e2))
     | FIte (c, t, e) ->
-        (ctx, fite (snd @@ walk_fml ctx c) (snd @@ walk_fml ctx t) (snd @@ walk_fml ctx e))
+        (ctx, fite (snd @@ walk_fml ctx c) (snd @@ walk_fml ctx t)
+                (snd @@ walk_fml ctx e))
     | Let (bindings, blk) -> 
         let ctx2, bindings2 = walk_bindings ctx bindings in
         let _, blk2 = walk_block ctx2 blk in
@@ -386,7 +387,8 @@ let refine_identifiers raw_pb =
         disj
     in
     let exp2 = walk_exp ctx exp in
-    let bvars = List.map (fun v -> Elo.bound_var (Var.fresh (Raw_ident.basename v))) vs in
+    let bvars =
+      List.map (fun v -> Elo.bound_var (Var.fresh (Raw_ident.basename v))) vs in
     let vars = List.map Elo.var_ident_of_bound_var bvars in
     (List.(combine vs vars |> rev) @ ctx, (disj2, bvars, exp2))      
 
@@ -408,8 +410,10 @@ let refine_identifiers raw_pb =
     | Iden -> iden
     | RUn (op, e) -> runary op @@ walk_exp ctx e
     | RBin (e1, op, e2) -> rbinary (walk_exp ctx e1) op (walk_exp ctx e2)
-    | RIte (c, t, e) -> rite (snd @@ walk_fml ctx c) (walk_exp ctx t) (walk_exp ctx e)
-    | BoxJoin (e, args) -> boxjoin (walk_exp ctx e) @@ List.map (walk_exp ctx) args
+    | RIte (c, t, e) -> rite (snd @@ walk_fml ctx c) (walk_exp ctx t)
+                          (walk_exp ctx e)
+    | BoxJoin (e, args) -> boxjoin (walk_exp ctx e)
+        @@ List.map (walk_exp ctx) args
     | Prime e -> prime (walk_exp ctx e) 
     | Compr (sim_bindings, blk) ->
         let ctx2, sim_bindings2 = walk_sim_bindings ctx sim_bindings in
@@ -447,7 +451,7 @@ let refine_identifiers raw_pb =
 
 
 (*******************************************************************************
- *  Check arities #708
+ *  Check arities 
  *******************************************************************************)
 
 (* computes the arity of a join *)
@@ -463,307 +467,291 @@ let join_arity ar1 ar2 = match ar1, ar2 with
 let str_exp =
   Fmtc.to_to_string (Fmtc.hbox2 Elo.pp_exp)
 
-let check_arities elo =
+let compute_arities elo =
   let open Elo in
   let open GenGoal in
   (* ctx is a map from identifiers to their arity  *)
-  let rec walk_fml ctx { prim_fml; _ } =
-    walk_prim_fml ctx prim_fml
+  let rec walk_fml ctx fml =
+    { fml with prim_fml = walk_prim_fml ctx fml.prim_fml }
 
   and walk_prim_fml ctx = function
-    | True | False -> ()
-    | Qual (ROne, exp)
-    | Qual (RSome, exp) ->
-        if arity_exp ctx exp = None then
+    | (True | False) as b -> b
+    | Qual (ROne, exp) ->
+        let exp' = walk_exp ctx exp in
+        if exp'.arity = None then
           Msg.Fatal.arity_error
             (fun args -> args elo.file exp
               @@ Fmtc.strf
                    "enclosing formula is false as %s is always empty"
                    (str_exp exp))
-    | Qual (_, exp) -> ignore @@ arity_exp ctx exp
-    | RComp (e1, _, e2) -> 
-        let ar1 = arity_exp ctx e1 in
-        let ar2 = arity_exp ctx e2 in
-        (if ar1 <> ar2 &&
-            ar1 <> None &&
-            ar2 <> None then
-           Msg.Fatal.arity_error
-             (fun args ->
-                args elo.file e2
-                  (Fmtc.strf "arity of %s incompatible with that of %s"
-                     (str_exp e1) (str_exp e2))))
+        else qual rsome exp'
+    | Qual (RSome, exp) ->
+        let exp' = walk_exp ctx exp in
+        if exp'.arity = None then
+          Msg.Fatal.arity_error
+            (fun args -> args elo.file exp
+              @@ Fmtc.strf
+                   "enclosing formula is false as %s is always empty"
+                   (str_exp exp))
+        else qual rsome exp'
+    | Qual (q, exp) -> qual q @@ walk_exp ctx exp
+    | RComp (e1, op, e2) ->
+        let e1' = walk_exp ctx e1 in
+        let e2' = walk_exp ctx e2 in
+        let ar1 = e1'.arity in
+        let ar2 = e2'.arity in
+        if ar1 <> ar2 &&
+           ar1 <> None &&
+           ar2 <> None then
+          Msg.Fatal.arity_error
+            (fun args ->
+               args elo.file e2
+                 (Fmtc.strf "arity of %s incompatible with that of %s"
+                    (str_exp e1) (str_exp e2)))
+        else
+          rcomp e1' op e2'
     | IComp (e1, op, e2) ->
-        begin
-          arity_iexp ctx e1;
-          arity_iexp ctx e2
-        end
-    | LUn (_, fml) -> walk_fml ctx fml
-    | LBin (f1, _, f2) -> 
-        begin
-          walk_fml ctx f1;
-          walk_fml ctx f2
-        end
-    | Quant (_, sim_bindings, blk) -> 
-        let ctx = walk_sim_bindings ctx sim_bindings in
-        walk_block ctx blk
-    | Let (bindings, blk) -> 
-        let ctx = walk_bindings ctx false bindings in
-        walk_block ctx blk
+        let e1' = walk_iexp ctx e1 in
+        let e2' = walk_iexp ctx e2 in
+        icomp e1' op e2'
+    | LUn (op, fml) ->
+        lunary op @@ walk_fml ctx fml
+    | LBin (f1, op, f2) ->
+        lbinary (walk_fml ctx f1) op (walk_fml ctx f2)
+    | Quant (q, sbs, blk) -> 
+        let sbs', ctx' = walk_sim_bindings ctx sbs in
+        quant q sbs' @@ walk_block ctx' blk
+    | Let (bindings, blk) ->   
+        let bindings', ctx' = walk_bindings ctx bindings in
+        let_ bindings' @@ walk_block ctx' blk
     | FIte (c, t, e) ->
-        walk_fml ctx c;
-        walk_fml ctx t;
-        walk_fml ctx e 
+        fite (walk_fml ctx c) (walk_fml ctx t) (walk_fml ctx e)
     | Block blk ->
-        walk_block ctx blk
+        block @@ walk_block ctx blk
 
   and walk_block ctx blk =
-    List.iter (walk_fml ctx) blk
+    List.map (walk_fml ctx) blk
 
-  and walk_bindings ctx in_q = function
-    | [] -> ctx
+  and walk_bindings ctx = function
+    | [] -> ([], ctx)
     | (BVar v, exp) :: bs ->
-        let ar = arity_exp ctx exp in
-        if in_q && ar <> Some 1 then (* under a quantification, range arity must be 1 *)
-          Msg.Fatal.arity_error
-            (fun args -> args elo.file exp "arity should be 1")
-        else
-          walk_bindings (ctx#add_variable v ar (* exp.must exp.sup *)) in_q bs
+        let exp' = walk_exp ctx exp in
+        let ar = exp'.arity in
+        let ctx' = ctx#update [(v, ar)] in
+        let bs', ctx'' = walk_bindings ctx' bs in
+        ((BVar v, exp')::bs', ctx'')
 
   and walk_sim_bindings ctx = function
-    | [] -> ctx
-    | sb :: sbs ->
-        let ctx = walk_sim_binding ctx sb in
-        walk_sim_bindings ctx sbs
+    | [] -> ([], ctx)
+    | (disj, vs, exp) :: sbs ->
+        let exp' = walk_exp ctx exp in
+        let ar = exp'.arity in
+        let ctx' = ctx#update @@ List.map (fun (BVar v) -> (v, ar)) vs in
+        let sbs', ctx'' = walk_sim_bindings ctx' sbs in
+        ((disj, vs, exp')::sbs', ctx'')
 
-  and walk_sim_binding ctx (_, vs, exp) =
-    let ar = arity_exp ctx exp in
-    (* let arity, must, sup = ar, exp.must, exp.sup in *)
-    List.fold_right
-      (fun (BVar v) ctx -> ctx#add_variable v ar (* must sup *)) vs ctx
 
-  and arity_exp ctx exp =
-    (* if arity = Some 0 then the analysis has not been made yet, otherwise it has *)
-    if Option.equal Int.equal exp.arity (Some 0) then
-      match arity_prim_exp ctx exp with
-        | Ok ar -> ar
-        | Error msg -> Msg.Fatal.arity_error (fun args -> args elo.file exp msg)
-    else
-      exp.arity
+  and walk_exp ctx exp =
+    match walk_prim_exp ctx exp with
+      | Ok exp' -> exp'
+      | Error msg -> Msg.Fatal.arity_error (fun args -> args elo.file exp msg)
 
-  and update_exp exp arity =
-    exp.arity <- arity;
-    arity
+
+  and return_exp exp ar pe =
+    Result.return { exp with arity = ar; prim_exp = pe }
 
   (* this function returns a [result] to factor the error messages out and also
      to enable to display the expression (i.e [exp], not [prim_exp]) concerned
      by the error*)
   (* IMPORTANT: the function receives an *expression*, not a *primitive* one; in
      order to easily set the mutable fields of the said expression. *)
-  and arity_prim_exp ctx exp = match exp.prim_exp with
+  and walk_prim_exp ctx exp = match exp.prim_exp with
     | None_ ->
-        Result.return @@ update_exp exp None (* (lazy TS.empty) (lazy TS.empty) *)
-    | Univ -> 
-        let arity(* , must, sup *) = ctx#get (Elo.Name Name.univ) in 
-        Result.return @@ update_exp exp arity (* must sup *)
+        return_exp exp None None_
+    | Univ ->
+        let arity = ctx#arity (Elo.Name Name.univ) in
+        return_exp exp arity Univ
     | Iden ->
-        let arity(* , must, sup *) = ctx#get (Elo.Name Name.iden) in 
-        Result.return @@ update_exp exp arity (* must sup *)
-    | Ident id -> 
-        let arity(* , must, sup *) = ctx#get id in 
-        Result.return @@ update_exp exp arity (* must sup *)
+        let arity = ctx#arity (Elo.Name Name.iden) in
+        return_exp exp arity Iden 
+    | Ident id ->
+        let arity = ctx#arity id in
+        return_exp exp arity (Ident id)
     | RUn (op, e) ->
-        let ar = arity_exp ctx e in
+        let e' = walk_exp ctx e in
+        let ar = e'.arity in
         if ar <> Some 2 then
           Result.fail "arity should be 2"
         else
-          Result.return
-          @@ update_exp exp ar(*  (lazy (TS.transpose @@ Lazy.force e.must)) *)
-    (* (lazy (TS.transpose @@ Lazy.force e.sup)) *)
+          return_exp exp ar (runary op e')
     | RBin (e1, op, e2) ->
-        let ar1 = arity_exp ctx e1 in
-        let ar2 = arity_exp ctx e2 in
+        let e1' = walk_exp ctx e1 in
+        let e2' = walk_exp ctx e2 in
+        let ar1 = e1'.arity in
+        let ar2 = e2'.arity in
         (match op with
           | Union when ar1 = ar2 || ar2 = None ->
-              Result.return
-              @@ update_exp exp ar1(*  (lazy (TS.union (Lazy.force e1.must) (Lazy.force e2.must))) *)
-          (* (lazy (TS.union (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+              return_exp exp ar1 @@ rbinary e1' op e2'
           | Union when ar1 = None ->
-              Result.return
-              @@ update_exp exp ar2(*  (lazy (TS.union (Lazy.force e1.must) (Lazy.force e2.must))) *)
-          (* (lazy (TS.union (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+              return_exp exp ar2 @@ rbinary e1' op e2'
           | Union ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
-                   (str_exp e1)
-                   (str_exp e2))
-          | Diff when ar1 = None -> 
-              Result.return
-              @@ update_exp exp None (* (lazy TS.empty) (lazy TS.empty) *)
+                   (str_exp e1')
+                   (str_exp e2'))
+          | Diff when ar1 = None ->
+              return_exp exp None @@ rbinary e1' op e2'
           | Diff when ar1 = ar2 || ar2 = None ->
-              Result.return
-              @@ update_exp exp ar1(*  (lazy (TS.diff (Lazy.force e1.must) (Lazy.force e2.must))) *)
-          (* (lazy (TS.diff (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+              return_exp exp ar1 @@ rbinary e1' op e2'
           | Diff ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
-                   (str_exp e1)
-                   (str_exp e2))
+                   (str_exp e1')
+                   (str_exp e2'))
           | Inter when ar1 = None || ar2 = None ->
-              Result.return
-              @@ update_exp exp None (* (lazy (TS.inter (Lazy.force e1.must) (Lazy.force e2.must))) *)
-          (* (lazy (TS.inter (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
-          | Inter when ar1 = ar2 -> 
-              Result.return
-              @@ update_exp exp ar1 (* (lazy (TS.inter (Lazy.force e1.must) (Lazy.force e2.must))) *)
-          (* (lazy (TS.inter (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+              return_exp exp None @@ rbinary e1' op e2'
+          | Inter when ar1 = ar2 ->
+              return_exp exp ar1 @@ rbinary e1' op e2'
           | Inter ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
-                   (str_exp e1)
-                   (str_exp e2))
+                   (str_exp e1')
+                   (str_exp e2'))
           | Over when ar1 = ar2 ->
               if CCOpt.compare CCInt.compare ar1 (Some 1) <= 0 then
                 Result.fail
-                  (Fmtc.strf "arity of %s is < 2" (str_exp e1))
+                  (Fmtc.strf "arity of %s is < 2" (str_exp e1'))
               else
-                Result.return
-                @@ update_exp exp ar1(*  (lazy (TS.override (Lazy.force e1.must) (Lazy.force e2.must))) *)
-          (* (lazy (TS.override (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+                return_exp exp ar1 @@ rbinary e1' op e2'
           | Over when ar1 = None ->
-              Result.return @@ update_exp exp ar2 (* e2.must e2.sup *)
+              return_exp exp ar2  @@ rbinary e1' op e2'
           | Over when ar2 = None ->
-              Result.return @@ update_exp exp ar1 (* e1.must e1.sup *)
+              return_exp exp ar1 @@ rbinary e1' op e2'
           | Over ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
-                   (str_exp e1)
-                   (str_exp e2))
+                   (str_exp e1')
+                   (str_exp e2'))
           | LProj when ar1 = None ->
-              Result.return @@ update_exp exp None (* (lazy TS.empty) (lazy TS.empty) *)
+              return_exp exp None @@ rbinary e1' op e2'
           | LProj when ar1 = Some 1 ->
-              Result.return @@ update_exp exp ar2 (* (lazy (TS.lproj (Lazy.force e1.must) (Lazy.force e2.must))) *)
-          (* (lazy (TS.lproj (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+              return_exp exp ar2 @@ rbinary e1' op e2'
           | LProj ->
               Result.fail "left projection should be on a set"
           | RProj when ar2 = None ->
-              Result.return @@ update_exp exp None (* (lazy TS.empty) (lazy TS.empty) *)
+              return_exp exp None @@ rbinary e1' op e2'
           | RProj when ar2 = Some 1 ->
-              Result.return @@ update_exp exp ar1 (* (lazy (TS.rproj (Lazy.force e1.must) (Lazy.force e2.must))) *)
-          (* (lazy (TS.rproj (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
-          | RProj -> 
+              return_exp exp ar1 @@ rbinary e1' op e2'
+          | RProj ->
               Result.fail "right projection should be on a set"
           | Prod ->
               (match ar1, ar2 with
                 | Some a1, Some a2 ->
                     let ar = Some (a1 + a2) in
-                    Result.return
-                    @@ update_exp exp ar (* (lazy (TS.product (Lazy.force e1.must) (Lazy.force e2.must))) *)
-                (* (lazy (TS.product (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+                    return_exp exp ar @@ rbinary e1' op e2'
                 | None, _
-                | _, None -> Result.return None)
+                | _, None -> return_exp exp None @@ rbinary e1' op e2')
           | Join ->
               let ar_join = join_arity ar1 ar2 in
               if ar_join = None then
                 Result.fail @@
                 Fmtc.strf "wrong arities for the dot join of %s and %s"
-                  (str_exp e1) (str_exp e2)
+                  (str_exp e1') (str_exp e2')
               else
-                Result.return
-                @@ update_exp exp ar_join(*  (lazy (TS.join (Lazy.force e1.must) (Lazy.force e2.must))) *)
-                (* (lazy (TS.join (Lazy.force e1.sup) (Lazy.force e2.sup))) *)
+                return_exp exp ar_join @@ rbinary e1' op e2'
         )
-    | RIte (c, t, e) -> 
-        begin
-          walk_fml ctx c;
-          let a_t = arity_exp ctx t in
-          let a_e = arity_exp ctx e in
-          if Option.equal Int.equal a_t a_e then
-            Result.return
-            @@ update_exp exp a_t (* (lazy (TS.inter (Lazy.force t.must) (Lazy.force e.must))) (lazy (TS.union (Lazy.force t.sup) (Lazy.force e.sup))) *)
-          else 
-            Result.fail "incompatible arities in the bodies of 'then' and 'else'" 
-        end
+    | RIte (c, t, e) ->
+        let c' = walk_fml ctx c in
+        let t' = walk_exp ctx t in
+        let e' = walk_exp ctx e in
+        if Option.equal Int.equal t'.arity e'.arity then
+          return_exp exp e'.arity (rite c' t' e') 
+        else
+          Result.fail "incompatible arities in the bodies of 'then' and 'else'"
     | BoxJoin (call, args) ->
         (* build the iterated "plain" join to get arity/must/sup *)
-        ignore @@ arity_exp ctx call;
-        List.iter Fun.(ignore % arity_exp ctx) args;
+        let call' = walk_exp ctx call in
+        let args' = List.map (walk_exp ctx) args in
         let res =
           List.fold_right
             (fun arg r ->
                GenGoal.exp
                  Option.(map2 (+) (pure (-2)) @@ map2 (+) arg.arity r.arity)
-                 Location.(span (arg.exp_loc, r.exp_loc))                 
+                 Location.(span (arg.exp_loc, r.exp_loc))
                @@ rbinary arg join r
             ) args call
         in
         if res.arity = None || res.arity = Some 0 then
           Result.fail "wrong arities for the box join"
         else
-          Result.return
-          @@ update_exp exp res.arity (* res.must res.sup *)
-    | Compr (sim_bindings, blk) ->
-        let ctx2 = walk_sim_bindings ctx sim_bindings in
-        begin
-          walk_block ctx2 blk;
-          match
-            List.(flat_map (fun (_, vs, _) ->
-                  map (fun v -> ctx2#get @@ var_ident_of_bound_var v) vs))
-              sim_bindings
-          with
-            | [] -> assert false
-            | hd::tl -> 
-                let ar =
-                  List.fold_left Option.(map2 (+)) hd tl
-                in
-                Result.return @@ update_exp exp ar (* must sup *)
-        end
+          return_exp exp res.arity @@ boxjoin call' args'
+    | Compr (sbs, blk) ->
+        let sbs', ctx2 = walk_sim_bindings ctx sbs in
+        (match
+           List.(flat_map (fun (_, vs, _) ->
+                 map (fun v -> ctx2#arity @@ var_ident_of_bound_var v) vs))
+             sbs'
+         with
+           | [] -> assert false
+           | hd::tl ->
+               let ar = List.fold_left Option.(map2 (+)) hd tl in
+               let blk' = walk_block ctx2 blk in 
+               return_exp exp ar @@ compr sbs' blk')
     | Prime e ->
-        let ar = arity_exp ctx e in
-        Result.return @@ update_exp exp ar (* e.must e.sup *)
+        let e' = walk_exp ctx e in
+        return_exp exp e'.arity @@ prime e' 
 
-  and arity_iexp ctx { prim_iexp; _ } =
-    arity_prim_iexp ctx prim_iexp
+  and walk_iexp ctx iexp =
+    { iexp with prim_iexp = walk_prim_iexp ctx iexp.prim_iexp}
 
-  and arity_prim_iexp ctx = function
-    | Num _ -> ()
-    | Card exp -> ignore @@ arity_exp ctx exp
-    | IUn (_, iexp) -> arity_iexp ctx iexp
-    | IBin (iexp1, _, iexp2) -> 
-        begin
-          arity_iexp ctx iexp1;
-          arity_iexp ctx iexp2
-        end
+  and walk_prim_iexp ctx = function
+    | Num n -> num n 
+    | Card exp -> card @@ walk_exp ctx exp
+    | IUn (op, iexp) -> iunary op @@ walk_iexp ctx iexp
+    | IBin (iexp1, op, iexp2) ->
+        ibinary (walk_iexp ctx iexp1) op (walk_iexp ctx iexp2)
+
   in
-  let init = object 
-    val variables = []
+  let init = object
+    val arities =
+      Domain.arities elo.Elo.domain
+      |> List.map (fun (n, a) -> (Elo.Name n, Some a))
+      |> Fun.tap (fun ars ->
+            Msg.debug (fun m ->
+                  m "compute_arities.initial arities = %a"
+                    Fmtc.(brackets @@
+                          list ~sep:sp
+                          @@ pair ~sep:(const string "→")
+                               Elo.pp_ident (option int)) ars ))
 
-    val domain = elo.domain
+    val domain = elo.Elo.domain
 
-    method add_variable v arity =
-      (* Msg.debug (fun m -> m "Raw_to_elo.check_arities.add_variable %a %a" *)
-      (*                       Var.pp v *)
-      (*                       Fmtc.(option int) arity); *)
-      {< variables = (v, arity) :: variables >}
+    method update pairs =
+      Msg.debug (fun m ->
+            m "compute_arities.update %a"
+              Fmtc.(list ~sep:sp @@ pair Var.pp (option int)) pairs);
+      {< arities = (List.map (fun (v, ar) -> (Elo.Var v, ar)) pairs) @ arities >}
 
-    method get ident = match ident with
-      | Elo.Tuple _ -> assert false (* no tuples yet, only present when instantiating *)
-      | Var v -> List.Assoc.get_exn ~eq:Var.equal v variables
-      | Name name ->
-          let ar = Relation.arity @@ Domain.get_exn name domain in
-          (* Msg.debug (fun m -> m "Raw_to_elo.check_arities.get %a = %d" *)
-          (*                   Name.pp name ar); *)
-          Some ar      
+    method arity ident =
+      List.Assoc.get_exn ~eq:Elo.equal_ident ident arities
+      |> Fun.tap (fun ar ->
+            Msg.debug (fun m -> m "compute_arities.arity %a --> %a"
+                                  Elo.pp_ident ident
+                                  Fmtc.(option int) ar
+                      ))
   end
   in
-  let walk_goal = function
-    | Run fml -> List.iter (walk_fml init)  fml
-    | Check fml -> List.iter (walk_fml init)  fml
+  let walk_goal ctx = function
+    | Run fmls -> run @@ List.map (walk_fml ctx) fmls
+    | Check fmls -> check @@ List.map (walk_fml ctx) fmls
   in
-  (* check/update goal and invariant arities *)
-  walk_goal elo.goal;
-  List.iter (walk_fml init) elo.invariants
+  Elo.{ elo with
+          invariants = List.map (walk_fml init) elo.invariants;
+          goal = walk_goal init elo.goal }
 
-(* Check Symmetries *)
+
+
+(* TODO: Check Symmetries *)
             
             
 (*******************************************************************************
@@ -776,14 +764,6 @@ let whole raw_pb =
   let instance = compute_instances domain raw_pb in
   let (invars, goal) = refine_identifiers raw_pb in
   Elo.make raw_pb.file domain instance syms invars goal
-  |> Fun.tap @@ fun elo -> 
-  (* begin *)
-  (*   Msg.debug *)
-  (*     (fun m -> m "Entering Raw_to_elo.check_arities: <-- initial context =@\n%a" *)
-  (*                 Domain.pp elo.Elo.domain); *)
-  check_arities elo
-  (* ; *)
-  (*   Msg.debug (fun m -> m "Raw_to_elo.check_arities -->@ %a" Elo.pp elo) *)
-  (* end *)
+  |> compute_arities 
   
 let transfo = Transfo.make "raw_to_elo" whole (* temporary *)
