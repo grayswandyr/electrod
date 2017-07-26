@@ -121,10 +121,13 @@ let main style_renderer verbosity tool file scriptfile keep_files =
       | NuSMV, None -> ("NuSMV", Solver.Default SMV.nuSMV_default_script)
       | NuSMV, Some s -> ("NuSMV", Solver.File s)
     in
-    
+
     Msg.debug (fun m -> m "@.%a"
                           (Elo_to_SMV1.pp ~margin:78) model);
-      
+
+    Msg.info (fun m -> m "%a" Elo_to_SMV1.SMV_LTL.pp_hasconsing_assessment
+                         (Elo_to_SMV1.SMV_LTL.pp));
+
     let res = Elo_to_SMV1.analyze ~cmd ~keep_files
                 ~elo:elo ~script ~file model in
     Logs.app (fun m -> m "Analysis yields:@\n%a" Solver.pp_outcome res);

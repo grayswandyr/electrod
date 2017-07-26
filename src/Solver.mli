@@ -8,6 +8,7 @@ module type ATOMIC_PROPOSITION =
     val make : Name.t -> Tuple.t -> t
     val compare : t -> t -> int
     val equal : t -> t -> bool
+    val hash  : t -> int
 
     val split : string -> Name.t * Tuple.t
                                 
@@ -23,6 +24,7 @@ module type LTL = sig
   val make_atomic : Name.t -> Tuple.t -> atomic
   val split_atomic : string -> Name.t * Tuple.t
   val compare_atomic : atomic -> atomic -> int
+  val hash_atomic  : atomic -> int
     
   type tcomp = tcomp_node Hashcons_util.hash_consed
 
@@ -131,6 +133,10 @@ module type LTL = sig
   val pp_atomic : Format.formatter -> atomic -> unit
 
   val pp : Format.formatter -> t -> unit
+    
+  val pp_hasconsing_assessment :
+           Format.formatter ->
+           (Format.formatter -> t -> unit) -> unit
 end
 
 (** Builds an LTL implementation out of an implementation of atomicic

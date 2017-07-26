@@ -5,7 +5,5 @@ open Containers
 type +'a hash_consed = 'a Hashcons.hash_consed = private {
   hkey : int;
   tag : int;
-  node : 'a
+  node : 'a 
 } [@@deriving show]
-
-let equal_hash_consed x y = Int.equal x.tag y.tag
