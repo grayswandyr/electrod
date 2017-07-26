@@ -1,5 +1,4 @@
-(** Provides a converter from Electrod models to (part of) a solver
-    model.  *)
+(** Provides a converter from Electrod models to (part of) a solver model.  *)
 
 open Containers
 
@@ -23,30 +22,30 @@ struct
     let sym_to_ltl (sym : Symmetry.t) =
       Symmetry.fold
         (fun (name1, tuple1) (name2, tuple2)
-             ((rigid_atoms_acc, flex_atoms_acc, fml_acc)
-              : atomic Sequence.t *atomic Sequence.t* Ltl.t)
-         ->         
-          (*We assume that a symmetry is well-formed: each pair of
-          name and tuple (name, tuple) share the same name *)         
-          if not (Name.equal name1 name2) then
-            assert false
-          else           
-            let name_is_const =
-              Domain.get_exn name1 dom |> Relation.is_const
-            in
-            let at1 = Ltl.Atomic.make name1 tuple1 in
-            let at_fml1 = atomic at1 in
-            let at2 = Ltl.Atomic.make name2 tuple2 in
-            let at_fml2 = atomic at2 in
-            if name_is_const then
-              (Sequence.cons at1 (Sequence.cons at2 rigid_atoms_acc),
-               flex_atoms_acc,
-               or_ (implies at_fml1 (lazy at_fml2))
+          ((rigid_atoms_acc, flex_atoms_acc, fml_acc)
+           : atomic Sequence.t *atomic Sequence.t* Ltl.t)
+          ->         
+            (*We assume that a symmetry is well-formed: each pair of
+              name and tuple (name, tuple) share the same name *)         
+            if not (Name.equal name1 name2) then
+              assert false
+            else           
+              let name_is_const =
+                Domain.get_exn name1 dom |> Relation.is_const
+              in
+              let at1 = Ltl.Atomic.make name1 tuple1 in
+              let at_fml1 = atomic at1 in
+              let at2 = Ltl.Atomic.make name2 tuple2 in
+              let at_fml2 = atomic at2 in
+              if name_is_const then
+                (Sequence.cons at1 (Sequence.cons at2 rigid_atoms_acc),
+                 flex_atoms_acc,
+                 or_ (implies at_fml1 (lazy at_fml2))
                    (lazy (and_ (iff at_fml1 at_fml2) (lazy fml_acc))))
-            else
-              (rigid_atoms_acc,
-               Sequence.cons at1 (Sequence.cons at2 flex_atoms_acc),
-               or_ (implies at_fml1 (lazy at_fml2))
+              else
+                (rigid_atoms_acc,
+                 Sequence.cons at1 (Sequence.cons at2 flex_atoms_acc),
+                 or_ (implies at_fml1 (lazy at_fml2))
                    (lazy (and_ (iff at_fml1 at_fml2) (lazy fml_acc))))
         )
         sym
@@ -54,59 +53,61 @@ struct
     in
     List.fold_left
       (fun (rigid_atoms_acc, flex_atoms_acc, fmls_acc) sym ->
-        let (cur_rigid_atoms, cur_flex_atoms, cur_fml) = sym_to_ltl sym in
-        (Sequence.append cur_rigid_atoms rigid_atoms_acc,
-         Sequence.append cur_flex_atoms flex_atoms_acc,
-         Sequence.cons cur_fml fmls_acc))
+         let (cur_rigid_atoms, cur_flex_atoms, cur_fml) = sym_to_ltl sym in
+         (Sequence.append cur_rigid_atoms rigid_atoms_acc,
+          Sequence.append cur_flex_atoms flex_atoms_acc,
+          Sequence.cons cur_fml fmls_acc))
       (Sequence.empty, Sequence.empty, Sequence.empty)
       syms
 
   (* Splits a list of formulas lf into two lists (invf, restf): the
-  list of invar formulas and the list of the rest of the formulas. In
-  case all the formulas in lf are invars, then the last formula of lf
-  is put in restf.*)
+     list of invar formulas and the list of the rest of the formulas. In
+     case all the formulas in lf are invars, then the last formula of lf
+     is put in restf.*)
   let split_invar_noninvar_fmls elo blk =
     let open Invar_computation in
     let (invf, restf) =
       List.partition_map
         (fun fml ->
-          let color = ConvertFormulas.color elo fml in
-          Msg.debug (fun m -> m
-                                "Color of formula %a : %a\n" Elo.pp_fml fml Invar_computation.pp color);
-          match color with
-          | Invar | Static_prop -> `Left (remove_always_to_invar fml)
-          | _ -> `Right (fml)
+           let color = ConvertFormulas.color elo fml in
+           Msg.debug (fun m -> m
+                                 "Color of formula %a : %a\n" Elo.pp_fml fml Invar_computation.pp color);
+           match color with
+             | Invar | Static_prop -> `Left (remove_always_to_invar fml)
+             | _ -> `Right (fml)
         )
         blk
     in
     match (restf, List.rev invf) with
-    | hd::tl , _ -> (invf, restf)
-    | [] , hd::tl -> (tl, [add_always_to_invar hd])
-    | _ -> assert false (*the goal cannot be empty*)
-      
+      | hd::tl , _ -> (invf, restf)
+      | [] , hd::tl -> (tl, [add_always_to_invar hd])
+      | _ -> assert false (*the goal cannot be empty*)
+
 
   (* From a non-empty list f1, f2, ..., fn of elo formulas, this
-  function computes the elo formula "(f1 and ... and fn-1) implies not
-  fn" *)
+     function computes the elo formula "(f1 and ... and fn-1) implies not
+     fn" *)
   let dualise_fmls fmls =
-    assert (List.length fmls > 0);
+    assert (fmls <> []);
 
     let open GenGoal in
-    let hd::tl = List.rev fmls in
-    let premise = 
-    List.fold_left
-               (fun x y -> fml (Location.span (x.fml_loc, y.fml_loc))
-                           @@ lbinary x and_ y)
-               (fml Location.dummy true_) tl
-    in
-    let rhs_fml =
-      match hd.prim_fml with
-      | LUn (Not, subfml) -> subfml
-      | _ -> fml hd.fml_loc @@ lunary Not hd
-    in
-    fml premise.fml_loc @@
-      lbinary premise Imp rhs_fml
-              
+    match List.rev fmls with
+      | [] -> assert false
+      | hd::tl ->
+          let premise = 
+            List.fold_left
+              (fun x y -> fml (Location.span (x.fml_loc, y.fml_loc))
+                @@ lbinary x and_ y)
+              (fml Location.dummy true_) tl
+          in
+          let rhs_fml =
+            match hd.prim_fml with
+              | LUn (Not, subfml) -> subfml
+              | _ -> fml hd.fml_loc @@ lunary Not hd
+          in
+          fml premise.fml_loc @@
+          lbinary premise Imp rhs_fml
+
   let run elo =
     let open Elo in
     (* #781 Handle instance:
@@ -121,8 +122,8 @@ struct
        refactoring won't be too painful. *)
     let elo =
       Elo.{ elo with
-            domain = Domain.update_domain_with_instance elo.domain
-                                                        elo.instance } in
+              domain = Domain.update_domain_with_instance elo.domain
+                         elo.instance } in
 
     (* walk through formulas, convert them to LTL and accumulate rigid
        and flexible variables. TODO: replace sequences by sets. *)
@@ -131,13 +132,13 @@ struct
       (* try *)
       List.fold_left
         (fun (acc_r, acc_f, acc_fml) fml ->
-          let (r, f, ltl) = ConvertFormulas.convert elo fml in
-          (* if ltl = Ltl.false_ then *)
-          (*   raise Early_stop *)
-          (* else *)
-          (Sequence.append r acc_r,
-           Sequence.append f acc_f,
-           Sequence.cons ltl acc_fml))
+           let (r, f, ltl) = ConvertFormulas.convert elo fml in
+           (* if ltl = Ltl.false_ then *)
+           (*   raise Early_stop *)
+           (* else *)
+           (Sequence.append r acc_r,
+            Sequence.append f acc_f,
+            Sequence.cons ltl acc_fml))
         Sequence.(empty, empty, empty) fmls
         (* with *)
         (*   Early_stop -> Sequence.(empty, empty, Ltl.false_) *)
@@ -149,7 +150,7 @@ struct
 
     (* handling the goal *)
     let goal_blk = match elo.goal with GenGoal.Run g | GenGoal.Check g -> g in
-    
+
 
     (* Partition the goal fmls into invars and non invars *)
     let detected_invars, general_fmls =
@@ -157,10 +158,10 @@ struct
     in   
     Msg.debug (fun m -> m "Detected invariants : %a"
                           Elo.pp_block detected_invars);
-    
+
     let spec_fml = dualise_fmls general_fmls in
     Msg.debug (fun m -> m "Elo property : %a" Elo.pp_fml spec_fml);
-    
+
     let (rigid_goal, flex_goal, property) =
       ConvertFormulas.convert elo spec_fml
     in
@@ -174,7 +175,7 @@ struct
     let rigid = Sequence.(append rigid_syms (append rigid_inv rigid_goal)) in
     let flexible = Sequence.(append flex_syms (append flex_goal flex_inv)) in 
     Model.make ~rigid ~flexible
-               ~invariant:Sequence.(append invars syms_fmls) ~property
+      ~invariant:Sequence.(append invars syms_fmls) ~property
 
 end
 
