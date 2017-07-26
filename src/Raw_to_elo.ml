@@ -750,8 +750,6 @@ let compute_arities elo =
           goal = walk_goal init elo.goal }
 
 
-
-(* TODO: Check Symmetries *)
             
             
 (*******************************************************************************

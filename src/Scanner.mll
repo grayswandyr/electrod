@@ -70,6 +70,8 @@ rule main infile = parse
     { ALWAYS }
 | ("sometime")
     { SOMETIME }
+| ("eventually")
+    { EVENTUALLY }
 | "until"
     { UNTIL }
 | "releases"
