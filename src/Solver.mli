@@ -5,30 +5,26 @@
 module type ATOMIC_PROPOSITION =
   sig
     type t
+      
     val make : Name.t -> Tuple.t -> t
+      
     val compare : t -> t -> int
     val equal : t -> t -> bool
     val hash  : t -> int
 
-    val split : string -> Name.t * Tuple.t
+    (** [split s] returns the name and tuple that produced this string, [None]
+        in case no such pair has arrived *)
+    val split : string -> (Name.t * Tuple.t) option
                                 
     val pp : t Fmtc.t
   end
 
 (** Abstract type of LTL (contains past connectives as well as basic counting
     capabilities).  *)
-
 module type LTL = sig
-  type atomic
-
-  val make_atomic : Name.t -> Tuple.t -> atomic
-  val split_atomic : string -> Name.t * Tuple.t
-  val compare_atomic : atomic -> atomic -> int
-  val hash_atomic  : atomic -> int
+  module Atomic : ATOMIC_PROPOSITION
     
-  type tcomp = tcomp_node Hashcons_util.hash_consed
-
-  and tcomp_node = private
+  type tcomp = 
     | Lte 
     | Lt
     | Gte
@@ -42,7 +38,7 @@ module type LTL = sig
     | Comp of tcomp * term * term
     | True
     | False
-    | Atomic of atomic
+    | Atomic of Atomic.t
     | Not of t
     | And of t * t
     | Or of t * t
@@ -73,7 +69,7 @@ module type LTL = sig
   val true_ : t
   val false_ : t
 
-  val atomic : atomic -> t
+  val atomic : Atomic.t -> t
 
   val not_ : t -> t
 
@@ -130,19 +126,18 @@ module type LTL = sig
     val ( @<=> ) : t -> t -> t
   end
 
-  val pp_atomic : Format.formatter -> atomic -> unit
-
   val pp : Format.formatter -> t -> unit
-    
+
   val pp_hasconsing_assessment :
            Format.formatter ->
            (Format.formatter -> t -> unit) -> unit
 end
 
+
 (** Builds an LTL implementation out of an implementation of atomicic
     propositions. *)
 module LTL_from_Atomic :
-  functor (At : ATOMIC_PROPOSITION) -> LTL with type atomic = At.t
+  functor (At : ATOMIC_PROPOSITION) -> LTL with module Atomic = At
 
 type outcome =
   | No_trace

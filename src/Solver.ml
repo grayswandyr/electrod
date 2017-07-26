@@ -10,22 +10,15 @@ module type ATOMIC_PROPOSITION = sig
   val equal : t -> t -> bool
   val hash  : t -> int
 
-  val split : string -> Name.t * Tuple.t
+  val split : string -> (Name.t * Tuple.t) option
   
   val pp : Format.formatter -> t -> unit
 end
 
 module type LTL = sig
-  type atomic
-
-  val make_atomic : Name.t -> Tuple.t -> atomic
-  val split_atomic : string -> Name.t * Tuple.t
-  val compare_atomic : atomic -> atomic -> int
-  val hash_atomic  : atomic -> int
+  module Atomic : ATOMIC_PROPOSITION
     
-  type tcomp = tcomp_node Hashcons_util.hash_consed
-
-  and tcomp_node = private
+  type tcomp = 
     | Lte 
     | Lt
     | Gte
@@ -39,7 +32,7 @@ module type LTL = sig
     | Comp of tcomp * term * term
     | True
     | False
-    | Atomic of atomic
+    | Atomic of Atomic.t
     | Not of t
     | And of t * t
     | Or of t * t
@@ -70,7 +63,7 @@ module type LTL = sig
   val true_ : t
   val false_ : t
 
-  val atomic : atomic -> t
+  val atomic : Atomic.t -> t
 
   val not_ : t -> t
 
@@ -127,8 +120,6 @@ module type LTL = sig
     val ( @<=> ) : t -> t -> t
   end
 
-  val pp_atomic : Format.formatter -> atomic -> unit
-
   val pp : Format.formatter -> t -> unit
 
   val pp_hasconsing_assessment :
@@ -137,75 +128,64 @@ module type LTL = sig
 end
 
 
-module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t = struct
-  
-  type atomic = At.t
-                  
-  let pp_atomic at = At.pp at 
-
-  let equal_atomic at = At.equal at
-  let hash_atomic at = At.hash at
-
-
-  let make_atomic at = At.make at
-  let compare_atomic at = At.compare at
-  let split_atomic at = At.split at
+module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At = struct
+  module Atomic = At
 
   type tcomp =
-    tcomp_node Hashcons_util.hash_consed
-      [@equal fun a b -> a == b]
-
-  and tcomp_node = 
     | Lte 
-    | Lt
-    | Gte
-    | Gt
+    | Lt 
+    | Gte 
+    | Gt 
     | Eq 
-    | Neq
+    | Neq 
+  [@@deriving show]
 
-  and t =
+  let hash_tcomp = function
+    | Lte -> 3
+    | Lt -> 5
+    | Gte -> 7
+    | Gt -> 11
+    | Eq -> 13
+    | Neq -> 17
+
+  type t =
     t_node Hashcons_util.hash_consed
-      [@equal fun a b -> a == b]
+      
 
   and t_node = 
     | Comp of tcomp * term * term
-                               [@equal fun (a1, a2, a3) (b1, b2, b3)
-                                 -> a1 == b1 && a2 == b2 && a3 == b3]
     | True
     | False
-    | Atomic of atomic [@equal fun a b -> equal_atomic a b]
-    | Not of t [@equal fun a b -> a == b]
-    | And of t * t [@equal fun (a1, a2) (b1, b2) -> a1 == b1 && a2 == b2]
-    | Or of t * t [@equal fun (a1, a2) (b1, b2) -> a1 == b1 && a2 == b2]
-    | Imp of t * t [@equal fun (a1, a2) (b1, b2) -> a1 == b1 && a2 == b2]
-    | Iff of t * t [@equal fun (a1, a2) (b1, b2) -> a1 == b1 && a2 == b2]
-    | Xor of t * t [@equal fun (a1, a2) (b1, b2) -> a1 == b1 && a2 == b2]
-    | Ite of t * t * t [@equal fun (a1, a2, a3) (b1, b2, b3)
-                       -> a1 == b1 && a2 == b2 && a3 == b3]
-    | X of t [@equal fun a b -> a == b]
-    | F of t [@equal fun a b -> a == b]
-    | G of t [@equal fun a b -> a == b]
-    | Y of t [@equal fun a b -> a == b]
-    | O of t [@equal fun a b -> a == b]
-    | H of t [@equal fun a b -> a == b]
-    | U of t * t [@equal fun (a1, a2) (b1, b2) -> a1 == b1 && a2 == b2]
-    | R of t * t [@equal fun (a1, a2) (b1, b2) -> a1 == b1 && a2 == b2]
-    | S of t * t [@equal fun (a1, a2) (b1, b2) -> a1 == b1 && a2 == b2]
-    | T of t * t   [@equal fun (a1, a2) (b1, b2) -> a1 == b1 && a2 == b2]             
+    | Atomic of Atomic.t 
+    | Not of t 
+    | And of t * t 
+    | Or of t * t 
+    | Imp of t * t 
+    | Iff of t * t 
+    | Xor of t * t 
+    | Ite of t * t * t 
+    | X of t 
+    | F of t 
+    | G of t 
+    | Y of t 
+    | O of t 
+    | H of t 
+    | U of t * t 
+    | R of t * t 
+    | S of t * t 
+    | T of t * t   
 
   and term =
     term_node Hashcons_util.hash_consed
-      [@equal fun a b -> a == b]
+      
 
   and term_node = 
-    | Num of int [@equal fun a b -> a == b]
-    | Plus of term * term [@equal fun (a1, a2) (b1, b2) -> a1 == b1 && a2 == b2]
-    | Minus of term * term [@equal fun (a1, a2) (b1, b2) -> a1 == b1 && a2 == b2]
-    | Neg of term [@equal fun a b -> a == b]
+    | Num of int 
+    | Plus of term * term 
+    | Minus of term * term 
+    | Neg of term 
     | Count of t list
-                 [@equal fun ps qs
-                   -> List.fold_left2 (fun acc p q -> p == q && acc) true ps qs]
-  [@@deriving show, eq]             (* default impl. for pp; to override later *)
+  [@@deriving show]             (* default impl. for pp; to override later *)
 
   (* BEGIN tcomp hashconsing *)
   (* let equal_tcomp_node x y = match x, y with  *)
@@ -217,22 +197,13 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
   (*   | Neq, Neq -> true *)
   (*   | _ -> false *)
   
-  module TComp = Hashcons.Make(struct
-    type t = tcomp_node
-    let hash x = Hashtbl.hash x
-		let equal = equal_tcomp_node
-  end)
-
-  let tcomp_table = TComp.create 29
-
-  let make_tcomp x = TComp.hashcons tcomp_table x
   
-  let lt = make_tcomp Lt
-  let lte = make_tcomp Lte
-  let gt = make_tcomp Gt
-  let gte = make_tcomp Gte
-  let eq = make_tcomp Eq
-  let neq = make_tcomp Neq
+  let lt = Lt
+  let lte = Lte
+  let gt = Gt
+  let gte = Gte
+  let eq = Eq
+  let neq = Neq
   (* END tcomp hashconsing *)
 
 
@@ -241,32 +212,54 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
   module T_node = struct 
     type t = t_node
 
-		let equal = equal_t_node  
-
+		let equal (t1 : t) (t2 : t) = match t1, t2 with
+        | True, True 
+        | False, False -> true
+        | Atomic a1, Atomic a2 -> Atomic.equal a1 a2
+        | Not a1, Not a2 -> a1 == a2
+        | X a1, X a2 -> a1 == a2
+        | F a1, F a2 -> a1 == a2
+        | G a1, G a2 -> a1 == a2
+        | Y a1, Y a2 -> a1 == a2
+        | O a1, O a2 -> a1 == a2
+        | H a1, H a2 -> a1 == a2
+        | U (a1, b1), U (a2, b2) -> a1 == a2 && b1 == b2
+        | R (a1, b1), R (a2, b2) -> a1 == a2 && b1 == b2
+        | S (a1, b1), S (a2, b2) -> a1 == a2 && b1 == b2
+        | T (a1, b1), T (a2, b2) -> a1 == a2 && b1 == b2
+        | And (a1, b1), And (a2, b2) -> a1 == a2 && b1 == b2
+        | Or (a1, b1), Or (a2, b2) -> a1 == a2 && b1 == b2
+        | Imp (a1, b1), Imp (a2, b2) -> a1 == a2 && b1 == b2
+        | Iff (a1, b1), Iff (a2, b2) -> a1 == a2 && b1 == b2
+        | Xor (a1, b1), Xor (a2, b2) -> a1 == a2 && b1 == b2
+        | Ite (a1, b1, c1), Ite (a2, b2, c2) -> a1 == a2 && b1 == b2 && c1 == c2
+        | Comp (a1, b1, c1), Comp (a2, b2, c2) -> a1 == a2 && b1 == b2 && c1 == c2
+        | _ -> false
+    
     let hash (tn : t_node) =
       let open Hashcons in
       match tn with
-        | True  -> 10
-        | False  -> 20
-        | Atomic a -> Hash.combine2 30 @@ hash_atomic a
-        | Not a -> Hash.combine2 40 a.hkey
-        | X a -> Hash.combine2 50 a.hkey
-        | F a -> Hash.combine2 60 a.hkey
-        | G a -> Hash.combine2 70 a.hkey
-        | Y a -> Hash.combine2 80 a.hkey
-        | O a -> Hash.combine2 90 a.hkey
-        | H a -> Hash.combine2 100 a.hkey
-        | U (a, b) -> Hash.combine3 110 a.hkey b.hkey
-        | R (a, b) -> Hash.combine3 120 a.hkey b.hkey
-        | S (a, b) -> Hash.combine3 130 a.hkey b.hkey
-        | T (a, b) -> Hash.combine3 140 a.hkey b.hkey
-        | And (a, b) -> Hash.combine3 150 a.hkey b.hkey
-        | Or (a, b) -> Hash.combine3 160 a.hkey b.hkey
-        | Imp (a, b) -> Hash.combine3 170 a.hkey b.hkey
-        | Iff (a, b) -> Hash.combine3 180 a.hkey b.hkey
-        | Xor (a, b) -> Hash.combine3 190 a.hkey b.hkey
-        | Ite (a, b, c) -> Hash.combine4 200 a.hkey b.hkey c.hkey
-        | Comp (a, b, c) -> Hash.combine4 210 a.hkey b.hkey c.hkey
+        | True -> 19
+        | False -> 23
+        | Atomic a -> Hash.combine2 29 @@ Atomic.hash a
+        | Not a -> Hash.combine2 31 a.hkey
+        | X a -> Hash.combine2 37 a.hkey
+        | F a -> Hash.combine2 41 a.hkey
+        | G a -> Hash.combine2 43 a.hkey
+        | Y a -> Hash.combine2 47 a.hkey
+        | O a -> Hash.combine2 53 a.hkey
+        | H a -> Hash.combine2 59 a.hkey
+        | U (a, b) -> Hash.combine3 61 a.hkey b.hkey
+        | R (a, b) -> Hash.combine3 67 a.hkey b.hkey
+        | S (a, b) -> Hash.combine3 71 a.hkey b.hkey
+        | T (a, b) -> Hash.combine3 73 a.hkey b.hkey
+        | And (a, b) -> Hash.combine3 79 a.hkey b.hkey
+        | Or (a, b) -> Hash.combine3 83 a.hkey b.hkey
+        | Imp (a, b) -> Hash.combine3 89 a.hkey b.hkey
+        | Iff (a, b) -> Hash.combine3 97 a.hkey b.hkey
+        | Xor (a, b) -> Hash.combine3 101 a.hkey b.hkey
+        | Ite (a, b, c) -> Hash.combine4 103 a.hkey b.hkey c.hkey
+        | Comp (a, b, c) -> Hash.combine4 107 (hash_tcomp a) b.hkey c.hkey
 
   end
   
@@ -325,19 +318,6 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
           | False -> not_ p
           | _ -> make_t @@ Imp (p, q2)
 
-  
-
-  (* OPTIMIZATIONS REMOVED *)
-  (* let not_ p = make_t @@ Not p *)
-  (* let and_ p (lazy q) = make_t @@ And (p, q) *)
-  (* let or_ p (lazy q) = make_t @@ Or (p, q) *)
-  (* let implies p (lazy q) = make_t @@ Imp (p, q) *)
-  (* let iff p q = make_t @@ Iff (p, q) *)
-  (* let plus t1 t2 = make_t @@ Plus (t1, t2) *)
-  (* let minus t1 t2 = make_t @@ Minus (t1, t2) *)
-  (* let neg t = make_t @@ Neg t *)
-  (* let comp op t1 t2 = make_t @@ Comp (op, t1, t2) *)
-
   let conj fmls =
     List.fold_left (fun a b -> and_ a (lazy b)) true_ fmls
 
@@ -362,7 +342,7 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
   let since p1 p2 = make_t @@ S (p1, p2)
   let trigerred p1 p2 = make_t @@ T (p1, p2)
 
-  let comp op t1 t2 = match op.H.node, t1.H.node, t2.H.node with
+  let comp op t1 t2 = match op, t1.H.node, t2.H.node with
     | Eq, Num n, Num m when n = m -> true_
     | Lt, Num n, Num m when n < m -> true_
     | Lte, Num n, Num m when n <= m -> true_
@@ -372,30 +352,43 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
     | (Lt | Lte | Gt | Gte | Neq), Num n, Num m when n = m -> false_
     | Eq, Num n, Num m when n <> m -> false_
     | _ -> make_t @@ Comp (op, t1, t2)
+
+  
+
+  (* OPTIMIZATIONS REMOVED *)
+  (* let not_ p = make_t @@ Not p *)
+  (* let and_ p (lazy q) = make_t @@ And (p, q) *)
+  (* let or_ p (lazy q) = make_t @@ Or (p, q) *)
+  (* let implies p (lazy q) = make_t @@ Imp (p, q) *)
+  (* let iff p q = make_t @@ Iff (p, q) *)
+  (* let plus t1 t2 = make_t @@ Plus (t1, t2) *)
+  (* let minus t1 t2 = make_t @@ Minus (t1, t2) *)
+  (* let neg t = make_t @@ Neg t *)
+  (* let comp op t1 t2 = make_t @@ Comp (op, t1, t2) *)
+                       
   (* END t hashconsing *)
 
   (* BEGIN term hashconsing *)
-  (* let equal_term_node x y = match x, y with *)
-  (*   | Num n, Num m -> n == m  *)
-  (*   | Plus (n1, m1), Plus (n2, m2) -> n1 == n2 && m1 == m2 *)
-  (*   | Minus (n1, m1), Minus (n2, m2) -> n1 == n2 && m1 == m2 *)
-  (*   | Neg n, Neg m -> n == m *)
-  (*   | Count ps, Count qs -> *)
-  (*       List.fold_left2 (fun acc p q -> p == q && acc) true ps qs *)
-  (*   | _ -> false *)
 
   module Term_node = struct
     type t = term_node
       
-		let equal = equal_term_node
+		let equal x y = match x, y with
+      | Num n, Num m -> n == m
+      | Plus (n1, m1), Plus (n2, m2) -> n1 == n2 && m1 == m2
+      | Minus (n1, m1), Minus (n2, m2) -> n1 == n2 && m1 == m2
+      | Neg n, Neg m -> n == m
+      | Count ps, Count qs ->
+          List.fold_left2 (fun acc p q -> p == q && acc) true ps qs
+      | _ -> false
 
     let hash (tn : term_node) =
       let open Hashcons in
       match tn with
-        | Num n -> Hash.combine2 10 @@ Hash.int n
-        | Neg a -> Hash.combine2 20 a.hkey
-        | Plus (a, b) -> Hash.combine3 30 a.hkey b.hkey
-        | Minus (a, b) -> Hash.combine3 40 a.hkey b.hkey
+        | Num n -> Hash.combine2 109 @@ Hash.int n
+        | Neg a -> Hash.combine2 113 a.hkey
+        | Plus (a, b) -> Hash.combine3 127 a.hkey b.hkey
+        | Minus (a, b) -> Hash.combine3 131 a.hkey b.hkey
         | Count ps -> Hash.list (fun p -> p.hkey) ps
   end
   
@@ -424,7 +417,9 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
     match List.filter (fun p -> p.H.node != False) ps with
       | [] -> num 0
       | props -> make_term @@ Count props
+                                
   (* END term hashconsing *)
+                                
                         
   let wedge ~range f =
     Sequence.fold (fun fml tuple -> and_ fml @@ f tuple) true_ range
@@ -443,6 +438,7 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
     let ( @=> ) x y = implies x y
     let ( @<=> ) x y = iff x y
   end
+  
 
   let pp_hasconsing_assessment out pp_t =
     let open Fmtc in
@@ -463,11 +459,9 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with type atomic = At.t =
     pf out "LTL hashconsing assessment@\n\
             [LTL]@\n@[<v>%a@]\
             [TERMS]@\n@[<v>%a@]\
-            [Tcomp]@\n@[<v>%a@]\
             LTL table:@\n"
       (pr_stats T.stats) t_table
-      (pr_stats Term.stats) term_table
-      (pr_stats TComp.stats) tcomp_table(* ; *)
+      (pr_stats Term.stats) term_table(* ; *)
     (* Format.pp_open_vbox out 0; *)
     (* T.iter (pp_t out) t_table; *)
     (* Format.pp_close_box out () *)

@@ -6,12 +6,12 @@ open Containers
 module Make
     (Ltl : Solver.LTL)
     (ConvertFormulas : Elo_to_LTL_intf.S
-     with type ltl = Ltl.t and type atomic = Ltl.atomic)
+     with type ltl = Ltl.t and type atomic = Ltl.Atomic.t)
     (Model : Solver.MODEL
      with type ltl = ConvertFormulas.ltl
       and type atomic = ConvertFormulas.atomic) =
 struct
-
+  type atomic = Ltl.Atomic.t
   (* Compute an LTL formula and the list of atomic propositions from a
      list of symmetries *)
   let syms_to_ltl elo =
@@ -33,9 +33,9 @@ struct
             let name_is_const =
               Domain.get_exn name1 dom |> Relation.is_const
             in
-            let at1 = make_atomic name1 tuple1 in
-            let at_fml1 =  atomic at1 in
-            let at2 = make_atomic name2 tuple2 in
+            let at1 = Ltl.Atomic.make name1 tuple1 in
+            let at_fml1 = atomic at1 in
+            let at2 = Ltl.Atomic.make name2 tuple2 in
             let at_fml2 = atomic at2 in
             if name_is_const then
               (Sequence.cons at1 (Sequence.cons at2 rigid_atoms_acc),

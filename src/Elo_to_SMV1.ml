@@ -17,7 +17,7 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
 
   (* table tracking which pair (name, tuple) a string comes from. Uses
      hahsconsing to make this more efficient *)
-  module HT = Hashtbl.Make(Symbol)
+  module HT = CCHashtbl.Make(Symbol)
       
   let names_and_tuples = HT.create 297
              
@@ -37,7 +37,7 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
 
   
   let split str =
-    HT.find names_and_tuples @@ Symbol.make str
+    HT.get names_and_tuples @@ Symbol.make str
    
 end
 
