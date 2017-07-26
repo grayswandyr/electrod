@@ -12,7 +12,7 @@ module H = Hashcons.Make(struct
 (* ********************* *)
 (* table for hashconsing *)
 (* ********************* *)
-let table = H.create 297
+let table = H.create 1289
 (* ********************* *)
            
 let make s =
@@ -20,15 +20,14 @@ let make s =
 
 let hash sym =
   let open Hashcons in
-  sym.tag
+  sym.hkey
 
 let compare s1 s2 =
   let open Hashcons in
-  Int.compare s1.tag s2.tag
+  s1.tag - s2.tag
 
 let equal x1 x2 =
-  let open Hashcons in
-  x1.tag = x2.tag
+  x1 == x2
 
 let pp out at =
   let open Hashcons in
