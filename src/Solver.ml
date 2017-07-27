@@ -342,6 +342,7 @@ module type MODEL = sig
   val analyze : cmd:string 
     -> script:script_type
     -> keep_files:bool
+    -> no_analysis:bool
     -> elo:Elo.t
     -> file:string -> t -> outcome
 

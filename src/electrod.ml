@@ -29,7 +29,12 @@ let script =
 let keep_files =
   let doc = {|If present, do not delete the model and script files after use.|}
   in
-  Arg.(value & flag & info ["keep"] ~doc)
+  Arg.(value & flag & info ["kg"; "keep-generated"] ~doc)
+
+let no_analysis =
+  let doc = {|If present, do not perform the analysis (files are still generated).|}
+  in
+  Arg.(value & flag & info ["na"; "no-analysis"] ~doc)
 
 (* verbosity options (already def'd in Logs_cli, thx!) *)
 let verb_term = 
@@ -47,7 +52,8 @@ let main_term =
         $ tool
         $ infile
         $ script
-        $ keep_files)
+        $ keep_files
+        $ no_analysis)
 
 let third_party_blurb =
   {|Electrod relies on the following third-party free software, 

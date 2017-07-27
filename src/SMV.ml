@@ -330,7 +330,18 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
   
   (* TODO pass script as argument *)
   (* TODO allow to specify a user script *)
-  let analyze ~cmd ~script ~keep_files ~elo ~file model =
+  let analyze ~cmd ~script ~keep_files ~no_analysis ~elo ~file model =
+    let keep_or_remove_files scr smv =
+      if keep_files then 
+        Logs.app (fun m ->
+              m "Analysis files kept@\nScript: %s@\nSMV file: %s" scr smv)
+      else begin
+        (match script with
+          | Solver.Default _ -> IO.File.remove_noerr scr
+          | Solver.File _ -> ());
+        IO.File.remove_noerr smv
+      end
+    in
     (* TODO check whether nuXmv is installed first *)
     let scr = make_script_file script in
     let before_generation = Mtime_clock.now () in
@@ -351,50 +362,49 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
           m "SMV file (size: %d%s) generated in %a"
             size unit_
             Mtime.Span.pp (Mtime.span before_generation after_generation));
-    (* TODO make things s.t. it's possible to set a time-out *)
-    let to_call = Fmt.strf "%s -source %s %s" cmd scr smv in
-    Msg.info (fun m -> m "Starting analysis:@ @[<h>%s@]" to_call);
-    let before_run = Mtime_clock.now () in
-    let (okout, errout, errcode) =
-      CCUnix.call "%s" to_call
-    in
-    let after_run = Mtime_clock.now () in
-    if errcode <> 0 then
-      Msg.Fatal.solver_failed (fun args -> args "nuXmv" scr smv errcode errout)
-    else (* running nuXmv goes well: parse its output *)
-      Msg.info (fun m -> m "Analysis done in %a" Mtime.Span.pp
-                 @@ Mtime.span before_run after_run);
-    let spec =
-      String.lines_gen okout
-      |> Gen.drop_while
-           (fun line ->
-              not @@ String.suffix ~suf:"is false" line
-              && not @@ String.suffix ~suf:"is true" line)
-    in
-    if not keep_files then
-      ((match script with
-          | Solver.Default _ -> IO.File.remove_noerr scr
-          | Solver.File _ -> ());
-       IO.File.remove_noerr smv)
+    if no_analysis then begin
+      keep_or_remove_files scr smv;
+      Solver.No_trace
+    end
     else
-      Logs.app (fun m -> m "Analysis files kept@\nScript: %s@\nSMV file: %s"
-                           scr smv);
-    if String.suffix ~suf:"is true" @@ Gen.get_exn spec then
-      Solver.No_trace 
-    else
-      (* nuXmv says there is a counterexample so we parse it on the standard
-         output *)
-      (* first create a trace parser (it is parameterized by [base] below
-         which tells the parser the "must" associated to every relation in the
-         domain, even the ones not present in the SMV file because they have
-         been simplified away in the translation. This goes this way because
-         the trace to return should reference all relations, not just the ones
-         grounded in the SMV file.). NOTE: the parser expects a nuXmv trace
-         using the "trace plugin" number 1 (classical output (i.e. no XML, no
-         table) with information on all variables, not just the ones that have
-         changed w.r.t. the previous state.). *)
-      let module P =
-        SMV_trace_parser.Make(struct
+      (* TODO make things s.t. it's possible to set a time-out *)
+      let to_call = Fmt.strf "%s -source %s %s" cmd scr smv in
+      Msg.info (fun m -> m "Starting analysis:@ @[<h>%s@]" to_call);
+      let before_run = Mtime_clock.now () in
+      let (okout, errout, errcode) =
+        CCUnix.call "%s" to_call
+      in
+      let after_run = Mtime_clock.now () in
+      if errcode <> 0 then
+        Msg.Fatal.solver_failed (fun args -> args "nuXmv" scr smv errcode errout)
+      else (* running nuXmv goes well: parse its output *)
+        Msg.info (fun m -> m "Analysis done in %a" Mtime.Span.pp
+                   @@ Mtime.span before_run after_run);
+      let spec =
+        String.lines_gen okout
+        |> Gen.drop_while
+             (fun line ->
+                not @@ String.suffix ~suf:"is false" line
+                && not @@ String.suffix ~suf:"is true" line)
+      in
+      keep_or_remove_files scr smv;
+
+      if String.suffix ~suf:"is true" @@ Gen.get_exn spec then
+        Solver.No_trace 
+      else
+        (* nuXmv says there is a counterexample so we parse it on the standard
+           output *)
+        (* first create a trace parser (it is parameterized by [base] below
+           which tells the parser the "must" associated to every relation in the
+           domain, even the ones not present in the SMV file because they have
+           been simplified away in the translation. This goes this way because
+           the trace to return should reference all relations, not just the ones
+           grounded in the SMV file.). NOTE: the parser expects a nuXmv trace
+           using the "trace plugin" number 1 (classical output (i.e. no XML, no
+           table) with information on all variables, not just the ones that have
+           changed w.r.t. the previous state.). *)
+        let module P =
+          SMV_trace_parser.Make(struct
             let base = Domain.musts ~with_univ_and_ident:false elo.Elo.domain
           end)
         in
