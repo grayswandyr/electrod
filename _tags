@@ -27,6 +27,7 @@ true: short_paths
 true: debug
 true: color(always)
 true: linkpkg
+true: warn(-58)
 
 true: use_menhir
 true: infer
