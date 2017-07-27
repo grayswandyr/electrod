@@ -1,32 +1,27 @@
 
 open Containers
 
-module Basis = struct
-  type t = {
-    name : string;
-    loc : Location.t option;
-    hash : int
-  }
+type t = {
+  sym : Symbol.t;
+  loc : Location.t option
+}
 
-  let compare at1 at2 = CCString.compare at1.name at2.name
+let compare a1 a2 = Symbol.compare a1.sym a2.sym
 
-  let equal at1 at2 = CCString.equal at1.name at2.name
-end
+let equal a1 a2 = Symbol.equal a1.sym a2.sym
 
-include Basis
-
-let atom ?loc name = { name; loc; hash = Hash.string name}
+let atom ?loc s = { sym = Symbol.make s; loc }
 
 let of_raw_ident id =
   atom ~loc:(Raw_ident.location id) (Raw_ident.basename id)
  
 
-let hash atom = atom.hash
+let hash atom = Symbol.hash atom.sym
 
 (** Generic interface implementations *)
 
-let pp out { name; _ } =
-  Fmtc.(string out name)
+let pp out { sym; _ } =
+  Symbol.pp out sym
 
 
 
@@ -42,4 +37,3 @@ let pp_list atoms =
 let to_string_list = Fmtc.to_to_string pp_list
 
 
-module Set = Set.Make(Basis)

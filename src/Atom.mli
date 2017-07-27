@@ -14,7 +14,6 @@ val pp_list : t list CCFormat.printer
 
 val hash : t -> int
   
-module Set : Set.S with type elt = t
 
 include Intf.Print.S with type t := t
   
