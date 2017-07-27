@@ -2,49 +2,69 @@
 
 (*$inject open Test *)
 
-type t = {
-  contents : Atom.t Array.t;
-  hash : int
-}
 
+(* WARNING: we use arrays for efficiency as tuples are of a fixed size BUT as
+   they are hashconsed, they must only be used in an APPLICATIVE way! *)
+module H = Hashcons
 
+type t_node = Atom.t Array.t 
+
+type t = t_node Hashcons_util.hash_consed
+
+module T_node = struct
+  type t = t_node
+
+  let equal t1 t2 =
+    Array.equal Atom.equal t1 t2
+
+  let hash t = Hash.array Atom.hash t
+end
+
+module T = Hashcons.Make(T_node)
+
+let t_table = T.create 2971
+  
+
+(* Constructors *)
+let hashcons x = T.hashcons t_table x
+
+let of_array arr =
+  assert (Array.length arr > 0);
+  hashcons arr
+
+let of_list1 xs =
+  assert (xs <> []);
+  hashcons @@ Array.of_list xs 
+
+let tuple1 at =
+  of_list1 [at]
+
+(* accessor *)
 let arity tuple =
-  Array.length tuple.contents
+  Array.length tuple.H.node
 
+let hash tuple =
+  tuple.H.hkey
+
+
+(* printing *)
 let pp out atoms =
   let open Fmtc in
   (array ~sep:sp Atom.pp
    |> (if arity atoms > 1 then parens else (fun x -> x)))
-    out atoms.contents
-
+    out atoms.H.node
 
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P  
 
 
-let of_array contents =
-  assert (Array.length contents > 0);
-  {
-    contents;
-    hash = Hash.array Atom.hash contents
-  }
+(* other accessors *)
 
-let of_list1 xs =
-  assert (xs <> []);
-  of_array @@ Array.of_list xs 
-
-
-let hash tuple =
-  tuple.hash
-
-let to_list t = Array.to_list t.contents
-
-let tuple1 at =
-  of_list1 [at]
+let to_list t = Array.to_list t.H.node
     
-let compare t1 t2 = Array.compare Atom.compare t1.contents t2.contents
+let compare t1 t2 = Array.compare Atom.compare t1.H.node t2.H.node
 
-let equal t1 t2 = Array.equal Atom.equal t1.contents t2.contents
+let equal t1 t2 = t1 == t2
 
 
 (* transpose involutive *)
@@ -54,15 +74,23 @@ let equal t1 t2 = Array.equal Atom.equal t1.contents t2.contents
 *)
 let transpose tuple =
   assert (arity tuple = 2);
-  of_array @@ Array.rev tuple.contents
+  (* [rev] create a copy => hashcons safe *)
+  hashcons @@ Array.rev tuple.H.node
                 
 
 let ith i tuple =
   assert (i >= 0 && i < arity tuple);
-  tuple.contents.(i)
+  tuple.H.node.(i)
 
 let ( @@@ ) t1 t2 =
-  of_array @@ Array.append t1.contents t2.contents
+  hashcons @@ Array.append t1.H.node t2.H.node
+
+(* let ( @@@ ) t1 t2 = *)
+(*   CCCache.(with_cache *)
+(*              (lru 1289 *)
+(*                 ~eq:(Pair.equal ( == ) ( == )) *)
+(*                 ~hash:(Hash.pair hash hash)) *)
+(*              (fun (x, y) -> x @@@ y) (t1, t2)) *)
 
 let concat = function
   | [] -> invalid_arg "Tuple.concat: empty list of tuples"
@@ -87,24 +115,31 @@ let concat = function
   )
 *)
 let join tuple1 tuple2 =
-  let t1 = tuple1.contents in
-  let t2 = tuple2.contents in
+  let t1 = tuple1.H.node in
+  let t2 = tuple2.H.node in
   let lg1 = Array.length t1 in
   let lg2 = Array.length t2 in
   assert (Atom.equal (ith (arity tuple1 - 1) tuple1) (ith 0 tuple2));
+  (* imperative but safe: first we create a fresh array and fill it
+     imperatively; and only then do we make a [t] out of it *)
   let res = Array.make (lg1 + lg2 - 2) t1.(0) in
   Array.blit t1 0 res 0 (lg1 - 1);
   Array.blit t2 1 res (lg1 - 1) (lg2 - 1);
-  of_array res
+  hashcons res
 
-
+(* let join t1 t2 = *)
+(*   CCCache.(with_cache *)
+(*              (lru 1289 *)
+(*                 ~eq:(Pair.equal ( == ) ( == )) *)
+(*                 ~hash:(Hash.pair hash hash)) *)
+(*              (fun (x, y) -> join x y) (t1, t2)) *)
 
 let is_in_join tup tuple1 tuple2 =
-  let t1 = tuple1.contents in
-  let t2 = tuple2.contents in
+  let t1 = tuple1.H.node in
+  let t2 = tuple2.H.node in
   let lg1 = Array.length t1 in
-  Atom.equal t1.(lg1 - 1) t2.(0) &&
-  equal tup @@ join tuple1 tuple2
+  Atom.equal t1.(lg1 - 1) t2.(0)
+  && equal tup @@ join tuple1 tuple2
   (* |> Fun.tap (fun res -> Msg.debug (fun m -> *)
   (*       m "is_in_join: %a in %a.%a --> %B" *)
   (*         pp tup *)
@@ -129,17 +164,24 @@ let is_in_join tup tuple1 tuple2 =
   )
 *)
 let split tuple len =
-  let t = tuple.contents in
+  let t = tuple.H.node in
   let full_len = Array.length t in
   assert (len > 0 && len < full_len);
+  (* copies make the operation safe with hashconsing *)
   let t1 = Array_slice.(make t 0 len |> copy) in
   let t2 = Array_slice.(make t len (full_len - len) |> copy) in
-  (of_array t1, of_array t2)
+  (hashcons t1, hashcons t2)
 
+(* let split tuple len = *)
+(*   CCCache.(with_cache *)
+(*              (lru 1289 *)
+(*                 ~eq:(Pair.equal ( == ) ( == )) *)
+(*                 ~hash:(Hash.pair hash Int.hash)) *)
+(*              (fun (x, y) -> split x y) (tuple, len)) *)
 
 
 let all_different tuple =
-  let t = tuple.contents in
+  let t = tuple.H.node in
   let sorted = Array.sorted Atom.compare t in
   let lg = Array.length t in
   let i = ref 1 in
@@ -150,11 +192,11 @@ let all_different tuple =
   !yes
 
 let to_1tuples t =
-  Array.fold_right (fun at acc -> of_list1 [at] :: acc) t.contents []
+  Array.fold_right (fun at acc -> of_list1 [at] :: acc) t.H.node []
 
 let to_ntuples n t =
-  assert (Array.length t.contents mod n = 0);
-  Array.to_list t.contents
+  assert (Array.length t.H.node mod n = 0);
+  Array.to_list t.H.node
   |> List.sublists_of_len n
   |> List.map of_list1
 
