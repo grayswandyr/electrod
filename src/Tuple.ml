@@ -169,7 +169,7 @@ let split tuple len =
   assert (len > 0 && len < full_len);
   (* copies make the operation safe with hashconsing *)
   let t1 = Array_slice.(make t 0 len |> copy) in
-  let t2 = Array_slice.(make t len (full_len - len) |> copy) in
+  let t2 = Array_slice.(make t len (full_len - len) |> copy) in 
   (hashcons t1, hashcons t2)
 
 (* let split tuple len = *)
