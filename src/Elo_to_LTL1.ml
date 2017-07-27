@@ -13,7 +13,7 @@ module Make (Ltl : Solver.LTL) = struct
   open Ltl
   open Ltl.Infix
 
-  type atomic = Ltl.atomic
+  type atomic = Ltl.Atomic.t
 
   type ltl = Ltl.t
 
@@ -374,14 +374,6 @@ module Make (Ltl : Solver.LTL) = struct
           |> rev_append acc) empty r_sup
     |> to_seq
 
-  (* let eligible_pairs = *)
-  (*   CCCache.(with_cache *)
-  (*              (lru ~eq:(fun (t1, r1, s1, _, _) (t2, r2, s2, _, _) -> *)
-  (*                     Tuple.equal t1 t2 *)
-  (*                     && Elo.equal_exp r1 r2 *)
-  (*                     && Elo.equal_exp s1 s2) *)
-  (*                  256) *)
-  (*              eligible_pairs) *)
 
 
   class ['env] converter = object (self : 'self)
@@ -1015,8 +1007,8 @@ module Make (Ltl : Solver.LTL) = struct
   (* set of atoms, to gather rigid and flexiblae variables *)
   module AS =
     Set.Make(struct
-      type t = Ltl.atomic
-      let compare = Ltl.compare_atomic
+      type t = Ltl.Atomic.t
+      let compare = Ltl.Atomic.compare
     end)
 
   class environment (elo : Elo.t) = object (self : 'self)
@@ -1041,7 +1033,7 @@ module Make (Ltl : Solver.LTL) = struct
 
     method make_atom (name : Name.t) (t : Tuple.t) =
       assert (Domain.mem name elo.Elo.domain);
-      let atom = make_atomic name t in
+      let atom = Atomic.make name t in
       (if Domain.get_exn name elo.Elo.domain |> Relation.is_const then
          rigid_atoms <- AS.add atom rigid_atoms
        else

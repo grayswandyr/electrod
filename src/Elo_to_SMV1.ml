@@ -4,57 +4,40 @@ open Containers
 
   
 module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
-  module H = Hashcons.Make(struct
-      type t = string
-      let hash = String.hash
-		  let equal = String.equal 
-    end)
-  
-  type t = string Hashcons.hash_consed
+  type t = Symbol.t             (* hashconsed strings *)
+    
+  let compare = Symbol.compare
 
-  (* table for hashconsing *)
-  let ht = H.create 297
+  let pp = Symbol.pp
 
-  (* table keeping trace of which pair (name, tuple) a string comes. Uses
+  let equal = Symbol.equal
+
+  let hash = Symbol.hash
+
+
+  (* table tracking which pair (name, tuple) a string comes from. Uses
      hahsconsing to make this more efficient *)
-  module HT = Hashtbl.Make(struct
-      type nonrec t = t
-      let hash x = x.Hashcons.tag
-      let equal x1 x2 = x1.Hashcons.tag = x2.Hashcons.tag
-    end)
+  module HT = CCHashtbl.Make(Symbol)
       
-  let names_and_tuples = HT.create 297
+  let names_and_tuples = HT.create 179 (* usually less than that many VARs *)
              
   let rel_sep = "$"
 
   let atom_sep = Fmtc.minus
   
-  let make_aux name atoms =
+  let make name atoms =
     let ats = Tuple.to_list atoms in
-    H.hashcons ht @@
+    Symbol.make @@
     Format.sprintf "%a%s%a"
       Name.pp name
       rel_sep
       Fmtc.(list ~sep:atom_sep Atom.pp) ats
-
-  let make name atoms =
-    make_aux name atoms 
-    (* keep trace of creations to get original pairs back *)
+    (* keep trace of creations to allow to get original pairs back *)
     |> Fun.tap (fun hs -> HT.add names_and_tuples hs (name, atoms))
 
   
   let split str =
-    HT.find names_and_tuples @@ H.hashcons ht str
-    
-    
-
-  let compare s1 s2 =
-    let open Hashcons in
-    Int.compare s1.tag s2.tag
-
-  let pp out at =
-    let open Hashcons in
-    Format.fprintf out "%s" at.node 
+    HT.get names_and_tuples @@ Symbol.make str
    
 end
 

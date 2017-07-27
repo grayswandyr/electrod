@@ -57,7 +57,13 @@ rule main split_atomic = parse
       { TRUE }
 
   | valu as v
-    { ATOMIC (split_atomic v) }
+    { match split_atomic v with
+      | None ->
+          Msg.Fatal.lexical
+          @@ fun args -> args None lexbuf
+                       ("SMV trace scanning: unknown variable: " ^ v)                           
+      | Some pair -> ATOMIC pair
+    }
 
   | '='
       { EQUAL }
