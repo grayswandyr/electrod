@@ -20,7 +20,7 @@ let exp_no_arity = G.exp (Some 0)
 %token GT GTE LT LTE TRUE FALSE SOMETIME EVENTUALLY ALWAYS NOT
 %token TILDE HAT STAR IDEN ELSE CONST INVARIANT
 %token INTER OVERRIDE LPROJ RPROJ MINUS DOT PRIME
-%token THEN NOT_IN RUN CHECK
+%token THEN NOT_IN RUN 
 // for integer expressions
 %token NEG ADD SUB HASH //INT
 
@@ -213,8 +213,6 @@ specification:
 %inline goal:
 	RUN fs = formula_semi+
 {G.run fs  }
-	| CHECK fs = formula_semi+
-	{ G.check fs }
 
 formula_semi:
   f = formula ioption(SEMI)

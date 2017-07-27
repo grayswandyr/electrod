@@ -5,7 +5,6 @@
    any identifier (a variable like in the former case or a relation name) *)
 type ('v, 'i) t =
   | Run of (('v, 'i) block)
-  | Check of (('v, 'i) block)
 
 (** Formulas and expressions *)
 
@@ -314,8 +313,6 @@ let iexp iexp_loc prim_iexp = { prim_iexp; iexp_loc }
 
 let run fs = Run fs
 
-let check fs = Check fs
-
 
 
 (******************************************************************************
@@ -324,21 +321,13 @@ let check fs = Check fs
 
 let kwd_styled pf = Fmtc.(styled `Bold) pf
 
-let rec pp pp_v pp_i out =
+let rec pp pp_v pp_i out (Run fml) =
   let open Fmtc in
-  function 
-    | Run fml ->
-        begin
-          (kwd_styled pf) out "run@ ";
-          pf out "  %a"
-            (box2 @@ list @@ pp_fml pp_v pp_i) fml
-        end
-    | Check fml ->
-        begin
-          (kwd_styled pf) out "check@ ";
-          pf out "  %a"
-            (box2 @@ list @@ pp_fml pp_v pp_i) fml
-        end
+  begin
+    (kwd_styled pf) out "run@ ";
+    pf out "  %a"
+      (box2 @@ list @@ pp_fml pp_v pp_i) fml
+  end
 
 and pp_fml pp_v pp_i out fml =
   pp_prim_fml pp_v pp_i out fml.prim_fml

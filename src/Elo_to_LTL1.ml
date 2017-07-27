@@ -397,8 +397,6 @@ module Make (Ltl : Solver.LTL) = struct
 
     method build_Run (env : 'env) _ = Fun.id
 
-    method build_Check (env : 'env) _ = Fun.id
-
     method build_True (env : 'env) = true_
 
     method build_False (env : 'env) = false_

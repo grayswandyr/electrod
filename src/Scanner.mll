@@ -51,8 +51,6 @@ rule main infile = parse
         Msg.Fatal.lexical
         @@ fun args -> args infile lexbuf ("invalid integer constant '" ^ i ^ "'")
     }   
-| "check" 
-    { CHECK }
 | "run"
     { RUN }
 | "invariant"

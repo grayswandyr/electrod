@@ -442,7 +442,6 @@ let refine_identifiers raw_pb =
   in
   let walk_goal = function
     | Run fml -> run @@ List.map Fun.(snd % walk_fml init_ctx) fml
-    | Check fml -> check @@ List.map Fun.(snd % walk_fml init_ctx) fml
   in
   let walk_invariants invs =
     snd @@ walk_block init_ctx invs
@@ -743,7 +742,6 @@ let compute_arities elo =
   in
   let walk_goal ctx = function
     | Run fmls -> run @@ List.map (walk_fml ctx) fmls
-    | Check fmls -> check @@ List.map (walk_fml ctx) fmls
   in
   Elo.{ elo with
           invariants = List.map (walk_fml init) elo.invariants;

@@ -88,23 +88,23 @@ struct
   function computes the elo formula "(f1 and ... and fn-1) implies not
   fn" *)
   let dualise_fmls fmls =
-    assert (List.length fmls > 0);
-
     let open GenGoal in
-    let hd::tl = List.rev fmls in
-    let premise = 
-    List.fold_left
-               (fun x y -> fml (Location.span (x.fml_loc, y.fml_loc))
-                           @@ lbinary x and_ y)
-               (fml Location.dummy true_) tl
-    in
-    let rhs_fml =
-      match hd.prim_fml with
-      | LUn (Not, subfml) -> subfml
-      | _ -> fml hd.fml_loc @@ lunary Not hd
-    in
-    fml premise.fml_loc @@
-      lbinary premise Imp rhs_fml
+    match List.rev fmls with
+      | [] -> assert false
+      | hd::tl ->
+          let premise = 
+            List.fold_left
+              (fun x y -> fml (Location.span (x.fml_loc, y.fml_loc))
+                @@ lbinary x and_ y)
+              (fml Location.dummy true_) tl
+          in
+          let rhs_fml =
+            match hd.prim_fml with
+              | LUn (Not, subfml) -> subfml
+              | _ -> fml hd.fml_loc @@ lunary Not hd
+          in
+          fml premise.fml_loc @@
+          lbinary premise Imp rhs_fml
               
   let run elo =
     let open Elo in
@@ -147,7 +147,7 @@ struct
 
 
     (* handling the goal *)
-    let goal_blk = match elo.goal with GenGoal.Run g | GenGoal.Check g -> g in
+    let goal_blk = match elo.goal with GenGoal.Run g -> g in
 
     (* Partition the goal fmls into invars and non invars *)
     let detected_invars, general_fmls =
