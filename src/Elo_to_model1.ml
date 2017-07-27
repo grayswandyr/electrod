@@ -88,8 +88,6 @@ struct
      function computes the elo formula "(f1 and ... and fn-1) implies not
      fn" *)
   let dualise_fmls fmls =
-    assert (fmls <> []);
-
     let open GenGoal in
     match List.rev fmls with
       | [] -> assert false
@@ -149,7 +147,7 @@ struct
 
 
     (* handling the goal *)
-    let goal_blk = match elo.goal with GenGoal.Run g | GenGoal.Check g -> g in
+    let goal_blk = match elo.goal with GenGoal.Run g -> g in
 
 
     (* Partition the goal fmls into invars and non invars *)
