@@ -110,6 +110,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
                     (Mtime.span before_conversion @@ Mtime_clock.now ())
                 ))
     in
+    
     (* let sup_r = Domain.sup (Name.name "r") elo.domain in *)
     (* let tc_r = TupleSet.transitive_closure sup_r in *)
     (* Msg.debug (fun m -> *)
@@ -129,6 +130,10 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
     (if not no_analysis then
        Logs.app (fun m -> m "Analysis yields:@\n%a" Solver.pp_outcome res));
 
+    let memory = Gc.allocated_bytes () in
+    Msg.info (fun m -> m "Total allocated memory: %.3fGB"
+                         (memory /. 1_000_000_000.));
+    
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
                          Mtime.Span.pp (Mtime_clock.elapsed ()))
 
