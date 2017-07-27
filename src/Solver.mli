@@ -173,10 +173,14 @@ module type MODEL = sig
       result contains the POSIX error code and the error string output by the
       solver. If [script] is [None], then a default command script is used;
       otherwise it contains the name of a script file. [elo] is the Electrod
-      model (used to interpret back a resulting trace). *)
+      model (used to interpret back a resulting trace). 
+
+      If [no_analysis] is set to true, then no analysis is done (but the files are
+      still generated and may be kept) and the function returns [No_trace]!*)
   val analyze : cmd:string 
     -> script:script_type
     -> keep_files:bool
+    -> no_analysis:bool
     -> elo:Elo.t
     -> file:string -> t -> outcome
 

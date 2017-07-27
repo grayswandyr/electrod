@@ -53,7 +53,7 @@ type tool =
   | NuSMV
 
 
-let main style_renderer verbosity tool file scriptfile keep_files =
+let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
   Printexc.record_backtrace true;
 
   Fmt_tty.setup_std_outputs ?style_renderer ();
@@ -114,23 +114,22 @@ let main style_renderer verbosity tool file scriptfile keep_files =
     (* let tc_r = TupleSet.transitive_closure sup_r in *)
     (* Msg.debug (fun m -> *)
     (*     m "Borne sup de la tc de r : %a " TupleSet.pp tc_r); *)
+    if not no_analysis then begin
+      let cmd, script = match tool, scriptfile with
+        | NuXmv, None -> ("nuXmv", Solver.Default SMV.nuXmv_default_script)
+        | NuXmv, Some s -> ("nuXmv", Solver.File s)
+        | NuSMV, None -> ("NuSMV", Solver.Default SMV.nuSMV_default_script)
+        | NuSMV, Some s -> ("NuSMV", Solver.File s)
+      in
 
-    let cmd, script = match tool, scriptfile with
-      | NuXmv, None -> ("nuXmv", Solver.Default SMV.nuXmv_default_script)
-      | NuXmv, Some s -> ("nuXmv", Solver.File s)
-      | NuSMV, None -> ("NuSMV", Solver.Default SMV.nuSMV_default_script)
-      | NuSMV, Some s -> ("NuSMV", Solver.File s)
-    in
+      Msg.debug (fun m -> m "@.%a"
+                            (Elo_to_SMV1.pp ~margin:78) model);
 
-    Msg.debug (fun m -> m "@.%a"
-                          (Elo_to_SMV1.pp ~margin:78) model);
-
-    Msg.info (fun m -> m "%a" Elo_to_SMV1.SMV_LTL.pp_hasconsing_assessment
-                         (Elo_to_SMV1.SMV_LTL.pp));
-
-    let res = Elo_to_SMV1.analyze ~cmd ~keep_files
-                ~elo:elo ~script ~file model in
-    Logs.app (fun m -> m "Analysis yields:@\n%a" Solver.pp_outcome res);
+      let res = Elo_to_SMV1.analyze ~cmd ~keep_files ~no_analysis
+                  ~elo:elo ~script ~file model in
+      if not no_analysis then
+        Logs.app (fun m -> m "Analysis yields:@\n%a" Solver.pp_outcome res)
+    end;
 
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
                          Mtime.Span.pp (Mtime_clock.elapsed ()))
