@@ -45,7 +45,7 @@ let to_list t = Array.to_list t
     
 let compare t1 t2 = Array.compare Atom.compare t1 t2
 
-let equal t1 t2 = t1 == t2
+let equal t1 t2 = Array.equal Atom.equal t1 t2
 
 
 (* transpose involutive *)
