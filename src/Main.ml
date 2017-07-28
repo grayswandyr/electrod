@@ -128,7 +128,8 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
     let res = Elo_to_SMV1.analyze ~cmd ~keep_files ~no_analysis
                 ~elo:elo ~script ~file model in
     (if not no_analysis then
-       Logs.app (fun m -> m "Analysis yields:@\n%a" Solver.pp_outcome res));
+       Logs.app (fun m -> m "Analysis yields:@\n%a"
+                            Solver.pp_outcome res));
 
     let memory = Gc.allocated_bytes () in
     Msg.info (fun m -> m "Total allocated memory: %.3fGB"

@@ -27,4 +27,4 @@ val to_loop : state -> state
 (** The list must be nonempty and must contain at least one lasso target. *)
 val make : state list -> t
 
-val pp : Format.formatter -> t -> unit
+val pp : format:[`XML | `Plain] -> Format.formatter -> t -> unit

@@ -340,7 +340,7 @@ let pp_outcome out =
   let open Fmtc in
   function
     | No_trace -> pf out "--no trace--"
-    | Trace t -> pf out "@[<v>%a@]" Trace.pp t
+    | Trace t -> pf out "@[<v>%a@]" (Trace.pp ~format:`XML) t
     
 type script_type =
   | Default of string
