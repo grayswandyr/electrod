@@ -332,15 +332,6 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
 
 end
 
-type outcome =
-  | No_trace
-  | Trace of Trace.t
-
-let pp_outcome out =
-  let open Fmtc in
-  function
-    | No_trace -> pf out "--no trace--"
-    | Trace t -> pf out "@[<v>%a@]" (Trace.pp ~format:`XML) t
     
 type script_type =
   | Default of string
@@ -369,7 +360,7 @@ module type MODEL = sig
     -> keep_files:bool
     -> no_analysis:bool
     -> elo:Elo.t
-    -> file:string -> t -> outcome
+    -> file:string -> t -> Outcome.t
 
   val pp : ?margin:int -> Format.formatter -> t -> unit
 end

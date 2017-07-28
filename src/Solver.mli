@@ -132,11 +132,6 @@ end
 module LTL_from_Atomic :
   functor (At : ATOMIC_PROPOSITION) -> LTL with module Atomic = At
 
-type outcome =
-  | No_trace
-  | Trace of Trace.t
-
-val pp_outcome : Format.formatter -> outcome -> unit
 
 type script_type =
   | Default of string
@@ -175,7 +170,7 @@ module type MODEL = sig
     -> keep_files:bool
     -> no_analysis:bool
     -> elo:Elo.t
-    -> file:string -> t -> outcome
+    -> file:string -> t -> Outcome.t
 
   val pp : ?margin:int -> Format.formatter -> t -> unit
 

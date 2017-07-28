@@ -110,7 +110,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
                     (Mtime.span before_conversion @@ Mtime_clock.now ())
                 ))
     in
-    
+
     (* let sup_r = Domain.sup (Name.name "r") elo.domain in *)
     (* let tc_r = TupleSet.transitive_closure sup_r in *)
     (* Msg.debug (fun m -> *)
@@ -127,14 +127,19 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
 
     let res = Elo_to_SMV1.analyze ~cmd ~keep_files ~no_analysis
                 ~elo:elo ~script ~file model in
-    (if not no_analysis then
-       Logs.app (fun m -> m "Analysis yields:@\n%a"
-                            Solver.pp_outcome res));
+    (if not no_analysis then begin
+        (* store the trace *)
+        IO.with_out (Filename.chop_extension file ^ "-result.xml")
+          (fun chan -> Format.with_out_chan chan (Outcome.pp ~format:`XML) res);
+
+        Msg.info (fun m -> m "Analysis yields:@.%a"
+                             (Outcome.pp ~format:`XML) res)
+      end);
 
     let memory = Gc.allocated_bytes () in
     Msg.info (fun m -> m "Total allocated memory: %.3fGB"
                          (memory /. 1_000_000_000.));
-    
+
     Logs.app (fun m -> m "Elapsed (wall-clock) time: %a"
                          Mtime.Span.pp (Mtime_clock.elapsed ()))
 

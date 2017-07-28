@@ -57,9 +57,9 @@ doc: all doc-requisites
 	@echo '}{%html:<h2>Module dependencies</h2><img src="modules.svg" width="300%">' >> doc/intro.text
 	@echo '<h2>Type dependencies</h2><img src="types.svg" width="300%">%}' >> doc/intro.text
 # generate documentation
-	@$(OCB) $(HTML_FLAGS) doc/api.docdir/index.html 
-	@$(OCB) -docflag -dot-reduce doc/api.docdir/modules.dot
-	@$(OCB) -docflags '-dot-types,-dot-reduce' doc/api.docdir/types.dot
+	@$(OCB) -pkg qcheck $(HTML_FLAGS) doc/api.docdir/index.html 
+	@$(OCB) -pkg qcheck -docflag -dot-reduce doc/api.docdir/modules.dot
+	@$(OCB) -pkg qcheck -docflags '-dot-types,-dot-reduce' doc/api.docdir/types.dot
 # remove unnecessary files (now that the doc has been created)
 	@rm doc/intro.text
 # ocamldoc -dot adds a rotation in dot files: remove it; then create svg files

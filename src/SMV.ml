@@ -309,6 +309,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
           const string "LTLSPEC NAME spec :=" **<
           sp **<
           Ltl.pp) property;
+    Format.pp_print_flush out ();
     Format.pp_set_margin out old_margin 
 
     
@@ -366,7 +367,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
             Mtime.Span.pp (Mtime.span before_generation after_generation));
     if no_analysis then begin
       keep_or_remove_files scr smv;
-      Solver.No_trace
+      Outcome.no_trace
     end
     else
       (* TODO make things s.t. it's possible to set a time-out *)
@@ -392,7 +393,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
       keep_or_remove_files scr smv;
 
       if String.suffix ~suf:"is true" @@ Gen.get_exn spec then
-        Solver.No_trace 
+        Outcome.no_trace 
       else
         (* nuXmv says there is a counterexample so we parse it on the standard
            output *)
@@ -420,7 +421,6 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
         |> fun trace_str ->
         (let lexbuf = Lexing.from_string trace_str in
          (P.trace (SMV_trace_scanner.main Ltl.Atomic.split) lexbuf))
-        |> fun trace -> Solver.Trace trace
         
   
 end

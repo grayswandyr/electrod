@@ -34,13 +34,13 @@ end>
 
   let rec tag_last_as_loop = function
     | [] -> assert false
-    | [ st ] -> [ Trace.to_loop st ]
+    | [ st ] -> [ Outcome.to_loop st ]
     | hd::tl -> hd :: tag_last_as_loop tl
        
 
 %}
   
-%start <Trace.t> trace
+%start <Outcome.t> trace
 
 
 
@@ -49,7 +49,7 @@ end>
 %public trace:
 states = state+ EOF 
     {
-      Trace.make
+      Outcome.trace
       (if !met_one_loop
        then states
        else tag_last_as_loop states)
@@ -58,12 +58,12 @@ states = state+ EOF
  state:
     loop = iboption(LOOP) STATE ntl = atomic*
     {
-      let valu = Trace.valuation @@ convert_name_tuple_l ntl in
+      let valu = Outcome.valuation @@ convert_name_tuple_l ntl in
       if loop then
         (met_one_loop := true;
-         Trace.loop_state valu)
+         Outcome.loop_state valu)
       else
-        Trace.plain_state valu
+        Outcome.plain_state valu
     }
 
 atomic:
