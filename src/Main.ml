@@ -129,11 +129,11 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
                 ~elo:elo ~script ~file model in
     (if not no_analysis then begin
         (* store the trace *)
-        IO.with_out (Filename.chop_extension file ^ "-result.xml")
+        IO.with_out (Filename.chop_extension file ^ ".xml")
           (fun chan -> Format.with_out_chan chan (Outcome.pp ~format:`XML) res);
 
         Msg.info (fun m -> m "Analysis yields:@.%a"
-                             (Outcome.pp ~format:`XML) res)
+                             (Outcome.pp ~format:`Plain) res)
       end);
 
     let memory = Gc.allocated_bytes () in
