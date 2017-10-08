@@ -28,10 +28,14 @@ module Make (Ltl : Solver.LTL) = struct
     may : TS.t;
   }
 
-  let make_bounds must sup =
-    { must; sup; may = TS.diff sup must }
+  let rec bounds subst domain exp =
+    let { must; sup; _ } = bounds_prim_exp subst domain exp.G.prim_exp in
+    { must; sup; may = TS.diff sup must }                             
 
-  let rec bounds_prim_exp subst domain pe =
+  and make_bounds must sup =
+    { must; sup; may = TS.empty } (*NOTICE: may is voluntarily wrong, fixed in [bounds] above *)
+
+  and bounds_prim_exp subst domain pe =
     let open G in
     let open TS in
     match pe with         
@@ -1028,8 +1032,8 @@ module Make (Ltl : Solver.LTL) = struct
         | Some rel -> Relation.arity rel
 
     method must_may_sup (subst : (Var.t, Tuple.t) CCList.Assoc.t)
-             (G.{ prim_exp; _ } : (Elo.var, Elo.ident) G.exp) =
-      bounds_prim_exp subst elo.Elo.domain prim_exp
+             (exp : (Elo.var, Elo.ident) G.exp) =
+      bounds subst elo.Elo.domain exp
 
     method make_atom (name : Name.t) (t : Tuple.t) =
       assert (Domain.mem name elo.Elo.domain);
