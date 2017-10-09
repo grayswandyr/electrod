@@ -2,29 +2,9 @@ open Containers
 
 
 
-let nuXmv_default_script = {|
-set default_trace_plugin 1;
-set on_failure_script_quits 1;
-read_model;
-flatten_hierarchy;
-build_flat_model;
-encode_variables;
-build_boolean_model;
-check_ltlspec_klive;
-quit -x
-|}
+let nuXmv_default_script = [%blob "../res/nuxmv-default.txt"]
 
-let nuSMV_default_script = {|
-set default_trace_plugin 1;
-set on_failure_script_quits 1;
-read_model;
-flatten_hierarchy;
-encode_variables;
-build_model;
-check_ltlspec;
-quit -x
-|}
-
+let nuSMV_default_script = [%blob "../res/nusmv-default.txt"]
 
 
 module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)

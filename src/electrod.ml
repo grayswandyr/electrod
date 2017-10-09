@@ -11,20 +11,21 @@ let infile =
 
 
 let tool =
-  let doc = {|Analysis tool to rely upon. TOOL must be one of `nuXmv' or 
+  let doc = {|Analysis tool to rely upon. $(docv) must be one of `nuXmv' or 
               `NuSMV'.|}
   in
   Arg.(value & opt (enum [ ("nuXmv", Main.NuXmv); ("NuSMV", Main.NuSMV)]) Main.NuXmv
        & info ["t"; "tool"] ~docv:"TOOL" ~doc)
 
 let script =
-  let doc = {|Script to pass to the analysis tool (default: homemade nuXmv 
-              script calling 'check_ltlspec_klive'). A script file for nuXmv 
-              or NuSMV MUST set both options `default_trace_plugin' and 
-              `on_failure_script_quits' to '1'. NOTICE: no verification 
-              of the script file is made whatsoever. |} in
+  let doc = {|Script to pass to the analysis tool (default: see section FILES). 
+              A script file for nuXmv 
+              or NuSMV $(b,MUST) set both options `default_trace_plugin' and 
+              `on_failure_script_quits' to '1' (NOTICE: no verification 
+              of the script file is made whatsoever). |}
+  in
   Arg.(value & opt (some non_dir_file) None
-       & info ["s"; "script"] ~docv:"FILE" ~doc)
+       & info ["s"; "script"] ~docv:"SCRIPT_FILE" ~doc)
 
 let keep_files =
   let doc = {|If present, do not delete the model and script files after use.|}
@@ -32,7 +33,8 @@ let keep_files =
   Arg.(value & flag & info ["kg"; "keep-generated"] ~doc)
 
 let no_analysis =
-  let doc = {|If present, do not perform the analysis (files are still generated).|}
+  let doc =
+    {|If present, do not perform the analysis (files are still generated).|}
   in
   Arg.(value & flag & info ["na"; "no-analysis"] ~doc)
 
@@ -55,18 +57,20 @@ let main_term =
         $ keep_files
         $ no_analysis)
 
-let third_party_blurb =
-  {|Electrod relies on the following third-party free software, 
-    released under their respective licence (see the respective 
-    OPAM repositories for the full text of the licences): cmdliner, 
-    mtime, fmt, logs, containers, sequence, gen, hashcons, 
-    ppx_deriving, visitors.|}
-
-let author_blurb = {|Julien BRUNEL (ONERA), David CHEMOUIL (ONERA).|}
   
 let main_info =
-  let doc = "formal analysis of Electrod models." in
+  let doc = "formal analysis of Electrod models" in
   let man = [
+    `S Manpage.s_files;
+    `P {|Default SCRIPT_FILE for nuXmv:|};
+    `Noblank;
+    `Pre SMV.nuXmv_default_script;
+    `Noblank;
+    `P {|Default SCRIPT_FILE for NuSMV:|};
+    `Noblank;
+    `Pre SMV.nuSMV_default_script;
+    `S Manpage.s_authors;
+    `P {|Julien BRUNEL (ONERA), David CHEMOUIL (ONERA).|};
     `S "COPYRIGHT";
     `P "Electrod (C) 2016-2017 ONERA.";
     `P "Electrod is free software: you can redistribute \
@@ -78,9 +82,12 @@ let main_info =
         implied warranty of MERCHANTABILITY or FITNESS FOR A \
         PARTICULAR PURPOSE. ";
     `S "THIRD-PARTY SOFTWARE";
-    `P third_party_blurb;
-    `S "AUTHORS";
-    `P author_blurb
+    `P {|Electrod relies on the following third-party free software, 
+         released under their respective license (see the respective 
+         OPAM repositories for the full text of the licenses):|};
+    `Noblank;
+    `P {|cmdliner, containers, fmt, gen, hashcons, logs, mtime, ppx_blob, 
+         ppx_deriving, sequence, visitors.|}
   ]
   in
   Term.info "electrod" ~doc ~man

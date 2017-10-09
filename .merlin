@@ -16,3 +16,4 @@ PKG visitors.ppx
 PKG ppx_deriving.std
 PKG hashcons
 PKG qcheck
+PKG ppx_blob

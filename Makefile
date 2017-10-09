@@ -86,7 +86,7 @@ check-config:
 	@which ocamlbuild > /dev/null
 	@$(CHECK_INSTALL) cmdliner containers gen sequence logs logs.fmt \
 	logs.cli fmt fmt.tty fmt.cli menhirLib mtime.os ppx_deriving bisect_ppx \
-	visitors hashcons > /dev/null
+	visitors hashcons ppx_blob > /dev/null
 
 
 .PHONY: all clean byte native profile debug check-config test doc doc-requisites test-requisites
