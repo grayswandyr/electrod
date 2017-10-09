@@ -1,4 +1,4 @@
--- ~7s with 40
+-- ~7s with 20
 univ : { M$1 .. M$40 W$1 .. W$40 }
 
 const Man :{} { M$1 .. M$40 }
@@ -10,19 +10,14 @@ var husband : {} Woman->Man
 
 invariant
 -- husband in Woman -> lone Man
-husband in Woman->Man
 all w : Woman | lone w.husband
 
 
 -- wife in Man -> lone Woman
-all m, w : univ |
-		m->w in wife implies {
-				 m->w in Man->Woman ;
-				 no w2 : univ - w | m->w2 in wife
-		}
+all m : Man | lone m.wife
 
 husband = ~wife
 
 run
-no husband
-sometime some husband
+always (some m : Man | next some m.wife => eventually some w : Woman | w = m.wife)
+

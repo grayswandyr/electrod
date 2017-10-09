@@ -239,8 +239,6 @@ let rec add_always_to_invar f =
       match id with
         | Var v ->
             Static_prop
-        | Tuple bs ->
-           assert false (*tuple ident only used during translation to LTL*)
         | Name r ->
            if env#is_const r then
              Static_prop
