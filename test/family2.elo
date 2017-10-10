@@ -10,6 +10,7 @@ var husband : {} Woman->Man
 
 invariant
 -- husband in Woman -> lone Man
+husband in Woman->Man
 all w : Woman | lone w.husband
 
 

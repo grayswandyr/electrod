@@ -17,21 +17,17 @@ let equal_var id1 id2 = match id1, id2 with
 type ident =
   | Var of Var.t
   | Name of Name.t
-  | Tuple of Tuple.t
 
 let var_ident i = Var i
 let name_ident i = Name i
-let tuple_ident i = Tuple i
 
 let var_ident_of_bound_var (BVar v) = Var v
 
 let equal_ident id1 id2 = match id1, id2 with
-  | Tuple at1, Tuple at2 -> Tuple.equal at1 at2
   | Name n1, Name n2 -> Name.equal n1 n2
   | Var v1, Var v2 -> Var.equal v1 v2
   | (Name _, _)
-  | (Var _, _)
-  | (Tuple _, _)-> false
+  | (Var _, _) -> false
 
 
 type goal = (var, ident) G.t
@@ -60,7 +56,6 @@ let pp_var out (BVar v) =
 let pp_ident out = function
   | Name n -> Fmtc.(styled `Cyan Name.pp) out n
   | Var v -> Fmtc.(styled `Yellow pp_var) out (BVar v)
-  | Tuple at -> Fmtc.(styled `Cyan Tuple.pp) out at
 
 let pp_goal = G.pp pp_var pp_ident
 
@@ -113,7 +108,7 @@ let substitute = object (self : 'self)
     match id with
       | Var var when List.Assoc.mem ~eq:Var.equal var env ->
           List.Assoc.get_exn ~eq:Var.equal var env
-      | Var _ | Name _ | Tuple _ -> G.ident id
+      | Var _ | Name _ -> G.ident id
 
 
   (* method visit_exp env exp =  *)

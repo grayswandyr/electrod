@@ -20,7 +20,7 @@ all m : Man | lone m.wife
 
 husband = ~wife
 
-some { disj x, y : wife, m : Man, w : x.y | m->w in Man->Woman}
+some { disj x, y : wife, m : Man, w : m.wife | m->w in Man->Woman}
 
 run
 no husband;
