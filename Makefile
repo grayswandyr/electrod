@@ -24,7 +24,6 @@ native:
 
 release: clean native
 
-
 byte: 
 	$(OCB) $(MAIN).byte
 
@@ -35,18 +34,18 @@ landmarks:
 	$(OCB) -pkg landmarks.ppx -pkg landmarks $(MAIN).native
 
 test: test-requisites
-	ocamldep -one-line -all -sort src/*.ml | sed 's/.ml//g' | sed 's/src\///g' \
+	ocamldep -one-line -all -sort lib/*.ml | sed 's/.ml//g' | sed 's/lib\///g' \
 	| sed 's/electrod//' | sed 's/Main//'> ./run_tests.qtestpack
-	$(OCB) -pkgs bisect_ppx,oUnit,qcheck run_tests.byte
+	$(OCB) -I harness -pkgs bisect_ppx,oUnit,qcheck run_tests.byte
 	./run_tests.byte
 	bisect-ppx-report -I _build -html _coverage/ bisect*.out
 
 doc: all doc-requisites
 # create odocl file by listing all ml or mli files and keeping one name for each
-	@find src/ -name '*.ml' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .ml > doc/api.odocl
-	@find src/ -name '*.mli' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .mli >> doc/api.odocl
-	@find src/ -name '*.mll' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .mll >> doc/api.odocl
-	@find src/ -name '*.mly' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .mly >> doc/api.odocl
+	@find lib/ -name '*.ml' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .ml > doc/api.odocl
+	@find lib/ -name '*.mli' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .mli >> doc/api.odocl
+	@find lib/ -name '*.mll' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .mll >> doc/api.odocl
+	@find lib/ -name '*.mly' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .mly >> doc/api.odocl
 # uppercase the first letter of every name (to get OCaml module names)
 	@sed -i 's/.*/\u&/' doc/api.odocl
 	@sort -u doc/api.odocl -o doc/api.odocl
@@ -54,19 +53,10 @@ doc: all doc-requisites
 	@cat doc/intro.base > doc/intro.text
 	@echo '<h2>Modules</h2>{!modules:' >> doc/intro.text
 	@cat	doc/api.odocl >> doc/intro.text
-	@echo '}{%html:<h2>Module dependencies</h2><img src="modules.svg" width="300%">' >> doc/intro.text
-	@echo '<h2>Type dependencies</h2><img src="types.svg" width="300%">%}' >> doc/intro.text
+	@echo '}' >> doc/intro.text
 # generate documentation
 	@$(OCB) -pkg qcheck $(HTML_FLAGS) doc/api.docdir/index.html 
-	@$(OCB) -pkg qcheck -docflag -dot-reduce doc/api.docdir/modules.dot
-	@$(OCB) -pkg qcheck -docflags '-dot-types,-dot-reduce' doc/api.docdir/types.dot
-# remove unnecessary files (now that the doc has been created)
 	@rm doc/intro.text
-# ocamldoc -dot adds a rotation in dot files: remove it; then create svg files
-	@sed -i 's/rotate.*//' api.docdir/modules.dot
-	@sed -i 's/rotate.*//' api.docdir/types.dot
-	@dot -Tsvg api.docdir/modules.dot > api.docdir/modules.svg
-	@dot -Tsvg api.docdir/types.dot > api.docdir/types.svg
 
 
 test-requisites:
@@ -75,7 +65,6 @@ test-requisites:
 doc-requisites:
 	@which echo > /dev/null
 	@which sed > /dev/null
-	@which dot > /dev/null
 	@which xargs > /dev/null
 	@which find > /dev/null
 	@which basename > /dev/null
