@@ -38,6 +38,6 @@ true: explain
 true: optimize(3), inlining_report
 
 <src/**>: include
-<lib/**>: include
-<lib/SMV_trace_tokens.mlypack>: only_tokens
-<lib/SMV_trace_parser.mlypack>: external_tokens(SMV_trace_tokens)
+<main/**>: include
+<src/SMV_trace_tokens.mlypack>: only_tokens
+<src/SMV_trace_parser.mlypack>: external_tokens(SMV_trace_tokens)

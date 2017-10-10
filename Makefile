@@ -34,7 +34,7 @@ landmarks:
 	$(OCB) -pkg landmarks.ppx -pkg landmarks $(MAIN).native
 
 test: test-requisites
-	ocamldep -one-line -all -sort lib/*.ml | sed 's/.ml//g' | sed 's/lib\///g' \
+	ocamldep -one-line -all -sort src/*.ml | sed 's/.ml//g' | sed 's/src\///g' \
 	| sed 's/electrod//' | sed 's/Main//'> ./run_tests.qtestpack
 	$(OCB) -I harness -pkgs bisect_ppx,oUnit,qcheck run_tests.byte
 	./run_tests.byte
@@ -42,10 +42,10 @@ test: test-requisites
 
 doc: all doc-requisites
 # create odocl file by listing all ml or mli files and keeping one name for each
-	@find lib/ -name '*.ml' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .ml > doc/api.odocl
-	@find lib/ -name '*.mli' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .mli >> doc/api.odocl
-	@find lib/ -name '*.mll' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .mll >> doc/api.odocl
-	@find lib/ -name '*.mly' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .mly >> doc/api.odocl
+	@find src/ -name '*.ml' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .ml > doc/api.odocl
+	@find src/ -name '*.mli' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .mli >> doc/api.odocl
+	@find src/ -name '*.mll' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .mll >> doc/api.odocl
+	@find src/ -name '*.mly' -printf "%f\n" | grep -v  '#' | xargs -r basename -s .mly >> doc/api.odocl
 # uppercase the first letter of every name (to get OCaml module names)
 	@sed -i 's/.*/\u&/' doc/api.odocl
 	@sort -u doc/api.odocl -o doc/api.odocl

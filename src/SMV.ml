@@ -2,9 +2,9 @@ open Containers
 
 
 
-let nuXmv_default_script = [%blob "../res/nuxmv-default.txt"]
+let nuXmv_default_script = [%blob "../res/nuxmv-default-script.txt"]
 
-let nuSMV_default_script = [%blob "../res/nusmv-default.txt"]
+let nuSMV_default_script = [%blob "../res/nusmv-default-script.txt"]
 
 
 module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
