@@ -12,6 +12,31 @@ module L = Location
 let fresh_var base exp =
   Var.fresh ~loc:exp.exp_loc base 
 
+(* from the var list [x1, x2, ...] 
+   create [x1', x2', ...] and the assoc list [(x1, x1'), (x2, x2') ...] 
+   and the formula x1!=x1' or x2!=x2' or ...  *)
+let create_new_vars_and_assoc_list_and_comp_fml vs ar =
+  List.fold_right
+    (fun (Elo.BVar var) (new_vars, assoc, prim_fml) ->
+       let new_var = Var.fresh_copy var in
+       let new_var_as_ident = ident (Elo.var_ident new_var) in
+       (Elo.bound_var new_var :: new_vars,
+        CCList.Assoc.set ~eq:Var.equal var new_var_as_ident assoc,
+        lbinary
+          (fml L.dummy
+           @@ rcomp
+                (exp ar L.dummy
+                 @@ ident @@ Elo.var_ident var)
+                REq
+                (exp ar L.dummy new_var_as_ident)
+          )
+          and_
+          (fml L.dummy prim_fml))
+    )
+    vs
+    ([], [], true_)
+
+
 (* simplify Elo goals *)
 class simplify = object (self : 'self)
   inherit [_] map as super
@@ -25,32 +50,6 @@ class simplify = object (self : 'self)
   method visit_Quant_One env q sim_bindings blk =
     (*re-write one x1,y1:r1, x2,y2:r2 | phi into
       some x1,y1:r1, x2,y2:r2 | (phi and all x1',x2':r1, x2',y2';r2 | ...)*)
-
-    (* from the var list [x1, x2, ...] 
-       create [x1', x2', ...] and the assoc list [(x1, x1'), (x2, x2') ...] 
-       and the formula x1!=x1' or x2!=x2' or ...  *)
-    let create_new_vars_and_assoc_list_and_comp_fml vs ar =
-      List.fold_right
-        (fun (Elo.BVar var) (new_vars, assoc, prim_fml) ->
-           let new_var = Var.fresh_copy var in
-           let new_var_as_ident = ident (Elo.var_ident new_var) in
-           (Elo.bound_var new_var :: new_vars,
-            CCList.Assoc.set ~eq:Var.equal var new_var_as_ident assoc,
-            lbinary
-              (fml L.dummy
-               @@ rcomp
-                    (exp ar L.dummy
-                     @@ ident @@ Elo.var_ident var)
-                    REq
-                    (exp ar L.dummy new_var_as_ident)
-              )
-              and_
-              (fml L.dummy prim_fml))
-        )
-        vs
-        ([], [], true_)
-    in
-
     let new_sim_bindings, assoc_new_vars, cmp_fml =
       List.fold_right
         (fun (disj, vars, e) (sim_bindings, acc_assoc, acc_fml) -> 
@@ -98,28 +97,25 @@ class simplify = object (self : 'self)
 
   (* split multiple simultaneous All/Some/No bindings into many quantifications *)
   method visit_Quant env q sim_bindings blk = 
-    (* Msg.debug (fun m -> m "Simplify1.visit_Quant <-- %a" *)
-    (*                       Elo.pp_prim_fml *)
-    (*             @@ quant q sim_bindings blk); *)
+    Msg.debug (fun m -> m "Simplify1.visit_Quant <-- %a"
+                          Elo.pp_prim_fml
+                @@ quant q sim_bindings blk);
     match q with
       | One -> self#visit_Quant_One env q sim_bindings blk
       | Lone -> self#visit_Quant_Lone env q sim_bindings blk
       | All | Some_ | No ->
           let res = match sim_bindings with
             | [] -> assert false
-            | [b] ->
-                let sim_bindings' =
-                  List.map
-                    (fun (disj, vs, e) -> (disj, vs, self#visit_exp env e))
-                    sim_bindings in
+            | [(disj, vs, e)] ->
                 let blk' = List.map (self#visit_fml env) blk in
-                quant q sim_bindings' blk'
-            | ((_, _, e) as b)::bs ->
-                quant q [b] [fml e.exp_loc @@ self#visit_Quant env q bs blk]
+                quant q [(disj, vs, self#visit_exp env e)] blk'
+            | (disj, vs, e)::bs ->
+                quant q [(disj, vs, self#visit_exp env e)]
+                  [fml e.exp_loc @@ self#visit_Quant env q bs blk]
           in
-          (* Msg.debug (fun m -> m "Simplify1.visit_Quant --> %a" *)
-          (*                       Elo.pp_prim_fml *)
-          (*                       res); *)
+          Msg.debug (fun m -> m "Simplify1.visit_Quant --> %a"
+                                Elo.pp_prim_fml
+                                res);
           res
 
 
