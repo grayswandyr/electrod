@@ -147,11 +147,11 @@ module Make (Ltl : Solver.LTL) = struct
         _visitors_r0 _visitors_r1 _visitors_r2
 
     method build_Quant (subst : 'subst) quant sim_bindings blk _ sim_bindings' _ =
-      Msg.debug
-        (fun m -> m "build_Quant <-- %a"
-                    (Elo.pp_prim_fml)
-                    (G.quant quant sim_bindings blk)
-        );
+      (* Msg.debug *)
+      (*   (fun m -> m "build_Quant <-- %a" *)
+      (*               (Elo.pp_prim_fml) *)
+      (*               (G.quant quant sim_bindings blk) *)
+      (*   ); *)
       match quant with
         | G.Lone | G.One ->
             assert false        (* SIMPLIFIED *)
@@ -226,18 +226,18 @@ module Make (Ltl : Solver.LTL) = struct
                           (*               Elo.pp_prim_fml s)) *)
                        ) (* blk [tuples / xs] *)
             in
-            Msg.debug (fun m ->
-                  m "build_Quant: ENTERING MUSTPART" );
+            (* Msg.debug (fun m -> *)
+            (*       m "build_Quant: ENTERING MUSTPART" ); *)
             let mustpart =
               bigop
                 ~range:(tuples_of_sim_binding ~disj xs @@ TS.to_list must)
                 (fun tuples -> sem_of_substituted_blk tuples)
             in
-            Msg.debug (fun m ->
-                  m "build_Quant: must(%a) = %a@\nmustpart = %a@\nENTERING MAYPART"
-                    (Elo.pp_exp) s
-                    TS.pp must
-                    Ltl.pp mustpart);
+            (* Msg.debug (fun m -> *)
+            (*       m "build_Quant: must(%a) = %a@\nmustpart = %a@\nENTERING MAYPART" *)
+            (*         (Elo.pp_exp) s *)
+            (*         TS.pp must *)
+            (*         Ltl.pp mustpart); *)
             let maypart =
               lazy 
                 (bigop
@@ -261,20 +261,20 @@ module Make (Ltl : Solver.LTL) = struct
                       lazy (link premise @@ sem_of_substituted_blk tuples)
                    ))
             in
-            Msg.debug (fun m ->
-                  m "build_Quant: may(%a) = %a@\nmaypart = %a"
-                    (Elo.pp_exp) s
-                    TS.pp may
-                    Ltl.pp (Lazy.force maypart));
+            (* Msg.debug (fun m -> *)
+            (*       m "build_Quant: may(%a) = %a@\nmaypart = %a" *)
+            (*         (Elo.pp_exp) s *)
+            (*         TS.pp may *)
+            (*         Ltl.pp (Lazy.force maypart)); *)
             (smallop mustpart maypart)
-            |> Fun.tap (fun res ->
-                  Msg.debug (fun m ->
-                        m "build_Quant [[%a %a %a]] -->@ %a"
-                          G.pp_quant quant
-                          (Fmtc.(list ~sep:comma) @@ Elo.pp_sim_binding) sim_bindings
-                          Elo.pp_block blk
-                          Ltl.pp res
-                      ))
+            (* |> Fun.tap (fun res -> *)
+            (*       Msg.debug (fun m -> *)
+            (*             m "build_Quant [[%a %a %a]] -->@ %a" *)
+            (*               G.pp_quant quant *)
+            (*               (Fmtc.(list ~sep:comma) @@ Elo.pp_sim_binding) sim_bindings *)
+            (*               Elo.pp_block blk *)
+            (*               Ltl.pp res *)
+            (*           )) *)
 
     method build_One (subst : 'subst) = G.One
 
@@ -623,14 +623,14 @@ module Make (Ltl : Solver.LTL) = struct
       (*     ); *)
       vee ~range:pairs (fun (bs, cs) ->
             lazy (r' bs +&& lazy (s' cs)))
-      (* |> Fun.tap (fun res -> *)
-      (*       Msg.debug (fun m -> *)
-      (*             m "build_Join [[%a . %a]](%a) --> %a" *)
-      (*               Elo.pp_exp r *)
-      (*               Elo.pp_exp s *)
-      (*               Tuple.pp tuple *)
-      (*               Ltl.pp res *)
-      (*           )) *)
+    (* |> Fun.tap (fun res -> *)
+    (*       Msg.debug (fun m -> *)
+    (*             m "build_Join [[%a . %a]](%a) --> %a" *)
+    (*               Elo.pp_exp r *)
+    (*               Elo.pp_exp s *)
+    (*               Tuple.pp tuple *)
+    (*               Ltl.pp res *)
+    (*           )) *)
 
 
 
@@ -659,10 +659,25 @@ module Make (Ltl : Solver.LTL) = struct
       let lg = Tuple.arity tuple in
       r' tuple +&& lazy (s' @@ Tuple.of_list1 [Tuple.ith (lg - 1) tuple])
 
-    method build_Diff (subst : 'subst) _ _ e' f' = fun x -> e' x +&& lazy (not_ (f' x))
+    method build_Diff (subst : 'subst) _ _ e' f' = fun tuple ->
+      e' tuple +&& lazy (not_ (f' tuple))
 
-    method build_Over (subst : 'subst) _ _ r' s' = fun tuple -> 
-      s' tuple +|| lazy (r' tuple +&& lazy (not_ @@ s' Tuple.(of_list1 [ith 0 tuple])))
+    method build_Over (subst : 'subst) _ s r' s' = fun tuple ->
+      let { must; may; _ } = env#must_may_sup subst s in
+      let proj1 x = Tuple.(of_list1 [ith 0 x]) in
+      let mustpart =
+        wedge
+          ~range:(TS.to_seq must)
+          (fun t -> lazy (if proj1 t = proj1 tuple then false_ else true_))
+      in 
+      let maypart =
+        not_ @@ vee 
+          ~range:(TS.to_seq may)
+          (fun t -> lazy (
+             let _, from_snd_elt = Tuple.split t 1 in
+             s' @@ Tuple.(proj1 tuple @@@ from_snd_elt)))
+      in
+      s' tuple +|| lazy (r' tuple +&& lazy mustpart +&& lazy maypart)
 
 
     (* runop *)
@@ -690,12 +705,12 @@ module Make (Ltl : Solver.LTL) = struct
       (* let suptc2 = *)
       (*   (env#must_may_sup tc_square).sup *)
       (* in *)
-      Msg.debug (fun m ->
-            m "borne de TC: (%d)" k);
+      (* Msg.debug (fun m -> *)
+      (*       m "borne de TC: (%d)" k); *)
       (* Msg.debug (fun m -> *)
       (*     m "terme de TC naif : (%a)" (Elo.pp_exp) (tc_naif)); *)
-      Msg.debug (fun m ->
-            m "terme de TC avec carrés itératifs : (%a)" (Elo.pp_exp) (tc_square));
+      (* Msg.debug (fun m -> *)
+      (*       m "terme de TC avec carrés itératifs : (%a)" (Elo.pp_exp) (tc_square)); *)
       (* Msg.debug (fun m -> *)
       (*     m "sup(%a) = %a" (Elo.pp_prim_exp) (G.runary G.tclos r) *)
       (*       TS.pp suptc); *)
@@ -703,7 +718,7 @@ module Make (Ltl : Solver.LTL) = struct
       (*     m "sup(%a) = %a" (Elo.pp_exp) (tc_square) *)
       (*       TS.pp suptc2); *)
 
-      self#visit_exp subst tc_square [@landmark "build_TClos/visit_exp"]
+      self#visit_exp subst tc_square
 
 
 
