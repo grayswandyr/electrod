@@ -67,21 +67,6 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
 
   Logs.app (fun m -> m "Processing file: %s" file);
 
-  (try
-     let inch = Unix.open_process_in "tput cols" in
-     let cols =
-       inch
-       |> IO.read_line
-       |> Fun.tap (fun _ -> ignore @@ Unix.close_process_in inch)
-       |> Option.get_or ~default:"80"
-       |> int_of_string in
-     (* Msg.debug (fun m -> m "Columns: %d" cols); *)
-     Format.(pp_set_margin stdout) cols;
-     Format.(pp_set_margin stderr) cols
-   with _ ->
-     Msg.debug
-       (fun m -> m "Columns not found, leaving terminal as is..."));
-
   (* begin work *)
   try
     let raw_to_elo_t = Transfo.tlist [ Raw_to_elo.transfo ] in
