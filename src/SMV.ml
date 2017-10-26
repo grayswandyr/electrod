@@ -354,10 +354,10 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
       let to_call = Fmt.strf "%s -source %s %s" cmd scr smv in
       Msg.info (fun m -> m "Starting analysis:@ @[<h>%s@]" to_call);
       Msg.info (fun m -> m "CWD = %s" (Sys.getcwd ()));
-      Msg.info (fun m -> m "PATH = %a" (Array.pp ~sep:"\n" String.print) (Unix.environment ()));
+      Msg.info (fun m -> m "env = %a" (Array.pp ~sep:"\n" String.print) (Unix.environment ()));
       let before_run = Mtime_clock.now () in
       let (okout, errout, errcode) =
-        CCUnix.call "./%s" to_call
+        CCUnix.call "%s" to_call
       in
       let after_run = Mtime_clock.now () in
       if errcode <> 0 then
