@@ -483,7 +483,7 @@ let compute_arities elo =
               @@ Fmtc.strf
                    "enclosing formula is false as %s is always empty"
                    (str_exp exp))
-        else qual rsome exp'
+        else qual rone exp'
     | Qual (RSome, exp) ->
         let exp' = walk_exp ctx exp in
         if exp'.arity = None then

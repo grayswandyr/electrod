@@ -65,6 +65,9 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
     (fun m ->
        m "%a" Fmtc.(styled `Bold string) "electrod (C) 2016-2017 ONERA");
 
+  Msg.debug (fun m -> m "CWD = %s" (Sys.getcwd ()));
+  Msg.debug (fun m -> m "PATH = %s" (Sys.getenv "PATH"));
+
   Logs.app (fun m -> m "Processing file: %s" file);
 
   (* begin work *)
@@ -79,7 +82,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Parsing done"))
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Static analysis done"))
-      (* |> Fun.tap (fun elo -> Msg.debug (fun m -> m "After raw_to_elo =@\n%a@." (Elo.pp) elo)) *)
+      |> Fun.tap (fun elo -> Msg.debug (fun m -> m "After raw_to_elo =@\n%a@." (Elo.pp) elo))
       |> Transfo.(get_exn elo_to_elo_t "simplify1" |> run)
       |> Fun.tap (fun elo -> Msg.debug (fun m -> m "After simplify1 =@\n%a@." (Elo.pp) elo))
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Simplification done"))
@@ -108,7 +111,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
     in
 
     Msg.debug (fun m -> m "@.%a"
-                          (Elo_to_SMV1.pp ~margin:78) model);
+                          (Elo_to_SMV1.pp ~margin:80) model);
 
     let res = Elo_to_SMV1.analyze ~cmd ~keep_files ~no_analysis
                 ~elo:elo ~script ~file model in

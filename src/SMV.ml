@@ -353,8 +353,6 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
       (* TODO make things s.t. it's possible to set a time-out *)
       let to_call = Fmt.strf "%s -source %s %s" cmd scr smv in
       Msg.info (fun m -> m "Starting analysis:@ @[<h>%s@]" to_call);
-      Msg.debug (fun m -> m "CWD = %s" (Sys.getcwd ()));
-      Msg.debug (fun m -> m "PATH = %s" (Sys.getenv "PATH"));
       let before_run = Mtime_clock.now () in
       let (okout, errout, errcode) =
         CCUnix.call "%s" to_call
