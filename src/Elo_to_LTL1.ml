@@ -494,6 +494,8 @@ module Make (Ltl : Solver.LTL) = struct
       else
         false_
 
+    
+
     method build_BoxJoin (subst : 'subst) call args call' args' = (* SIMPLIFIED *)
       assert false
 
@@ -544,73 +546,13 @@ module Make (Ltl : Solver.LTL) = struct
 
     method build_Inter (subst : 'subst) _ _ e1 e2 = fun x -> e1 x +&& lazy (e2 x)
 
-    (* method build_Join (subst : 'subst) r s r' s' =  fun tuple -> *)
-    (*   let sup_r = (env#must_may_sup r).sup in *)
-    (*   let sup_s = (env#must_may_sup s).sup in *)
-    (*   let s1 = TS.to_seq sup_r in *)
-    (*   let s2 = TS.to_seq sup_s in *)
-    (*   let[@landmark] eligible_pairs = *)
-    (*     Sequence.product s1 s2 *)
-    (*     |> Sequence.filter (fun (t1, t2) -> Tuple.is_in_join tuple t1 t2) *)
-    (*   in *)
-    (*   Msg.debug *)
-    (*     (fun m -> m "Elo_to_LTL1.build_Join <-- \ *)
-           (*                  %a.%a@\nsup(%a) = %a@\nsup(%a) = %a@\neligible_pairs =@ %a" *)
-    (*                 (Elo.pp_exp) r *)
-    (*                 (Elo.pp_exp) s *)
-    (*                 (Elo.pp_exp) r *)
-    (*                 TupleSet.pp sup_r *)
-    (*                 (Elo.pp_exp) s *)
-    (*                 TupleSet.pp sup_s *)
-    (*                 (Sequence.pp_seq *)
-    (*                  @@ Fmtc.brackets @@ Fmt.pair ~sep:Fmtc.sp Tuple.pp Tuple.pp) *)
-    (*                 eligible_pairs *)
-    (*     ); *)
-    (*   vee ~range:eligible_pairs (fun (bs, cs) -> lazy (r' bs +&& lazy (s' cs))) *)
-    (*     [@landmark "build_Join"] *)
-
-
-    (* method build_Join (subst : 'subst) r s r' s' =  fun tuple -> *)
-    (*   let open Sequence in *)
-    (*   let rseq = (env#must_may_sup r).sup |> TS.to_seq in *)
-    (*   let sseq = (env#must_may_sup s).sup |> TS.to_seq in *)
-    (*   let[@landmark] eligible_pairs = *)
-    (*     fold (fun acc rtuple -> *)
-    (*           filter_map *)
-    (*             (fun stuple -> *)
-    (*                if Tuple.is_in_join tuple rtuple stuple then *)
-    (*                  Some (rtuple, stuple) *)
-    (*                else *)
-    (*                  None) sseq *)
-    (*           |> append acc) empty rseq *)
-    (*   in *)
-
-    (*   (\* Msg.debug *\) *)
-    (*   (\*   (fun m -> m "Elo_to_LTL1.build_Join <-- \ *\) *)
-         (*             (\*                %a.%a@\nsup(%a) = %a@\nsup(%a) = %a@\neligible_pairs =@ %a" *\) *)
-    (*   (\*               (Elo.pp_exp) r *\) *)
-    (*   (\*               (Elo.pp_exp) s *\) *)
-    (*   (\*               (Elo.pp_exp) r *\) *)
-    (*   (\*               TupleSet.pp (env#sup r) *\) *)
-    (*   (\*               (Elo.pp_exp) s *\) *)
-    (*   (\*               TupleSet.pp (env#sup s) *\) *)
-    (*   (\*               (Sequence.pp_seq  *\) *)
-    (*   (\*                @@ Fmtc.brackets @@ Fmt.pair ~sep:Fmtc.sp Tuple.pp Tuple.pp) *\) *)
-    (*   (\*               eligible_pairs *\) *)
-    (*   (\*   ); *\) *)
-    (*   vee ~range:eligible_pairs (fun (bs, cs) -> lazy (r' bs +&& lazy (s' cs))) *)
-    (*     [@landmark "build_Join"] *)
-
-
-
-
     method build_Join (subst : 'subst) r s r' s' =  fun tuple ->
-      let open List in
-      (* Msg.debug (fun m -> *)
-      (*       m "build_Join <-- [[%a . %a]](%a) " *)
-      (*         Elo.pp_exp r *)
-      (*         Elo.pp_exp s *)
-      (*         Tuple.pp tuple); *)
+      (* let open List in *)
+      Msg.debug (fun m ->
+            m "build_Join <-- [[%a . %a]](%a) "
+              Elo.pp_exp r
+              Elo.pp_exp s
+              Tuple.pp tuple);
       let rlist = lazy (TS.to_list (env#must_may_sup subst r).sup) in
       let slist = lazy (TS.to_list (env#must_may_sup subst s).sup) in
       let pairs = eligible_pairs (tuple, rlist, slist) in
@@ -623,14 +565,14 @@ module Make (Ltl : Solver.LTL) = struct
       (*     ); *)
       vee ~range:pairs (fun (bs, cs) ->
             lazy (r' bs +&& lazy (s' cs)))
-    (* |> Fun.tap (fun res -> *)
-    (*       Msg.debug (fun m -> *)
-    (*             m "build_Join [[%a . %a]](%a) --> %a" *)
-    (*               Elo.pp_exp r *)
-    (*               Elo.pp_exp s *)
-    (*               Tuple.pp tuple *)
-    (*               Ltl.pp res *)
-    (*           )) *)
+      |> Fun.tap (fun res ->
+            Msg.debug (fun m ->
+                  m "build_Join [[%a . %a]](%a) --> %a"
+                    Elo.pp_exp r
+                    Elo.pp_exp s
+                    Tuple.pp tuple
+                    Ltl.pp res
+                ))
 
 
 
@@ -672,10 +614,10 @@ module Make (Ltl : Solver.LTL) = struct
       in 
       let maypart =
         not_ @@ vee 
-          ~range:(TS.to_seq may)
-          (fun t -> lazy (
-             let _, from_snd_elt = Tuple.split t 1 in
-             s' @@ Tuple.(proj1 tuple @@@ from_snd_elt)))
+                  ~range:(TS.to_seq may)
+                  (fun t -> lazy (
+                     let _, from_snd_elt = Tuple.split t 1 in
+                     s' @@ Tuple.(proj1 tuple @@@ from_snd_elt)))
       in
       s' tuple +|| lazy (r' tuple +&& lazy mustpart +&& lazy maypart)
 
@@ -691,10 +633,9 @@ module Make (Ltl : Solver.LTL) = struct
       r' @@ Tuple.transpose tuple
 
     method build_TClos (subst : 'subst) r r' =
-      (* Msg.debug *)
-      (*   (fun m -> m "Elo_to_LTL1.build_TClos <-- %a" *)
-      (*               Elo.pp_exp r) *)
-      (* ; *)
+      Msg.debug
+        (fun m -> m "Elo_to_LTL1.build_TClos <-- %a"
+                    Elo.pp_exp r);
       let { sup ; _ } = env#must_may_sup subst r in
       let[@landmark] k = compute_tc_length sup in
       (* let tc_naif = iter_tc r k in *)
@@ -705,12 +646,12 @@ module Make (Ltl : Solver.LTL) = struct
       (* let suptc2 = *)
       (*   (env#must_may_sup tc_square).sup *)
       (* in *)
-      (* Msg.debug (fun m -> *)
-      (*       m "borne de TC: (%d)" k); *)
+      Msg.debug (fun m ->
+            m "borne de TC: (%d)" k);
       (* Msg.debug (fun m -> *)
       (*     m "terme de TC naif : (%a)" (Elo.pp_exp) (tc_naif)); *)
-      (* Msg.debug (fun m -> *)
-      (*       m "terme de TC avec carrés itératifs : (%a)" (Elo.pp_exp) (tc_square)); *)
+      Msg.debug (fun m ->
+            m "terme de TC avec carrés itératifs : (%a)" (Elo.pp_exp) (tc_square));
       (* Msg.debug (fun m -> *)
       (*     m "sup(%a) = %a" (Elo.pp_prim_exp) (G.runary G.tclos r) *)
       (*       TS.pp suptc); *)
