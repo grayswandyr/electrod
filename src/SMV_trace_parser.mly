@@ -30,9 +30,17 @@ end>
     in walk D.base ntl
 
 
+  (* From what we gathered, we should remove the last state from the returned
+     trace (it is the loop-target state), and if the first state is the target,
+     it is not said so we have to tag it as a loop-target by ourselves. *)
   let met_one_loop = ref false
 
-  let rec tag_first_as_loop = function
+  let rec remove_last = function
+    | [] -> assert false
+    | [_] -> []
+    | hd::tl -> hd :: remove_last tl
+    
+  let rec first_state_as_loop = function
     | [] -> assert false
     | hd::tl -> (Outcome.to_loop hd) :: tl
        
@@ -49,11 +57,11 @@ states = state+ EOF
     {
       Outcome.trace
       (if !met_one_loop
-       then states
-       else tag_first_as_loop states)
+       then remove_last states
+       else first_state_as_loop @@ remove_last states)
     }
 
- state:
+    state:
     loop = iboption(LOOP) STATE ntl = atomic*
     {
       let valu = Outcome.valuation @@ convert_name_tuple_l ntl in
