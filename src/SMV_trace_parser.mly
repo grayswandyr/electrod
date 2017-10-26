@@ -32,12 +32,10 @@ end>
 
   let met_one_loop = ref false
 
-  let rec tag_last_as_loop = function
+  let rec tag_first_as_loop = function
     | [] -> assert false
-    | [ st ] -> [ Outcome.to_loop st ]
-    | hd::tl -> hd :: tag_last_as_loop tl
+    | hd::tl -> (Outcome.to_loop hd) :: tl
        
-
 %}
   
 %start <Outcome.t> trace
@@ -52,7 +50,7 @@ states = state+ EOF
       Outcome.trace
       (if !met_one_loop
        then states
-       else tag_last_as_loop states)
+       else tag_first_as_loop states)
     }
 
  state:
