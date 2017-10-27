@@ -10,9 +10,11 @@ module type S = sig
     Elo.t ->
     (Elo.var, Elo.ident) GenGoal.fml ->
     Invar_computation.goal_color
-      
+
   val convert :
     Elo.t ->
     (Elo.var, Elo.ident) GenGoal.fml ->
-    atomic CCSet.sequence * atomic CCSet.sequence * ltl
+    atomic CCSet.sequence * atomic CCSet.sequence
+    * string * ltl
+
 end

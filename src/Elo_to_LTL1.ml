@@ -692,9 +692,6 @@ module Make (Ltl : Solver.LTL) = struct
 
       self#visit_exp subst tc_square
 
-
-
-
     (*********************************** iexp **************************************)
 
     method build_iexp (subst : 'subst) _ iexp' _ = iexp'
@@ -768,7 +765,13 @@ module Make (Ltl : Solver.LTL) = struct
     let env = new environment elo in
     let color = (new invarComputation)#visit_fml env elo_fml in
     color
-      
+
+
+  
+  let formula_as_comment fml =
+    let str = Fmt.to_to_string Elo.pp_fml fml in
+    "# " ^ String.replace ~which:`All ~sub:"\n" ~by:"\n# " str
+             
   (* Converts an Elo formula to an LTL formula, gathering at the same time the
      rigid and flexible variables having appeared during the walk. *)
   let convert elo elo_fml =
@@ -776,7 +779,8 @@ module Make (Ltl : Solver.LTL) = struct
     let env = new environment elo in    
     let ltl_fml = (new converter env)#visit_fml [] elo_fml in
     let (rigid, flexible) = env#atoms in
-    (rigid, flexible, ltl_fml)
+    (rigid, flexible, formula_as_comment elo_fml, ltl_fml)
 
       
 end
+

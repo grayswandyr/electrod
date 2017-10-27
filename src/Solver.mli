@@ -146,15 +146,15 @@ module type MODEL = sig
   type t = private {
     rigid : atomic Sequence.t;
     flexible : atomic Sequence.t;    
-    invariant : ltl Sequence.t;
-    property : ltl 
+    invariant : (string * ltl) Sequence.t;
+    property : string * ltl 
   }
 
   val make :
     rigid:atomic Sequence.t
     -> flexible:atomic Sequence.t
-    -> invariant:ltl Sequence.t 
-    -> property:ltl -> t
+    -> invariant:(string * ltl) Sequence.t 
+    -> property:(string * ltl) -> t
     
   (** [analyze domain script filename model] runs the solver on [model]
       ([filename helps creating a temporary file name]): in case of [Error], the

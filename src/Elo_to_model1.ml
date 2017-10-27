@@ -58,7 +58,7 @@ struct
          let (cur_rigid_atoms, cur_flex_atoms, cur_fml) = sym_to_ltl sym in
          (S.append cur_rigid_atoms rigid_atoms_acc,
           S.append cur_flex_atoms flex_atoms_acc,
-          S.cons cur_fml fmls_acc))
+          S.cons ("# (symmetry)", cur_fml) fmls_acc))
       (S.empty, S.empty, S.empty)
       syms
 
@@ -137,13 +137,13 @@ struct
       (* try *)
       List.fold_left
         (fun (acc_r, acc_f, acc_fml) fml ->
-           let (r, f, ltl) = ConvertFormulas.convert elo fml in
+           let (r, f, fml_str, ltl) = ConvertFormulas.convert elo fml in
            (* if ltl = Ltl.false_ then *)
            (*   raise Early_stop *)
            (* else *)
            (S.append r acc_r,
             S.append f acc_f,
-            S.cons ltl acc_fml))
+            S.cons (fml_str, ltl) acc_fml))
         S.(empty, empty, empty) fmls
         (* with *)
         (*   Early_stop -> S.(empty, empty, Ltl.false_) *)
@@ -167,7 +167,7 @@ struct
     let spec_fml = dualise_fmls general_fmls in
     Msg.debug (fun m -> m "Elo property : %a" Elo.pp_fml spec_fml);
 
-    let (rigid_goal, flex_goal, property) =
+    let (rigid_goal, flex_goal, spec_fml_str, prop_ltl) =
       ConvertFormulas.convert elo spec_fml
     in
 
@@ -180,7 +180,7 @@ struct
     let rigid = S.(append rigid_syms (append rigid_inv rigid_goal)) in
     let flexible = S.(append flex_syms (append flex_goal flex_inv)) in 
     Model.make ~rigid ~flexible
-      ~invariant:S.(append invars syms_fmls) ~property
+      ~invariant:S.(append invars syms_fmls) ~property:(spec_fml_str, prop_ltl)
 
 end
 

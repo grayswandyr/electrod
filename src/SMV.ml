@@ -238,8 +238,8 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
   type t = {
     rigid : atomic Sequence.t;
     flexible : atomic Sequence.t;    
-    invariant : ltl Sequence.t;
-    property : ltl 
+    invariant : (string * ltl) Sequence.t;
+    property : string * ltl 
   }
 
   let make ~rigid ~flexible ~invariant ~property =
@@ -247,6 +247,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
 
   let pp_decl out atomic =
     Fmtc.pf out "%a : boolean;" Ltl.Atomic.pp atomic
+
 
   let pp ?(margin = 78) out { rigid; flexible; invariant; property } =
     let open Fmtc in
@@ -274,21 +275,34 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
           cut **<
           Format.seq ~sep:cut pp_decl) flexible;
     (* INVAR *)
-    pf out "@[<v>%a@]@\n"
-      (Format.seq ~sep:hardline
-       @@ hvbox2
-       @@ hardline **>
-          semi **>
-          const string "INVAR" **<
-          sp **<
-          Ltl.pp) invariant;
+    (* pf out "@[<v>%a@]@\n" *)
+    (*   (Format.seq ~sep:hardline *)
+    (*    @@ hvbox2 *)
+    (*    @@ hardline **> *)
+    (*       semi **> *)
+    (*       const string "INVAR" **< *)
+    (*       sp **< *)
+    (*       Ltl.pp) invariant; *)
+    hardline out ();
+    Format.pp_open_vbox out 0;
+    S.iter
+      (fun (elo_str, fml) -> 
+         pf out "%s@\nINVAR@\n@[<hv2>%a@];@\n@\n" elo_str Ltl.pp fml)
+      invariant;
+    Format.pp_close_box out ();
+    hardline out ();
     (* SPEC *)
-    pf out "%a@."
-      (hvbox2
-       @@ semi **>
-          const string "LTLSPEC NAME spec :=" **<
-          sp **<
-          Ltl.pp) property;
+    (* pf out "%a@." *)
+    (*   (hvbox2 *)
+    (*    @@ semi **> *)
+    (*       const string "LTLSPEC NAME spec :=" **< *)
+    (*       sp **< *)
+    (*       Ltl.pp) property; *)
+    Format.pp_open_vbox out 0;
+    pf out "%s@\nLTLSPEC@\n@[<hv2>%a@];@\n" (fst property) Ltl.pp 
+      (snd property);
+    Format.pp_close_box out ();
+    hardline out ();
     Format.pp_print_flush out ();
     Format.pp_set_margin out old_margin 
 
