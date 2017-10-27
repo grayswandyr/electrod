@@ -29,6 +29,7 @@ let equal x1 x2 =
   x1 == x2
 
 let pp out at =
+  (* Format.fprintf out "%s/%d" at.H.node at.H.tag *)
   Format.fprintf out "%s" at.H.node 
 
 include Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)

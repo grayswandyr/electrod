@@ -8,7 +8,14 @@ type t = {
 
 let compare a1 a2 = Symbol.compare a1.sym a2.sym
 
-let equal a1 a2 = Symbol.equal a1.sym a2.sym
+let equal a1 a2 =
+  Symbol.equal a1.sym a2.sym
+  (* |> Fun.tap *)
+  (*      (fun res -> *)
+  (*         (Fmt.epr "Atom.equal %a %a = %B" *)
+  (*            Symbol.pp a1.sym *)
+  (*            Symbol.pp a2.sym *)
+  (*            res)) *)
 
 let atom ?loc s = { sym = Symbol.make s; loc }
 
