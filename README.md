@@ -12,7 +12,7 @@ instructions.
 Copyright and license
 ---------------------
 
-(C) 2016 Onera
+(C) 2016-2017 ONERA
 
 electrod is distributed under the terms of the Mozilla Public License v2.0.
 
