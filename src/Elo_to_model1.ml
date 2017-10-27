@@ -121,11 +121,12 @@ struct
     let elo =
       Elo.{ elo with
               domain = Domain.update_domain_with_instance elo.domain
-                         elo.instance } in
+                         elo.instance;
+              instance = Instance.empty } in
 
     Msg.debug (fun m ->
-          m "Elo_to_model1.run: domain after instance update:@ %a"
-            Domain.pp elo.domain);
+          m "Elo_to_model1.run: after instance update:@ %a"
+            Elo.pp elo);
 
     (* walk through formulas, convert them to LTL and accumulate rigid
        and flexible variables. TODO: replace sequences by sets. *)
