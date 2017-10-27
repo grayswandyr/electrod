@@ -276,15 +276,15 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
   
 
   (* OPTIMIZATIONS REMOVED *)
-  let not_ p = Not p
-  let and_ p (lazy q) = And (p, q)
-  let or_ p (lazy q) = Or (p, q)
-  let implies p (lazy q) = Imp (p, q)
-  let iff p q = Iff (p, q)
-  let plus t1 t2 = Plus (t1, t2)
-  let minus t1 t2 = Minus (t1, t2)
-  let neg t = Neg t
-  let comp op t1 t2 = Comp (op, t1, t2)
+  (* let not_ p = Not p *)
+  (* let and_ p (lazy q) = And (p, q) *)
+  (* let or_ p (lazy q) = Or (p, q) *)
+  (* let implies p (lazy q) = Imp (p, q) *)
+  (* let iff p q = Iff (p, q) *)
+  (* let plus t1 t2 = Plus (t1, t2) *)
+  (* let minus t1 t2 = Minus (t1, t2) *)
+  (* let neg t = Neg t *)
+  (* let comp op t1 t2 = Comp (op, t1, t2) *)
                        
 
                       
