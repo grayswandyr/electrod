@@ -2,6 +2,8 @@
 
 open Containers
 
+module S = Sequence
+
 module Make
     (Ltl : Solver.LTL)
     (ConvertFormulas : Elo_to_LTL_intf.S
@@ -23,7 +25,7 @@ struct
       Symmetry.fold
         (fun (name1, tuple1) (name2, tuple2)
           ((rigid_atoms_acc, flex_atoms_acc, fml_acc)
-           : atomic Sequence.t *atomic Sequence.t* Ltl.t)
+           : atomic S.t *atomic S.t* Ltl.t)
           ->         
             (*We assume that a symmetry is well-formed: each pair of
               name and tuple (name, tuple) share the same name *)         
@@ -38,26 +40,26 @@ struct
               let at2 = Ltl.Atomic.make name2 tuple2 in
               let at_fml2 = atomic at2 in
               if name_is_const then
-                (Sequence.cons at1 (Sequence.cons at2 rigid_atoms_acc),
+                (S.cons at1 (S.cons at2 rigid_atoms_acc),
                  flex_atoms_acc,
                  or_ (implies at_fml1 (lazy at_fml2))
                    (lazy (and_ (iff at_fml1 at_fml2) (lazy fml_acc))))
               else
                 (rigid_atoms_acc,
-                 Sequence.cons at1 (Sequence.cons at2 flex_atoms_acc),
+                 S.cons at1 (S.cons at2 flex_atoms_acc),
                  or_ (implies at_fml1 (lazy at_fml2))
                    (lazy (and_ (iff at_fml1 at_fml2) (lazy fml_acc))))
         )
         sym
-        (Sequence.empty, Sequence.empty, true_)
+        (S.empty, S.empty, true_)
     in
     List.fold_left
       (fun (rigid_atoms_acc, flex_atoms_acc, fmls_acc) sym ->
          let (cur_rigid_atoms, cur_flex_atoms, cur_fml) = sym_to_ltl sym in
-         (Sequence.append cur_rigid_atoms rigid_atoms_acc,
-          Sequence.append cur_flex_atoms flex_atoms_acc,
-          Sequence.cons cur_fml fmls_acc))
-      (Sequence.empty, Sequence.empty, Sequence.empty)
+         (S.append cur_rigid_atoms rigid_atoms_acc,
+          S.append cur_flex_atoms flex_atoms_acc,
+          S.cons cur_fml fmls_acc))
+      (S.empty, S.empty, S.empty)
       syms
 
   (* Splits a list of formulas lf into two lists (invf, restf): the
@@ -139,12 +141,12 @@ struct
            (* if ltl = Ltl.false_ then *)
            (*   raise Early_stop *)
            (* else *)
-           (Sequence.append r acc_r,
-            Sequence.append f acc_f,
-            Sequence.cons ltl acc_fml))
-        Sequence.(empty, empty, empty) fmls
+           (S.append r acc_r,
+            S.append f acc_f,
+            S.cons ltl acc_fml))
+        S.(empty, empty, empty) fmls
         (* with *)
-        (*   Early_stop -> Sequence.(empty, empty, Ltl.false_) *)
+        (*   Early_stop -> S.(empty, empty, Ltl.false_) *)
     in
 
     (* handling symmetries *)
@@ -175,10 +177,10 @@ struct
     in
 
 
-    let rigid = Sequence.(append rigid_syms (append rigid_inv rigid_goal)) in
-    let flexible = Sequence.(append flex_syms (append flex_goal flex_inv)) in 
+    let rigid = S.(append rigid_syms (append rigid_inv rigid_goal)) in
+    let flexible = S.(append flex_syms (append flex_goal flex_inv)) in 
     Model.make ~rigid ~flexible
-      ~invariant:Sequence.(append invars syms_fmls) ~property
+      ~invariant:S.(append invars syms_fmls) ~property
 
 end
 

@@ -120,12 +120,12 @@ let diagonal b =
   )
 *)
 let join b1 b2 =
-  let open Sequence in
+  let module S = Sequence in
   let lg1 = inferred_arity b1 in
   let s1 = to_seq b1 in
   let s2 = to_seq b2 in
-  product s1 s2
-  |> filter_map
+  S.product s1 s2
+  |> S.filter_map
        (fun (t1, t2) ->
           if Atom.equal (Tuple.ith (lg1 - 1) t1) (Tuple.ith 0 t2)
           then Some (Tuple.join t1 t2)

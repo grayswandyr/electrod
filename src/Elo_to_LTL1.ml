@@ -32,13 +32,13 @@ module Make (Ltl : Solver.LTL) = struct
   let compute_domain_codomain ts =
     let ar = TS.inferred_arity ts in
     assert (ar = 2);
-    let open Sequence in
+    let module S = Sequence in
     let s = TS.to_seq ts in
     let split_seq (s1_acc, s2_acc) tup =
-      (cons (Tuple.ith 0 tup) s1_acc,
-       cons (Tuple.ith 1 tup) s2_acc)
+      (S.cons (Tuple.ith 0 tup) s1_acc,
+       S.cons (Tuple.ith 1 tup) s2_acc)
     in
-    fold split_seq (empty, empty) s
+    S.fold split_seq (S.empty, S.empty) s
     |> Fun.tap
     @@ fun res ->
     Msg.debug (fun m ->
@@ -47,8 +47,8 @@ module Make (Ltl : Solver.LTL) = struct
             ar
             (Fmtc.parens @@
              Pair.pp ~sep:", "
-               (Fmtc.parens @@ Sequence.pp_seq ~sep:", " Atom.pp)
-               (Fmtc.parens @@ Sequence.pp_seq ~sep:", " Atom.pp)) res)
+               (Fmtc.parens @@ S.pp_seq ~sep:", " Atom.pp)
+               (Fmtc.parens @@ S.pp_seq ~sep:", " Atom.pp)) res)
       
 
   (* given a 2-tuple set, this function computes the maximum length of
@@ -59,19 +59,19 @@ module Make (Ltl : Solver.LTL) = struct
     Msg.debug (fun m ->
           m "compute_tc_length: arity of relation : %d\n" (TS.inferred_arity ts));    
     assert (TS.inferred_arity ts = 2);
-    let open Sequence in
+    let module S = Sequence in
     let s1, s2 = compute_domain_codomain ts in    
-    let core_ats = inter ~eq:Atom.equal ~hash:Atom.hash s1 s2 in
+    let core_ats = S.inter ~eq:Atom.equal ~hash:Atom.hash s1 s2 in
     Msg.debug (fun m ->
           m "compute_tc_length: inter %a %a = %a\n"
-            (Fmtc.parens @@ Sequence.pp_seq ~sep:", " Atom.pp) s1
-            (Fmtc.parens @@ Sequence.pp_seq ~sep:", " Atom.pp) s2
-            (Fmtc.parens @@ Sequence.pp_seq ~sep:", " Atom.pp) core_ats
+            (Fmtc.parens @@ S.pp_seq ~sep:", " Atom.pp) s1
+            (Fmtc.parens @@ S.pp_seq ~sep:", " Atom.pp) s2
+            (Fmtc.parens @@ S.pp_seq ~sep:", " Atom.pp) core_ats
         );   
-    let core_length = (length core_ats) - 1  in
+    let core_length = (S.length core_ats) - 1  in
     (* is it possible that x1 is not in the core (intersection of the
        domain and the codomain) ? *)
-    let first_elt_in_core = subset ~eq:Atom.equal ~hash:Atom.hash s1 core_ats in
+    let first_elt_in_core = S.subset ~eq:Atom.equal ~hash:Atom.hash s1 core_ats in
     Msg.debug (fun m ->
           m "compute_tc_length: first_elt_in_core = %B\n"
             first_elt_in_core
@@ -79,7 +79,7 @@ module Make (Ltl : Solver.LTL) = struct
 
     (* is it possible that xn is not in the core (intersection of the
        domain and the codomain) ? *)
-    let last_elt_in_core = subset ~eq:Atom.equal ~hash:Atom.hash s2 core_ats in
+    let last_elt_in_core = S.subset ~eq:Atom.equal ~hash:Atom.hash s2 core_ats in
     Msg.debug (fun m ->
           m "compute_tc_length: last_elt_in_core = %B\n"
             last_elt_in_core
