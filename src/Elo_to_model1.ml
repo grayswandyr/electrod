@@ -123,6 +123,10 @@ struct
               domain = Domain.update_domain_with_instance elo.domain
                          elo.instance } in
 
+    Msg.debug (fun m ->
+          m "Elo_to_model1.run: domain after instance update:@ %a"
+            Domain.pp elo.domain);
+
     (* walk through formulas, convert them to LTL and accumulate rigid
        and flexible variables. TODO: replace sequences by sets. *)
     (* let exception Early_stop in *)
