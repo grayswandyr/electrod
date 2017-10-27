@@ -117,7 +117,7 @@ rule main infile = parse
 | ("not" | "!") (whitespace | newline)+ "in" (* TODO: take comments into account *)
     { NOT_IN}
 | "inst"
-    { INST }
+    { (* INST *) failwith "`inst` not implemented" }
 | "sym"
     { SYM }
 | ("not")
