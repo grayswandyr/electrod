@@ -58,21 +58,32 @@ and bounds_prim_exp subst domain pe =
     | RUn (TClos, e) -> 
         let b = bounds_exp subst domain e in
         make_bounds (transitive_closure b.must) (transitive_closure b.sup)
-    (* |> Fun.tap *)
-    (*      (fun res ->  *)
-    (*         Msg.debug (fun m -> *)
-    (*               m *)
-    (*                 "Elo_to_LTL1.bounds_prim_exp(TClos):@\n\ *)
-                       (*                  must(%a) = %a@\nmay(%a) = %a" *)
-    (*                 Elo.pp_prim_exp pe *)
-    (*                 TS.pp res.must *)
-    (*                 Elo.pp_prim_exp pe *)
-    (*                 TS.pp res.may)) *)
+    |> Fun.tap
+         (fun res ->
+            Msg.debug (fun m ->
+                  m
+                    "Elo_to_LTL1.bounds_prim_exp(TClos):@\n\
+                                        must(%a) = %a@\nmay(%a) = %a"
+                    Elo.pp_prim_exp pe
+                    TS.pp res.must
+                    Elo.pp_prim_exp pe
+                    TS.pp res.may))
     | RUn (RTClos, e) -> 
         let iden = Domain.get_exn Name.iden domain in
         let b = bounds_exp subst domain e in
-        make_bounds (union b.must @@ Relation.must iden)
-          (union b.sup @@ Relation.sup iden)
+        make_bounds (union (transitive_closure b.must) @@ Relation.must iden)
+                    (union (transitive_closure b.sup) @@ Relation.sup iden)
+        |> Fun.tap
+         (fun res ->
+            Msg.debug (fun m ->
+                  m
+                    "Elo_to_LTL1.bounds_prim_exp(TClos):@\n\
+                                        must(%a) = %a@\nmay(%a) = %a"
+                    Elo.pp_prim_exp pe
+                    TS.pp res.must
+                    Elo.pp_prim_exp pe
+                    TS.pp res.may))
+
     | RBin (e1, Union ,e2) -> 
         let b1 = bounds_exp subst domain e1 in
         let b2 = bounds_exp subst domain e2 in
