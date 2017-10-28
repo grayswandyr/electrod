@@ -58,7 +58,7 @@ struct
          let (cur_rigid_atoms, cur_flex_atoms, cur_fml) = sym_to_ltl sym in
          (S.append cur_rigid_atoms rigid_atoms_acc,
           S.append cur_flex_atoms flex_atoms_acc,
-          S.cons ("# (symmetry)", cur_fml) fmls_acc))
+          S.cons ("-- (symmetry)", cur_fml) fmls_acc))
       (S.empty, S.empty, S.empty)
       syms
 

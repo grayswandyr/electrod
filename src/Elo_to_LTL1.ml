@@ -770,7 +770,7 @@ module Make (Ltl : Solver.LTL) = struct
   
   let formula_as_comment fml =
     let str = Fmt.to_to_string Elo.pp_fml fml in
-    "# " ^ String.replace ~which:`All ~sub:"\n" ~by:"\n# " str
+    "-- " ^ String.replace ~which:`All ~sub:"\n" ~by:"\n-- " str
              
   (* Converts an Elo formula to an LTL formula, gathering at the same time the
      rigid and flexible variables having appeared during the walk. *)
