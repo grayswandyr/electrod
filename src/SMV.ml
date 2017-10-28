@@ -249,7 +249,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     Fmtc.pf out "%a : boolean;" Ltl.Atomic.pp atomic
 
 
-  let pp ?(margin = 78) out { rigid; flexible; invariant; property } =
+  let pp ?(margin = 80) out { rigid; flexible; invariant; property } =
     let open Fmtc in
     let module S = Sequence in
     let old_margin = Format.pp_get_margin out () in
@@ -275,14 +275,6 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
           cut **<
           Format.seq ~sep:cut pp_decl) flexible;
     (* INVAR *)
-    (* pf out "@[<v>%a@]@\n" *)
-    (*   (Format.seq ~sep:hardline *)
-    (*    @@ hvbox2 *)
-    (*    @@ hardline **> *)
-    (*       semi **> *)
-    (*       const string "INVAR" **< *)
-    (*       sp **< *)
-    (*       Ltl.pp) invariant; *)
     hardline out ();
     Format.pp_open_vbox out 0;
     S.iter
@@ -292,15 +284,9 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     Format.pp_close_box out ();
     hardline out ();
     (* SPEC *)
-    (* pf out "%a@." *)
-    (*   (hvbox2 *)
-    (*    @@ semi **> *)
-    (*       const string "LTLSPEC NAME spec :=" **< *)
-    (*       sp **< *)
-    (*       Ltl.pp) property; *)
     Format.pp_open_vbox out 0;
-    pf out "%s@\nLTLSPEC@\n@[<hv2>%a@];@\n" (fst property) Ltl.pp 
-      (snd property);
+    let prop_str, ltlspec = property in
+    pf out "%s@\nLTLSPEC@\n@[<hv2>%a@];" prop_str Ltl.pp ltlspec;
     Format.pp_close_box out ();
     hardline out ();
     Format.pp_print_flush out ();
@@ -310,7 +296,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
   (* write in temp file *)
   let make_model_file infile model =
     let src_file = Filename.basename infile in
-    let tgt = Filename.temp_file ("electrod-" ^ src_file ^ "-") ".smv" in
+    let tgt = Filename.temp_file (src_file ^ "-") ".smv" in
     IO.with_out tgt 
       (fun out ->
          Fmtc.styled `None pp
@@ -416,5 +402,4 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
         (let lexbuf = Lexing.from_string trace_str in
          (P.trace (SMV_trace_scanner.main Ltl.Atomic.split) lexbuf))
         
-  
-end
+  end

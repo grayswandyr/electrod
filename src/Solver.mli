@@ -146,8 +146,8 @@ module type MODEL = sig
   type t = private {
     rigid : atomic Sequence.t;
     flexible : atomic Sequence.t;    
-    invariant : (string * ltl) Sequence.t;
-    property : string * ltl 
+    invariant : (string * ltl) Sequence.t; (* fst: string repr of Elo formula *)
+    property : string * ltl                (* fst: string repr of Elo formula *)
   }
 
   val make :
