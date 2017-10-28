@@ -191,7 +191,7 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
           infixl ~paren:true upper 7 string pp_term pp_term out ("-", t1, t2)
       | Neg t -> prefix upper 8 string pp_term out ("- ", t)
       | Count ts ->
-          pf out "@[count(%a@])" (list ~sep:(const string "+") (pp 0)) ts
+          pf out "@[count(%a@])" (list ~sep:(const string ", ") (pp 0)) ts
   end
 
   let pp_atomic = PP.pp_atomic
