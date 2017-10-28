@@ -58,7 +58,7 @@ states = state+ EOF
       Outcome.trace
       (if !met_one_loop
        then remove_last states
-       else first_state_as_loop @@ remove_last states)
+       else first_state_as_loop states)
     }
 
     state:
