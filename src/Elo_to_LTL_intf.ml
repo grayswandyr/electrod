@@ -14,7 +14,6 @@ module type S = sig
   val convert :
     Elo.t ->
     (Elo.var, Elo.ident) GenGoal.fml ->
-    atomic CCSet.sequence * atomic CCSet.sequence
-    * string * ltl
+    string * ltl
 
 end

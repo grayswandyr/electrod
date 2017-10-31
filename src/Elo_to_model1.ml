@@ -1,4 +1,5 @@
-(** Provides a converter from Electrod models to (part of) a solver model.  *)
+(** Provides a converter from Electrod models to (part of) a solver
+    model.  *)
 
 open Containers
 
@@ -20,46 +21,31 @@ struct
     let open Elo in
     let open Ltl in
     let syms = elo.sym in
-    let dom = elo.domain in
     let sym_to_ltl (sym : Symmetry.t) =
       Symmetry.fold
         (fun (name1, tuple1) (name2, tuple2)
-          ((rigid_atoms_acc, flex_atoms_acc, fml_acc)
-           : atomic S.t *atomic S.t* Ltl.t)
+          (fml_acc : Ltl.t)
           ->         
             (*We assume that a symmetry is well-formed: each pair of
               name and tuple (name, tuple) share the same name *)         
             if not (Name.equal name1 name2) then
               assert false
             else           
-              let name_is_const =
-                Domain.get_exn name1 dom |> Relation.is_const
-              in
               let at1 = Ltl.Atomic.make name1 tuple1 in
               let at_fml1 = atomic at1 in
               let at2 = Ltl.Atomic.make name2 tuple2 in
               let at_fml2 = atomic at2 in
-              if name_is_const then
-                (S.cons at1 (S.cons at2 rigid_atoms_acc),
-                 flex_atoms_acc,
-                 or_ (implies at_fml1 (lazy at_fml2))
-                   (lazy (and_ (iff at_fml1 at_fml2) (lazy fml_acc))))
-              else
-                (rigid_atoms_acc,
-                 S.cons at1 (S.cons at2 flex_atoms_acc),
-                 or_ (implies at_fml1 (lazy at_fml2))
-                   (lazy (and_ (iff at_fml1 at_fml2) (lazy fml_acc))))
+              or_ (implies at_fml1 (lazy at_fml2))
+                (lazy (and_ (iff at_fml1 at_fml2) (lazy fml_acc)))
         )
         sym
-        (S.empty, S.empty, true_)
+        true_
     in
     List.fold_left
-      (fun (rigid_atoms_acc, flex_atoms_acc, fmls_acc) sym ->
-         let (cur_rigid_atoms, cur_flex_atoms, cur_fml) = sym_to_ltl sym in
-         (S.append cur_rigid_atoms rigid_atoms_acc,
-          S.append cur_flex_atoms flex_atoms_acc,
-          S.cons ("-- (symmetry)", cur_fml) fmls_acc))
-      (S.empty, S.empty, S.empty)
+      (fun (fmls_acc) sym ->
+         let cur_fml = sym_to_ltl sym in
+         S.cons ("-- (symmetry)", cur_fml) fmls_acc)
+      S.empty
       syms
 
   (* Splits a list of formulas lf into two lists (invf, restf): the
@@ -136,21 +122,20 @@ struct
     let translate_formulas fmls =
       (* try *)
       List.fold_left
-        (fun (acc_r, acc_f, acc_fml) fml ->
-           let (r, f, fml_str, ltl) = ConvertFormulas.convert elo fml in
+        (fun acc_fml fml ->
+           let (fml_str, ltl) = ConvertFormulas.convert elo fml in
            (* if ltl = Ltl.false_ then *)
            (*   raise Early_stop *)
            (* else *)
-           (S.append r acc_r,
-            S.append f acc_f,
-            S.cons (fml_str, ltl) acc_fml))
-        S.(empty, empty, empty) fmls
+           (
+             S.cons (fml_str, ltl) acc_fml))
+        S.empty fmls
         (* with *)
         (*   Early_stop -> S.(empty, empty, Ltl.false_) *)
     in
 
     (* handling symmetries *)
-    let (rigid_syms, flex_syms, syms_fmls) = syms_to_ltl elo in
+    let syms_fmls = syms_to_ltl elo in
 
 
     (* handling the goal *)
@@ -161,25 +146,23 @@ struct
     let detected_invars, general_fmls =
       split_invar_noninvar_fmls elo goal_blk
     in   
-    Msg.debug (fun m -> m "Detected invariants : %a"
-                          Elo.pp_block detected_invars);
+    Msg.debug (fun m ->
+          m "Detected invariants : %a" Elo.pp_block detected_invars);
 
     let spec_fml = dualise_fmls general_fmls in
     Msg.debug (fun m -> m "Elo property : %a" Elo.pp_fml spec_fml);
 
-    let (rigid_goal, flex_goal, spec_fml_str, prop_ltl) =
+    let spec_fml_str, prop_ltl =
       ConvertFormulas.convert elo spec_fml
     in
 
     (* handling invariants *)
-    let (rigid_inv, flex_inv, invars) =
+    let invars =
       translate_formulas @@ List.append detected_invars elo.Elo.invariants
     in
 
 
-    let rigid = S.(append rigid_syms (append rigid_inv rigid_goal)) in
-    let flexible = S.(append flex_syms (append flex_goal flex_inv)) in 
-    Model.make ~elo ~rigid ~flexible
+    Model.make ~elo 
       ~invariant:S.(append invars syms_fmls) ~property:(spec_fml_str, prop_ltl)
 
 end
