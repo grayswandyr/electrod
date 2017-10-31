@@ -12,10 +12,11 @@ module type ATOMIC_PROPOSITION =
     val equal : t -> t -> bool
     val hash  : t -> int
 
-    (** [split s] returns the name and tuple that produced this string, [None]
+    (** [split_string s] returns the name and tuple that produced this string, [None]
         in case no such pair has arrived *)
-    val split : string -> (Name.t * Tuple.t) option
-                                
+    val split_string : string -> (Name.t * Tuple.t) option
+    val split : t -> (Name.t * Tuple.t) option
+                                   
     val pp : t Fmtc.t
   end
 
@@ -124,6 +125,9 @@ module type LTL = sig
 
   val pp : Format.formatter -> t -> unit
 
+  val pp_gather_variables :
+    Atomic.t Sequence.t ref -> Format.formatter -> t -> unit
+
 end
 
 
@@ -144,15 +148,13 @@ module type MODEL = sig
   type atomic
 
   type t = private {
-    rigid : atomic Sequence.t;
-    flexible : atomic Sequence.t;    
+    elo : Elo.t;   
     invariant : (string * ltl) Sequence.t; (* fst: string repr of Elo formula *)
     property : string * ltl                (* fst: string repr of Elo formula *)
   }
 
   val make :
-    rigid:atomic Sequence.t
-    -> flexible:atomic Sequence.t
+    elo:Elo.t
     -> invariant:(string * ltl) Sequence.t 
     -> property:(string * ltl) -> t
     

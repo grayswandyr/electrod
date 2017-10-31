@@ -725,18 +725,8 @@ module Make (Ltl : Solver.LTL) = struct
 
   end                           (* end converter *)
 
-  (* set of atoms, to gather rigid and flexiblae variables *)
-  module AtomSet =
-    Set.Make(struct
-      type t = Ltl.Atomic.t
-      let compare = Ltl.Atomic.compare
-    end)
 
   class environment (elo : Elo.t) = object (self : 'self)
-    val mutable flexible_atoms = AtomSet.empty
-
-    val mutable rigid_atoms = AtomSet.empty
-
     method arity name =
       match Domain.get name elo.Elo.domain with
         | None -> assert false
@@ -749,14 +739,7 @@ module Make (Ltl : Solver.LTL) = struct
     method make_atom (name : Name.t) (t : Tuple.t) =
       assert (Domain.mem name elo.Elo.domain);
       let atom = Atomic.make name t in
-      (if self#is_const name then
-         rigid_atoms <- AtomSet.add atom rigid_atoms
-       else
-         flexible_atoms <- AtomSet.add atom flexible_atoms);
       Ltl.atomic atom
-
-    method atoms =              (* TODO remove seq and return set *)
-      Pair.map_same AtomSet.to_seq (rigid_atoms, flexible_atoms)
 
     method is_const (name : Name.t) =
       assert (Domain.mem name elo.Elo.domain);
@@ -784,8 +767,7 @@ module Make (Ltl : Solver.LTL) = struct
     let open Elo in
     let env = new environment elo in    
     let ltl_fml = (new converter env)#visit_fml [] elo_fml in
-    let (rigid, flexible) = env#atoms in
-    (rigid, flexible, formula_as_comment elo_fml, ltl_fml)
+    (formula_as_comment elo_fml, ltl_fml)
 
       
 end
