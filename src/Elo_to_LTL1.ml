@@ -56,40 +56,44 @@ module Make (Ltl : Solver.LTL) = struct
      tuple set.  Used to compute the number of iterations needed for
      transitive closure term. *)
   let compute_tc_length ts =
+    let tsarity = TS.inferred_arity ts in
     Msg.debug (fun m ->
-          m "compute_tc_length: arity of relation : %d\n" (TS.inferred_arity ts));    
-    assert (TS.inferred_arity ts = 2);
-    let module S = Sequence in
-    let s1, s2 = compute_domain_codomain ts in    
-    let core_ats = S.inter ~eq:Atom.equal ~hash:Atom.hash s1 s2 in
-    Msg.debug (fun m ->
+        m "compute_tc_length: arity of relation : %d\n" tsarity);
+
+    assert (tsarity = 2 || tsarity = 0);
+    if tsarity = 0 then 0
+    else
+      let module S = Sequence in
+      let s1, s2 = compute_domain_codomain ts in    
+      let core_ats = S.inter ~eq:Atom.equal ~hash:Atom.hash s1 s2 in
+      Msg.debug (fun m ->
           m "compute_tc_length: inter %a %a = %a\n"
             (Fmtc.parens @@ S.pp_seq ~sep:", " Atom.pp) s1
             (Fmtc.parens @@ S.pp_seq ~sep:", " Atom.pp) s2
             (Fmtc.parens @@ S.pp_seq ~sep:", " Atom.pp) core_ats
         );   
-    let core_length = (S.length core_ats) - 1  in
-    (* is it possible that x1 is not in the core (intersection of the
-       domain and the codomain) ? *)
-    let first_elt_in_core = S.subset ~eq:Atom.equal ~hash:Atom.hash s1 core_ats in
-    Msg.debug (fun m ->
+      let core_length = (S.length core_ats) - 1  in
+      (* is it possible that x1 is not in the core (intersection of the
+       domain an        d the codomain) ? *)
+      let first_elt_in_core = S.subset ~eq:Atom.equal ~hash:Atom.hash s1 core_ats in
+      Msg.debug (fun m ->
           m "compute_tc_length: first_elt_in_core = %B\n"
             first_elt_in_core
         );
-
-    (* is it possible that xn is not in the core (intersection of the
-       domain and the codomain) ? *)
-    let last_elt_in_core = S.subset ~eq:Atom.equal ~hash:Atom.hash s2 core_ats in
-    Msg.debug (fun m ->
+      
+      (* is it possible that xn is not in the core (intersection of the
+       d omain and the codomain) ? *)
+      let last_elt_in_core = S.subset ~eq:Atom.equal ~hash:Atom.hash s2 core_ats in
+      Msg.debug (fun m ->
           m "compute_tc_length: last_elt_in_core = %B\n"
             last_elt_in_core
         );
-
-    match first_elt_in_core, last_elt_in_core with
+      
+      match first_elt_in_core, last_elt_in_core with
       | true, true -> core_length
       | false, false -> core_length + 2
       | _ -> core_length + 1 
-
+           
 
   (* computes the transitive closure of the term acc_term by k iterative
      squares (t+t.t)+(t+t.t)(t+t.t) + ... *)
@@ -112,13 +116,15 @@ module Make (Ltl : Solver.LTL) = struct
 
   let iter_tc (t : (Elo.var, Elo.ident) G.exp) k =
     let open Location in
-    let t_to_the_k = ref t in
-    let tc = ref t in
-    for i = 2 to k do
-      t_to_the_k := G.(exp t.arity dummy @@ rbinary !t_to_the_k join t);
-      tc := G.(exp t.arity dummy @@ rbinary !tc union !t_to_the_k);
-    done;
-    !tc
+    if k=0 then G.(exp None dummy none)
+    else
+      let t_to_the_k = ref t in
+      let tc = ref t in
+      for i = 2 to k do
+        t_to_the_k := G.(exp t.arity dummy @@ rbinary !t_to_the_k join t);
+        tc := G.(exp t.arity dummy @@ rbinary !tc union !t_to_the_k);
+      done;
+      !tc
 
 
   (* utility function for build_Join *)
