@@ -36,8 +36,11 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
     |> Fun.tap (fun hs -> HT.add names_and_tuples hs (name, atoms))
 
   
-  let split str =
-    HT.get names_and_tuples @@ Symbol.make str
+  let split sym =
+    HT.get names_and_tuples sym
+                                 
+  let split_string str =
+    split @@ Symbol.make str
    
 end
 

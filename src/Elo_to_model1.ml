@@ -179,7 +179,7 @@ struct
 
     let rigid = S.(append rigid_syms (append rigid_inv rigid_goal)) in
     let flexible = S.(append flex_syms (append flex_goal flex_inv)) in 
-    Model.make ~rigid ~flexible
+    Model.make ~elo ~rigid ~flexible
       ~invariant:S.(append invars syms_fmls) ~property:(spec_fml_str, prop_ltl)
 
 end
