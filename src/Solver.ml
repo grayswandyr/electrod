@@ -359,7 +359,9 @@ module type MODEL = sig
     -> invariant:(string * ltl) Sequence.t 
     -> property:(string * ltl) -> t
 
-  val analyze : cmd:string 
+  val analyze :
+    conversion_time:Mtime.span
+    -> cmd:string 
     -> script:script_type
     -> keep_files:bool
     -> no_analysis:bool

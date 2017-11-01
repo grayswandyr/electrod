@@ -167,7 +167,9 @@ module type MODEL = sig
 
       If [no_analysis] is set to true, then no analysis is done (but the files are
       still generated and may be kept) and the function returns [No_trace]!*)
-  val analyze : cmd:string 
+  val analyze : 
+    conversion_time:Mtime.span
+    -> cmd:string 
     -> script:script_type
     -> keep_files:bool
     -> no_analysis:bool

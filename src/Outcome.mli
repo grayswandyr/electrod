@@ -10,20 +10,24 @@ type valuation
 type state
   
 (** Nonempty, ordered sequence of states.  *)
-type states
+type states = state list
 
 (** An outcome represents the result of an analysis. It is either [None],
     meaning there is no resulting trace, or it is [Some _] in wihch case it
     carries a nonempty, ordered sequence of states, with at least one being the
     target of a loop ("lasso" step). *)
-type t = private states option
-
+type t = private {
+  trace : states option;
+  nbvars : int;                 (** number of Booleans used  *)
+  conversion_time : Mtime.span;
+  analysis_time : Mtime.span
+}
 
 (** Represents the absence of trace (so usually: UNSAT). *)
-val no_trace : t
+val no_trace : int -> Mtime.span -> Mtime.span -> t
 
 (** The list must be nonempty and must contain at least one lasso target. *)
-val trace : state list -> t
+val trace : int -> Mtime.span -> Mtime.span -> state list -> t
 
 val valuation : (Name.t, TupleSet.t) List.Assoc.t -> valuation
 

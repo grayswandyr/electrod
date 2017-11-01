@@ -258,7 +258,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     Fmtc.pf out "%s %a : boolean;" sort Ltl.Atomic.pp atomic
 
 
-  let pp ?(margin = 80) out { elo; invariant; property } =
+  let pp_count_variables ?(margin = 80) out { elo; invariant; property } =
     let open Fmtc in
     let module S = Sequence in
     let old_margin = Format.pp_get_margin out () in
@@ -306,17 +306,22 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
           Format.seq ~sep:cut (pp_decl "VAR")) flexible;
     (* close printing *)
     Format.pp_print_flush out ();
-    Format.pp_set_margin out old_margin
-    
+    Format.pp_set_margin out old_margin;
+    S.length !variables
+
+
+  let pp ?(margin = 80) out { elo; invariant; property } =
+    ignore (pp_count_variables ~margin out { elo; invariant; property })
+  
   (* write in temp file *)
   let make_model_file infile model =
     let src_file = Filename.basename infile in
     let tgt = Filename.temp_file (src_file ^ "-") ".smv" in
+    let nbvars = ref 0 in
     IO.with_out tgt 
       (fun out ->
-         Fmtc.styled `None pp
-           (Format.formatter_of_out_channel out) model);
-    tgt
+          nbvars := pp_count_variables (Format.formatter_of_out_channel out) model);
+    (tgt, !nbvars)
 
   
   let make_script_file = function
@@ -328,7 +333,8 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
   
   (* TODO pass script as argument *)
   (* TODO allow to specify a user script *)
-  let analyze ~cmd ~script ~keep_files ~no_analysis ~elo ~file model =
+  let analyze ~conversion_time ~cmd ~script ~keep_files
+        ~no_analysis ~elo ~file model : Outcome.t=
     let keep_or_remove_files scr smv =
       if keep_files then 
         Logs.app (fun m ->
@@ -343,7 +349,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     (* TODO check whether nuXmv is installed first *)
     let scr = make_script_file script in
     let before_generation = Mtime_clock.now () in
-    let smv = make_model_file file model in
+    let smv, nbvars = make_model_file file model in
     let after_generation = Mtime_clock.now () in
     Msg.info (fun m ->
           let size, unit_ =
@@ -362,7 +368,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
             Mtime.Span.pp (Mtime.span before_generation after_generation));
     if no_analysis then begin
       keep_or_remove_files scr smv;
-      Outcome.no_trace
+      Outcome.no_trace nbvars conversion_time Mtime.Span.zero
     end
     else
       (* TODO make things s.t. it's possible to set a time-out *)
@@ -373,11 +379,12 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
         CCUnix.call "%s" to_call
       in
       let after_run = Mtime_clock.now () in
+      let analysis_time = Mtime.span before_run after_run in
       if errcode <> 0 then
         Msg.Fatal.solver_failed (fun args -> args "nuXmv" scr smv errcode errout)
       else (* running nuXmv goes well: parse its output *)
         Msg.info (fun m -> m "Analysis done in %a" Mtime.Span.pp
-                   @@ Mtime.span before_run after_run);
+                             analysis_time );
       let spec =
         String.lines_gen okout
         |> Gen.drop_while
@@ -388,7 +395,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
       keep_or_remove_files scr smv;
 
       if String.suffix ~suf:"is true" @@ Gen.get_exn spec then
-        Outcome.no_trace 
+        Outcome.no_trace nbvars conversion_time analysis_time
       else
         (* nuXmv says there is a counterexample so we parse it on the standard
            output *)
@@ -406,15 +413,18 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
             let base = Domain.musts ~with_univ_and_ident:false elo.Elo.domain
           end)
         in
-        spec
-        (* With this trace output, nuXmv shows a few uninteresting lines first,
-           that we have to gloss over *)
-        |> Gen.drop_while (fun line -> not @@ String.prefix "Trace" line)
-        |> Gen.drop_while (String.prefix ~pre:"Trace")
-        |> String.unlines_gen
-        (* |> Fun.tap print_endline *)
-        |> fun trace_str ->
-        (let lexbuf = Lexing.from_string trace_str in
-         (P.trace (SMV_trace_scanner.main Ltl.Atomic.split_string) lexbuf))
+        let trace =
+          spec
+          (* With this trace output, nuXmv shows a few uninteresting lines first,
+             that we have to gloss over *)
+          |> Gen.drop_while (fun line -> not @@ String.prefix "Trace" line)
+          |> Gen.drop_while (String.prefix ~pre:"Trace")
+          |> String.unlines_gen
+          (* |> Fun.tap print_endline *)
+          |> fun trace_str ->
+          (let lexbuf = Lexing.from_string trace_str in
+           (P.trace (SMV_trace_scanner.main Ltl.Atomic.split_string) lexbuf))
+        in
+        Outcome.trace nbvars conversion_time analysis_time trace
         
   end
