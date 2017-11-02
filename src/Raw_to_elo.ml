@@ -663,10 +663,16 @@ let compute_arities elo =
         let c' = walk_fml ctx c in
         let t' = walk_exp ctx t in
         let e' = walk_exp ctx e in
-        if Option.equal Int.equal t'.arity e'.arity then
-          return_exp exp e'.arity (rite c' t' e') 
-        else
-          Result.fail "incompatible arities in the bodies of 'then' and 'else'"
+        (match t'.arity, e'.arity with
+          | Some a1, Some a2 when a1 = a2 ->
+              return_exp exp e'.arity (rite c' t' e')
+          | Some a, None
+          | None, Some a ->
+              return_exp exp (Some a) (rite c' t' e')
+          | None, None -> 
+              return_exp exp None (rite c' t' e')
+          | Some _, Some _ -> 
+              Result.fail "incompatible arities in the bodies of 'then' and 'else'")
     | BoxJoin (call, args) ->
         (* build the iterated "plain" join to get arity/must/sup *)
         let call' = walk_exp ctx call in
@@ -715,13 +721,13 @@ let compute_arities elo =
     val arities =
       Domain.arities elo.Elo.domain
       |> List.map (fun (n, a) -> (Elo.Name n, Some a))
-      (* |> Fun.tap (fun ars -> *)
-      (*       Msg.debug (fun m -> *)
-      (*             m "compute_arities.initial arities = %a" *)
-      (*               Fmtc.(brackets @@ *)
-      (*                     list ~sep:sp *)
-      (*                     @@ pair ~sep:(const string "→") *)
-      (*                          Elo.pp_ident (option int)) ars )) *)
+    (* |> Fun.tap (fun ars -> *)
+    (*       Msg.debug (fun m -> *)
+    (*             m "compute_arities.initial arities = %a" *)
+    (*               Fmtc.(brackets @@ *)
+    (*                     list ~sep:sp *)
+    (*                     @@ pair ~sep:(const string "→") *)
+    (*                          Elo.pp_ident (option int)) ars )) *)
 
     val domain = elo.Elo.domain
 
