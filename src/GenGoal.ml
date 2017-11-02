@@ -370,7 +370,7 @@ and pp_prim_fml pp_v pp_i out =
           (pp_block pp_v pp_i) blk
     | FIte (c, t, e) ->
         (* pf out "@[<hv2>(%a@ @[implies %a@]@ @[else %a@])@]" *)
-          pf out "@[<hv>%a %a@;<1 2>@[%a@]@;%a@;<1 2>@[%a@]@]"
+          pf out "@[<hv>(%a) %a@;<1 2>@[(%a@])@;%a@;<1 2>@[(%a@])@]"
           (pp_fml pp_v pp_i) c
           (kwd_styled string) "implies"
           (pp_fml pp_v pp_i) t
