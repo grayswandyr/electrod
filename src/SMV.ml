@@ -167,7 +167,10 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
           | Imp (p, q) -> infixr ~paren:true upper 1 string pp pp out ("->", p, q)
           | Iff (p, q) -> infixl ~paren:true upper 2 string pp pp out ("<->", p, q)
           | Ite (c, t, e) ->
-              pf out "(%a@ ?@ %a@ :@ %a)" (pp 3) c (pp 3) t (pp 3) e
+              (* SMV's ...?...:... or case...esac expression cannot be
+                 used as nuXmv does not accept these when subexpressions
+                 are temporal (seen invarious tests). So we rewrite the formula into more basic terms. *)
+              pp upper out @@ I.Infix.((c @=> lazy t) +&& lazy ((I.not_ c) @=> lazy e))
           | Or (p, q) -> infixl ~paren:true upper 4 string pp pp out ("|", p, q)
           (* force parenthses as we're not used to see the Xor connective and so its precedence may be unclear *)
           | Xor (p, q) -> infixl ~paren:true upper 4 string pp pp out ("xor", p, q)
