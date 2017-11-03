@@ -147,31 +147,31 @@ module Make (Ltl : Solver.LTL) = struct
                                                                 
     inherit ['self] GenGoalRecursor.recursor as super
 
-    method visit_'v (subst : 'subst) = Fun.id
+    method visit_'v __subst = Fun.id
 
-    method visit_'i (subst : 'subst) = Fun.id
+    method visit_'i __subst = Fun.id
 
     (* fml  *)                        
 
-    method build_fml (subst : 'subst) _ ltl _ = ltl
+    method build_fml __subst _ ltl _ = ltl
 
-    method build_Run (subst : 'subst) _ = Fun.id
+    method build_Run __subst _ = Fun.id
 
-    method build_True (subst : 'subst) = true_
+    method build_True __subst = true_
 
-    method build_False (subst : 'subst) = false_
+    method build_False __subst = false_
 
-    method build_Block (subst : 'subst) _ = conj
+    method build_Block __subst _ = conj
 
-    method build_FIte (subst : 'subst) _ _ _ = ifthenelse 
+    method build_FIte __subst _ _ _ = ifthenelse 
 
-    method build_Let (subst : 'subst) bs block bs' block'= assert false (* SIMPLIFIED *)
+    method build_Let __subst __bs __block __bs' __block'= assert false (* SIMPLIFIED *)
 
     (* quant *)
 
     (* re-defining this method to avoid going down in the block as a
        substitution must be made first *)
-    method visit_Quant env _visitors_c0 _visitors_c1 _visitors_c2 =
+    method! visit_Quant env _visitors_c0 _visitors_c1 _visitors_c2 =
       let _visitors_r0 = self#visit_quant env _visitors_c0  in
       let _visitors_r1 =
         self#visit_list self#visit_sim_binding env _visitors_c1  in
@@ -179,7 +179,7 @@ module Make (Ltl : Solver.LTL) = struct
       self#build_Quant env _visitors_c0 _visitors_c1 _visitors_c2
         _visitors_r0 _visitors_r1 _visitors_r2
 
-    method build_Quant (subst : 'subst) quant sim_bindings blk _ sim_bindings' _ =
+    method build_Quant subst quant sim_bindings blk _ sim_bindings' _ =
       (* Msg.debug *)
       (*   (fun m -> m "build_Quant <-- %a" *)
       (*               (Elo.pp_prim_fml) *)
@@ -249,15 +249,15 @@ module Make (Ltl : Solver.LTL) = struct
               lazy (pos_or_neg
                     @@ (self#visit_prim_fml @@ sub_for tuples @ subst) (* [[...]] *)
                     @@ G.block blk
-                          (* |> Fun.tap (fun s -> *)
-                          (*       Msg.debug (fun m -> *)
-                          (*             m "%a[%a] -->@   %a" *)
-                          (*               Elo.pp_block blk *)
-                          (*               Fmtc.(list @@ pair ~sep:(const string " := ") *)
-                          (*                               Var.pp Elo.pp_prim_exp) *)
-                          (*               (sub_for tuples) *)
-                          (*               Elo.pp_prim_fml s)) *)
-                       ) (* blk [tuples / xs] *)
+                    (* |> Fun.tap (fun s -> *)
+                    (*       Msg.debug (fun m -> *)
+                    (*             m "%a[%a] -->@   %a" *)
+                    (*               Elo.pp_block blk *)
+                    (*               Fmtc.(list @@ pair ~sep:(const string " := ") *)
+                    (*                               Var.pp Elo.pp_prim_exp) *)
+                    (*               (sub_for tuples) *)
+                    (*               Elo.pp_prim_fml s)) *)
+                   ) (* blk [tuples / xs] *)
             in
             (* Msg.debug (fun m -> *)
             (*       m "build_Quant: ENTERING MUSTPART" ); *)
@@ -287,7 +287,7 @@ module Make (Ltl : Solver.LTL) = struct
                          repetition. *)
                       let premise = 
                         wedge
-                          List.(to_seq @@ sort_uniq ~cmp:Tuple.compare tuples)
+                          ~range:List.(to_seq @@ sort_uniq ~cmp:Tuple.compare tuples)
                           (fun tuple -> lazy (s' tuple))
                       in
                       (* Msg.debug (fun m -> m "(build_Quant.premise) %a" Ltl.pp premise); *)
@@ -309,19 +309,19 @@ module Make (Ltl : Solver.LTL) = struct
             (*               Ltl.pp res *)
             (*           )) *)
 
-    method build_One (subst : 'subst) = G.One
+    method build_One __subst = G.One
 
-    method build_Lone (subst : 'subst) = G.Lone
+    method build_Lone __subst = G.Lone
 
-    method build_All (subst : 'subst) = G.All
+    method build_All __subst = G.All
 
-    method build_No (subst : 'subst) = G.No 
+    method build_No __subst = G.No 
 
-    method build_Some_ (subst : 'subst) = G.Some_    
+    method build_Some_ __subst = G.Some_    
 
     (* lbinop *)      
 
-    method build_LBin (subst : 'subst) f1 op f2 f1' op' f2' =
+    method build_LBin __subst f1 __op f2 f1' op' f2' =
       op' f1 f2 f1' f2'
       (* |> Fun.tap (fun res -> *)
       (*       Msg.debug (fun m -> *)
@@ -332,23 +332,23 @@ module Make (Ltl : Solver.LTL) = struct
       (*               Ltl.pp res *)
       (*           )) *)
 
-    method build_And (subst : 'subst) _ _ = fun a b -> and_ a (lazy b)
+    method build_And __subst _ _ = fun a b -> and_ a (lazy b)
 
-    method build_Iff (subst : 'subst) _ _ = iff
+    method build_Iff __subst _ _ = iff
 
-    method build_Imp (subst : 'subst) _ _ = fun a b -> implies a (lazy b)
+    method build_Imp __subst _ _ = fun a b -> implies a (lazy b)
 
-    method build_U (subst : 'subst) _ _ = until
+    method build_U __subst _ _ = until
 
-    method build_Or (subst : 'subst) _ _ = fun a b -> or_ a (lazy b)
+    method build_Or __subst _ _ = fun a b -> or_ a (lazy b)
 
-    method build_R (subst : 'subst) _ _ = releases
+    method build_R __subst _ _ = releases
 
-    method build_S (subst : 'subst) _ _ = since
+    method build_S __subst _ _ = since
 
     (* lunop *)                     
 
-    method build_LUn (subst : 'subst) op f op' f' =
+    method build_LUn __subst __op f op' f' =
       op' f f'
       (* |> Fun.tap (fun res -> *)
       (*       Msg.debug (fun m -> *)
@@ -358,23 +358,23 @@ module Make (Ltl : Solver.LTL) = struct
       (*               Ltl.pp res *)
       (*           )) *)
 
-    method build_X (subst : 'subst) _ = next
+    method build_X __subst _ = next
 
-    method build_F (subst : 'subst) _ = eventually
+    method build_F __subst _ = eventually
 
-    method build_G (subst : 'subst) _ = always
+    method build_G __subst _ = always
 
-    method build_H (subst : 'subst) _ = historically
+    method build_H __subst _ = historically
 
-    method build_O (subst : 'subst) _ = once
+    method build_O __subst _ = once
 
-    method build_P (subst : 'subst) _ = yesterday
+    method build_P __subst _ = yesterday
 
-    method build_Not (subst : 'subst) _ = not_
+    method build_Not __subst _ = not_
 
     (* compo_op *)
 
-    method build_RComp (subst : 'subst) f1 op f2 f1' op' f2' =
+    method build_RComp _ f1 __op f2 f1' op' f2' =
       op' f1 f2 f1' f2'
       (* |> Fun.tap (fun res -> *)
       (*       Msg.debug  *)
@@ -386,10 +386,10 @@ module Make (Ltl : Solver.LTL) = struct
       (*     ) *)
 
 
-    (* method build_REq (subst : 'subst) r s r' s' = *)
+    (* method build_REq __subst r s r' s' = *)
     (*   self#build_In env r s r' s' +&& lazy (self#build_In env s r s' r') *)
 
-    method build_REq (subst : 'subst) r s r' s' =
+    method build_REq subst r s r' s' =
       let r_bounds = env#must_may_sup subst r in
       let s_bounds = env#must_may_sup subst s in
       let inter = TS.inter r_bounds.may s_bounds.may in
@@ -401,7 +401,7 @@ module Make (Ltl : Solver.LTL) = struct
       +&& lazy (wedge ~range:(TS.to_seq @@ TS.diff s_bounds.may inter)
                   (fun bs -> lazy (s' bs @=> lazy (r' bs))))
 
-    method build_In (subst : 'subst) r s r' s' =
+    method build_In subst r __s r' s' =
       let { must; may; _} = env#must_may_sup subst r in
       (* Msg.debug (fun m -> m "build_In: %a in %a@\nmust(%a) = %a@\nmay(%a) = %a" *)
       (*                       Elo.pp_exp r *)
@@ -415,48 +415,48 @@ module Make (Ltl : Solver.LTL) = struct
       +&& lazy (wedge ~range:(TS.to_seq may)
                   (fun bs -> lazy (r' bs @=> lazy (s' bs))))
 
-    method build_NotIn (subst : 'subst) r s r' s' =
+    method build_NotIn subst r s r' s' =
       not_ @@ self#build_In subst r s r' s'
 
-    method build_RNEq (subst : 'subst) r s r' s' =
+    method build_RNEq subst r s r' s' =
       not_ @@ self#build_REq subst r s r' s'
 
     (* icomp_op *)
 
-    method build_IComp (subst : 'subst) e1 _ e2 e1_r op e2_r = op e1_r e2_r
+    method build_IComp __subst __e1 _ __e2 e1_r op e2_r = op e1_r e2_r
 
-    method build_Gt (subst : 'subst) = comp gt
+    method build_Gt __subst = comp gt
 
-    method build_Gte (subst : 'subst) = comp gte
+    method build_Gte __subst = comp gte
 
-    method build_IEq (subst : 'subst) = comp eq
+    method build_IEq __subst = comp eq
 
-    method build_INEq (subst : 'subst) = comp neq
+    method build_INEq __subst = comp neq
 
-    method build_Lt (subst : 'subst) = comp lt
+    method build_Lt __subst = comp lt
 
-    method build_Lte (subst : 'subst) = comp lte
+    method build_Lte __subst = comp lte
 
     (* rqualify *)
 
-    method build_Qual (subst : 'subst) _ r q' r' = assert false (* SIMPLIFIED *)
+    method build_Qual __subst __q __r __q' __r' = assert false (* SIMPLIFIED *)
 
-    method build_RLone (subst : 'subst) = G.rlone (* SIMPLIFIED *)
+    method build_RLone __subst = G.rlone (* SIMPLIFIED *)
 
-    method build_RNo (subst : 'subst) = assert false (* SIMPLIFIED *)
+    method build_RNo __subst = assert false (* SIMPLIFIED *)
 
-    method build_ROne (subst : 'subst) = assert false (* SIMPLIFIED *)
+    method build_ROne __subst = assert false (* SIMPLIFIED *)
 
-    method build_RSome (subst : 'subst) = assert false (* SIMPLIFIED *)
+    method build_RSome __subst = assert false (* SIMPLIFIED *)
 
     (************************** exp  ********************************)
 
-    method build_exp (subst : 'subst) _ pe' _ _ = pe'
+    method build_exp __subst _ pe' _ _ = pe'
 
 
     (* re-defining this method to avoid going down in the block as a
        substitution must be made first *)
-    method visit_Compr env _visitors_c0 _visitors_c1 =
+    method! visit_Compr env _visitors_c0 _visitors_c1 =
       let _visitors_r0 =
         self#visit_list self#visit_sim_binding env _visitors_c0
       in
@@ -465,7 +465,7 @@ module Make (Ltl : Solver.LTL) = struct
 
     method private allocate_sbs_to_tuples vars l = match vars with
       | [] -> []
-      | (v, r)::tl ->
+      | (_, r)::tl ->
           let xs, ys = List.take_drop Option.(get_exn r.G.arity) l in
           Tuple.of_list1 xs :: self#allocate_sbs_to_tuples tl ys
 
@@ -476,7 +476,7 @@ module Make (Ltl : Solver.LTL) = struct
        substitutions and then compute separately the semantics of every binding,
        before computing the whole resulting formula.
     *)
-    method build_Compr (subst : 'subst) sbs b _ _ = fun tuple ->
+    method build_Compr subst sbs b _ _ = fun tuple ->
       (* assert (List.for_all (fun (disj, _, _) -> not disj) sbs); *)
       (* compute the subtitution of elements in [tuple] for all bound variables *)
       let ranging_vars = 
@@ -520,7 +520,7 @@ module Make (Ltl : Solver.LTL) = struct
       in
       conj (b' :: ranges)
 
-    method build_Iden (subst : 'subst) = fun tuple -> 
+    method build_Iden __subst = fun tuple -> 
       assert (Tuple.arity tuple = 2);
       if Atom.equal (Tuple.ith 0 tuple) (Tuple.ith 1 tuple) then
         true_
@@ -529,19 +529,18 @@ module Make (Ltl : Solver.LTL) = struct
 
     
 
-    method build_BoxJoin (subst : 'subst) call args call' args' = (* SIMPLIFIED *)
+    method build_BoxJoin __subst __call __args __call' __args' = (* SIMPLIFIED *)
       assert false
 
-    method build_Ident (subst : 'subst) _ id = fun tuple ->
-      let open Elo in
+    method build_Ident subst _ id = fun tuple ->
       match id with
-        | Var v ->
+        | Elo.Var v ->
             if Tuple.equal (CCList.Assoc.get_exn ~eq:Var.equal v subst) tuple
             then
               true_
             else
               false_
-        | Name r ->
+        | Elo.Name r ->
             let { must; may; _ } =
               env#must_may_sup subst @@
               G.exp (Some (env#arity r)) Location.dummy @@ G.ident id
@@ -559,27 +558,27 @@ module Make (Ltl : Solver.LTL) = struct
             else
               false_
 
-    method build_None_ (subst : 'subst) = fun _ -> false_
+    method build_None_ __subst = fun _ -> false_
 
-    method build_Univ (subst : 'subst) = fun _ -> true_
+    method build_Univ __subst = fun _ -> true_
 
-    method build_Prime (subst : 'subst) _ e' = fun tuple -> next @@ e' tuple
+    method build_Prime __subst _ e' = fun tuple -> next @@ e' tuple
 
-    method build_RIte (subst : 'subst) _ _ _ f_r e1_r e2_r = fun tuple -> 
+    method build_RIte __subst _ _ _ f_r e1_r e2_r = fun tuple -> 
       f_r @=> lazy (e1_r tuple +&& lazy (not_ f_r @=> lazy (e2_r tuple)))
 
 
     (* rbinop *)
 
-    method build_RBin (subst : 'subst) f1 op f2 f1' op' f2' =
+    method build_RBin __subst f1 __op f2 f1' op' f2' =
       op' f1 f2 f1' f2'
 
-    method build_Union (subst : 'subst) _ _ e1 e2 =
+    method build_Union __subst _ _ e1 e2 =
       (fun x -> e1 x +|| lazy (e2 x))
 
-    method build_Inter (subst : 'subst) _ _ e1 e2 = fun x -> e1 x +&& lazy (e2 x)
+    method build_Inter __subst _ _ e1 e2 = fun x -> e1 x +&& lazy (e2 x)
 
-    method build_Join (subst : 'subst) r s r' s' =  fun tuple ->
+    method build_Join subst r s r' s' =  fun tuple ->
       (* let open List in *)
       Msg.debug (fun m ->
             m "build_Join <-- [[%a . %a]](%a) "
@@ -609,10 +608,10 @@ module Make (Ltl : Solver.LTL) = struct
 
 
 
-    method build_LProj (subst : 'subst) _ _ s' r' = fun tuple -> 
+    method build_LProj __subst _ _ s' r' = fun tuple -> 
       r' tuple +&& lazy (s' @@ Tuple.(of_list1 [ith 0 tuple]))
 
-    method build_Prod (subst : 'subst) r s r' s' = fun tuple ->
+    method build_Prod __subst r __s r' s' = fun tuple ->
       let ar_r = Option.get_exn r.G.arity in
       let t1, t2 = Tuple.split tuple ar_r in
       r' t1 +&& lazy (s' t2)
@@ -630,14 +629,14 @@ module Make (Ltl : Solver.LTL) = struct
     (*         )) *)
 
 
-    method build_RProj (subst : 'subst) _ _ r' s' = fun tuple -> 
+    method build_RProj __subst _ _ r' s' = fun tuple -> 
       let lg = Tuple.arity tuple in
       r' tuple +&& lazy (s' @@ Tuple.of_list1 [Tuple.ith (lg - 1) tuple])
 
-    method build_Diff (subst : 'subst) _ _ e' f' = fun tuple ->
+    method build_Diff __subst _ _ e' f' = fun tuple ->
       e' tuple +&& lazy (not_ (f' tuple))
 
-    method build_Over (subst : 'subst) _ s r' s' = fun tuple ->
+    method build_Over subst _ s r' s' = fun tuple ->
       let { must; may; _ } = env#must_may_sup subst s in
       let proj1 x = Tuple.(of_list1 [ith 0 x]) in
       let mustpart =
@@ -657,15 +656,15 @@ module Make (Ltl : Solver.LTL) = struct
 
     (* runop *)
 
-    method build_RUn (subst : 'subst) _ e op e_r = op e e_r
+    method build_RUn __subst _ e op e_r = op e e_r
 
-    method build_RTClos (subst : 'subst) r _ = fun tuple ->
+    method build_RTClos subst r _ = fun tuple ->
       self#build_Iden subst tuple +|| lazy (self#visit_RUn subst G.TClos r tuple)
 
-    method build_Transpose (subst : 'subst) _ r' = fun tuple -> 
+    method build_Transpose __subst _ r' = fun tuple -> 
       r' @@ Tuple.transpose tuple
 
-    method build_TClos (subst : 'subst) r r' =
+    method build_TClos subst r __r' =
       Msg.debug
         (fun m -> m "Elo_to_LTL1.build_TClos <-- %a"
                     Elo.pp_exp r);
@@ -700,21 +699,21 @@ module Make (Ltl : Solver.LTL) = struct
 
     (*********************************** iexp **************************************)
 
-    method build_iexp (subst : 'subst) _ iexp' _ = iexp'
+    method build_iexp __subst _ iexp' _ = iexp'
 
-    method build_IBin (subst : 'subst) _ _ _ i1' op' i2' = op' i1' i2'
+    method build_IBin __subst _ _ _ i1' op' i2' = op' i1' i2'
 
-    method build_IUn (subst : 'subst) _ _ op' i' = op' i'
+    method build_IUn __subst _ _ op' i' = op' i'
 
-    method build_Num (subst : 'subst) _ = num
+    method build_Num __subst _ = num
 
-    method build_Add (subst : 'subst) = plus
+    method build_Add __subst = plus
 
-    method build_Neg (subst : 'subst) = neg
+    method build_Neg __subst = neg
 
-    method build_Sub (subst : 'subst) = minus
+    method build_Sub __subst = minus
 
-    method build_Card (subst : 'subst) r r' =
+    method build_Card subst r r' =
       let { must; may; _ } = env#must_may_sup subst r in
       let must_card = num @@ TS.size must in
       let may_card =
@@ -726,7 +725,7 @@ module Make (Ltl : Solver.LTL) = struct
   end                           (* end converter *)
 
 
-  class environment (elo : Elo.t) = object (self : 'self)
+  class environment (elo : Elo.t) = object (_ : 'self)
     method arity name =
       match Domain.get name elo.Elo.domain with
         | None -> assert false

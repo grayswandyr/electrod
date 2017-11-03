@@ -8,7 +8,7 @@ open Containers
 
 (* inspired by Logs_fmt code *)     
 let keyword =
-  let open Logs in
+  let open! Logs in
   function
     | App -> ""
     | Error -> "ERROR"
@@ -18,7 +18,7 @@ let keyword =
 
 
 let short =
-  let open Logs in
+  let open! Logs in
   function
     | App -> ""
     | Error -> "E"
@@ -29,7 +29,7 @@ let short =
 
 
 let pp_header ppf (l, h) =
-  let open Logs in 
+  let open! Logs in 
   let open Logs_fmt in
   let pp_h ppf style h = Fmtc.pf ppf "[%a] " Fmtc.(styled style string) h in
   match l with

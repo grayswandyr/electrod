@@ -36,7 +36,7 @@ let err m = LoggingSetup.kmsg (fun () -> raise Exit) Logs.Error m
 
 
 let style =
-  let open Logs in
+  let open! Logs in
   let open Logs_fmt in
   function
     | App -> app_style

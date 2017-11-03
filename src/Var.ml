@@ -31,7 +31,7 @@ let equal { id = id1; _ } { id = id2; _ } =
 
 let style = `Yellow
 
-let pp out { id; name; sep } =
+let pp out { id; name; sep; _ } =
   Fmtc.(pf out "%a%a%a"
           (styled style string) name
           (styled style string) sep

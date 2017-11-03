@@ -1,5 +1,6 @@
 
 %{
+    [@warning "-4"]
   
 module R = Raw
 

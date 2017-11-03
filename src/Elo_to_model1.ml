@@ -58,16 +58,17 @@ struct
       List.partition_map
         (fun fml ->
            let color = ConvertFormulas.color elo fml in
-           Msg.debug (fun m -> m
-                                 "Color of formula %a : %a\n" Elo.pp_fml fml Invar_computation.pp color);
+           Msg.debug (fun m ->
+                 m "Color of formula %a : %a\n"
+                   Elo.pp_fml fml Invar_computation.pp color);
            match color with
              | Invar | Static_prop -> `Left (remove_always_to_invar fml)
-             | _ -> `Right (fml)
+             | Init | Temporal -> `Right (fml)
         )
         blk
     in
     match (restf, List.rev invf) with
-      | hd::tl , _ -> (invf, restf)
+      | _::_ , _ -> (invf, restf)
       | [] , hd::tl -> (tl, [add_always_to_invar hd])
       | _ -> assert false (*the goal cannot be empty*)
 

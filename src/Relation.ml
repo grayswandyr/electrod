@@ -39,8 +39,8 @@ let scope = function
   | Var { scope; _ } -> scope
 
 
-let pp ?(print_name = true) out rel = 
-  let open Fmtc in
+let pp ?(print_name = true) out rel =
+  let open! Fmtc in             (* shadows const *)
   let pp_name =
     if print_name then (sp **> colon **> nbsp **> Name.pp) else nop
   in

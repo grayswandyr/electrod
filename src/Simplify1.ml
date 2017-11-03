@@ -47,7 +47,7 @@ class simplify = object (self : 'self)
 
   method visit_'i _ = Fun.id
 
-  method visit_Quant_One env q sim_bindings blk =
+  method visit_Quant_One env __q sim_bindings blk =
     (*re-write one x1,y1:r1, x2,y2:r2 | phi into
       some x1,y1:r1, x2,y2:r2 | (phi and all x1',x2':r1, x2',y2';r2 | ...)*)
     let new_sim_bindings, assoc_new_vars, cmp_fml =
@@ -86,7 +86,7 @@ class simplify = object (self : 'self)
     self#visit_prim_fml env temporary_fml
 
   (* translate lone x:t|phi into one x:t|phi or no x:t|phi *)
-  method visit_Quant_Lone env q sim_bindings blk =
+  method visit_Quant_Lone env __q sim_bindings blk =
     let res_fml =
       lbinary 
         (fml L.dummy @@ quant one sim_bindings blk)
@@ -96,7 +96,7 @@ class simplify = object (self : 'self)
     self#visit_prim_fml env res_fml
 
   (* split multiple simultaneous All/Some/No bindings into many quantifications *)
-  method visit_Quant env q sim_bindings blk = 
+  method! visit_Quant env q sim_bindings blk = 
     Msg.debug (fun m -> m "Simplify1.visit_Quant <-- %a"
                           Elo.pp_prim_fml
                 @@ quant q sim_bindings blk);
@@ -120,7 +120,7 @@ class simplify = object (self : 'self)
 
 
   (* substitute let bindings *)
-  method visit_Let env bindings fmls =
+  method! visit_Let env bindings fmls =
     (* substitute from right to left as a binding on the left may apply in the
        range of a binding on the right *)
     (* Msg.debug (fun m -> m "Simplify1.visit_Let <-- %a" *)
@@ -138,7 +138,7 @@ class simplify = object (self : 'self)
   (*                       Elo.pp_prim_fml res) *)
 
   (* change relation qualifiers into formulas *)
-  method visit_Qual env q expr =
+  method! visit_Qual env q expr =
     (* Msg.debug (fun m -> m "Simplify1.visit_Qual <-- %a" *)
     (*                       Elo.pp_prim_fml *)
     (*             @@ qual q expr); *)
@@ -169,7 +169,7 @@ class simplify = object (self : 'self)
   (*                       Elo.pp_prim_fml res) *)
 
   (* change box join in join *)
-  method visit_BoxJoin env call args =
+  method! visit_BoxJoin env call args =
     (* Msg.debug (fun m -> m "Simplify1.visit_BoxJoin <-- %a[%a]" *)
     (*                       Elo.pp_exp call *)
     (*                       (Fmtc.list Elo.pp_exp) args); *)

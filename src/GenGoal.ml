@@ -150,19 +150,19 @@ let icomp exp1 rcomp exp2 = IComp (exp1, rcomp, exp2)
 
 let lbinary fml1 binop fml2 = match fml1.prim_fml, binop, fml2.prim_fml with
   (* And *)
-  | (False | Block [ { prim_fml = False }]), And, _
-  | _, And, (False | Block [ { prim_fml = False }]) -> false_
-  | (True | Block [ { prim_fml = True }]), And, _ -> fml2.prim_fml
-  | _, And, (True | Block [ { prim_fml = True }]) -> fml1.prim_fml
+  | (False | Block [ { prim_fml = False; _ }]), And, _
+  | _, And, (False | Block [ { prim_fml = False; _ }]) -> false_
+  | (True | Block [ { prim_fml = True; _ }]), And, _ -> fml2.prim_fml
+  | _, And, (True | Block [ { prim_fml = True; _ }]) -> fml1.prim_fml
   (* Or *)
-  | (False | Block [ { prim_fml = False }]), Or, _ -> fml2.prim_fml
-  | _, Or, (False | Block [ { prim_fml = False }]) -> fml1.prim_fml
-  | (True | Block [ { prim_fml = True }]), Or, _ 
-  | _, Or, (True | Block [ { prim_fml = True }]) -> True
+  | (False | Block [ { prim_fml = False; _ }]), Or, _ -> fml2.prim_fml
+  | _, Or, (False | Block [ { prim_fml = False; _ }]) -> fml1.prim_fml
+  | (True | Block [ { prim_fml = True; _ }]), Or, _ 
+  | _, Or, (True | Block [ { prim_fml = True; _ }]) -> True
   (* Implies *)
-  | (False | Block [ { prim_fml = False }]), Imp, _
-  | _, Imp, (True | Block [ { prim_fml = True }]) -> true_
-  | (True | Block [ { prim_fml = True }]), Imp, _ -> fml2.prim_fml
+  | (False | Block [ { prim_fml = False; _ }]), Imp, _
+  | _, Imp, (True | Block [ { prim_fml = True; _ }]) -> true_
+  | (True | Block [ { prim_fml = True; _ }]), Imp, _ -> fml2.prim_fml
   
   | _ -> LBin (fml1, binop, fml2)
 
@@ -295,7 +295,7 @@ let card exp = Card exp
 
 let iunary op exp = IUn (op, exp)
 
-let ibinary exp op exp = IBin (exp, op, exp)
+let ibinary exp1 op exp2 = IBin (exp1, op, exp2)
 
 let neg = Neg
 
@@ -326,7 +326,7 @@ let rec pp pp_v pp_i out (Run fml) =
   begin
     (kwd_styled pf) out "run@ ";
     pf out "  %a"
-      (box2 @@ list @@ pp_fml pp_v pp_i) fml
+      (box @@ list @@ pp_fml pp_v pp_i) fml
   end
 
 and pp_fml pp_v pp_i out fml =
@@ -455,7 +455,7 @@ and pp_sim_binding pp_v pp_i out (disj, vars, exp) =
     (list ~sep:(sp **> comma) pp_v) vars
     (pp_exp pp_v pp_i) exp
 
-and pp_exp ?(show_arity = false) ?(show_bounds = true) pp_v pp_i out exp =
+and pp_exp ?(show_arity = false) pp_v pp_i out exp =
   pp_prim_exp pp_v pp_i out exp.prim_exp;
   if show_arity then Fmtc.(pf out "«%a»" (option int) exp.arity);
 
@@ -474,7 +474,7 @@ and pp_prim_exp pp_v pp_i out =
         pf out "@[<2>(%a%a)@]"
           pp_runop op
           (pp_exp pp_v pp_i) e
-    | RBin (e1, Join, e2) ->
+    | RBin (e1, Join, e2) ->    (* special one for join *)
         pf out "@[<2>(%a.%a)@]"
           (pp_exp pp_v pp_i) e1
           (pp_exp pp_v pp_i) e2

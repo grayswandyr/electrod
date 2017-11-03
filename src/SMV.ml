@@ -420,7 +420,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
           spec
           (* With this trace output, nuXmv shows a few uninteresting lines first,
              that we have to gloss over *)
-          |> Gen.drop_while (fun line -> not @@ String.prefix "Trace" line)
+          |> Gen.drop_while (fun line -> not @@ String.prefix ~pre:"Trace" line)
           |> Gen.drop_while (String.prefix ~pre:"Trace")
           |> String.unlines_gen
           (* |> Fun.tap print_endline *)

@@ -1,5 +1,8 @@
-open Containers
 
+
+open Containers
+    
+[@@@warning "-4"] (* fragile patterns, lots of them as we short-circuit *)
 
 module type ATOMIC_PROPOSITION = sig
   type t
@@ -211,7 +214,7 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
   let or_ p1 p2 = match p1, p2 with
     | True, _ -> true_
     | False, lazy p -> p
-    | p, lazy q ->
+    | _, lazy q ->
         match q with
           | False -> p1
           | True -> true_

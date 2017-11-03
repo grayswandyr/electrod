@@ -73,7 +73,7 @@ let update_domain_with_instance domain instance =
     assert (R.is_const rel);
     R.const (R.name rel) (R.arity rel) (Scope.exact I.(inst_item))
   in
-  let keep_instance name = function
+  let keep_instance __name = function
     | `Both (dom_entry, inst_entry) ->
         Some (relation_of_instance_item inst_entry dom_entry)
     | `Left dom_entry -> Some dom_entry

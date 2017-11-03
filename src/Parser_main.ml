@@ -9,7 +9,10 @@ module P = Parser
 let check_paragraphs file pars =
   let open List in
   let goal =
-    let candidates = filter (function Raw.ParGoal g -> true | _ -> false) pars in
+    let candidates =
+      filter
+        (function Raw.ParGoal g -> true
+                | Raw.ParInst _ | Raw.ParSym _ | Raw.ParInv _ -> false) pars in
     if length candidates = 1 then (* there must be one goal *)
       match candidates with [ Raw.ParGoal g ] -> g | _ -> assert false
     else
@@ -17,7 +20,9 @@ let check_paragraphs file pars =
         (fun args -> args file "one goal must be declared exactly")
   in
   let invar =
-    let candidates = filter (function Raw.ParInv _ -> true | _ -> false) pars in
+    let candidates =
+      filter (function Raw.ParInv _ -> true
+                     | Raw.ParGoal _ | Raw.ParInst _ | Raw.ParSym _ -> false) pars in
     if length candidates <= 1 then (* there may be one list of instances *)
       match candidates with [] -> [] | [ Raw.ParInv g ] -> g | _ -> assert false
     else 
@@ -25,7 +30,9 @@ let check_paragraphs file pars =
         (fun args -> args file "at most one invariant section may be declared")
   in
   let inst =
-    let candidates = filter (function Raw.ParInst _ -> true | _ -> false) pars in
+    let candidates =
+      filter (function Raw.ParInst _ -> true
+                     | Raw.ParGoal _ | Raw.ParSym _ | Raw.ParInv _ -> false) pars in
     if length candidates <= 1 then (* there may be one list of instances *)
       match candidates with [] -> [] | [ Raw.ParInst g ] -> g | _ -> assert false
     else 
@@ -33,7 +40,9 @@ let check_paragraphs file pars =
         (fun args -> args file "at most one (partial) instance may be declared")
   in
   let sym =
-    let candidates = filter (function Raw.ParSym _ -> true | _ -> false) pars in
+    let candidates =
+      filter (function Raw.ParSym _ -> true
+                     | Raw.ParGoal _ | Raw.ParInst _ | Raw.ParInv _ -> false) pars in
     if length candidates <= 1 then  (* there may be one list of symmetries *)
       match candidates with [] -> [] | [ Raw.ParSym g ] -> g | _ -> assert false
     else
