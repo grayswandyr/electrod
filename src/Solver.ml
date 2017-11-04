@@ -202,34 +202,28 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
   let true_ = True
   let false_ = False
 
-  let and_ p q = match p, q with
+  let rec and_ p q = match p, q with
     | False, _ -> false_
     | True, lazy q -> q
+    | Atomic at1, lazy (Atomic at2) when Atomic.equal at1 at2 -> p
     | _, lazy q ->
         match q with
           | False -> false_
           | True -> p
           | _ -> And (p, q)
 
-  let or_ p1 p2 = match p1, p2 with
+  and or_ p1 p2 = match p1, p2 with
+    | Not notp1, _ -> implies notp1 p2
     | True, _ -> true_
     | False, lazy p -> p
+    | Atomic at1, lazy (Atomic at2) when Atomic.equal at1 at2 -> p1
     | _, lazy q ->
         match q with
           | False -> p1
           | True -> true_
           | _ -> Or (p1, q)
-  
-  let xor p1 p2 = Xor (p1, p2)
 
-  let iff p q = match p, q with
-    | False, False
-    | True, True -> true_
-    | False, True
-    | True, False -> false_
-    | _, _ -> Iff (p, q)
-
-  let rec not_ p = match p with
+  and not_ p = match p with
     | True -> false_
     | False -> true_ 
     | And (p, q) -> or_ (not_ p) (lazy (not_ q))
@@ -241,12 +235,23 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
   and implies p q = match p, q with
     | False, _ -> true_
     | True, lazy q2 -> q2
+    | Atomic at1, lazy (Atomic at2) when Atomic.equal at1 at2 -> true_
     | _, lazy q2 ->
         match q2 with
           | True -> true_
           | False -> not_ p
           | _ -> Imp (p, q2)
 
+  let xor p1 p2 = Xor (p1, p2)
+
+  let iff p q = match p, q with
+    | Atomic at1, Atomic at2 when Atomic.equal at1 at2 -> true_
+    | False, False
+    | True, True -> true_
+    | False, True
+    | True, False -> false_
+    | _, _ -> Iff (p, q)
+                
   let conj fmls =
     List.fold_left (fun a b -> and_ a (lazy b)) true_ fmls
 
