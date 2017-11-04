@@ -40,6 +40,12 @@ and bounds_prim_exp subst domain pe =
           TS.singleton @@ CCList.Assoc.get_exn ~eq:Var.equal v subst
         in
         make_bounds singleton singleton
+        |> Fun.tap
+             (fun _ ->
+                Msg.debug (fun m ->
+                      m "bounds_prim_exp(%a) =[exact] %a"
+                        Var.pp v
+                        TS.pp singleton))
     | Ident (Elo.Name n) -> 
         let rel = Domain.get_exn n domain in
         make_bounds (Relation.must rel) (Relation.sup rel)
@@ -57,31 +63,31 @@ and bounds_prim_exp subst domain pe =
     | RUn (TClos, e) -> 
         let b = bounds_exp subst domain e in
         make_bounds (TS.transitive_closure b.must) (TS.transitive_closure b.sup)
-    |> Fun.tap
-         (fun res ->
-            Msg.debug (fun m ->
-                  m
-                    "Elo_to_LTL1.bounds_prim_exp(TClos):@\n\
-                                        must(%a) = %a@\nmay(%a) = %a"
-                    Elo.pp_prim_exp pe
-                    TS.pp res.must
-                    Elo.pp_prim_exp pe
-                    TS.pp res.may))
+        |> Fun.tap
+             (fun res ->
+                Msg.debug (fun m ->
+                      m
+                        "bounds_prim_exp(TClos):@\n\
+                         must(%a) = %a@\nmay(%a) = %a"
+                        Elo.pp_prim_exp pe
+                        TS.pp res.must
+                        Elo.pp_prim_exp pe
+                        TS.pp res.may))
     | RUn (RTClos, e) -> 
         let iden = Domain.get_exn Name.iden domain in
         let b = bounds_exp subst domain e in
         make_bounds (TS.union (TS.transitive_closure b.must) @@ Relation.must iden)
-                    (TS.union (TS.transitive_closure b.sup) @@ Relation.sup iden)
+          (TS.union (TS.transitive_closure b.sup) @@ Relation.sup iden)
         |> Fun.tap
-         (fun res ->
-            Msg.debug (fun m ->
-                  m
-                    "Elo_to_LTL1.bounds_prim_exp(TClos):@\n\
-                                        must(%a) = %a@\nmay(%a) = %a"
-                    Elo.pp_prim_exp pe
-                    TS.pp res.must
-                    Elo.pp_prim_exp pe
-                    TS.pp res.may))
+             (fun res ->
+                Msg.debug (fun m ->
+                      m
+                        "bounds_prim_exp(TClos):@\n\
+                         must(%a) = %a@\nmay(%a) = %a"
+                        Elo.pp_prim_exp pe
+                        TS.pp res.must
+                        Elo.pp_prim_exp pe
+                        TS.pp res.may))
 
     | RBin (e1, Union ,e2) -> 
         let b1 = bounds_exp subst domain e1 in
@@ -132,7 +138,7 @@ and bounds_prim_exp subst domain pe =
         in
         Msg.debug (fun m ->
               m
-                "Elo_to_LTL1.bounds_exp(Compr):\
+                "bounds_exp(Compr):\
                  @\nmust(%a) = @[<hov>%a@]\
                  @\nsup(%a) = @[<hov>%a@]"
                 (Fmtc.(list ~sep:(const string ": "))
@@ -181,7 +187,7 @@ and bounds_sim_bindings
       (subst : (Var.t, Tuple.t) CCList.Assoc.t)
       (sbs : (Elo.var, Elo.ident) G.sim_binding list)
   : Tuple.t list =  
-  let open List in
+  let open! List in
   match sbs with
     | [] -> assert false      (* nonempty list *)
     | [(disj, vs, r)] -> 
@@ -221,7 +227,7 @@ and product_for_one_hd_combination fbound domain subst vars
       (tail : (Elo.var, Elo.ident) G.sim_binding list)
       (hd_combination : Tuple.t list)
   : Tuple.t list =
-  let open List in
+  let open! List in
   (* compute the corresponding substitution for this instance of the head bound *)
   let subst2 = combine vars hd_combination @ subst in
   (* compute all the tuples for the tail with *this* subtitution *)
