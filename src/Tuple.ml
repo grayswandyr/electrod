@@ -108,12 +108,12 @@ let is_in_join tup tuple1 tuple2 =
   let lg1 = Array.length t1 in
   Atom.equal t1.(lg1 - 1) t2.(0)
   && equal tup @@ join tuple1 tuple2
-  (* |> Fun.tap (fun res -> Msg.debug (fun m -> *)
-  (*       m "is_in_join: %a in %a.%a --> %B" *)
-  (*         pp tup *)
-  (*         pp tuple1 *)
-  (*         pp tuple2 *)
-  (*         res)) *)
+  |> Fun.tap (fun res -> Msg.debug (fun m ->
+        m "is_in_join: %a =? %a.%a --> %B"
+          pp tup
+          pp tuple1
+          pp tuple2
+          res))
 
 (* split "inverse" to (@@@) *)
 (*$Q split
@@ -132,12 +132,15 @@ let is_in_join tup tuple1 tuple2 =
   )
 *)
 let split tuple len =
+  Msg.debug (fun m -> m "split <-- %a %d" pp tuple len);
   let t = tuple in
   let full_len = Array.length t in
   assert (len > 0 && len < full_len);
   let t1 = Array_slice.(make t 0 ~len |> copy) in
-  let t2 = Array_slice.(make t ~len (full_len - len) |> copy) in 
+  let t2 = Array_slice.(make t len ~len:(full_len - len) |> copy) in (* mind the tilde! *)
   (t1, t2)
+  |> Fun.tap (fun res ->
+      Msg.debug (fun m -> m "split --> %a@." Fmtc.(parens @@ Pair.pp ~sep:"," pp pp) res))
 
 
 
