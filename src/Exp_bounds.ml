@@ -32,20 +32,19 @@ and bounds_exp subst domain exp =
   bounds_prim_exp subst domain exp.G.prim_exp 
 
 and bounds_prim_exp subst domain pe =
-  let open G in
-  let open TS in
+  let open G in 
   match pe with         
     | BoxJoin (_,_) -> assert false (* SIMPLIFIED *)
     | Ident (Elo.Var v) -> 
         let singleton =
-          singleton @@ CCList.Assoc.get_exn ~eq:Var.equal v subst
+          TS.singleton @@ CCList.Assoc.get_exn ~eq:Var.equal v subst
         in
         make_bounds singleton singleton
     | Ident (Elo.Name n) -> 
         let rel = Domain.get_exn n domain in
         make_bounds (Relation.must rel) (Relation.sup rel)
     | None_ ->
-        make_bounds empty empty
+        make_bounds TS.empty TS.empty
     | Univ ->
         let univ = Domain.univ_atoms domain in
         make_bounds univ univ
@@ -54,10 +53,10 @@ and bounds_prim_exp subst domain pe =
         make_bounds (Relation.must iden) (Relation.sup iden)
     | RUn (Transpose, e) ->
         let b = bounds_exp subst domain e in
-        make_bounds (transpose b.must) (transpose b.sup)
+        make_bounds (TS.transpose b.must) (TS.transpose b.sup)
     | RUn (TClos, e) -> 
         let b = bounds_exp subst domain e in
-        make_bounds (transitive_closure b.must) (transitive_closure b.sup)
+        make_bounds (TS.transitive_closure b.must) (TS.transitive_closure b.sup)
     |> Fun.tap
          (fun res ->
             Msg.debug (fun m ->
@@ -71,8 +70,8 @@ and bounds_prim_exp subst domain pe =
     | RUn (RTClos, e) -> 
         let iden = Domain.get_exn Name.iden domain in
         let b = bounds_exp subst domain e in
-        make_bounds (union (transitive_closure b.must) @@ Relation.must iden)
-                    (union (transitive_closure b.sup) @@ Relation.sup iden)
+        make_bounds (TS.union (TS.transitive_closure b.must) @@ Relation.must iden)
+                    (TS.union (TS.transitive_closure b.sup) @@ Relation.sup iden)
         |> Fun.tap
          (fun res ->
             Msg.debug (fun m ->
@@ -87,39 +86,39 @@ and bounds_prim_exp subst domain pe =
     | RBin (e1, Union ,e2) -> 
         let b1 = bounds_exp subst domain e1 in
         let b2 = bounds_exp subst domain e2 in
-        make_bounds (union b1.must b2.must) (union b1.sup b2.sup)
+        make_bounds (TS.union b1.must b2.must) (TS.union b1.sup b2.sup)
     | RBin (e1, Inter ,e2) -> 
         let b1 = bounds_exp subst domain e1 in
         let b2 = bounds_exp subst domain e2 in
-        make_bounds (inter b1.must b2.must) (inter b1.sup b2.sup)
+        make_bounds (TS.inter b1.must b2.must) (TS.inter b1.sup b2.sup)
     | RBin (e1, Over ,e2) -> 
         let b1 = bounds_exp subst domain e1 in
         let b2 = bounds_exp subst domain e2 in
-        make_bounds (override b1.must b2.must) (override b1.sup b2.sup)
+        make_bounds (TS.override b1.must b2.must) (TS.override b1.sup b2.sup)
     | RBin (e1, LProj ,e2) -> 
         let b1 = bounds_exp subst domain e1 in
         let b2 = bounds_exp subst domain e2 in
-        make_bounds (lproj b1.must b2.must) (lproj b1.sup b2.sup)
+        make_bounds (TS.lproj b1.must b2.must) (TS.lproj b1.sup b2.sup)
     | RBin (e1, RProj ,e2) -> 
         let b1 = bounds_exp subst domain e1 in
         let b2 = bounds_exp subst domain e2 in
-        make_bounds (rproj b1.must b2.must) (rproj b1.sup b2.sup)
+        make_bounds (TS.rproj b1.must b2.must) (TS.rproj b1.sup b2.sup)
     | RBin (e1, Prod ,e2) -> 
         let b1 = bounds_exp subst domain e1 in
         let b2 = bounds_exp subst domain e2 in
-        make_bounds (product b1.must b2.must) (product b1.sup b2.sup)
+        make_bounds (TS.product b1.must b2.must) (TS.product b1.sup b2.sup)
     | RBin (e1, Diff ,e2) -> 
         let b1 = bounds_exp subst domain e1 in
         let b2 = bounds_exp subst domain e2 in
-        make_bounds (diff b1.must b2.must) (diff b1.sup b2.sup)
+        make_bounds (TS.diff b1.must b2.must) (TS.diff b1.sup b2.sup)
     | RBin (e1, Join ,e2) -> 
         let b1 = bounds_exp subst domain e1 in
         let b2 = bounds_exp subst domain e2 in
-        make_bounds (join b1.must b2.must) (join b1.sup b2.sup)
+        make_bounds (TS.join b1.must b2.must) (TS.join b1.sup b2.sup)
     | RIte (_, e1, e2) ->
         let b1 = bounds_exp subst domain e1 in
         let b2 = bounds_exp subst domain e2 in
-        make_bounds (inter b1.must b2.must) (union b1.sup b2.sup) 
+        make_bounds (TS.inter b1.must b2.must) (TS.union b1.sup b2.sup) 
     | Prime e ->
         bounds_exp subst domain e
     | Compr (sim_bindings, _) ->
@@ -181,7 +180,7 @@ and bounds_sim_bindings
       domain
       (subst : (Var.t, Tuple.t) CCList.Assoc.t)
       (sbs : (Elo.var, Elo.ident) G.sim_binding list)
-  : Tuple.t list = 
+  : Tuple.t list =  
   let open List in
   match sbs with
     | [] -> assert false      (* nonempty list *)

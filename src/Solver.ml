@@ -1,5 +1,8 @@
-open Containers
 
+
+open Containers
+    
+[@@@warning "-4"] (* fragile patterns, lots of them as we short-circuit *)
 
 module type ATOMIC_PROPOSITION = sig
   type t
@@ -9,7 +12,8 @@ module type ATOMIC_PROPOSITION = sig
   val equal : t -> t -> bool
   val hash  : t -> int
 
-  val split : string -> (Name.t * Tuple.t) option
+  val split_string : string -> (Name.t * Tuple.t) option
+  val split : t -> (Name.t * Tuple.t) option
   
   val pp : Format.formatter -> t -> unit
 end
@@ -117,6 +121,9 @@ module type LTL = sig
 
   val pp : Format.formatter -> t -> unit
 
+  val pp_gather_variables :
+    Atomic.t Sequence.t ref -> Format.formatter -> t -> unit
+
 end
 
 
@@ -169,7 +176,9 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
     | Minus of term * term 
     | Neg of term 
     | Count of t list
-  [@@deriving show]             (* default impl. for pp; to override later *)
+  [@@deriving show]      (* default impl. for pp; to override later *)
+
+  let pp_gather_variables _ = pp (* default impl. for pp; to override later *)
 
   (* let equal_tcomp_node x y = match x, y with  *)
   (*   | Lte, Lte *)
@@ -205,7 +214,7 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
   let or_ p1 p2 = match p1, p2 with
     | True, _ -> true_
     | False, lazy p -> p
-    | p, lazy q ->
+    | _, lazy q ->
         match q with
           | False -> p1
           | True -> true_
@@ -343,19 +352,19 @@ module type MODEL = sig
   type atomic
 
   type t = private {
-    rigid : atomic Sequence.t;
-    flexible : atomic Sequence.t;    
+    elo : Elo.t;  
     invariant : (string * ltl) Sequence.t;
     property : string * ltl 
   }
 
   val make :
-    rigid:atomic Sequence.t
-    -> flexible:atomic Sequence.t
+    elo:Elo.t
     -> invariant:(string * ltl) Sequence.t 
     -> property:(string * ltl) -> t
 
-  val analyze : cmd:string 
+  val analyze :
+    conversion_time:Mtime.span
+    -> cmd:string 
     -> script:script_type
     -> keep_files:bool
     -> no_analysis:bool

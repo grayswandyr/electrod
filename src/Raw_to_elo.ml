@@ -8,7 +8,7 @@ module TS = TupleSet
  *******************************************************************************)
 
 let split_indexed_id infile id =
-  let name, loc = Raw_ident.(basename id, location id) in
+  let name = Raw_ident.basename id in
   match String.Split.right ~by:"$" name with
     | None -> assert false      (* comes from the lexer so cannot be None*)
     | Some (left, right) ->
@@ -127,9 +127,9 @@ let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
             | None -> Msg.Fatal.undeclared_id (fun args -> args infile ref_id)
             | Some rel ->
                 match rel with
-                  | Const { scope = Exact b }
+                  | Const { scope = Exact b; _ }
                     when TS.inferred_arity b = 1 -> b
-                  | Const { scope = Inexact (inf, sup) }
+                  | Const { scope = Inexact (inf, sup); _ }
                     when TS.inferred_arity sup = 1 ->
                       (match which with
                         | Some `Inf -> inf
@@ -150,8 +150,8 @@ let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
     | BUnion (rb1, rb2) ->
         (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BUnion"); *)
         let b1 = walk rb1 in
-        let b2 = walk rb2 in
-        if TS.(inferred_arity b1 = inferred_arity b2) then
+        let b2 = walk rb2 in 
+        if TS.inferred_arity b1 = TS.inferred_arity b2 then
           TS.union b1 b2
         else
           Msg.Fatal.incompatible_arities @@ fun args -> args infile id
@@ -264,10 +264,9 @@ let check_assignment_in_scope infile domain id tupleset =
     | None -> Msg.Fatal.undeclared_id (fun args -> args infile id)
     | Some Relation.Var _ ->
         Msg.Fatal.instance_is_var (fun args -> args infile id)
-    | Some Relation.Const { scope; _ }
-      when not @@ Scope.included_in tupleset scope ->
+    | Some Relation.Const { scope; _ } when not @@ Scope.included_in tupleset scope ->
         Msg.Fatal.instance_not_in_scope (fun args -> args infile id)
-    | Some _ -> ()
+    | Some (Relation.Const _) -> ()
         
 
 
@@ -466,8 +465,8 @@ let join_arity ar1 ar2 = match ar1, ar2 with
 let str_exp =
   Fmtc.to_to_string (Fmtc.hbox2 Elo.pp_exp)
 
-let compute_arities elo =
-  let open Elo in
+let compute_arities elo = 
+  let open Elo in 
   let open GenGoal in
   (* ctx is a map from identifiers to their arity  *)
   let rec walk_fml ctx fml =
@@ -479,7 +478,7 @@ let compute_arities elo =
         let exp' = walk_exp ctx exp in
         if exp'.arity = None then
           Msg.Fatal.arity_error
-            (fun args -> args elo.file exp
+            (fun args -> args elo.Elo.file exp
               @@ Fmtc.strf
                    "enclosing formula is false as %s is always empty"
                    (str_exp exp))
@@ -488,7 +487,7 @@ let compute_arities elo =
         let exp' = walk_exp ctx exp in
         if exp'.arity = None then
           Msg.Fatal.arity_error
-            (fun args -> args elo.file exp
+            (fun args -> args elo.Elo.file exp
               @@ Fmtc.strf
                    "enclosing formula is false as %s is always empty"
                    (str_exp exp))
@@ -504,7 +503,7 @@ let compute_arities elo =
            ar2 <> None then
           Msg.Fatal.arity_error
             (fun args ->
-               args elo.file e2
+               args elo.Elo.file e2
                  (Fmtc.strf "arity of %s incompatible with that of %s"
                     (str_exp e1) (str_exp e2)))
         else
@@ -553,7 +552,7 @@ let compute_arities elo =
   and walk_exp ctx exp =
     match walk_prim_exp ctx exp with
       | Ok exp' -> exp'
-      | Error msg -> Msg.Fatal.arity_error (fun args -> args elo.file exp msg)
+      | Error msg -> Msg.Fatal.arity_error (fun args -> args elo.Elo.file exp msg)
 
 
   and return_exp exp ar pe =
@@ -663,10 +662,16 @@ let compute_arities elo =
         let c' = walk_fml ctx c in
         let t' = walk_exp ctx t in
         let e' = walk_exp ctx e in
-        if Option.equal Int.equal t'.arity e'.arity then
-          return_exp exp e'.arity (rite c' t' e') 
-        else
-          Result.fail "incompatible arities in the bodies of 'then' and 'else'"
+        (match t'.arity, e'.arity with
+          | Some a1, Some a2 when a1 = a2 ->
+              return_exp exp e'.arity (rite c' t' e')
+          | Some a, None
+          | None, Some a ->
+              return_exp exp (Some a) (rite c' t' e')
+          | None, None -> 
+              return_exp exp None (rite c' t' e')
+          | Some _, Some _ -> 
+              Result.fail "incompatible arities in the bodies of 'then' and 'else'")
     | BoxJoin (call, args) ->
         (* build the iterated "plain" join to get arity/must/sup *)
         let call' = walk_exp ctx call in
@@ -715,13 +720,13 @@ let compute_arities elo =
     val arities =
       Domain.arities elo.Elo.domain
       |> List.map (fun (n, a) -> (Elo.Name n, Some a))
-      (* |> Fun.tap (fun ars -> *)
-      (*       Msg.debug (fun m -> *)
-      (*             m "compute_arities.initial arities = %a" *)
-      (*               Fmtc.(brackets @@ *)
-      (*                     list ~sep:sp *)
-      (*                     @@ pair ~sep:(const string "→") *)
-      (*                          Elo.pp_ident (option int)) ars )) *)
+    (* |> Fun.tap (fun ars -> *)
+    (*       Msg.debug (fun m -> *)
+    (*             m "compute_arities.initial arities = %a" *)
+    (*               Fmtc.(brackets @@ *)
+    (*                     list ~sep:sp *)
+    (*                     @@ pair ~sep:(const string "→") *)
+    (*                          Elo.pp_ident (option int)) ars )) *)
 
     val domain = elo.Elo.domain
 

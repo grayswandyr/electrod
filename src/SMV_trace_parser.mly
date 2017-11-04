@@ -46,7 +46,7 @@ end>
        
 %}
   
-%start <Outcome.t> trace
+%start <Outcome.states> trace
 
 
 
@@ -55,7 +55,6 @@ end>
 %public trace:
 states = state+ EOF 
     {
-      Outcome.trace
       (if !met_one_loop
        then remove_last states
        else first_state_as_loop states)

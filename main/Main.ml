@@ -8,7 +8,7 @@ open Containers
 
 (* inspired by Logs_fmt code *)     
 let keyword =
-  let open Logs in
+  let open! Logs in
   function
     | App -> ""
     | Error -> "ERROR"
@@ -18,7 +18,7 @@ let keyword =
 
 
 let short =
-  let open Logs in
+  let open! Logs in
   function
     | App -> ""
     | Error -> "E"
@@ -29,7 +29,7 @@ let short =
 
 
 let pp_header ppf (l, h) =
-  let open Logs in 
+  let open! Logs in 
   let open Logs_fmt in
   let pp_h ppf style h = Fmtc.pf ppf "[%a] " Fmtc.(styled style string) h in
   match l with
@@ -89,15 +89,14 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
     in
     let before_conversion = Mtime_clock.now () in
     let model =
-      elo
-      |> Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) 
-      |> Fun.tap (fun _ ->
-            Msg.info (fun m ->
-                  m "Conversion done in %a"
-                    Mtime.Span.pp
-                    (Mtime.span before_conversion @@ Mtime_clock.now ())
-                ))
+      Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) elo
     in
+    let conversion_time = Mtime.span before_conversion @@ Mtime_clock.now ()
+    in
+    Msg.info (fun m ->
+          m "Conversion done in %a"
+            Mtime.Span.pp conversion_time
+        );
 
     (* let sup_r = Domain.sup (Name.name "r") elo.domain in *)
     (* let tc_r = TupleSet.transitive_closure sup_r in *)
@@ -113,7 +112,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
     Msg.debug (fun m -> m "@.%a"
                           (Elo_to_SMV1.pp ~margin:80) model);
 
-    let res = Elo_to_SMV1.analyze ~cmd ~keep_files ~no_analysis
+    let res = Elo_to_SMV1.analyze ~conversion_time ~cmd ~keep_files ~no_analysis
                 ~elo:elo ~script ~file model in
     (if not no_analysis then begin
         (* store the trace *)
@@ -138,6 +137,6 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
         exit 1
     | e ->
         raise e
-      
+
 
 

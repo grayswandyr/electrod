@@ -1,6 +1,6 @@
 S src/** 
 B _build/**
-FLG -w -4-33-40-41-42-43-34-44
+FLG -w +A
 FLG -short-paths
 PKG menhirLib
 PKG containers

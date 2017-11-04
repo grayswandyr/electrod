@@ -151,53 +151,66 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
 NOTE: precedences for LTL connectives are not specified, hence we force parenthesising of these.
 *)
 
-    let rec pp upper out f =
-      assert (upper >= 0);
-      match f with
-        | True  -> pf out "TRUE"
-        | False  -> pf out "FALSE"
-        | Atomic at -> pf out "%a" pp_atomic at
-        (* tweaks, here, to force parenthese around immediate subformulas of Imp
-           and Iff as their precedence may not be easily remembered*)
-        | Imp (p, q) -> infixr ~paren:true upper 1 string pp pp out ("->", p, q)
-        | Iff (p, q) -> infixl ~paren:true upper 2 string pp pp out ("<->", p, q)
-        | Ite (c, t, e) ->
-            pf out "(%a@ ?@ %a@ :@ %a)" (pp 3) c (pp 3) t (pp 3) e
-        | Or (p, q) -> infixl ~paren:true upper 4 string pp pp out ("|", p, q)
-        (* force parenthses as we're not used to see the Xor connective and so its precedence may be unclear *)
-        | Xor (p, q) -> infixl ~paren:true upper 4 string pp pp out ("xor", p, q)
-        | And (p, q) -> infixl ~paren:true upper 5 string pp pp out ("&", p, q)
-        | Comp (op, t1, t2) ->
-            infixn upper 6 pp_tcomp pp_term pp_term out (op, t1, t2)
-        | Not p -> prefix upper 9 string pp out ("!", p)
-        (* no known precedence for temporal operators so we force parenthses and
-           use as the "this" precedence that of the upper context*)
-        | U (p, q) -> infixl ~paren:true upper upper string pp pp out ("U", p, q)
-        | R (p, q) -> infixl ~paren:true upper upper string pp pp out ("V", p, q)
-        | S (p, q) -> infixl ~paren:true upper upper string pp pp out ("S", p, q)
-        | T (p, q) -> infixl ~paren:true upper upper string pp pp out ("T", p, q)
-        | X p -> prefix ~paren:true upper upper string pp out ("X ", p)
-        | F p -> prefix ~paren:true upper upper string pp out ("F ", p)
-        | G p -> prefix ~paren:true upper upper string pp out ("G ", p)
-        | Y p -> prefix ~paren:true upper upper string pp out ("Y ", p)
-        | O p -> prefix ~paren:true upper upper string pp out ("O ", p)
-        | H p -> prefix ~paren:true upper upper string pp out ("H ", p)
+    let pp variables upper out f =
+      let rec pp upper out f =
+        assert (upper >= 0);
+        match f with
+          | True  -> pf out "TRUE"
+          | False  -> pf out "FALSE"
+          | Atomic at -> 
+              begin
+                variables := Sequence.cons at !variables;
+                pf out "%a" pp_atomic at
+              end
+          (* tweaks, here, to force parenthese around immediate subformulas of Imp
+             and Iff as their precedence may not be easily remembered*)
+          | Imp (p, q) -> infixr ~paren:true upper 1 string pp pp out ("->", p, q)
+          | Iff (p, q) -> infixl ~paren:true upper 2 string pp pp out ("<->", p, q)
+          | Ite (c, t, e) ->
+              (* SMV's ...?...:... or case...esac expression cannot be
+                 used as nuXmv does not accept these when subexpressions
+                 are temporal (seen invarious tests). So we rewrite the formula into more basic terms. *)
+              pp upper out @@ I.Infix.((c @=> lazy t) +&& lazy ((I.not_ c) @=> lazy e))
+          | Or (p, q) -> infixl ~paren:true upper 4 string pp pp out ("|", p, q)
+          (* force parenthses as we're not used to see the Xor connective and so its precedence may be unclear *)
+          | Xor (p, q) -> infixl ~paren:true upper 4 string pp pp out ("xor", p, q)
+          | And (p, q) -> infixl ~paren:true upper 5 string pp pp out ("&", p, q)
+          | Comp (op, t1, t2) ->
+              infixn upper 6 pp_tcomp pp_term pp_term out (op, t1, t2)
+          | Not p -> prefix upper 9 string pp out ("!", p)
+          (* no known precedence for temporal operators so we force parenthses and
+             use as the "this" precedence that of the upper context*)
+          | U (p, q) -> infixl ~paren:true upper upper string pp pp out ("U", p, q)
+          | R (p, q) -> infixl ~paren:true upper upper string pp pp out ("V", p, q)
+          | S (p, q) -> infixl ~paren:true upper upper string pp pp out ("S", p, q)
+          | T (p, q) -> infixl ~paren:true upper upper string pp pp out ("T", p, q)
+          | X p -> prefix ~paren:true upper upper string pp out ("X ", p)
+          | F p -> prefix ~paren:true upper upper string pp out ("F ", p)
+          | G p -> prefix ~paren:true upper upper string pp out ("G ", p)
+          | Y p -> prefix ~paren:true upper upper string pp out ("Y ", p)
+          | O p -> prefix ~paren:true upper upper string pp out ("O ", p)
+          | H p -> prefix ~paren:true upper upper string pp out ("H ", p)
 
-    and pp_term upper out (t : term) = match t with
-      | Num n -> pf out "%d" n
-      | Plus (t1, t2) ->
-          infixl ~paren:true upper 7 string pp_term pp_term out ("+", t1, t2)
-      | Minus (t1, t2) ->
-          infixl ~paren:true upper 7 string pp_term pp_term out ("-", t1, t2)
-      | Neg t -> prefix upper 8 string pp_term out ("- ", t)
-      | Count ts ->
-          pf out "@[count(%a@])" (list ~sep:(const string ", ") (pp 0)) ts
+      and pp_term upper out (t : term) = match t with
+        | Num n -> pf out "%d" n
+        | Plus (t1, t2) ->
+            infixl ~paren:true upper 7 string pp_term pp_term out ("+", t1, t2)
+        | Minus (t1, t2) ->
+            infixl ~paren:true upper 7 string pp_term pp_term out ("-", t1, t2)
+        | Neg t -> prefix upper 8 string pp_term out ("- ", t)
+        | Count ts ->
+            pf out "@[count(%a@])" (list ~sep:(const string ", ") (pp 0)) ts
+
+    in pp upper out f
   end
 
   let pp_atomic = PP.pp_atomic
 
+  let pp_gather_variables variables out f =
+    Fmtc.pf out "@[<hov2>%a@]" (PP.pp variables 0) f
+
   let pp out f =
-    Fmtc.pf out "@[<hov2>%a@]" (PP.pp 0) f
+    pp_gather_variables (ref Sequence.empty) out f
 
 
   (* let () =  *)
@@ -236,72 +249,82 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
   type atomic = Ltl.Atomic.t
 
   type t = {
-    rigid : atomic Sequence.t;
-    flexible : atomic Sequence.t;    
+    elo : Elo.t;
     invariant : (string * ltl) Sequence.t;
     property : string * ltl 
   }
 
-  let make ~rigid ~flexible ~invariant ~property =
-    { rigid; flexible; invariant = Sequence.rev invariant; property }
+  let make ~elo ~invariant ~property =
+    { elo; invariant = Sequence.rev invariant; property }
 
-  let pp_decl out atomic =
-    Fmtc.pf out "%a : boolean;" Ltl.Atomic.pp atomic
+  let pp_decl sort out atomic =
+    Fmtc.pf out "%s %a : boolean;" sort Ltl.Atomic.pp atomic
 
 
-  let pp ?(margin = 80) out { rigid; flexible; invariant; property } =
+  let pp_count_variables ?(margin = 80) out { elo; invariant; property } =
     let open Fmtc in
     let module S = Sequence in
     let old_margin = Format.pp_get_margin out () in
     Format.pp_set_margin out margin;
-    let rigid = S.sort_uniq ~cmp:Ltl.Atomic.compare rigid in
-    let flexible = S.sort_uniq ~cmp:Ltl.Atomic.compare flexible in
     pf out
       "-- Generated by electrod (C) ONERA 2016-2017@\n\
        MODULE main@\n\
        JUSTICE TRUE;@\n@\n";
-    (* FROZENVAR *)
-    pf out "@[<v>%a@]@\n"
-      (unless S.is_empty
-       @@ hardline **>
-          const string "FROZENVAR" **<
-          cut **<
-          Format.seq ~sep:cut pp_decl) rigid;
-    (* VAR *)
-    pf out "@[<v>%a@]@\n"
-      (unless S.is_empty 
-       @@ hardline **>
-          const string "VAR" **<
-          cut **<
-          Format.seq ~sep:cut pp_decl) flexible;
+    let variables = ref S.empty in
     (* INVAR *)
     hardline out ();
     Format.pp_open_vbox out 0;
     S.iter
       (fun (elo_str, fml) -> 
-         pf out "%s@\nINVAR@\n@[<hv2>%a@];@\n@\n" elo_str Ltl.pp fml)
+         pf out "%s@\nINVAR@\n@[<hv2>%a@];@\n@\n" elo_str (Ltl.pp_gather_variables variables) fml)
       invariant;
     Format.pp_close_box out ();
     hardline out ();
     (* SPEC *)
     Format.pp_open_vbox out 0;
     let prop_str, ltlspec = property in
-    pf out "%s@\nLTLSPEC@\n@[<hv2>%a@];" prop_str Ltl.pp ltlspec;
+    pf out "%s@\nLTLSPEC@\n@[<hv2>%a@];" prop_str (Ltl.pp_gather_variables variables) ltlspec;
     Format.pp_close_box out ();
     hardline out ();
-    Format.pp_print_flush out ();
-    Format.pp_set_margin out old_margin 
 
-    
+    (* HANDLING VARIABLES *)
+    variables := S.sort_uniq ~cmp:Ltl.Atomic.compare !variables;
+    let rigid =
+      S.filter (fun at ->
+            let rel, _ = Option.get_exn @@ Ltl.Atomic.split at in
+            Domain.get_exn rel elo.Elo.domain |> Relation.is_const) !variables in
+    let flexible =
+      S.filter (fun at ->
+            let rel, _ = Option.get_exn @@ Ltl.Atomic.split at in
+            Domain.get_exn rel elo.Elo.domain |> Relation.is_var) !variables in
+    (* FROZENVAR *)
+    pf out "@\n@[<v>%a@]@\n"
+      (unless S.is_empty
+       @@ hardline **>
+          Format.seq ~sep:cut (pp_decl "FROZENVAR")) rigid;
+    (* VAR *)
+    pf out "@[<v>%a@]@\n"
+      (unless S.is_empty 
+       @@ hardline **>
+          Format.seq ~sep:cut (pp_decl "VAR")) flexible;
+    (* close printing *)
+    Format.pp_print_flush out ();
+    Format.pp_set_margin out old_margin;
+    S.length !variables
+
+
+  let pp ?(margin = 80) out { elo; invariant; property } =
+    ignore (pp_count_variables ~margin out { elo; invariant; property })
+  
   (* write in temp file *)
   let make_model_file infile model =
     let src_file = Filename.basename infile in
     let tgt = Filename.temp_file (src_file ^ "-") ".smv" in
+    let nbvars = ref 0 in
     IO.with_out tgt 
       (fun out ->
-         Fmtc.styled `None pp
-           (Format.formatter_of_out_channel out) model);
-    tgt
+          nbvars := pp_count_variables (Format.formatter_of_out_channel out) model);
+    (tgt, !nbvars)
 
   
   let make_script_file = function
@@ -313,7 +336,8 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
   
   (* TODO pass script as argument *)
   (* TODO allow to specify a user script *)
-  let analyze ~cmd ~script ~keep_files ~no_analysis ~elo ~file model =
+  let analyze ~conversion_time ~cmd ~script ~keep_files
+        ~no_analysis ~elo ~file model : Outcome.t=
     let keep_or_remove_files scr smv =
       if keep_files then 
         Logs.app (fun m ->
@@ -328,7 +352,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     (* TODO check whether nuXmv is installed first *)
     let scr = make_script_file script in
     let before_generation = Mtime_clock.now () in
-    let smv = make_model_file file model in
+    let smv, nbvars = make_model_file file model in
     let after_generation = Mtime_clock.now () in
     Msg.info (fun m ->
           let size, unit_ =
@@ -347,7 +371,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
             Mtime.Span.pp (Mtime.span before_generation after_generation));
     if no_analysis then begin
       keep_or_remove_files scr smv;
-      Outcome.no_trace
+      Outcome.no_trace nbvars conversion_time Mtime.Span.zero
     end
     else
       (* TODO make things s.t. it's possible to set a time-out *)
@@ -358,11 +382,12 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
         CCUnix.call "%s" to_call
       in
       let after_run = Mtime_clock.now () in
+      let analysis_time = Mtime.span before_run after_run in
       if errcode <> 0 then
         Msg.Fatal.solver_failed (fun args -> args "nuXmv" scr smv errcode errout)
       else (* running nuXmv goes well: parse its output *)
         Msg.info (fun m -> m "Analysis done in %a" Mtime.Span.pp
-                   @@ Mtime.span before_run after_run);
+                             analysis_time );
       let spec =
         String.lines_gen okout
         |> Gen.drop_while
@@ -373,7 +398,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
       keep_or_remove_files scr smv;
 
       if String.suffix ~suf:"is true" @@ Gen.get_exn spec then
-        Outcome.no_trace 
+        Outcome.no_trace nbvars conversion_time analysis_time
       else
         (* nuXmv says there is a counterexample so we parse it on the standard
            output *)
@@ -391,15 +416,18 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
             let base = Domain.musts ~with_univ_and_ident:false elo.Elo.domain
           end)
         in
-        spec
-        (* With this trace output, nuXmv shows a few uninteresting lines first,
-           that we have to gloss over *)
-        |> Gen.drop_while (fun line -> not @@ String.prefix "Trace" line)
-        |> Gen.drop_while (String.prefix ~pre:"Trace")
-        |> String.unlines_gen
-        (* |> Fun.tap print_endline *)
-        |> fun trace_str ->
-        (let lexbuf = Lexing.from_string trace_str in
-         (P.trace (SMV_trace_scanner.main Ltl.Atomic.split) lexbuf))
+        let trace =
+          spec
+          (* With this trace output, nuXmv shows a few uninteresting lines first,
+             that we have to gloss over *)
+          |> Gen.drop_while (fun line -> not @@ String.prefix ~pre:"Trace" line)
+          |> Gen.drop_while (String.prefix ~pre:"Trace")
+          |> String.unlines_gen
+          (* |> Fun.tap print_endline *)
+          |> fun trace_str ->
+          (let lexbuf = Lexing.from_string trace_str in
+           (P.trace (SMV_trace_scanner.main Ltl.Atomic.split_string) lexbuf))
+        in
+        Outcome.trace nbvars conversion_time analysis_time trace
         
   end

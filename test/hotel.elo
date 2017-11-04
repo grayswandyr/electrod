@@ -13,14 +13,6 @@ var FrontDesk#occupant :2 { } { ( Room0 Guest0 ) ( Room0 Guest1 ) ( Room0 Guest2
 var FrontDesk#lastKey :2 { } { ( Room0 Key0 ) ( Room0 Key1 ) ( Room0 Key2 ) ( Room1 Key0 ) ( Room1 Key1 ) ( Room1 Key2 ) ( Room2 Key0 ) ( Room2 Key1 ) ( Room2 Key2 ) };
 const ints :1 { };
 
-inst
-Room#keys = { ( Room2 Key0 ) ( Room2 Key1 ) ( Room2 Key2 ) };
-ordering##Ord#First = { ( Key0 ) };
-Key = { ( Key0 ) ( Key1 ) ( Key2 ) };
-ordering##Ord#Last = { ( Key2 ) };
-ordering##Ord#Next = { ( Key0 Key1 ) ( Key1 Key2 ) };
-Guest = { };
-Room = { ( Room2 ) };
 
 sym
 [( FrontDesk#lastKey Room0 Key0 )( FrontDesk#lastKey Room0 Key1 )( FrontDesk#lastKey Room0 Key2 )( FrontDesk#occupant Room0 Guest0 )( FrontDesk#occupant Room0 Guest1 )( FrontDesk#occupant Room0 Guest2 )( Room#currentKey Room0 Key0 )( Room#currentKey Room0 Key1 )( Room#currentKey Room0 Key2 ) <= ( FrontDesk#lastKey Room1 Key0 )( FrontDesk#lastKey Room1 Key1 )( FrontDesk#lastKey Room1 Key2 )( FrontDesk#occupant Room1 Guest0 )( FrontDesk#occupant Room1 Guest1 )( FrontDesk#occupant Room1 Guest2 )( Room#currentKey Room1 Key0 )( Room#currentKey Room1 Key1 )( Room#currentKey Room1 Key2 )];

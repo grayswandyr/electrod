@@ -135,8 +135,8 @@ let split tuple len =
   let t = tuple in
   let full_len = Array.length t in
   assert (len > 0 && len < full_len);
-  let t1 = Array_slice.(make t 0 len |> copy) in
-  let t2 = Array_slice.(make t len (full_len - len) |> copy) in 
+  let t1 = Array_slice.(make t 0 ~len |> copy) in
+  let t2 = Array_slice.(make t ~len (full_len - len) |> copy) in 
   (t1, t2)
 
 

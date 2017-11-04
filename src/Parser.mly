@@ -1,5 +1,6 @@
 
 %{
+    [@warning "-4"]
   
 module R = Raw
 
@@ -25,7 +26,7 @@ let exp_no_arity = G.exp (Some 0)
 %token NEG ADD SUB HASH //INT
 
 
-%token SYM INST
+%token SYM INST 
 
 /* plain ID */
 %token <string> PLAIN_ID
@@ -40,10 +41,9 @@ let exp_no_arity = G.exp (Some 0)
 
 /* in ascending order of priority */
 %nonassoc BAR
-%left IFF
 %left OR
-%right IMPLIES
-%right ELSE
+%left IFF
+%right IMPLIES ELSE
 %left AND
 %left RELEASES SINCE UNTIL 
 %nonassoc NOT NEXT ALWAYS SOMETIME EVENTUALLY PREVIOUS HISTORICALLY ONCE
@@ -255,9 +255,13 @@ formula :
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.let_ decls block}
       
-	| f = formula IMPLIES t = formula ELSE e = formula
+	|  f = formula IMPLIES t = formula ELSE e = formula 
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.fite f t e }
+      
+	|  f = formula IMPLIES t = formula 
+	{ G.fml (Location.from_positions $startpos $endpos)
+    @@ G.lbinary f G.impl t  }
       
 	| f = f_block
 	{ G.fml (Location.from_positions $startpos $endpos)
@@ -302,8 +306,8 @@ formula :
 	{ G.and_ }
 	| OR
 	{ G.or_ }
-	| IMPLIES
-	{ G.impl }
+/*	| IMPLIES
+	{ G.impl }*/
 	| IFF
 	{ G.iff }
 	| UNTIL

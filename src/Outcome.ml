@@ -1,6 +1,11 @@
 open Containers
 
-type t = states option
+type t = {
+  trace : states option;
+  nbvars : int;
+  conversion_time : Mtime.span;
+  analysis_time : Mtime.span
+}
 
 and states = state list         (** nonempty *)
 
@@ -24,12 +29,22 @@ let loop_state v = Loop v
 let to_loop = function Loop v | Plain v -> Loop v
 
 
-let no_trace = None
+let no_trace nbvars conversion_time analysis_time =
+  { trace = None;
+    analysis_time;
+    nbvars;
+    conversion_time
+  }
 
-let trace states =
+let trace nbvars conversion_time analysis_time states =
   assert (states <> []
           && List.exists (function Loop _ -> true | Plain _ -> false) states);
-  Some states
+  {
+    trace = Some states;
+    analysis_time;
+    nbvars;
+    conversion_time
+  }
 
 
 open Fmtc
@@ -45,7 +60,7 @@ module PPPlain = struct
     | Plain v -> (const string "  " **< brackets_ pp_valuation) out v 
     | Loop v -> (const string "->" **< brackets_ pp_valuation) out v
 
-  let pp out = function
+  let pp out t = match t.trace with
     | None -> pf out "--no trace--"
     | Some trace ->
         (vbox @@ list ~sep:sp pp_state) out trace
@@ -106,17 +121,29 @@ module PPXML = struct
       pp_valuation valu
       kwd tag
 
-  let pp out t =
+  let pp out { trace; nbvars; conversion_time; analysis_time } =
+    let ct = Mtime.Span.to_ms conversion_time in
+    let at = Mtime.Span.to_ms analysis_time in
     pf out "<?%a %a=\"1.0\" %a=\"UTF-8\"?>@\n"
       kwd "xml"
       attr "version"
       attr "encoding";
-    (match t with
-      | None -> pf out "@[<h><%a/>@]" kwd "notrace"
+    (match trace with
+      | None ->
+          pf out "@[<h><%a nbvars='%d' conversion-time='%.0f' \
+                  analysis-time='%.0f'/>@]@\n"
+            kwd "notrace"
+            nbvars
+            ct
+            at 
       | Some trace ->
           let tag = "trace" in
-          pf out "@[<v><%a>@,  @[<v>%a@]@,</%a>@]"
+          pf out "@[<v><%a nbvars='%d' conversion-time='%.0f' \
+                  analysis-time='%.0f'>@, @[<v>%a@]@,</%a>@]"
             kwd tag
+            nbvars
+            ct
+            at
             (list ~sep:sp pp_state) trace
             kwd tag);
     Format.pp_print_flush out ()

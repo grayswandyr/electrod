@@ -16,7 +16,7 @@ class simplify = object (self : 'self)
   inherit Simplify1.simplify as super
 
   (* change relation qualifiers into formulas *)
-  method visit_Qual env qual exp =
+  method! visit_Qual env qual exp =
     Msg.debug (fun m -> m "Simplify2.visit_Qual <-- %a"
                           Elo.pp_prim_fml
                 @@ GenGoal.qual qual exp);

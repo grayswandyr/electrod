@@ -179,7 +179,7 @@ class virtual ['self] recursor = object (self : 'self)
     in
     let _visitors_r2 = self#visit_exp env _visitors_c2 in
     (_visitors_r0, _visitors_r1, _visitors_r2)
-  method visit_disj env _visitors_this =
+  method visit_disj __env _visitors_this =
     _visitors_this
   method visit_block env =
     self#visit_list self#visit_fml env

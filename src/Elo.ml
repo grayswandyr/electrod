@@ -75,7 +75,7 @@ let pp_block = G.pp_block pp_var pp_ident
 
 let pp_sim_binding = G.pp_sim_binding pp_var pp_ident
 
-let pp out { file; domain; instance; sym; invariants; goal } =
+let pp out { domain; instance; invariants; goal; _ } =
   let open Fmtc in
   pf out "%a@\n%a@\n%a@\n%a"
     Domain.pp domain
@@ -88,14 +88,14 @@ let pp out { file; domain; instance; sym; invariants; goal } =
     (vbox @@ pp_goal) goal
 
 (* substitution *)
-let substitute = object (self : 'self)
+let substitute = object (_ : 'self)
   inherit [_] G.map as super
 
   method visit_'v _ = Fun.id
 
   method visit_'i _ = Fun.id
 
-  method visit_Ident
+  method! visit_Ident
            (env : (Var.t, (var, ident) G.prim_exp) CCList.Assoc.t )
            (id : ident) =
     (* Msg.debug *)
