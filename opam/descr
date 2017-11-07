@@ -1,0 +1,10 @@
+Model finder for relational FOLTL over bounded FO domains.
+
+Electrod is a model finder inspired by Kodkod. It takes as input a
+model expressed in a mixture of relational first-order logic (RFOL)
+over bounded domains and linear temporal logic (LTL) over an unbounded
+time horizon. Then it compiles it to a problem for a solver (currently
+the NuSMV and nuXmv tools) to produce example or counter-example traces.
+
+Electrod is mainly meant to be used as a backend for the more abstract
+language Electrum (inspired by Alloy).

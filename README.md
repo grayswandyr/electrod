@@ -1,16 +1,29 @@
-electrod - Formal analysis for the Electrod formal specification language
-=========================================================================
+# electrod - Formal analysis for the Electrod formal specification language
 
-Compiles specifications written in Electrod (an extension of Kodkod with
-temporal logic) into SMV files (processable using NuSMV or NuXmv).
+Electrod is a model finder for first-order linear temporal logic with
+relations, transitive closure and partial domains.
 
-See the file [INSTALL.md](INSTALL.md) for building and installation
-instructions.
+See the file [INSTALL.md](INSTALL.md) for building and installation instructions.
 
 [Home page](https://forge.onera.fr/projects/electrod)
 
-Copyright and license
----------------------
+## External dependencies
+
+As of now, Electrod relies on NuSMV or nuXmv (default), so you must at least
+install one of them.
+
+## Running
+
+Electrod is primarily aimed at being called by external, more abstract
+tools, such as the Electrum Analyzer.
+
+However, it can also be run as a standalone tool by calling the
+`electrod` program.
+
+Type `electrod --help` to get some help on options.
+
+
+## Copyright and license
 
 (C) 2016-2017 ONERA
 
