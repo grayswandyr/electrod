@@ -42,7 +42,7 @@ let show_generated_file =
   let doc =
     {|If present, print the generated file on the standard output.|}
   in
-  Arg.(value & flag & info ["sgf"; "show-generated-file"] ~doc)
+  Arg.(value & flag & info ["pg"; "print-generated"] ~doc)
 
 (* verbosity options (already def'd in Logs_cli, thx!) *)
 let verb_term = 
