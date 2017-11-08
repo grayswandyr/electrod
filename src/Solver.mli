@@ -126,7 +126,7 @@ module type LTL = sig
   val pp : Format.formatter -> t -> unit
 
   val pp_gather_variables :
-    Atomic.t Sequence.t ref -> Format.formatter -> t -> unit
+    ?next_is_X:bool -> Atomic.t Sequence.t ref -> Format.formatter -> t -> unit
 
 end
 

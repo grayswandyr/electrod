@@ -122,7 +122,7 @@ module type LTL = sig
   val pp : Format.formatter -> t -> unit
 
   val pp_gather_variables :
-    Atomic.t Sequence.t ref -> Format.formatter -> t -> unit
+    ?next_is_X:bool -> Atomic.t Sequence.t ref -> Format.formatter -> t -> unit
 
 end
 
@@ -178,7 +178,7 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
     | Count of t list
   [@@deriving show]      (* default impl. for pp; to override later *)
 
-  let pp_gather_variables _ = pp (* default impl. for pp; to override later *)
+  let pp_gather_variables ?(next_is_X = true) _ = pp (* default impl. for pp; to override later *)
 
   (* let equal_tcomp_node x y = match x, y with  *)
   (*   | Lte, Lte *)

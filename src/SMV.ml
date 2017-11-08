@@ -151,7 +151,7 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
 NOTE: precedences for LTL connectives are not specified, hence we force parenthesising of these.
 *)
 
-    let pp variables upper out f =
+    let pp ?(next_is_X = true) variables upper out f =
       let rec pp upper out f =
         assert (upper >= 0);
         match f with
@@ -178,13 +178,18 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
           | Comp (op, t1, t2) ->
               infixn upper 6 pp_tcomp pp_term pp_term out (op, t1, t2)
           | Not p -> prefix upper 9 string pp out ("!", p)
-          (* no known precedence for temporal operators so we force parenthses and
+          (* no known precedence for temporal operators so we force parentheses and
              use as the "this" precedence that of the upper context*)
           | U (p, q) -> infixl ~paren:true upper upper string pp pp out ("U", p, q)
           | R (p, q) -> infixl ~paren:true upper upper string pp pp out ("V", p, q)
           | S (p, q) -> infixl ~paren:true upper upper string pp pp out ("S", p, q)
           | T (p, q) -> infixl ~paren:true upper upper string pp pp out ("T", p, q)
-          | X p -> prefix ~paren:true upper upper string pp out ("X ", p)
+          | X p when next_is_X -> prefix ~paren:true upper upper string pp out ("X ", p)
+          | X p ->  (* next_is _X= false *)
+              begin
+                styled `Bold string out "next";
+                pf out "@[(%a@])" (pp 0) p
+              end
           | F p -> prefix ~paren:true upper upper string pp out ("F ", p)
           | G p -> prefix ~paren:true upper upper string pp out ("G ", p)
           | Y p -> prefix ~paren:true upper upper string pp out ("Y ", p)
@@ -199,15 +204,16 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
             infixl ~paren:true upper 7 string pp_term pp_term out ("-", t1, t2)
         | Neg t -> prefix upper 8 string pp_term out ("- ", t)
         | Count ts ->
-            pf out "@[count(%a@])" (list ~sep:(const string ", ") (pp 0)) ts
+            styled `Bold string out "count";            
+            pf out "@[(%a@])" (list ~sep:(const string ", ") (pp 0)) ts
 
-    in pp upper out f
+      in pp upper out f
   end
 
   let pp_atomic = PP.pp_atomic
 
-  let pp_gather_variables variables out f =
-    Fmtc.pf out "@[<hov2>%a@]" (PP.pp variables 0) f
+  let pp_gather_variables ?(next_is_X = true) variables out f =
+    Fmtc.pf out "@[<hov2>%a@]" (PP.pp ~next_is_X variables 0) f
 
   let pp out f =
     pp_gather_variables (ref Sequence.empty) out f
@@ -286,7 +292,9 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     Format.pp_open_vbox out 0;
     S.iter
       (fun (elo_str, fml) -> 
-         pf out "%s@\nTRANS@\n@[<hv2>%a@];@\n@\n" elo_str (Ltl.pp_gather_variables variables) fml)
+         pf out "%s@\nTRANS@\n@[<hv2>%a@];@\n@\n"
+           elo_str
+           (Ltl.pp_gather_variables ~next_is_X:false variables) fml)
       trans;
     Format.pp_close_box out ();
     hardline out ();    
