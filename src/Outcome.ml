@@ -36,11 +36,17 @@ let no_trace nbvars conversion_time analysis_time =
     conversion_time
   }
 
+
+let sort_states =
+  let sort = List.sort (fun (n1, _) (n2, _) -> Name.compare n1 n2) in
+  List.map
+    (function Plain v -> Plain (sort v) | Loop v -> Loop (sort v))
+
 let trace nbvars conversion_time analysis_time states =
   assert (states <> []
           && List.exists (function Loop _ -> true | Plain _ -> false) states);
   {
-    trace = Some states;
+    trace = Some (sort_states states);
     analysis_time;
     nbvars;
     conversion_time
@@ -65,6 +71,58 @@ module PPPlain = struct
     | Some trace ->
         (vbox @@ list ~sep:sp pp_state) out trace
 end
+
+module PPChrono = struct
+  module PB = PrintBox
+
+  let valuation_to_strings (previous : valuation option) (valu : valuation)
+    = match previous with
+      | None ->
+          List.map (fun (_, ts) -> PB.line @@ TupleSet.to_string ts) valu
+      | Some prev ->
+          List.map2 
+            (fun (_, pts) (_, ts) ->
+               if TupleSet.equal pts ts then
+                 PB.line @@ TupleSet.to_string ts
+               else
+                 PB.line @@ "## " ^ TupleSet.to_string ts)
+            prev valu 
+        
+    
+  let state_to_vlist previous = function
+    | Plain v ->
+        PB.vlist ~pad:(PB.hpad 1) 
+        @@ (valuation_to_strings previous v @ [PB.line " "])
+    | Loop v ->
+        PB.vlist ~pad:(PB.hpad 1)
+        @@ (valuation_to_strings previous v @ [PB.line "LOOP"])
+
+  let rec trace_to_hlist previous trace = match previous, trace with
+    | _, [] -> []
+    | None, hd::tl ->
+        state_to_vlist None hd :: trace_to_hlist (Some hd) tl
+    | Some (Plain pre | Loop pre), hd::tl -> 
+        state_to_vlist (Some pre) hd :: trace_to_hlist (Some hd) tl
+          
+  let pp out t = match t.trace with
+    | None -> pf out "--no trace--"
+    | Some [] -> assert false
+    | Some ((Plain hd | Loop hd)::tl as trace)->
+        let rel_names_col =
+         List.map (fun (name, _) -> PB.line @@ Name.to_string name) hd
+          |> (fun l -> l @ [PB.text " "])
+          |> PB.vlist ~pad:(PB.hpad 1)
+        in
+        let str =
+          PrintBox_text.to_string
+          @@ PB.hlist 
+          @@ rel_names_col :: trace_to_hlist None trace
+        in
+        pf out "%s"str
+          
+
+end
+
 
 module PPXML = struct
 
@@ -151,5 +209,5 @@ module PPXML = struct
 end
 
 let pp ~(format : [`XML | `Plain]) out trace = match format with
-  | `Plain -> PPPlain.pp out trace
+  | `Plain -> PPChrono.pp out trace
   | `XML -> PPXML.pp out trace

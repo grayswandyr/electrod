@@ -57,6 +57,10 @@ let subset b1 b2 =
 
 let equal b1 b2 =
   TS.equal b1 b2
+  (* |> Fun.tap (fun res -> *)
+  (*       Msg.debug *)
+  (*         (fun m -> m "equal %a %a -> %B" *)
+  (*                     pp b1 pp b2 res)) *)
 
 let compare b1 b2 =
   TS.compare b1 b2
