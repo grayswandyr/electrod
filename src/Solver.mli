@@ -150,12 +150,14 @@ module type MODEL = sig
   type t = private {
     elo : Elo.t;   
     invariant : (string * ltl) Sequence.t; (* fst: string repr of Elo formula *)
+    trans : (string * ltl) Sequence.t; (* fst: string repr of Elo formula *)
     property : string * ltl                (* fst: string repr of Elo formula *)
   }
 
   val make :
     elo:Elo.t
-    -> invariant:(string * ltl) Sequence.t 
+    -> invariant:(string * ltl) Sequence.t
+    -> trans:(string * ltl) Sequence.t 
     -> property:(string * ltl) -> t
     
   (** [analyze domain script filename model] runs the solver on [model]

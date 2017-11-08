@@ -1,32 +1,50 @@
 open Containers
 
-
-type goal_color = Invar | Init | Static_prop | Temporal
+(* 
+Static_prop: a proposition that does not include any variable relation
+nor any temporal operator.
+Primed_prop: a propostion that may include variabale and constant
+relations, without any temporal operator except un-nested X (next) or
+prime.
+Invar: proposition of the form always (phi) where phi does not include
+any temporal operator (the color pf phi is Init or Static_prop).
+Init: proposition without any temporal operator.
+Trans: proposition of the form always (phi) where the color of phi is
+Primed_prop.
+Temporal: any other proposition.
+ *)
+type goal_color = Static_prop | Primed_prop | Invar | Init | Trans | Temporal
 
 let to_string (gc : goal_color) =
   match gc with
-    | Invar -> "Invar"
-    | Init -> "Init"
-    | Static_prop -> "Static_prop"
-    | Temporal -> "Temporal"
+  | Static_prop -> "Static_prop"
+  | Primed_prop -> "Primed_prop"
+  | Invar -> "Invar"
+  | Init -> "Init"
+  | Trans -> "Trans"
+  | Temporal -> "Temporal"
 let pp out gc =
   Fmtc.(pf out "%a" (styled `Yellow string) (to_string gc))
 
-
 (* Computes the most general color between two colors *)
 let max_color c1 c2 =
-  match c1, c2 with
-    | Static_prop, Static_prop -> Static_prop
-    | (Init | Static_prop) , (Init | Static_prop)  -> Init
-    | (Invar | Static_prop) , (Invar | Static_prop) -> Invar
-    | _ , _ -> Temporal
+  match c1, c2 with 
+  | Static_prop, Static_prop -> Static_prop
+  | (Init | Static_prop) , (Init | Static_prop)  -> Init
+  | (Primed_prop | Init | Static_prop) , (Primed_prop | Init | Static_prop)
+    -> Primed_prop                                
+  | (Invar | Static_prop) , (Invar | Static_prop) -> Invar
+  | (Trans | Static_prop) , (Trans | Static_prop) -> Trans
+  | _ , _ -> Temporal
 
-(* same as max_color, but without Invar *)               
-let max_color_wi c1 c2 =
+(* same as max_color, but without Invar nor Trans *)               
+let max_color_wiwt c1 c2 =
   match c1, c2 with
-    | Static_prop, Static_prop -> Static_prop
-    | (Init | Static_prop) , (Init | Static_prop)  -> Init
-    | _ , _ -> Temporal
+  | Static_prop, Static_prop -> Static_prop
+  | (Init | Static_prop) , (Init | Static_prop)  -> Init
+  | (Primed_prop | Init | Static_prop) , (Primed_prop | Init | Static_prop)
+    -> Primed_prop 
+  | _ , _ -> Temporal
 
 (* removes the top level always operator in an invariant elo formula *)
 let rec remove_always_to_invar f =
@@ -61,13 +79,13 @@ class ['env] invarComputation = object (self : 'self)
 
   method build_Run (env : 'env) blk' =
     List.fold_left
-      max_color_wi
+      max_color_wiwt
       Static_prop
       blk'
 
   method build_Check (env : 'env) blk' =
     List.fold_left
-      max_color_wi
+      max_color_wiwt
       Static_prop
       blk'
 
@@ -84,10 +102,13 @@ class ['env] invarComputation = object (self : 'self)
 
   method build_FIte (env : 'env) f t e =
     match f, t, e with
-      | Static_prop, Static_prop, Static_prop -> Static_prop
-      | (Init | Static_prop) , (Init | Static_prop) , (Init | Static_prop)
-        -> Init
-      | _ , _, _ -> Temporal
+    | Static_prop, Static_prop, Static_prop -> Static_prop
+    | (Init | Static_prop) , (Init | Static_prop) , (Init | Static_prop)
+      -> Init
+    | (Primed_prop | Init | Static_prop) , (Primed_prop | Init | Static_prop) ,
+      (Primed_prop | Init | Static_prop)
+      -> Primed_prop
+    | _ , _, _ -> Temporal
 
   method build_Let (env : 'env) bs' block'= assert false (* SIMPLIFIED *)
 
@@ -96,12 +117,12 @@ class ['env] invarComputation = object (self : 'self)
   method build_Quant (env : 'env) quant' sim_bindings_colors blk_colors =
     let blk_color =
       List.fold_left
-        max_color_wi
+        max_color_wiwt
         Static_prop
         blk_colors
     in
     let max_color_for_simbindings color_acc (disj1, vars1, e1)  =
-      max_color_wi color_acc e1
+      max_color_wiwt color_acc e1
     in      
     let sim_bindings_color =
       List.fold_left
@@ -127,13 +148,13 @@ class ['env] invarComputation = object (self : 'self)
 
   method build_And (env : 'env) = max_color
 
-  method build_Iff (env : 'env) = max_color_wi
+  method build_Iff (env : 'env) = max_color_wiwt
 
-  method build_Imp (env : 'env)  = max_color_wi
+  method build_Imp (env : 'env)  = max_color_wiwt
 
   method build_U (env : 'env) _ _ = Temporal
 
-  method build_Or (env : 'env)  = max_color_wi
+  method build_Or (env : 'env)  = max_color_wiwt
 
   method build_R (env : 'env) _ _ = Temporal
 
@@ -144,14 +165,18 @@ class ['env] invarComputation = object (self : 'self)
   method build_LUn (env : 'env) op' f' =
     op' f'
 
-  method build_X (env : 'env) _ = Temporal
+  method build_X (env : 'env) f' =
+    match f' with
+    | Static_prop | Init -> Primed_prop
+    | _ -> Temporal
 
   method build_F (env : 'env) _ = Temporal
 
   method build_G (env : 'env) f' =
     match f' with
-      | Init | Static_prop | Invar -> Invar
-      | _ -> Temporal
+    | Init | Static_prop | Invar -> Invar
+    | Primed_prop | Trans -> Trans 
+    | _ -> Temporal
 
   method build_H (env : 'env) _ = Temporal
 
@@ -160,37 +185,37 @@ class ['env] invarComputation = object (self : 'self)
   method build_P (env : 'env) _ = Temporal
 
   method build_Not (env : 'env) f' =
-    max_color_wi Static_prop f'
+    max_color_wiwt Static_prop f'
 
   (* compo_op *)
 
   method build_RComp (env : 'env) f1' op' f2' =
     op' f1' f2'
 
-  method build_REq (env : 'env) = max_color_wi
+  method build_REq (env : 'env) = max_color_wiwt
 
-  method build_In (env : 'env)  = max_color_wi
+  method build_In (env : 'env)  = max_color_wiwt
 
-  method build_NotIn (env : 'env) = max_color_wi
+  method build_NotIn (env : 'env) = max_color_wiwt
 
-  method build_RNEq (env : 'env) = max_color_wi
+  method build_RNEq (env : 'env) = max_color_wiwt
 
   (* icomp_op *)
 
   method build_IComp (env : 'env) e1' op' e2' =
     op' e1' e2'
 
-  method build_Gt (env : 'env) = max_color_wi
+  method build_Gt (env : 'env) = max_color_wiwt
 
-  method build_Gte (env : 'env) = max_color_wi
+  method build_Gte (env : 'env) = max_color_wiwt
 
-  method build_IEq (env : 'env) = max_color_wi
+  method build_IEq (env : 'env) = max_color_wiwt
 
-  method build_INEq (env : 'env) = max_color_wi
+  method build_INEq (env : 'env) = max_color_wiwt
 
-  method build_Lt (env : 'env) = max_color_wi
+  method build_Lt (env : 'env) = max_color_wiwt
 
-  method build_Lte (env : 'env) = max_color_wi
+  method build_Lte (env : 'env) = max_color_wiwt
 
   (* rqualify *)
 
@@ -211,14 +236,14 @@ class ['env] invarComputation = object (self : 'self)
   method build_Compr (env : 'env) sbs' b' =
     let blk_color =
       List.fold_left
-        max_color_wi
+        max_color_wiwt
         Static_prop
         b'
     in
 
     let max_color_for_simbindings (color_acc : goal_color)
           ((disj1, vars1, e1) : bool * Elo.var list * goal_color)  =
-      max_color_wi color_acc e1
+      max_color_wiwt color_acc e1
     in      
     let sim_bindings_color =
       List.fold_left
@@ -227,7 +252,7 @@ class ['env] invarComputation = object (self : 'self)
         sbs'
     in
 
-    max_color_wi sim_bindings_color blk_color
+    max_color_wiwt sim_bindings_color blk_color
 
   method build_Iden (env : 'env) = Static_prop
 
@@ -249,14 +274,20 @@ class ['env] invarComputation = object (self : 'self)
 
   method build_Univ (env : 'env) = Static_prop
 
-  method build_Prime (env : 'env) _ = Temporal
+  method build_Prime (env : 'env) f' =
+    match f' with
+    | Static_prop | Init -> Primed_prop
+    | _ -> Temporal
 
   method build_RIte (env : 'env) f' t' e' =
     match f', t', e' with
-      | Static_prop, Static_prop, Static_prop -> Static_prop
-      | (Init | Static_prop) , (Init | Static_prop) , (Init | Static_prop)
-        -> Init
-      | _ , _, _ -> Temporal
+    | Static_prop, Static_prop, Static_prop -> Static_prop
+    | (Init | Static_prop) , (Init | Static_prop) , (Init | Static_prop)
+      -> Init
+    | (Primed_prop | Init | Static_prop) , (Primed_prop | Init | Static_prop) ,
+      (Primed_prop | Init | Static_prop)
+      -> Primed_prop
+    | _ , _, _ -> Temporal
 
 
   (* rbinop *)
@@ -264,19 +295,19 @@ class ['env] invarComputation = object (self : 'self)
   method build_RBin (env : 'env) f1' op' f2' =
     op' f1' f2'
 
-  method build_Union (env : 'env)  = max_color_wi
+  method build_Union (env : 'env)  = max_color_wiwt
 
 
-  method build_Inter (env : 'env) = max_color_wi
+  method build_Inter (env : 'env) = max_color_wiwt
 
-  method build_Join (env : 'env) = max_color_wi
+  method build_Join (env : 'env) = max_color_wiwt
 
-  method build_LProj (env : 'env) = max_color_wi
-  method build_Prod (env : 'env) = max_color_wi
+  method build_LProj (env : 'env) = max_color_wiwt
+  method build_Prod (env : 'env) = max_color_wiwt
 
-  method build_RProj (env : 'env) = max_color_wi
-  method build_Diff (env : 'env) = max_color_wi
-  method build_Over (env : 'env) = max_color_wi                             
+  method build_RProj (env : 'env) = max_color_wiwt
+  method build_Diff (env : 'env) = max_color_wiwt
+  method build_Over (env : 'env) = max_color_wiwt                           
   (* runop *)
 
   method build_RUn (env : 'env) op' e' = op' e'
@@ -298,11 +329,11 @@ class ['env] invarComputation = object (self : 'self)
 
   method build_Num (env : 'env) _ = Static_prop
 
-  method build_Add (env : 'env) = max_color_wi
+  method build_Add (env : 'env) = max_color_wiwt
 
-  method build_Neg (env : 'env) = max_color_wi Static_prop
+  method build_Neg (env : 'env) = max_color_wiwt Static_prop
 
-  method build_Sub (env : 'env) = max_color_wi
+  method build_Sub (env : 'env) = max_color_wiwt
 
   method build_Card (env : 'env) r' = r'
 end
