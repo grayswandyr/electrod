@@ -53,7 +53,7 @@ type tool =
   | NuSMV
 
 
-let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
+let main style_renderer verbosity tool file scriptfile keep_files no_analysis show_generated_file =
   Printexc.record_backtrace true;
 
   Fmt_tty.setup_std_outputs ?style_renderer ();
@@ -109,8 +109,9 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis =
       | NuSMV, Some s -> ("NuSMV", Solver.File s)
     in
 
-    Msg.debug (fun m -> m "@.%a"
-                          (Elo_to_SMV1.pp ~margin:80) model);
+    if show_generated_file then
+      Logs.app (fun m -> m "Generated file:@.%a"
+                            (Elo_to_SMV1.pp ~margin:80) model);
 
     let res = Elo_to_SMV1.analyze ~conversion_time ~cmd ~keep_files ~no_analysis
                 ~elo:elo ~script ~file model in

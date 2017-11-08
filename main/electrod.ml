@@ -38,6 +38,12 @@ let no_analysis =
   in
   Arg.(value & flag & info ["na"; "no-analysis"] ~doc)
 
+let show_generated_file = 
+  let doc =
+    {|If present, print the generated file on the standard output.|}
+  in
+  Arg.(value & flag & info ["sgf"; "show-generated-file"] ~doc)
+
 (* verbosity options (already def'd in Logs_cli, thx!) *)
 let verb_term = 
   Logs_cli.level ()
@@ -55,7 +61,8 @@ let main_term =
         $ infile
         $ script
         $ keep_files
-        $ no_analysis)
+        $ no_analysis
+        $ show_generated_file)
 
   
 let main_info =
