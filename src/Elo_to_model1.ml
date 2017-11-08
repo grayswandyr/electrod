@@ -48,13 +48,14 @@ struct
       S.empty
       syms
 
-  (* Splits a list of formulas lf into two lists (invf, restf): the
-     list of invar formulas and the list of the rest of the formulas. In
-     case all the formulas in lf are invars, then the last formula of lf
+  (* Splits a list of formulas lf into three lists (invf, transf,
+     restf): the list of invar formulas, the list of trans formulas
+     and the list of the rest of the formulas. In case restf is empty,
+     then the last formula of transf (or invf if transf is also empty)
      is put in restf.*)
   let split_invar_noninvar_fmls elo blk =
     let open Invar_computation in
-    let (invf, restf) =
+    let (invf, tmp_restf) =
       List.partition_map
         (fun fml ->
            let color = ConvertFormulas.color elo fml in
@@ -63,13 +64,28 @@ struct
                    Elo.pp_fml fml Invar_computation.pp color);
            match color with
              | Invar | Static_prop -> `Left (remove_always_to_invar fml)
-             | Init | Temporal -> `Right (fml)
+             | Init | Primed_prop | Trans | Temporal -> `Right (fml)
         )
         blk
     in
-    match (restf, List.rev invf) with
-      | _::_ , _ -> (invf, restf)
-      | [] , hd::tl -> (tl, [add_always_to_invar hd])
+    let (transf, restf) =
+      List.partition_map
+        (fun fml ->
+           let color = ConvertFormulas.color elo fml in
+           Msg.debug (fun m ->
+                 m "Color of formula %a : %a\n"
+                   Elo.pp_fml fml Invar_computation.pp color);
+           match color with
+           | Trans -> `Left (remove_always_to_invar fml)
+           | _ -> `Right(fml)
+        )
+        tmp_restf
+    in
+    
+    match (restf, List.rev invf, List.rev transf) with
+      | _::_ , _ , _-> (invf, transf, restf)
+      | [] , _ , hd::tl -> (invf, List.rev tl, [add_always_to_invar hd])
+      | [], hd::tl , _ -> (List.rev tl, transf, [add_always_to_invar hd])
       | _ -> assert false (*the goal cannot be empty*)
 
 
@@ -144,7 +160,7 @@ struct
 
 
     (* Partition the goal fmls into invars and non invars *)
-    let detected_invars, general_fmls =
+    let detected_invars, detected_trans, general_fmls =
       split_invar_noninvar_fmls elo goal_blk
     in   
     Msg.debug (fun m ->
@@ -162,9 +178,10 @@ struct
       translate_formulas @@ List.append detected_invars elo.Elo.invariants
     in
 
+    let trans = translate_formulas detected_trans in    
 
     Model.make ~elo 
-      ~invariant:S.(append invars syms_fmls) ~property:(spec_fml_str, prop_ltl)
+      ~invariant:S.(append invars syms_fmls) ~trans:trans ~property:(spec_fml_str, prop_ltl)
 
 end
 

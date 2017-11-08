@@ -359,12 +359,14 @@ module type MODEL = sig
   type t = private {
     elo : Elo.t;  
     invariant : (string * ltl) Sequence.t;
+    trans : (string * ltl) Sequence.t;
     property : string * ltl 
   }
 
   val make :
     elo:Elo.t
-    -> invariant:(string * ltl) Sequence.t 
+    -> invariant:(string * ltl) Sequence.t
+    -> trans:(string * ltl) Sequence.t 
     -> property:(string * ltl) -> t
 
   val analyze :
