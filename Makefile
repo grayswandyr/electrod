@@ -12,6 +12,9 @@ HTML_FLAGS = -docflags "-safe-string,-short-paths,-sort,-colorize-code,\
 
 MAIN = electrod
 
+CRAM3 := $(shell command -v cram3 2> /dev/null)
+CRAM2 := $(shell command -v cram 2> /dev/null)
+
 all: byte 
 
 clean:
@@ -33,12 +36,27 @@ profile:
 landmarks:
 	$(OCB) -pkg landmarks.ppx -pkg landmarks $(MAIN).native
 
-test: test-requisites
+test: test-requisites cram
 	ocamldep -one-line -all -sort src/*.ml | sed 's/.ml//g' | sed 's/src\///g' \
 	| sed 's/electrod//' | sed 's/Main//'> ./run_tests.qtestpack
 	$(OCB) -I harness -pkgs bisect_ppx,oUnit,qcheck run_tests.byte
 	./run_tests.byte
 	bisect-ppx-report -I _build -html _coverage/ bisect*.out
+
+
+# expectation tests using Python's cram or cram3
+cram: native
+ifdef CRAM3
+	@cram3 -v test/*.t || true
+else
+ifdef CRAM2
+	@cram -v test/*.t || true
+else
+	echo "cram3 and cram are missing: no tests played"
+endif
+endif
+
+
 
 doc: all doc-requisites
 # create odocl file by listing all ml or mli files and keeping one name for each
