@@ -107,7 +107,7 @@ module PPChrono = struct
         let table = PB.transpose preprended in
         (* mark differences *)
         for line = 0 to Array.length table - 2 do (* last is for LOOPs *)
-          for col = 2 to Array.length table.(line) - 1 do (* first is for name and second has no predecessor *)
+          for col = Array.length table.(line) - 1 downto 2 do (* first is for name and second has no predecessor *)
             if String.equal table.(line).(col) table.(line).(col - 1) then
               table.(line).(col) <- "-==-"
           done
