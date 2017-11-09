@@ -414,7 +414,7 @@ and pp_lunop out x =
   Fmtc.(kwd_styled pf) out
   @@ match x with
   | Not -> "not"
-  | F -> "sometime"
+  | F -> "eventually"
   | G -> "always"
   | O -> "once"
   | X -> "next"
