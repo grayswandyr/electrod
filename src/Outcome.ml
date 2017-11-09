@@ -9,24 +9,25 @@ type t = {
 
 and states = state list         (** nonempty *)
 
+and state_type = Plain | Loop
+
 (** A state is either a plain state, or the target of a lasso from the last
     state of the trace. *)
-and state =
-  | Plain of valuation
-  | Loop of valuation
+and state = state_type * valuation
 
-(** A valuation maps set/relation names to the tuples they contain. *)
+(** A valuation maps set/relation names to the tuples they
+    contain. Notice: the valuation is {b sorted} over names. *)
 and valuation = (Name.t, TupleSet.t) List.Assoc.t
 
 
 let valuation valu =
   valu
 
-let plain_state v = Plain v
+let plain_state v = (Plain, v)
 
-let loop_state v = Loop v
+let loop_state v = (Loop, v)
 
-let to_loop = function Loop v | Plain v -> Loop v
+let to_loop = function (_, v) -> loop_state v
 
 
 let no_trace nbvars conversion_time analysis_time =
@@ -39,12 +40,11 @@ let no_trace nbvars conversion_time analysis_time =
 
 let sort_states =
   let sort = List.sort (fun (n1, _) (n2, _) -> Name.compare n1 n2) in
-  List.map
-    (function Plain v -> Plain (sort v) | Loop v -> Loop (sort v))
+  List.map (fun (typ, v) -> (typ, sort v))
 
 let trace nbvars conversion_time analysis_time states =
   assert (states <> []
-          && List.exists (function Loop _ -> true | Plain _ -> false) states);
+          && List.exists (function (Loop, _) -> true | (Plain, _) -> false) states);
   {
     trace = Some (sort_states states);
     analysis_time;
@@ -63,8 +63,8 @@ module PPPlain = struct
     @@ List.sort (fun (n1, _) (n2, _) -> Name.compare n1 n2) valu
 
   let pp_state out = function
-    | Plain v -> (const string "  " **< brackets_ pp_valuation) out v 
-    | Loop v -> (const string "->" **< brackets_ pp_valuation) out v
+    | Plain, v -> (const string "  " **< brackets_ pp_valuation) out v 
+    | Loop, v -> (const string "->" **< brackets_ pp_valuation) out v
 
   let pp out t = match t.trace with
     | None -> pf out "--no trace--"
@@ -75,52 +75,44 @@ end
 module PPChrono = struct
   module PB = PrintBox
 
-  let valuation_to_strings (previous : valuation option) (valu : valuation)
-    = match previous with
-      | None ->
-          List.map (fun (_, ts) -> PB.line @@ TupleSet.to_string ts) valu
-      | Some prev ->
-          List.map2 
-            (fun (_, pts) (_, ts) ->
-               if TupleSet.equal pts ts then
-                 PB.line @@ TupleSet.to_string ts
-               else
-                 PB.line @@ "## " ^ TupleSet.to_string ts)
-            prev valu 
-        
-    
-  let state_to_vlist previous = function
-    | Plain v ->
-        PB.vlist ~pad:(PB.hpad 1) 
-        @@ (valuation_to_strings previous v @ [PB.line " "])
-    | Loop v ->
-        PB.vlist ~pad:(PB.hpad 1)
-        @@ (valuation_to_strings previous v @ [PB.line "LOOP"])
+  let to_string_width width fmt t =
+    let module F = Format in
+    let old_margin = F.get_margin () in
+    F.pp_set_margin F.str_formatter width;
+    F.fprintf F.str_formatter "%a" fmt t;
+    let s = F.flush_str_formatter () in
+    F.pp_set_margin F.str_formatter old_margin;
+    s
 
-  let rec trace_to_hlist previous trace = match previous, trace with
-    | _, [] -> []
-    | None, hd::tl ->
-        state_to_vlist None hd :: trace_to_hlist (Some hd) tl
-    | Some (Plain pre | Loop pre), hd::tl -> 
-        state_to_vlist (Some pre) hd :: trace_to_hlist (Some hd) tl
-          
+  let state_as_array ((typ, v) : state) =
+    let ts_strings = List.map (fun (_, ts) -> to_string_width 40 TupleSet.pp ts) v in
+    (if typ = Loop then
+       ts_strings @ [ "LOOP"]
+     else
+       ts_strings @ [ " " ])
+    |> Array.of_list 
+  
   let pp out t = match t.trace with
     | None -> pf out "--no trace--"
     | Some [] -> assert false
-    | Some ((Plain hd | Loop hd)::tl as trace)->
-        let rel_names_col =
-         List.map (fun (name, _) -> PB.line @@ Name.to_string name) hd
-          |> (fun l -> l @ [PB.text " "])
-          |> PB.vlist ~pad:(PB.hpad 1)
+    | Some ((_, hd)::_ as trace)->
+        let trace_strings = List.map state_as_array trace in
+        (* prepend names: *)
+        let preprended =
+          (Array.of_list
+           @@ (List.map (fun (name, _) -> to_string_width 40 Name.pp name) hd @ [ " "])
+          ) :: trace_strings
+          |> Array.of_list
         in
-        let str =
-          PrintBox_text.to_string
-          @@ PB.hlist 
-          @@ rel_names_col :: trace_to_hlist None trace
-        in
-        pf out "%s"str
-          
-
+        let table = PB.transpose preprended in
+        (* mark differences *)
+        for line = 0 to Array.length table - 2 do (* last is for LOOPs *)
+          for col = 2 to Array.length table.(line) - 1 do (* first is for name and second has no predecessor *)
+            if String.equal table.(line).(col) table.(line).(col - 1) then
+              table.(line).(col) <- "-==-"
+          done
+        done;
+        PrintBox_text.output Pervasives.stdout @@ PB.grid_text ~pad:(PB.hpad 1) table
 end
 
 
@@ -169,8 +161,8 @@ module PPXML = struct
     let tag = "st" in
     let attribute = "loop-target" in
     let valu, loop = match st with
-      | Loop v -> (v, true)
-      | Plain v -> (v, false)
+      | Loop, v -> (v, true)
+      | Plain, v -> (v, false)
     in
     pf out "@[<v><%a %a=\"%a\">@,  @[<v>%a@]@,</%a>@]"
       kwd tag
@@ -208,6 +200,7 @@ module PPXML = struct
 
 end
 
-let pp ~(format : [`XML | `Plain]) out trace = match format with
-  | `Plain -> PPChrono.pp out trace
+let pp ~(format : [`XML | `Plain | `Chrono]) out trace = match format with
+  | `Plain -> PPPlain.pp out trace
+  | `Chrono -> PPChrono.pp out trace
   | `XML -> PPXML.pp out trace

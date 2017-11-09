@@ -38,4 +38,4 @@ val loop_state : valuation -> state
 (** Converts any state to a loop state *)
 val to_loop : state -> state
 
-val pp : format:[`XML | `Plain] -> Format.formatter -> t -> unit
+val pp : format:[`XML | `Plain | `Chrono] -> Format.formatter -> t -> unit

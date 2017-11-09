@@ -38,11 +38,22 @@ let no_analysis =
   in
   Arg.(value & flag & info ["na"; "no-analysis"] ~doc)
 
-let show_generated_file = 
+let print_generated = 
   let doc =
     {|If present, print the generated file on the standard output.|}
   in
   Arg.(value & flag & info ["pg"; "print-generated"] ~doc)
+
+
+let outcome_format = 
+  let doc =
+    {|Format for the outcome of analysis. \
+      $(docv) must be one of `chrono', `plain' or `xml'|}
+  in
+  Arg.(value
+       & opt (enum [("chrono", `Chrono); ("plain", `Plain); ("xml", `XML)])
+           `Chrono
+       & info ["of"; "outcome-format"] ~docv:"FORMAT" ~doc)
 
 (* verbosity options (already def'd in Logs_cli, thx!) *)
 let verb_term = 
@@ -62,7 +73,8 @@ let main_term =
         $ script
         $ keep_files
         $ no_analysis
-        $ show_generated_file)
+        $ print_generated
+        $ outcome_format)
 
   
 let main_info =

@@ -53,7 +53,7 @@ type tool =
   | NuSMV
 
 
-let main style_renderer verbosity tool file scriptfile keep_files no_analysis show_generated_file =
+let main style_renderer verbosity tool file scriptfile keep_files no_analysis print_generated outcome_format =
   Printexc.record_backtrace true;
 
   Fmt_tty.setup_std_outputs ?style_renderer ();
@@ -109,7 +109,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis sh
       | NuSMV, Some s -> ("NuSMV", Solver.File s)
     in
 
-    if show_generated_file then
+    if print_generated then
       Logs.app (fun m -> m "Generated file:@.%a"
                             (Elo_to_SMV1.pp ~margin:80) model);
 
@@ -121,7 +121,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis sh
           (fun chan -> Format.with_out_chan chan (Outcome.pp ~format:`XML) res);
 
         Msg.info (fun m -> m "Analysis yields:@.%a"
-                             (Outcome.pp ~format:`Plain) res)
+                             (Outcome.pp ~format:outcome_format) res)
       end);
 
     let memory = Gc.allocated_bytes () in
