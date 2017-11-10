@@ -1,4 +1,3 @@
-Testing if/then/else
   $ electrod --pg -v $TESTDIR/ifthenelse.elo
   electrod* (glob)
   Processing file: .* (re)
