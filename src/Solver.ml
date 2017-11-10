@@ -357,7 +357,8 @@ module type MODEL = sig
   type atomic
 
   type t = private {
-    elo : Elo.t;  
+    elo : Elo.t;
+    init : (string * ltl) Sequence.t;
     invariant : (string * ltl) Sequence.t;
     trans : (string * ltl) Sequence.t;
     property : string * ltl 
@@ -365,6 +366,7 @@ module type MODEL = sig
 
   val make :
     elo:Elo.t
+    -> init:(string * ltl) Sequence.t
     -> invariant:(string * ltl) Sequence.t
     -> trans:(string * ltl) Sequence.t 
     -> property:(string * ltl) -> t

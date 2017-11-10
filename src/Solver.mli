@@ -149,6 +149,7 @@ module type MODEL = sig
 
   type t = private {
     elo : Elo.t;   
+    init : (string * ltl) Sequence.t; (* fst: string repr of Elo formula *)
     invariant : (string * ltl) Sequence.t; (* fst: string repr of Elo formula *)
     trans : (string * ltl) Sequence.t; (* fst: string repr of Elo formula *)
     property : string * ltl                (* fst: string repr of Elo formula *)
@@ -156,6 +157,7 @@ module type MODEL = sig
 
   val make :
     elo:Elo.t
+    -> init:(string * ltl) Sequence.t
     -> invariant:(string * ltl) Sequence.t
     -> trans:(string * ltl) Sequence.t 
     -> property:(string * ltl) -> t

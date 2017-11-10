@@ -255,20 +255,21 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
   type atomic = Ltl.Atomic.t
 
   type t = {
-    elo : Elo.t;
-    invariant : (string * ltl) Sequence.t;
-    trans : (string * ltl) Sequence.t;
-    property : string * ltl 
-  }
+      elo : Elo.t;
+      init : (string * ltl) Sequence.t;
+      invariant : (string * ltl) Sequence.t;
+      trans : (string * ltl) Sequence.t;
+      property : string * ltl 
+    }
 
-  let make ~elo ~invariant ~trans ~property =
-    { elo; invariant = invariant; trans = trans ; property }
+  let make ~elo ~ init ~invariant ~trans ~property =
+    { elo ; init = init ; invariant = invariant ; trans = trans ; property }
 
   let pp_decl sort out atomic =
     Fmtc.pf out "%s %a : boolean;" sort Ltl.Atomic.pp atomic
 
 
-  let pp_count_variables ?(margin = 80) out { elo; invariant; trans; property } =
+  let pp_count_variables ?(margin = 80) out { elo; init; invariant; trans; property } =
     let open Fmtc in
     let module S = Sequence in
     let old_margin = Format.pp_get_margin out () in
@@ -278,6 +279,15 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
        MODULE main@\n\
        JUSTICE TRUE;@\n@\n";
     let variables = ref S.empty in
+    (* INIT *)
+    hardline out ();
+    Format.pp_open_vbox out 0;
+    S.iter
+      (fun (elo_str, fml) -> 
+         pf out "%s@\nINIT@\n@[<hv2>%a@];@\n@\n" elo_str (Ltl.pp_gather_variables variables) fml)
+      init;
+    Format.pp_close_box out ();
+    hardline out ();
     (* INVAR *)
     hardline out ();
     Format.pp_open_vbox out 0;
@@ -331,8 +341,8 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     S.length !variables
 
 
-  let pp ?(margin = 80) out { elo; invariant; trans; property } =
-    ignore (pp_count_variables ~margin out { elo; invariant; trans; property })
+  let pp ?(margin = 80) out { elo; init; invariant; trans; property } =
+    ignore (pp_count_variables ~margin out { elo; init; invariant; trans; property })
   
   (* write in temp file *)
   let make_model_file infile model =
