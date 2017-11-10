@@ -504,8 +504,11 @@ let compute_arities elo =
           Msg.Fatal.arity_error
             (fun args ->
                args elo.Elo.file e2
-                 (Fmtc.strf "arity of %s incompatible with that of %s"
-                    (str_exp e1) (str_exp e2)))
+                 (Fmtc.strf "arity of %s (%a) incompatible with that of %s (%a)"
+                    (str_exp e1)
+                    Fmtc.(option ~none:(const string "none") int) ar1
+                    (str_exp e2)
+                    Fmtc.(option ~none:(const string "none") int) ar2))
         else
           rcomp e1' op e2'
     | IComp (e1, op, e2) ->
@@ -683,7 +686,7 @@ let compute_arities elo =
                  Option.(map2 (+) (pure (-2)) @@ map2 (+) arg.arity r.arity)
                  Location.(span (arg.exp_loc, r.exp_loc))
                @@ rbinary arg join r
-            ) args call
+            ) args' call'
         in
         if res.arity = None || res.arity = Some 0 then
           Result.fail "wrong arities for the box join"
