@@ -165,6 +165,7 @@ struct
         S.empty fmls
         (* with *)
         (*   Early_stop -> S.(empty, empty, Ltl.false_) *)
+      |> S.rev
     in
 
     (* handling symmetries *)

@@ -7,43 +7,9 @@
   JUSTICE TRUE;
   
   
-  -- ((s.r) = (s.r))
-  INVAR
-  TRUE;
   
-  -- ((m ++ n) = m_plusplus_n)
-  INVAR
-  TRUE;
   
-  -- ((r ++ t) = r_overriden_by_t)
-  INVAR
-  TRUE;
-  
-  -- ((s <: (^r)) = s_proj_tc)
-  INVAR
-  TRUE;
-  
-  -- ((^(~r)) = (~(^r)))
-  INVAR
-  TRUE;
-  
-  -- ((s.r) = ((~r).s))
-  INVAR
-  TRUE;
-  
-  -- (iden_plus_tc_r = (iden + (^r)))
-  INVAR
-  TRUE;
-  
-  -- ((*r) = iden_plus_tc_r)
-  INVAR
-  TRUE;
-  
-  -- ((s.(*r)) = (s.(iden + (^r))))
-  INVAR
-  TRUE;
-  
-  -- (tc_r = (^r))
+  -- ((reflexive - iden) in none)
   INVAR
   TRUE;
   
@@ -51,7 +17,43 @@
   INVAR
   TRUE;
   
-  -- ((reflexive - iden) in none)
+  -- (tc_r = (^r))
+  INVAR
+  TRUE;
+  
+  -- ((s.(*r)) = (s.(iden + (^r))))
+  INVAR
+  TRUE;
+  
+  -- ((*r) = iden_plus_tc_r)
+  INVAR
+  TRUE;
+  
+  -- (iden_plus_tc_r = (iden + (^r)))
+  INVAR
+  TRUE;
+  
+  -- ((s.r) = ((~r).s))
+  INVAR
+  TRUE;
+  
+  -- ((^(~r)) = (~(^r)))
+  INVAR
+  TRUE;
+  
+  -- ((s <: (^r)) = s_proj_tc)
+  INVAR
+  TRUE;
+  
+  -- ((r ++ t) = r_overriden_by_t)
+  INVAR
+  TRUE;
+  
+  -- ((m ++ n) = m_plusplus_n)
+  INVAR
+  TRUE;
+  
+  -- ((s.r) = (s.r))
   INVAR
   TRUE;
   

@@ -11,18 +11,75 @@
   JUSTICE TRUE;
   
   
+  
+  
+  -- {((e1 in rel) implies ((e2 in rel) implies (some some/0 : s {true})))}
+  INVAR
+  (rel$a1 -> (rel$a2 -> s$a));
+  
   -- {((e1 in rel)) implies
   --    ((s in none))
   --  else
-  --    (((e2 in rel)) implies
-  --       ((some some/12 : s {true}))
-  --     else
-  --       (((e3 in rel) implies (some some/13 : s {true}))))
+  --    (((e2 in rel) and (some some/1 : s {true})))
   -- }
   INVAR
-  ((rel$a1 -> !s$a) &
-     (!rel$a1 -> ((rel$a2 -> s$a) & (!rel$a2 -> (rel$a3 -> s$a))))
-  );
+  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 & s$a)));
+  
+  -- {((e1 in rel)) implies
+  --    ((s in none))
+  --  else
+  --    (((e2 in rel) and (some some/2 : s {true})))
+  -- }
+  INVAR
+  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 & s$a)));
+  
+  -- {(((e1 in rel)) implies ((s in none)) else ((e2 in rel)) and
+  --    (some some/3 : s {true}))
+  -- }
+  INVAR
+  (((rel$a1 -> !s$a) & (!rel$a1 -> rel$a2)) & s$a);
+  
+  -- {(((e1 in rel)) implies ((s in none)) else ((e2 in rel)) iff
+  --    (some some/4 : s {true}))
+  -- }
+  INVAR
+  (((rel$a1 -> !s$a) & (!rel$a1 -> rel$a2)) <-> s$a);
+  
+  -- {(((e1 in rel)) implies ((s in none)) else ((e2 in rel)) iff
+  --    (some some/5 : s {true}))
+  -- }
+  INVAR
+  (((rel$a1 -> !s$a) & (!rel$a1 -> rel$a2)) <-> s$a);
+  
+  -- {((e1 in rel)) implies
+  --    ((s in none))
+  --  else
+  --    (((e2 in rel) iff (some some/6 : s {true})))
+  -- }
+  INVAR
+  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 <-> s$a)));
+  
+  -- {((e1 in rel)) implies
+  --    ((s in none))
+  --  else
+  --    (((e2 in rel) implies (some some/7 : s {true})))
+  -- }
+  INVAR
+  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 -> s$a)));
+  
+  -- {((e1 in rel)) implies
+  --    ((s in none))
+  --  else
+  --    (((e2 in rel) implies (some some/8 : s {true})))
+  -- }
+  INVAR
+  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 -> s$a)));
+  
+  -- {(((e1 in rel)) implies ((s in none)) else ((e2 in rel)) implies
+  --    (some some/9 : s {true}))
+  -- }
+  INVAR
+  (((rel$a1 -> !s$a) & (!rel$a1 -> rel$a2)) -> s$a);
   
   -- {((e1 in rel)) implies
   --    ((s in none))
@@ -37,73 +94,18 @@
      (!rel$a1 -> ((rel$a2 -> s$a) & (!rel$a2 -> (rel$a3 -> s$a))))
   );
   
-  -- {(((e1 in rel)) implies ((s in none)) else ((e2 in rel)) implies
-  --    (some some/9 : s {true}))
-  -- }
-  INVAR
-  (((rel$a1 -> !s$a) & (!rel$a1 -> rel$a2)) -> s$a);
-  
   -- {((e1 in rel)) implies
   --    ((s in none))
   --  else
-  --    (((e2 in rel) implies (some some/8 : s {true})))
+  --    (((e2 in rel)) implies
+  --       ((some some/12 : s {true}))
+  --     else
+  --       (((e3 in rel) implies (some some/13 : s {true}))))
   -- }
   INVAR
-  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 -> s$a)));
-  
-  -- {((e1 in rel)) implies
-  --    ((s in none))
-  --  else
-  --    (((e2 in rel) implies (some some/7 : s {true})))
-  -- }
-  INVAR
-  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 -> s$a)));
-  
-  -- {((e1 in rel)) implies
-  --    ((s in none))
-  --  else
-  --    (((e2 in rel) iff (some some/6 : s {true})))
-  -- }
-  INVAR
-  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 <-> s$a)));
-  
-  -- {(((e1 in rel)) implies ((s in none)) else ((e2 in rel)) iff
-  --    (some some/5 : s {true}))
-  -- }
-  INVAR
-  (((rel$a1 -> !s$a) & (!rel$a1 -> rel$a2)) <-> s$a);
-  
-  -- {(((e1 in rel)) implies ((s in none)) else ((e2 in rel)) iff
-  --    (some some/4 : s {true}))
-  -- }
-  INVAR
-  (((rel$a1 -> !s$a) & (!rel$a1 -> rel$a2)) <-> s$a);
-  
-  -- {(((e1 in rel)) implies ((s in none)) else ((e2 in rel)) and
-  --    (some some/3 : s {true}))
-  -- }
-  INVAR
-  (((rel$a1 -> !s$a) & (!rel$a1 -> rel$a2)) & s$a);
-  
-  -- {((e1 in rel)) implies
-  --    ((s in none))
-  --  else
-  --    (((e2 in rel) and (some some/2 : s {true})))
-  -- }
-  INVAR
-  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 & s$a)));
-  
-  -- {((e1 in rel)) implies
-  --    ((s in none))
-  --  else
-  --    (((e2 in rel) and (some some/1 : s {true})))
-  -- }
-  INVAR
-  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 & s$a)));
-  
-  -- {((e1 in rel) implies ((e2 in rel) implies (some some/0 : s {true})))}
-  INVAR
-  (rel$a1 -> (rel$a2 -> s$a));
+  ((rel$a1 -> !s$a) &
+     (!rel$a1 -> ((rel$a2 -> s$a) & (!rel$a2 -> (rel$a3 -> s$a))))
+  );
   
   
   
@@ -124,7 +126,7 @@
   );
   
   
-  -- (not (sometime (some some/14 : s {true})))
+  -- (not (eventually (some some/14 : s {true})))
   LTLSPEC
   !(F s$a);
   
