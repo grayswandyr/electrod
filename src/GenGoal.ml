@@ -1,4 +1,4 @@
-[@@@landmark "auto"]
+
 
 
 (* ['v] is the type of variables introduced in quantifiers, ['i] is the type of

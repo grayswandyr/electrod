@@ -79,6 +79,8 @@ doc: all doc-requisites
 
 test-requisites:
 	@which sed > /dev/null
+	@which qtest > /dev/null
+	@$(CHECK_INSTALL) bisect_ppx qcheck > /dev/null
 
 doc-requisites:
 	@which echo > /dev/null
@@ -93,7 +95,7 @@ check-config:
 	@which ocamlbuild > /dev/null
 	@$(CHECK_INSTALL) cmdliner containers gen sequence logs logs.fmt \
 	logs.cli fmt fmt.tty fmt.cli menhirLib mtime ppx_deriving bisect_ppx \
-	visitors hashcons ppx_blob > /dev/null
+	visitors hashcons ppx_blob printbox > /dev/null
 
 .PHONY: all clean byte native profile debug check-config test doc doc-requisites test-requisites
 

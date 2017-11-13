@@ -1,7 +1,7 @@
 (** Implements a recursor over generic goals (necessary for conversion
     to LTL).  *)
 
-[@@@landmark "auto"]
+
 
 open GenGoal
 
@@ -97,53 +97,53 @@ class virtual ['self] recursor = object (self : 'self)
     let _visitors_r1 =
       (fun _visitors_this -> _visitors_this) _visitors_this.fml_loc
     in
-    self#build_fml env _visitors_this _visitors_r0 _visitors_r1 [@landmark "build_fml"]
+    self#build_fml env _visitors_this _visitors_r0 _visitors_r1 
   method visit_True env =
-    self#build_True env [@landmark "build_True"]
+    self#build_True env 
   method visit_False env =
-    self#build_False env [@landmark "build_False"]
+    self#build_False env 
   method visit_Qual env _visitors_c0 _visitors_c1 =
     let _visitors_r0 = self#visit_rqualify env _visitors_c0 in
     let _visitors_r1 = self#visit_exp env _visitors_c1 in
-    self#build_Qual env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1 [@landmark "build_Qual"]
+    self#build_Qual env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1 
   method visit_RComp env _visitors_c0 _visitors_c1 _visitors_c2 =
     let _visitors_r0 = self#visit_exp env _visitors_c0 in
     let _visitors_r1 = self#visit_comp_op env _visitors_c1 in
     let _visitors_r2 = self#visit_exp env _visitors_c2 in
-    self#build_RComp env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 [@landmark "build_RComp"]
+    self#build_RComp env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 
   method visit_IComp env _visitors_c0 _visitors_c1 _visitors_c2 =
     let _visitors_r0 = self#visit_iexp env _visitors_c0 in
     let _visitors_r1 = self#visit_icomp_op env _visitors_c1 in
     let _visitors_r2 = self#visit_iexp env _visitors_c2 in
-    self#build_IComp env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 [@landmark "build_IComp"]
+    self#build_IComp env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 
   method visit_LUn env _visitors_c0 _visitors_c1 =
     let _visitors_r0 = self#visit_lunop env _visitors_c0 in
     let _visitors_r1 = self#visit_fml env _visitors_c1 in
-    self#build_LUn env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1 [@landmark "build_LUn"]
+    self#build_LUn env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1 
   method visit_LBin env _visitors_c0 _visitors_c1 _visitors_c2 =
     let _visitors_r0 = self#visit_fml env _visitors_c0 in
     let _visitors_r1 = self#visit_lbinop env _visitors_c1 in
     let _visitors_r2 = self#visit_fml env _visitors_c2 in
-    self#build_LBin env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 [@landmark "build_LBin"]
+    self#build_LBin env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 
   method visit_Quant env _visitors_c0 _visitors_c1 _visitors_c2 =
     let _visitors_r0 = self#visit_quant env _visitors_c0 in
     let _visitors_r1 =
       self#visit_list self#visit_sim_binding env _visitors_c1 in
     let _visitors_r2 = self#visit_block env _visitors_c2 in
-    self#build_Quant env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 [@landmark "build_Quant"]
+    self#build_Quant env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 
   method visit_Let env _visitors_c0 _visitors_c1 =
     let _visitors_r0 =
       self#visit_list self#visit_binding env _visitors_c0 in
     let _visitors_r1 = self#visit_block env _visitors_c1 in
-    self#build_Let env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1 [@landmark "build_Let"]
+    self#build_Let env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1 
   method visit_FIte env _visitors_c0 _visitors_c1 _visitors_c2 =
     let _visitors_r0 = self#visit_fml env _visitors_c0 in
     let _visitors_r1 = self#visit_fml env _visitors_c1 in
     let _visitors_r2 = self#visit_fml env _visitors_c2 in
-    self#build_FIte env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 [@landmark "build_FIte"]
+    self#build_FIte env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 
   method visit_Block env _visitors_c0 =
     let _visitors_r0 = self#visit_block env _visitors_c0 in
-    self#build_Block env _visitors_c0 _visitors_r0 [@landmark "build_Block"]
+    self#build_Block env _visitors_c0 _visitors_r0 
   method visit_prim_fml env _visitors_this =
     match _visitors_this with
       | True ->
@@ -184,15 +184,15 @@ class virtual ['self] recursor = object (self : 'self)
   method visit_block env =
     self#visit_list self#visit_fml env
   method visit_All env =
-    self#build_All env [@landmark "build_All"]
+    self#build_All env 
   method visit_Some_ env =
-    self#build_Some_ env [@landmark "build_Some_"]
+    self#build_Some_ env 
   method visit_No env =
-    self#build_No env [@landmark "build_No"]
+    self#build_No env 
   method visit_One env =
-    self#build_One env [@landmark "build_One"]
+    self#build_One env 
   method visit_Lone env =
-    self#build_Lone env [@landmark "build_Lone"]
+    self#build_Lone env 
   method visit_quant env _visitors_this =
     match _visitors_this with
       | All ->
@@ -206,19 +206,19 @@ class virtual ['self] recursor = object (self : 'self)
       | Lone ->
           self#visit_Lone env
   method visit_And env =
-    self#build_And env [@landmark "build_And"]
+    self#build_And env 
   method visit_Or env =
-    self#build_Or env [@landmark "build_Or"]
+    self#build_Or env 
   method visit_Imp env =
-    self#build_Imp env [@landmark "build_Imp"]
+    self#build_Imp env 
   method visit_Iff env =
-    self#build_Iff env [@landmark "build_Iff"]
+    self#build_Iff env 
   method visit_U env =
-    self#build_U env [@landmark "build_U"]
+    self#build_U env 
   method visit_R env =
-    self#build_R env [@landmark "build_R"]
+    self#build_R env 
   method visit_S env =
-    self#build_S env [@landmark "build_S"]
+    self#build_S env 
   method visit_lbinop env _visitors_this =
     match _visitors_this with
       | And ->
@@ -236,19 +236,19 @@ class virtual ['self] recursor = object (self : 'self)
       | S ->
           self#visit_S env
   method visit_F env =
-    self#build_F env [@landmark "build_F"]
+    self#build_F env 
   method visit_G env =
-    self#build_G env [@landmark "build_G"]
+    self#build_G env 
   method visit_Not env =
-    self#build_Not env [@landmark "build_Not"]
+    self#build_Not env 
   method visit_O env =
-    self#build_O env [@landmark "build_O"]
+    self#build_O env 
   method visit_X env =
-    self#build_X env [@landmark "build_X"]
+    self#build_X env 
   method visit_H env =
-    self#build_H env [@landmark "build_H"]
+    self#build_H env 
   method visit_P env =
-    self#build_P env [@landmark "build_P"]
+    self#build_P env 
   method visit_lunop env _visitors_this =
     match _visitors_this with
       | F ->
@@ -266,13 +266,13 @@ class virtual ['self] recursor = object (self : 'self)
       | P ->
           self#visit_P env
   method visit_In env =
-    self#build_In env [@landmark "build_In"]
+    self#build_In env 
   method visit_NotIn env =
-    self#build_NotIn env [@landmark "build_NotIn"]
+    self#build_NotIn env 
   method visit_REq env =
-    self#build_REq env [@landmark "build_REq"]
+    self#build_REq env 
   method visit_RNEq env =
-    self#build_RNEq env [@landmark "build_RNEq"]
+    self#build_RNEq env 
   method visit_comp_op env _visitors_this =
     match _visitors_this with
       | In ->
@@ -284,17 +284,17 @@ class virtual ['self] recursor = object (self : 'self)
       | RNEq ->
           self#visit_RNEq env
   method visit_IEq env =
-    self#build_IEq env [@landmark "build_IEq"]
+    self#build_IEq env 
   method visit_INEq env =
-    self#build_INEq env [@landmark "build_INEq"]
+    self#build_INEq env 
   method visit_Lt env =
-    self#build_Lt env [@landmark "build_Lt"]
+    self#build_Lt env 
   method visit_Lte env =
-    self#build_Lte env [@landmark "build_Lte"]
+    self#build_Lte env 
   method visit_Gt env =
-    self#build_Gt env [@landmark "build_Gt"]
+    self#build_Gt env 
   method visit_Gte env =
-    self#build_Gte env [@landmark "build_Gte"]
+    self#build_Gte env 
   method visit_icomp_op env _visitors_this =
     match _visitors_this with
       | IEq ->
@@ -317,43 +317,43 @@ class virtual ['self] recursor = object (self : 'self)
     in
     let _visitors_r2 =
       (fun _visitors_this -> _visitors_this) _visitors_this.arity in
-    self#build_exp env _visitors_this _visitors_r0 _visitors_r1 _visitors_r2 [@landmark "build_exp"]
+    self#build_exp env _visitors_this _visitors_r0 _visitors_r1 _visitors_r2 
   method visit_None_ env =
-    self#build_None_ env [@landmark "build_None_"]
+    self#build_None_ env 
   method visit_Univ env =
-    self#build_Univ env [@landmark "build_Univ"]
+    self#build_Univ env 
   method visit_Iden env =
-    self#build_Iden env [@landmark "build_Iden"]
+    self#build_Iden env 
   method visit_Ident env _visitors_c0 =
     let _visitors_r0 = self#visit_'i env _visitors_c0 in
-    self#build_Ident env _visitors_c0 _visitors_r0 [@landmark "build_Ident"]
+    self#build_Ident env _visitors_c0 _visitors_r0 
   method visit_RUn env _visitors_c0 _visitors_c1 =
     let _visitors_r0 = self#visit_runop env _visitors_c0 in
     let _visitors_r1 = self#visit_exp env _visitors_c1 in
-    self#build_RUn env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1 [@landmark "build_RUn"]
+    self#build_RUn env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1 
   method visit_RBin env _visitors_c0 _visitors_c1 _visitors_c2 =
     let _visitors_r0 = self#visit_exp env _visitors_c0 in
     let _visitors_r1 = self#visit_rbinop env _visitors_c1 in
     let _visitors_r2 = self#visit_exp env _visitors_c2 in
-    self#build_RBin env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 [@landmark "build_RBin"]
+    self#build_RBin env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 
   method visit_RIte env _visitors_c0 _visitors_c1 _visitors_c2 =
     let _visitors_r0 = self#visit_fml env _visitors_c0 in
     let _visitors_r1 = self#visit_exp env _visitors_c1 in
     let _visitors_r2 = self#visit_exp env _visitors_c2 in
-    self#build_RIte env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 [@landmark "build_RIte"]
+    self#build_RIte env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 
   method visit_BoxJoin env _visitors_c0 _visitors_c1 =
     let _visitors_r0 = self#visit_exp env _visitors_c0 in
     let _visitors_r1 = self#visit_list self#visit_exp env _visitors_c1
     in
-    self#build_BoxJoin env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1 [@landmark "build_BoxJoin"]
+    self#build_BoxJoin env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1 
   method visit_Compr env _visitors_c0 _visitors_c1 =
     let _visitors_r0 =
       self#visit_list self#visit_sim_binding env _visitors_c0 in
     let _visitors_r1 = self#visit_block env _visitors_c1 in
-    self#build_Compr env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1 [@landmark "build_Compr"]
+    self#build_Compr env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1 
   method visit_Prime env _visitors_c0 =
     let _visitors_r0 = self#visit_exp env _visitors_c0 in
-    self#build_Prime env _visitors_c0 _visitors_r0 [@landmark "build_Prime"]
+    self#build_Prime env _visitors_c0 _visitors_r0 
   method visit_prim_exp env _visitors_this =
     match _visitors_this with
       | None_ ->
@@ -377,13 +377,13 @@ class virtual ['self] recursor = object (self : 'self)
       | Prime _visitors_c0 ->
           self#visit_Prime env _visitors_c0
   method visit_ROne env =
-    self#build_ROne env [@landmark "build_ROne"]
+    self#build_ROne env 
   method visit_RLone env =
-    self#build_RLone env [@landmark "build_RLone"]
+    self#build_RLone env 
   method visit_RSome env =
-    self#build_RSome env [@landmark "build_RSome"]
+    self#build_RSome env 
   method visit_RNo env =
-    self#build_RNo env [@landmark "build_RNo"]
+    self#build_RNo env 
   method visit_rqualify env _visitors_this =
     match _visitors_this with
       | ROne ->
@@ -395,11 +395,11 @@ class virtual ['self] recursor = object (self : 'self)
       | RNo ->
           self#visit_RNo env
   method visit_Transpose env =
-    self#build_Transpose env [@landmark "build_Transpose"]
+    self#build_Transpose env 
   method visit_TClos env  =
-    self#build_TClos env [@landmark "build_TClos"]
+    self#build_TClos env 
   method visit_RTClos env =
-    self#build_RTClos env [@landmark "build_RTClos"]
+    self#build_RTClos env 
   method visit_runop env _visitors_this =
     match _visitors_this with
       | Transpose ->
@@ -409,21 +409,21 @@ class virtual ['self] recursor = object (self : 'self)
       | RTClos ->
           self#visit_RTClos env
   method visit_Union env _visitors_c0 _visitors_c1 =
-    self#build_Union env _visitors_c0 _visitors_c1 [@landmark "build_Union"]
+    self#build_Union env _visitors_c0 _visitors_c1 
   method visit_Inter env =
-    self#build_Inter env [@landmark "build_Inter"]
+    self#build_Inter env 
   method visit_Over env =
-    self#build_Over env [@landmark "build_Over"]
+    self#build_Over env 
   method visit_LProj env =
-    self#build_LProj env [@landmark "build_LProj"]
+    self#build_LProj env 
   method visit_RProj env =
-    self#build_RProj env [@landmark "build_RProj"]
+    self#build_RProj env 
   method visit_Prod env =
-    self#build_Prod env [@landmark "build_Prod"]
+    self#build_Prod env 
   method visit_Diff env =
-    self#build_Diff env [@landmark "build_Diff"]
+    self#build_Diff env 
   method visit_Join env =
-    self#build_Join env [@landmark "build_Join"]
+    self#build_Join env 
   method visit_rbinop env _visitors_this =
     match _visitors_this with
       | Union ->
@@ -448,23 +448,23 @@ class virtual ['self] recursor = object (self : 'self)
     let _visitors_r1 =
       (fun _visitors_this -> _visitors_this) _visitors_this.iexp_loc
     in
-    self#build_iexp env _visitors_this _visitors_r0 _visitors_r1 [@landmark "build_iexp"]
+    self#build_iexp env _visitors_this _visitors_r0 _visitors_r1 
   method visit_Num env _visitors_c0 =
     let _visitors_r0 =
       (fun _visitors_this -> _visitors_this) _visitors_c0 in
-    self#build_Num env _visitors_c0 _visitors_r0 [@landmark "build_Num"]
+    self#build_Num env _visitors_c0 _visitors_r0 
   method visit_Card env _visitors_c0 =
     let _visitors_r0 = self#visit_exp env _visitors_c0 in
-    self#build_Card env _visitors_c0 _visitors_r0 [@landmark "build_Card"]
+    self#build_Card env _visitors_c0 _visitors_r0 
   method visit_IUn env _visitors_c0 _visitors_c1 =
     let _visitors_r0 = self#visit_iunop env _visitors_c0 in
     let _visitors_r1 = self#visit_iexp env _visitors_c1 in
-    self#build_IUn env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1 [@landmark "build_IUn"]
+    self#build_IUn env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1 
   method visit_IBin env _visitors_c0 _visitors_c1 _visitors_c2 =
     let _visitors_r0 = self#visit_iexp env _visitors_c0 in
     let _visitors_r1 = self#visit_ibinop env _visitors_c1 in
     let _visitors_r2 = self#visit_iexp env _visitors_c2 in
-    self#build_IBin env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 [@landmark "build_IBin"]
+    self#build_IBin env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2 
   method visit_prim_iexp env _visitors_this =
     match _visitors_this with
       | Num _visitors_c0 ->
@@ -476,13 +476,13 @@ class virtual ['self] recursor = object (self : 'self)
       | IBin (_visitors_c0, _visitors_c1, _visitors_c2) ->
           self#visit_IBin env _visitors_c0 _visitors_c1 _visitors_c2
   method visit_Neg env =
-    self#build_Neg env [@landmark "build_Neg"]
+    self#build_Neg env 
   method visit_iunop env _visitors_this =
     match _visitors_this with | Neg -> self#visit_Neg env
   method visit_Add env =
-    self#build_Add env [@landmark "build_Add"]
+    self#build_Add env 
   method visit_Sub env =
-    self#build_Sub env [@landmark "build_Sub"]
+    self#build_Sub env 
   method visit_ibinop env _visitors_this =
     match _visitors_this with
       | Add ->

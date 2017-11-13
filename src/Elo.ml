@@ -1,6 +1,6 @@
 (** Definition of the type for Electrod models.  *)
 
-[@@@landmark "auto"]
+
 open Containers
 
 module G = GenGoal
