@@ -559,6 +559,7 @@ let compute_arities elo =
 
 
   and return_exp exp ar pe =
+    assert (ar <> Some 0);
     Result.return { exp with arity = ar; prim_exp = pe }
 
   (* this function returns a [result] to factor the error messages out and also

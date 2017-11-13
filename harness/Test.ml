@@ -36,4 +36,4 @@ let any_tupleset = Q.make ~print:TupleSet.to_string gen_tupleset
 
 let any_tupleset1 = Q.make ~print:TupleSet.to_string @@ gen_tupleset ~arity:1
                                                           
-let any_tupleset2 = Q.make ~print:TupleSet.to_string @@ gen_tupleset ~arity:12
+let any_tupleset2 = Q.make ~print:TupleSet.to_string @@ gen_tupleset ~arity:2

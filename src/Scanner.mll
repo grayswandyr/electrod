@@ -117,7 +117,10 @@ rule main infile = parse
 | ("not" | "!") (whitespace | newline)+ "in" (* TODO: take comments into account *)
     { NOT_IN}
 | "inst"
-    { (* INST *) failwith "`inst` not implemented" }
+    { (* INST *)
+Msg.Fatal.lexical
+@@ fun args -> args infile lexbuf ("`inst` not implemented (yet?)")
+    }
 | "sym"
     { SYM }
 | ("not")

@@ -31,5 +31,5 @@ some inexact1;
 
 all x : inexact2 | x.r in inexact2;
 
-check
+run
 some ^r;

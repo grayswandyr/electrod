@@ -4,13 +4,14 @@ module G = GenGoal
 module TS = TupleSet
 
 type bounds = {
-  must : TupleSet.t;
-  sup : TupleSet.t;
-  may : TupleSet.t;
+  must : TS.t;
+  sup : TS.t;
+  may : TS.t;
 }
 
 let rec bounds subst domain exp =
   let { must; sup; _ } = bounds_exp subst domain exp in
+  assert (TS.subset must sup);
   { must; sup; may = TS.diff sup must }  
 
 (* Helper function.  NOTICE: [may] is voluntarily wrong because its

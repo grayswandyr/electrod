@@ -22,7 +22,9 @@ let tuple1 at =
 
 (* accessor *)
 let arity tuple =
-  Array.length tuple
+  let ar = Array.length tuple in
+  assert (ar > 0);
+  ar
 
 let hash tuple =
   Hash.array Atom.hash tuple
@@ -102,17 +104,17 @@ let join tuple1 tuple2 =
   res
 
 
-let is_in_join tup tuple1 tuple2 =
-  let t1 = tuple1 in
-  let t2 = tuple2 in
+let is_in_join tup t1 t2 =
   let lg1 = Array.length t1 in
+  assert (lg1 > 0);
+  assert (Array.length t2 > 0);
   Atom.equal t1.(lg1 - 1) t2.(0)
-  && equal tup @@ join tuple1 tuple2
+  && equal tup @@ join t1 t2
   (* |> Fun.tap (fun res -> Msg.debug (fun m -> *)
   (*       m "is_in_join: %a =? %a.%a --> %B" *)
   (*         pp tup *)
-  (*         pp tuple1 *)
-  (*         pp tuple2 *)
+  (*         pp t1 *)
+  (*         pp t2 *)
   (*         res)) *)
 
 (* split "inverse" to (@@@) *)
@@ -144,10 +146,10 @@ let split tuple len =
 
 
 
-let all_different tuple =
-  let t = tuple in
+let all_different t =
   let sorted = Array.sorted Atom.compare t in
   let lg = Array.length t in
+  assert (lg > 0);
   let i = ref 1 in
   let yes = ref true in
   while !yes && !i < lg do
@@ -156,10 +158,16 @@ let all_different tuple =
   !yes
 
 let to_1tuples t =
+  assert (Array.length t > 0);
   Array.fold_right (fun at acc -> of_list1 [at] :: acc) t []
 
 let to_ntuples n t =
-  assert (Array.length t mod n = 0);
+  let lg = Array.length t in
+  assert (lg > 0);
+  (if lg mod n <> 0 then
+     invalid_arg @@
+     Fmt.strf "Tuple.to_ntuples %d %a: length not a multiple of %d"
+       n pp t n);
   Array.to_list t
   |> List.sublists_of_len n
   |> List.map of_list1

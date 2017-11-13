@@ -36,7 +36,7 @@ profile:
 landmarks:
 	$(OCB) -pkg landmarks.ppx -pkg landmarks $(MAIN).native
 
-test: test-requisites cram
+test: test-requisites 
 	ocamldep -one-line -all -sort src/*.ml | sed 's/.ml//g' | sed 's/src\///g' \
 	| sed 's/electrod//' | sed 's/Main//'> ./run_tests.qtestpack
 	$(OCB) -I harness -pkgs bisect_ppx,oUnit,qcheck run_tests.byte
