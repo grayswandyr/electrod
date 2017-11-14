@@ -15,7 +15,7 @@ MAIN = electrod
 CRAM3 := $(shell command -v cram3 2> /dev/null)
 CRAM2 := $(shell command -v cram 2> /dev/null)
 
-all: byte 
+all: build
 
 clean:
 	$(OCB) -clean
@@ -25,7 +25,7 @@ clean:
 native: 
 	$(OCB) $(MAIN).native
 
-release: clean native
+release: clean headers
 
 byte: 
 	$(OCB) $(MAIN).byte
@@ -96,6 +96,12 @@ check-config:
 	@$(CHECK_INSTALL) cmdliner containers gen sequence logs logs.fmt \
 	logs.cli fmt fmt.tty fmt.cli menhirLib mtime ppx_deriving bisect_ppx \
 	visitors hashcons ppx_blob printbox > /dev/null
+
+headers:
+	for f in src/* main/* harness/*; do
+		sh util/headache/headache.sh $f;
+	done
+
 
 .PHONY: all clean byte native profile debug check-config test doc doc-requisites test-requisites
 

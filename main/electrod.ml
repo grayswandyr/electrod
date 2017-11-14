@@ -102,11 +102,11 @@ let main_info =
         PARTICULAR PURPOSE. ";
     `S "THIRD-PARTY SOFTWARE";
     `P {|Electrod relies on the following third-party free software, 
-         released under their respective license (see the respective 
-         OPAM repositories for the full text of the licenses):|};
+         released under their respective license (see the Electrod 
+         OPAM repository for the full text of the licenses):|};
     `Noblank;
     `P {|cmdliner, containers, fmt, gen, hashcons, logs, mtime, ppx_blob, 
-         ppx_deriving, sequence, visitors.|}
+         ppx_deriving, printbox, sequence, visitors.|}
   ]
   in
   Term.info "electrod" ~doc ~man

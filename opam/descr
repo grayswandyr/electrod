@@ -1,4 +1,4 @@
-Model finder for relational FOLTL over bounded FO domains.
+A model finder for relational first-order linear temporal logic (RFOLTL).
 
 Electrod is a model finder inspired by Kodkod. It takes as input a
 model expressed in a mixture of relational first-order logic (RFOL)

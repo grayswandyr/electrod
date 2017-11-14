@@ -29,4 +29,4 @@ Type `electrod --help` to get some help on options.
 
 electrod is distributed under the terms of the Mozilla Public License v2.0.
 
-See [LICENSE.txt](LICENSE.txt) for more information.
+See [LICENSES/MPL-2.0.txt](LICENSES/MPL-2.0.txt) for more information.
