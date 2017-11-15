@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-11-15 CET 15:57:14 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -37,15 +37,22 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
       
   let names_and_tuples = HT.create 179 (* usually less than that many VARs *)
              
-  let rel_sep = "$"
+  let rel_sep = "-"
 
   let atom_sep = Fmtc.minus
   
   let make name atoms =
     let ats = Tuple.to_list atoms in
+    let name_str =
+      let s = Fmtc.to_to_string Name.pp name in
+      if String.prefix ~pre:"$" s then
+        (* Skolem vars may have a name incompatible with SMV so: *)
+        "_" ^ s
+      else s
+    in
     Symbol.make @@
-    Format.sprintf "%a%s%a"
-      Name.pp name
+    Format.sprintf "%s%s%a"
+      name_str
       rel_sep
       Fmtc.(list ~sep:atom_sep Atom.pp) ats
     (* keep trace of creations to allow to get original pairs back *)

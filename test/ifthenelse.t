@@ -15,7 +15,7 @@
   
   -- {((e1 in rel) implies ((e2 in rel) implies (some some/0 : s {true})))}
   INVAR
-  (rel$a1 -> (rel$a2 -> s$a));
+  (rel-a1 -> (rel-a2 -> s-a));
   
   -- {((e1 in rel)) implies
   --    ((s in none))
@@ -23,7 +23,7 @@
   --    (((e2 in rel) and (some some/1 : s {true})))
   -- }
   INVAR
-  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 & s$a)));
+  ((rel-a1 -> !s-a) & (!rel-a1 -> (rel-a2 & s-a)));
   
   -- {((e1 in rel)) implies
   --    ((s in none))
@@ -31,25 +31,25 @@
   --    (((e2 in rel) and (some some/2 : s {true})))
   -- }
   INVAR
-  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 & s$a)));
+  ((rel-a1 -> !s-a) & (!rel-a1 -> (rel-a2 & s-a)));
   
   -- {(((e1 in rel)) implies ((s in none)) else ((e2 in rel)) and
   --    (some some/3 : s {true}))
   -- }
   INVAR
-  (((rel$a1 -> !s$a) & (!rel$a1 -> rel$a2)) & s$a);
+  (((rel-a1 -> !s-a) & (!rel-a1 -> rel-a2)) & s-a);
   
   -- {(((e1 in rel)) implies ((s in none)) else ((e2 in rel)) iff
   --    (some some/4 : s {true}))
   -- }
   INVAR
-  (((rel$a1 -> !s$a) & (!rel$a1 -> rel$a2)) <-> s$a);
+  (((rel-a1 -> !s-a) & (!rel-a1 -> rel-a2)) <-> s-a);
   
   -- {(((e1 in rel)) implies ((s in none)) else ((e2 in rel)) iff
   --    (some some/5 : s {true}))
   -- }
   INVAR
-  (((rel$a1 -> !s$a) & (!rel$a1 -> rel$a2)) <-> s$a);
+  (((rel-a1 -> !s-a) & (!rel-a1 -> rel-a2)) <-> s-a);
   
   -- {((e1 in rel)) implies
   --    ((s in none))
@@ -57,7 +57,7 @@
   --    (((e2 in rel) iff (some some/6 : s {true})))
   -- }
   INVAR
-  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 <-> s$a)));
+  ((rel-a1 -> !s-a) & (!rel-a1 -> (rel-a2 <-> s-a)));
   
   -- {((e1 in rel)) implies
   --    ((s in none))
@@ -65,7 +65,7 @@
   --    (((e2 in rel) implies (some some/7 : s {true})))
   -- }
   INVAR
-  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 -> s$a)));
+  ((rel-a1 -> !s-a) & (!rel-a1 -> (rel-a2 -> s-a)));
   
   -- {((e1 in rel)) implies
   --    ((s in none))
@@ -73,13 +73,13 @@
   --    (((e2 in rel) implies (some some/8 : s {true})))
   -- }
   INVAR
-  ((rel$a1 -> !s$a) & (!rel$a1 -> (rel$a2 -> s$a)));
+  ((rel-a1 -> !s-a) & (!rel-a1 -> (rel-a2 -> s-a)));
   
   -- {(((e1 in rel)) implies ((s in none)) else ((e2 in rel)) implies
   --    (some some/9 : s {true}))
   -- }
   INVAR
-  (((rel$a1 -> !s$a) & (!rel$a1 -> rel$a2)) -> s$a);
+  (((rel-a1 -> !s-a) & (!rel-a1 -> rel-a2)) -> s-a);
   
   -- {((e1 in rel)) implies
   --    ((s in none))
@@ -90,8 +90,8 @@
   --       (((e3 in rel) implies (some some/11 : s {true}))))
   -- }
   INVAR
-  ((rel$a1 -> !s$a) &
-     (!rel$a1 -> ((rel$a2 -> s$a) & (!rel$a2 -> (rel$a3 -> s$a))))
+  ((rel-a1 -> !s-a) &
+     (!rel-a1 -> ((rel-a2 -> s-a) & (!rel-a2 -> (rel-a3 -> s-a))))
   );
   
   -- {((e1 in rel)) implies
@@ -103,8 +103,8 @@
   --       (((e3 in rel) implies (some some/13 : s {true}))))
   -- }
   INVAR
-  ((rel$a1 -> !s$a) &
-     (!rel$a1 -> ((rel$a2 -> s$a) & (!rel$a2 -> (rel$a3 -> s$a))))
+  ((rel-a1 -> !s-a) &
+     (!rel-a1 -> ((rel-a2 -> s-a) & (!rel-a2 -> (rel-a3 -> s-a))))
   );
   
   
@@ -115,11 +115,11 @@
   --    (((rel = e2)) implies ((e2 in r')) else (((rel = e3) implies (e3 in r'))))
   -- }
   TRANS
-  (((rel$a1 & (!rel$a2 & !rel$a3)) -> next(r$a1)) &
-     ((rel$a1 -> (rel$a2 | rel$a3)) ->
-        (((rel$a2 & (!rel$a1 & !rel$a3)) -> next(r$a2)) &
-           ((rel$a2 -> (rel$a1 | rel$a3)) ->
-              ((rel$a3 & (!rel$a1 & !rel$a2)) -> next(r$a3))
+  (((rel-a1 & (!rel-a2 & !rel-a3)) -> next(r-a1)) &
+     ((rel-a1 -> (rel-a2 | rel-a3)) ->
+        (((rel-a2 & (!rel-a1 & !rel-a3)) -> next(r-a2)) &
+           ((rel-a2 -> (rel-a1 | rel-a3)) ->
+              ((rel-a3 & (!rel-a1 & !rel-a2)) -> next(r-a3))
            )
         )
      )
@@ -128,16 +128,16 @@
   
   -- (not (eventually (some some/14 : s {true})))
   LTLSPEC
-  !(F s$a);
+  !(F s-a);
   
   
-  VAR s$a : boolean;
-  VAR rel$a1 : boolean;
-  VAR rel$a2 : boolean;
-  VAR rel$a3 : boolean;
-  VAR r$a1 : boolean;
-  VAR r$a2 : boolean;
-  VAR r$a3 : boolean;
+  VAR s-a : boolean;
+  VAR rel-a1 : boolean;
+  VAR rel-a2 : boolean;
+  VAR rel-a3 : boolean;
+  VAR r-a1 : boolean;
+  VAR r-a2 : boolean;
+  VAR r-a3 : boolean;
   
   
   [INFO] * (glob)
