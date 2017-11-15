@@ -1,4 +1,19 @@
- 
+(*******************************************************************************
+ * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * 
+ * electrod - a model finder for relational first-order linear temporal logic
+ * 
+ * Copyright (C) 2016-2017 ONERA
+ * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
+ * 
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * 
+ * SPDX-License-Identifier: MPL-2.0
+ * License-Filename: LICENSES/MPL-2.0.txt
+ ******************************************************************************)
+
 (** {b Entrypoint for the 'electrod' program.} Performs CLI management.*)
 
 open Containers
@@ -101,12 +116,9 @@ let main_info =
         implied warranty of MERCHANTABILITY or FITNESS FOR A \
         PARTICULAR PURPOSE. ";
     `S "THIRD-PARTY SOFTWARE";
-    `P {|Electrod relies on the following third-party free software, 
-         released under their respective license (see the Electrod 
-         OPAM repository for the full text of the licenses):|};
-    `Noblank;
-    `P {|cmdliner, containers, fmt, gen, hashcons, logs, mtime, ppx_blob, 
-         ppx_deriving, printbox, sequence, visitors.|}
+    `P {|Electrod relies on third-party free software, 
+         please refer to the Electrod 
+         OPAM repository for the full text of their licenses.|}
   ]
   in
   Term.info "electrod" ~doc ~man

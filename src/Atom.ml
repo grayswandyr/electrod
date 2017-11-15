@@ -1,10 +1,10 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 13:01:38 David Chemouil>
+ * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
  * 
- * electrod - a model finder for relational first-order linear temporal logic (RFOLTL)
+ * electrod - a model finder for relational first-order linear temporal logic
  * 
  * Copyright (C) 2016-2017 ONERA
- * Authors: Julien Brunel, David Chemouil
+ * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this

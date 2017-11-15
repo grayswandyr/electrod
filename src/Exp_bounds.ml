@@ -1,3 +1,19 @@
+(*******************************************************************************
+ * Time-stamp: <2017-11-15 CET 09:53:38 David Chemouil>
+ * 
+ * electrod - a model finder for relational first-order linear temporal logic
+ * 
+ * Copyright (C) 2016-2017 ONERA
+ * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
+ * 
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * 
+ * SPDX-License-Identifier: MPL-2.0
+ * License-Filename: LICENSES/MPL-2.0.txt
+ ******************************************************************************)
+
 open Containers
 
 module G = GenGoal
@@ -11,7 +27,19 @@ type bounds = {
 
 let rec bounds subst domain exp =
   let { must; sup; _ } = bounds_exp subst domain exp in
-  assert (TS.subset must sup);
+  (if not (TS.subset must sup) then
+     Msg.err (fun m ->
+           m
+             "Exp_bounds.bounds@ %a@ with@\nsubst= %a@\n%a@\nmust(%a)=@ \
+              %a@\nsup(%a)=@ %a@."
+             Elo.pp_exp exp
+             Fmtc.(brackets @@ list @@ parens @@ pair Var.pp Tuple.pp) subst
+             Domain.pp domain
+             Elo.pp_exp exp
+             TS.pp must
+             Elo.pp_exp exp
+             TS.pp sup)
+  );
   { must; sup; may = TS.diff sup must }  
 
 (* Helper function.  NOTICE: [may] is voluntarily wrong because its
@@ -117,7 +145,7 @@ and bounds_prim_exp subst domain pe =
     | RBin (e1, Diff ,e2) -> 
         let b1 = bounds_exp subst domain e1 in
         let b2 = bounds_exp subst domain e2 in
-        make_bounds (TS.diff b1.must b2.must) (TS.diff b1.sup b2.sup)
+        make_bounds (TS.diff b1.must b2.must) (TS.diff b1.sup b2.must) (* b2.MUST! *)
     | RBin (e1, Join ,e2) -> 
         let b1 = bounds_exp subst domain e1 in
         let b2 = bounds_exp subst domain e2 in
