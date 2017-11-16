@@ -34,4 +34,3 @@ val hash : t -> int
 include Intf.Print.S with type t := t
   
 include Intf.COMPARE with type t := t
-

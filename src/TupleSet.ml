@@ -95,7 +95,6 @@ let union b1 b2 =
 
 let diff = TS.diff
 
-
 let map f ts =
   TS.to_seq ts
   |> Sequence.map f

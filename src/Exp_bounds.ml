@@ -145,7 +145,9 @@ and bounds_prim_exp subst domain pe =
     | RBin (e1, Diff ,e2) -> 
         let b1 = bounds_exp subst domain e1 in
         let b2 = bounds_exp subst domain e2 in
-        make_bounds (TS.diff b1.must b2.must) (TS.diff b1.sup b2.must) (* b2.MUST! *)
+        (* compute the tuples that are necessarily in e1 and necessarily not in e2 *)
+        let must_diff = TS.filter (fun tup -> not (TS.mem tup b2.sup)) b1.must in
+        make_bounds must_diff (TS.diff b1.sup b2.must) (* b2.MUST! *)
     | RBin (e1, Join ,e2) -> 
         let b1 = bounds_exp subst domain e1 in
         let b2 = bounds_exp subst domain e2 in
