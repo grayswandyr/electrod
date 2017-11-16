@@ -62,10 +62,10 @@
   
   -- (not (eventually (some some/0 : z {true})))
   LTLSPEC
-  !(F z$l);
+  !(F z-l);
   
   
-  VAR z$l : boolean;
+  VAR z-l : boolean;
   
   
   Elapsed* (glob)

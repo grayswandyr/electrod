@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-11-15 CET 15:50:19 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -36,7 +36,7 @@ let letter = [ 'A'-'Z' 'a'-'z' ]
 
 let dollar = '$'
 
-let plain_id = dollar? letter (letter | digit | '_' | '#')*
+let plain_id = ('_' dollar)? letter (letter | digit | '_' | '#')*
 
 let ident = plain_id (dollar number)?
 
@@ -45,7 +45,7 @@ let loop_msg = "-- Loop starts here"
 
 let state = "->" whitespace+ "State:" whitespace+ digit '.' digit whitespace+ "<-"
 
-let rel_sep = '$'
+let rel_sep = '-'
 
 let ident_sep = '-'
 
