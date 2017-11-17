@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-11-17 CET 10:41:17 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -62,7 +62,7 @@ let print_generated =
 
 let outcome_format = 
   let doc =
-    {|Format for the outcome of analysis. \
+    {|Format for the outcome of analysis. 
       $(docv) must be one of `chrono', `plain' or `xml'|}
   in
   Arg.(value

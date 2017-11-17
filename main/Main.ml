@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-11-17 CET 10:43:46 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -125,8 +125,12 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis pr
     in
 
     if print_generated then
-      Logs.app (fun m -> m "Generated file:@.%a"
-                            (Elo_to_SMV1.pp ~margin:80) model);
+      Logs.app (fun m ->
+            m "Generated file:@.\
+               --------------------------------------------------------------------------------@\n\
+               %a\
+               --------------------------------------------------------------------------------"
+              (Elo_to_SMV1.pp ~margin:80) model);
 
     let res = Elo_to_SMV1.analyze ~conversion_time ~cmd ~keep_files ~no_analysis
                 ~elo:elo ~script ~file model in
@@ -135,7 +139,14 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis pr
         IO.with_out (Filename.chop_extension file ^ ".xml")
           (fun chan -> Format.with_out_chan chan (Outcome.pp ~format:`XML) res);
 
-        Msg.info (fun m -> m "Analysis yields:@.%a"
+        Logs.app (fun m ->
+              if Outcome.some_trace res then
+                m "Specification is: SAT"
+              else
+                m "Specification is: UNSAT"
+            );
+
+        Msg.info (fun m -> m "Outcome:@.%a"
                              (Outcome.pp ~format:outcome_format) res)
       end);
 

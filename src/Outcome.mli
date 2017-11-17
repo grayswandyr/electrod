@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-11-17 CET 10:38:20 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -41,6 +41,8 @@ type t = private {
 
 (** Represents the absence of trace (so usually: UNSAT). *)
 val no_trace : int -> Mtime.span -> Mtime.span -> t
+
+val some_trace : t -> bool
 
 (** The list must be nonempty and must contain at least one lasso target. *)
 val trace : int -> Mtime.span -> Mtime.span -> state list -> t

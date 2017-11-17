@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-11-17 CET 10:36:05 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -67,6 +67,9 @@ let trace nbvars conversion_time analysis_time states =
     nbvars;
     conversion_time
   }
+
+let some_trace { trace; _ } =
+  Option.is_some trace
 
 
 open Fmtc
