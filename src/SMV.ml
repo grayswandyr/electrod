@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-17 CET 14:34:45 David Chemouil>
+ * Time-stamp: <2017-11-20 CET 15:45:10 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -175,7 +175,7 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
           | False  -> pf out "FALSE"
           | Atomic at -> 
               begin
-                variables := Sequence.cons at !variables;
+                variables := Sequence.(union (singleton at) !variables);
                 pf out "%a" pp_atomic at
               end
           (* tweaks, here, to force parenthese around immediate subformulas of Imp
@@ -373,7 +373,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     Format.pp_set_margin out old_margin;
 
     (* return the number of variables *)
-    S.length !variables
+    S.length rigid + S.length flexible
 
 
   let pp ?(margin = 80) out { elo; init; invariant; trans; property } =
@@ -447,7 +447,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
       let after_run = Mtime_clock.now () in
       let analysis_time = Mtime.span before_run after_run in
       if errcode <> 0 then
-        Msg.Fatal.solver_failed (fun args -> args "nuXmv" scr smv errcode errout)
+        Msg.Fatal.solver_failed (fun args -> args cmd scr smv errcode errout)
       else (* running nuXmv goes well: parse its output *)
         Msg.info (fun m -> m "Analysis done in %a" Mtime.Span.pp
                              analysis_time );
@@ -491,6 +491,10 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
           (let lexbuf = Lexing.from_string trace_str in
            (P.trace (SMV_trace_scanner.main Ltl.Atomic.split_string) lexbuf))
         in
-        Outcome.trace nbvars conversion_time analysis_time trace
+        if not @@ Outcome.loop_is_present trace then
+          Msg.Fatal.solver_bug (fun args ->
+                args cmd "trace is missing a loop state." scr smv)
+        else
+          Outcome.trace nbvars conversion_time analysis_time trace
         
   end

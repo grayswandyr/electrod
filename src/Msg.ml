@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-11-20 CET 15:47:24 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -379,9 +379,17 @@ module Fatal = struct
     fun solver scr smv errcode erroutput ->
     m ~header:(code 22)
       "%s@ failed@ with@ error@ code@ %d@ and@ error@ output:@\n%s@\n\
-       Script@ and@ model@ files@ kept@ at@ %S@ and@ %S,@ remember@ to@ remove@ them."
+       Script@ and@ model@ files@ kept@ at@ %S@ and@ %S,\
+       @ remember@ to@ remove@ them."
       solver errcode erroutput
       scr smv
+
+  let solver_bug args = err @@ fun m -> args @@
+    fun solver msg scr smv ->
+    m ~header:(code 23)
+      "bug in %s: %s@\n\
+       Script@ and@ model@ files@ kept@ at@ %S@ and@ %S,\
+       @ remember@ to@ remove@ them." solver msg scr smv
 end
 
   

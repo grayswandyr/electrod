@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-11-20 CET 15:35:40 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -55,9 +55,6 @@ end>
     | [_] -> []
     | hd::tl -> hd :: remove_last tl
     
-  let rec first_state_as_loop = function
-    | [] -> assert false
-    | hd::tl -> (Outcome.to_loop hd) :: tl
        
 %}
   
@@ -70,9 +67,7 @@ end>
 %public trace:
 states = state+ EOF 
     {
-      (if !met_one_loop
-       then remove_last states
-       else first_state_as_loop states)
+      remove_last states
     }
 
     state:

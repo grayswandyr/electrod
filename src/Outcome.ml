@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-17 CET 10:36:05 David Chemouil>
+ * Time-stamp: <2017-11-20 CET 15:42:33 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -45,6 +45,10 @@ let loop_state v = (Loop, v)
 
 let to_loop = function (_, v) -> loop_state v
 
+let loop_is_present trace = match trace with
+  | [] -> invalid_arg "Outcome.loop_is_present: empty states"
+  | _::_ ->
+      List.exists (function (Loop, _) -> true | (Plain, _) -> false) trace
 
 let no_trace nbvars conversion_time analysis_time =
   { trace = None;
@@ -60,7 +64,9 @@ let sort_states =
 
 let trace nbvars conversion_time analysis_time states =
   assert (states <> []
-          && List.exists (function (Loop, _) -> true | (Plain, _) -> false) states);
+          && List.exists
+               (function (Loop, _) -> true | (Plain, _) -> false) states)
+  ;
   {
     trace = Some (sort_states states);
     analysis_time;

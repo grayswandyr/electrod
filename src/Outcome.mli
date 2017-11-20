@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-17 CET 10:38:20 David Chemouil>
+ * Time-stamp: <2017-11-20 CET 15:43:21 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -52,6 +52,9 @@ val valuation : (Name.t, TupleSet.t) List.Assoc.t -> valuation
 val plain_state : valuation -> state
   
 val loop_state : valuation -> state
+
+(** Says whether a non-empty trace features a loop states. *)
+val loop_is_present : states -> bool
 
 (** Converts any state to a loop state *)
 val to_loop : state -> state
