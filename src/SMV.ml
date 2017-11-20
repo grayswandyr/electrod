@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-20 CET 17:15:53 David Chemouil>
+ * Time-stamp: <2017-11-20 CET 17:30:44 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -483,7 +483,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
         in
         if not @@ Outcome.loop_is_present trace then
           Msg.Fatal.solver_bug (fun args ->
-                args cmd "trace is missing a loop state." scr smv)
+                args cmd "trace is missing a loop state.")
         else
           Outcome.trace nbvars conversion_time analysis_time trace
         

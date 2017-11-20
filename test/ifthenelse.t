@@ -137,9 +137,5 @@
   Starting analysis: * (glob)
   [INFO] Analysis done in * (glob)
   [E0023] bug in nuXmv: trace is missing a loop state.
-          Script and model files kept at
-          * (glob)
-          * (glob)
-          remove them.
   Aborting (* (glob)
   [1]
