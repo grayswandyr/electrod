@@ -7,8 +7,6 @@
   MODULE main
   JUSTICE TRUE;
   
-  VAR z-l : boolean;
-  
   -- ((reflexive - iden) in none)
   INVAR
   TRUE;
@@ -60,5 +58,7 @@
   -- (not (eventually (some some/0 : z {true})))
   LTLSPEC
   !(F z-l);
+  
+  VAR z-l : boolean;
   --------------------------------------------------------------------------------
   Elapsed (wall-clock) time: * (glob)
