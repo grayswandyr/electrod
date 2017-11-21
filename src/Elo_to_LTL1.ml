@@ -610,7 +610,7 @@ module Make (Ltl : Solver.LTL) = struct
     method build_Prime __subst _ e' = fun tuple -> next @@ e' tuple
 
     method build_RIte __subst _ _ _ f_r e1_r e2_r = fun tuple -> 
-      f_r @=> lazy (e1_r tuple +&& lazy (not_ f_r @=> lazy (e2_r tuple)))
+      (f_r @=> lazy (e1_r tuple)) +&& lazy (not_ f_r @=> lazy (e2_r tuple))
 
 
     (* rbinop *)
