@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Time-stamp: <2017-11-20 CET 15:35:40 David Chemouil>
+ * Time-stamp: <2017-11-21 CET 16:45:00 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -70,11 +70,11 @@ states = state+ EOF
       remove_last states
     }
 
-    state:
-    loop = iboption(LOOP) STATE ntl = atomic*
+state:
+ loop = iboption(LOOP) STATE ntl = atomic*
     {
       let valu = Outcome.valuation @@ convert_name_tuple_l ntl in
-      if loop then
+      if loop && not !met_one_loop then (* nuXmv may report several loop states, we only keep one *)
         (met_one_loop := true;
          Outcome.loop_state valu)
       else
