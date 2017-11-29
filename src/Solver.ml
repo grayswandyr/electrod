@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-29 CET 12:43:18 David Chemouil>
+ * Time-stamp: <2017-11-29 CET 14:25:22 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -332,7 +332,7 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
     | _ -> Neg t
              
   let count ps =
-    match List.filter (fun p -> p != False) ps with
+    match List.filter (fun p -> p <> False) ps with
       | [] -> num 0
       | props -> Count props
                                 

@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-11-29 CET 14:25:49 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -330,7 +330,7 @@ let compute_symmetries (pb : Raw.raw_problem) =
   | l1, l2 ->
      let len1 = List.length l1 in
      let len2 = List.length l2 in
-     if (len1 != len2) then
+     if (len1 <> len2) then
        let (id, _) = List.hd l1 in     
        Msg.Fatal.symmetry_wrongly_defined (fun args -> args pb.file id)
      else
