@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-29 CET 12:49:16 David Chemouil>
+ * Time-stamp: <2017-11-29 CET 12:52:50 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -413,7 +413,10 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
       end
     in
     (* TODO check whether nuXmv is installed first *)
-    let dir = Filename.dirname file in
+    let dir =
+      if keep_files then Filename.dirname file
+      else Filename.get_temp_dir_name ()
+    in
     let scr = make_script_file dir script in
     let before_generation = Mtime_clock.now () in
     let smv, nbvars = make_model_file dir file model in

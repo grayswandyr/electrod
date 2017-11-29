@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-29 CET 12:43:43 David Chemouil>
+ * Time-stamp: <2017-11-29 CET 12:53:44 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -45,8 +45,9 @@ let script =
 
 let keep_files =
   let doc =
-    {|If present, keep the generated model and script files (in the same 
-      directory as ELECTROD_FILE).|}
+    {|If present, keep the generated model and script files in the same 
+      directory as ELECTROD_FILE (otherwise, files are generated in an 
+      OS-specific directory for temporary files). |}
   in
   Arg.(value & flag & info ["kg"; "keep-generated"] ~doc)
 
