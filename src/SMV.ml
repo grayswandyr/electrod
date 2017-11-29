@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-20 CET 17:30:44 David Chemouil>
+ * Time-stamp: <2017-11-29 CET 12:49:16 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -371,9 +371,9 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     ignore (pp_count_variables ~margin out { elo; init; invariant; trans; property })
   
   (* write in temp file *)
-  let make_model_file infile model =
+  let make_model_file dir infile model =
     let src_file = Filename.basename infile in
-    let tgt = Filename.temp_file (src_file ^ "-") ".smv" in
+    let tgt = Filename.temp_file ~temp_dir:dir (src_file ^ "-") ".smv" in
     let nbvars = ref 0 in
     IO.with_out tgt 
       (fun out ->
@@ -381,10 +381,10 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     (tgt, !nbvars)
 
   
-  let make_script_file = function
+  let make_script_file dir = function
     | Solver.File filename -> filename (* script given on the command line *)
     | Solver.Default default ->
-        let tgt = Filename.temp_file "electrod-" ".scr" in
+        let tgt = Filename.temp_file ~temp_dir:dir "electrod-" ".scr" in
         IO.with_out tgt (fun out -> IO.write_line out default);
         tgt
   
@@ -393,8 +393,18 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
   let analyze ~conversion_time ~cmd ~script ~keep_files
         ~no_analysis ~elo ~file model : Outcome.t=
     let keep_or_remove_files scr smv =
-      if keep_files then 
-        Logs.app (fun m -> m "Keeping the script and SMV files")
+      if keep_files then
+        begin
+          if no_analysis then
+            Logs.app
+              (fun m ->
+                 m "@[<hv2>Keeping the script and SMV files at:@ %s@\n%s@]"
+                   scr smv)
+          else 
+            Logs.app
+              (fun m ->
+                 m "@[<hv2>Keeping the script and SMV files@]")
+        end
       else begin
         (match script with
           | Solver.Default _ -> IO.File.remove_noerr scr
@@ -403,9 +413,10 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
       end
     in
     (* TODO check whether nuXmv is installed first *)
-    let scr = make_script_file script in
+    let dir = Filename.dirname file in
+    let scr = make_script_file dir script in
     let before_generation = Mtime_clock.now () in
-    let smv, nbvars = make_model_file file model in
+    let smv, nbvars = make_model_file dir file model in
     let after_generation = Mtime_clock.now () in
     Msg.info (fun m ->
           let size, unit_ =

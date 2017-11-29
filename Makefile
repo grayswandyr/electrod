@@ -15,7 +15,7 @@ MAIN = electrod
 CRAM3 := $(shell command -v cram3 2> /dev/null)
 CRAM2 := $(shell command -v cram 2> /dev/null)
 
-all: build
+all: native
 
 clean:
 	$(OCB) -clean

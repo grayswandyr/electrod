@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-17 CET 10:41:17 David Chemouil>
+ * Time-stamp: <2017-11-29 CET 12:43:43 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -21,15 +21,16 @@ open Cmdliner
  
 let infile =
   let doc = "File to process." in
-  Arg.(required & pos 0 (some non_dir_file) None
-       & info [] ~docv:"FILE" ~doc )
+  Arg.(required & pos 0 (some ~none:"missing FILE" non_dir_file) None
+       & info [] ~docv:"ELECTROD_FILE" ~doc )
 
 
 let tool =
   let doc = {|Analysis tool to rely upon. $(docv) must be one of `nuXmv' or 
               `NuSMV'.|}
   in
-  Arg.(value & opt (enum [ ("nuXmv", Main.NuXmv); ("NuSMV", Main.NuSMV)]) Main.NuXmv
+  Arg.(value
+       & opt (enum [ ("nuXmv", Main.NuXmv); ("NuSMV", Main.NuSMV)]) Main.NuXmv
        & info ["t"; "tool"] ~docv:"TOOL" ~doc)
 
 let script =
@@ -43,7 +44,9 @@ let script =
        & info ["s"; "script"] ~docv:"SCRIPT_FILE" ~doc)
 
 let keep_files =
-  let doc = {|If present, do not delete the model and script files after use.|}
+  let doc =
+    {|If present, keep the generated model and script files (in the same 
+      directory as ELECTROD_FILE).|}
   in
   Arg.(value & flag & info ["kg"; "keep-generated"] ~doc)
 
