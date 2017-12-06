@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-12-06 CET 09:47:54 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -94,6 +94,8 @@ val transitive_closure_is : t -> t
 
 (** Filters tuples depending on a predicate.  *)
 val filter : (Tuple.t -> bool) -> t -> t
+
+val map : (Tuple.t -> Tuple.t) -> t -> t
 
 val to_seq : t -> Tuple.t CCSet.sequence
 val to_list : t -> Tuple.t list

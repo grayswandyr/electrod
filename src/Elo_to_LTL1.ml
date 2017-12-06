@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-12-06 CET 09:49:52 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -679,22 +679,51 @@ module Make (Ltl : Solver.LTL) = struct
     method build_Diff __subst _ _ e' f' = fun tuple ->
       e' tuple +&& lazy (not_ (f' tuple))
 
-    method build_Over subst _ s r' s' = fun tuple ->
+    (* [[r++ s]](a) = [[s]](a) or ([[r]](a) and not [[pi_1(s)]](a_1)) 
+
+       which for the last part gives:
+
+       AND_{t in must(s)} [ if a1 = pi_1(t) then false_ else true_]
+
+       and AND_{t in may(s)} not [ [[s]](a_1 t_2 ...)]
+    *)
+    method build_Over subst __r s r' s' = fun tuple ->
+      Msg.debug (fun m ->
+            m "build_Over <-- [[%a ++ %a]](%a)"
+              Elo.pp_exp __r
+              Elo.pp_exp s
+              Tuple.pp tuple
+          );
       let { must; may; _ } = env#must_may_sup subst s in
       let proj1 x = Tuple.(of_list1 [ith 0 x]) in
       let mustpart =
         wedge
           ~range:(TS.to_seq must)
           (fun t -> lazy (if proj1 t = proj1 tuple then false_ else true_))
-      in 
-      let maypart =
-        not_ @@ vee 
-                  ~range:(TS.to_seq may)
-                  (fun t -> lazy (
-                     let _, from_snd_elt = Tuple.split t 1 in
-                     s' @@ Tuple.(proj1 tuple @@@ from_snd_elt)))
       in
-      s' tuple +|| lazy (r' tuple +&& lazy mustpart +&& lazy maypart)
+      (* [newmay] helps compute the last AND above: it removes duplicate tuples
+         that may appear in this translation: *)
+      let newmay =
+        let mktup t =
+          let _, from_snd_elt = Tuple.split t 1 in
+          Tuple.(proj1 tuple @@@ from_snd_elt)
+        in
+        TS.map mktup may
+      in
+      let maypart =
+        not_ @@ vee ~range:(TS.to_seq newmay) (fun t -> lazy (s' t))
+      in
+      s' tuple +|| lazy (mustpart +&& lazy ((r' tuple) +&& lazy maypart))
+      |> Fun.tap
+           (fun res ->
+              Msg.debug
+                (fun m ->
+                   m "build_Over [[%a ++ %a]](%a) = %a"
+                     Elo.pp_exp __r
+                     Elo.pp_exp s
+                     Tuple.pp tuple
+                     Ltl.pp res
+                ))
 
 
     (* runop *)
