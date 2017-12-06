@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-29 CET 12:52:50 David Chemouil>
+ * Time-stamp: <2017-12-06 CET 13:58:12 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -424,17 +424,17 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     Msg.info (fun m ->
           let size, unit_ =
             let s = float_of_int @@ Unix.((stat smv).st_size) in
-            if s < 1_000. then
+            if s < 1_024. then
               (s, "B")
-            else if s < 1_000_000. then
-              (s /. 1_000., "KB")
-            else if s < 1_000_000_000. then
-              (s /. 1_000_000., "MB")
+            else if s < 1_048_576. then
+              (s /. 1_024., "KB")
+            else if s < 1_073_741_824. then
+              (s /. 1_048_576., "MB")
             else
-              (s /. 1_000_000_000., "GB")
+              (s /. 1_073_741_824., "GB")
           in
-          m "SMV file (size: %.3f%s) generated in %a"
-            size unit_
+          m "SMV file (size: %.0f%s) generated in %a"
+            (Float.round size) unit_
             Mtime.Span.pp (Mtime.span before_generation after_generation));
     if no_analysis then begin
       keep_or_remove_files scr smv;
