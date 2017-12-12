@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-12-06 CET 09:49:52 David Chemouil>
+ * Time-stamp: <2017-12-11 CET 16:49:52 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -65,7 +65,7 @@ module Make (Ltl : Solver.LTL) = struct
              Pair.pp ~sep:", "
                (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp)
                (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp)) res)
-      
+
 
   (* given a 2-tuple set, this function computes the maximum length of
      a path (x1, ... xn) such that each 2-tuple (xi, xi+1) is in the
@@ -74,7 +74,7 @@ module Make (Ltl : Solver.LTL) = struct
   let compute_tc_length ts =
     let tsarity = TS.inferred_arity ts in
     Msg.debug (fun m ->
-        m "compute_tc_length: arity of relation : %d\n" tsarity);
+          m "compute_tc_length: arity of relation : %d\n" tsarity);
 
     assert (tsarity = 2 || tsarity = 0);
     if tsarity = 0 then 0
@@ -83,38 +83,38 @@ module Make (Ltl : Solver.LTL) = struct
       let dom, cod = compute_domain_codomain ts in    
       let core_ats = S.inter ~eq:Atom.equal ~hash:Atom.hash dom cod in
       Msg.debug (fun m ->
-          m "compute_tc_length: inter %a %a = %a\n"
-            (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp) dom
-            (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp) cod
-            (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp) core_ats
-        );   
+            m "compute_tc_length: inter %a %a = %a\n"
+              (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp) dom
+              (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp) cod
+              (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp) core_ats
+          );   
       let core_length = S.length core_ats in
       (* is it possible that x1 is not in the core (intersection of the
-       domain and the codomain) ? *)
+         domain and the codomain) ? *)
       let first_elt_in_core =
         S.subset ~eq:Atom.equal ~hash:Atom.hash dom core_ats in
       Msg.debug (fun m ->
-          m "compute_tc_length: first_elt_in_core = %B\n"
-            first_elt_in_core
-        );
-      
+            m "compute_tc_length: first_elt_in_core = %B\n"
+              first_elt_in_core
+          );
+
       (* is it possible that xn is not in the core (intersection of the
-       domain and the codomain) ? *)
+         domain and the codomain) ? *)
       let last_elt_in_core =
         S.subset ~eq:Atom.equal ~hash:Atom.hash cod core_ats in
       Msg.debug (fun m ->
-          m "compute_tc_length: last_elt_in_core = %B\n"
-            last_elt_in_core
-        );
-      
+            m "compute_tc_length: last_elt_in_core = %B\n"
+              last_elt_in_core
+          );
+
       (match first_elt_in_core, last_elt_in_core with
-      | true, true -> core_length
-      | false, false -> core_length + 2
-      | _ -> core_length + 1)
+        | true, true -> core_length
+        | false, false -> core_length + 2
+        | _ -> core_length + 1)
 
       |> Fun.tap (fun res ->
-          Msg.debug (fun m -> m "compute_tc_length --> length = %d" res))
-           
+            Msg.debug (fun m -> m "compute_tc_length --> length = %d" res))
+
 
   (* computes the transitive closure of the term acc_term by k iterative
      squares (t+t.t)+(t+t.t)(t+t.t) + ... *)
@@ -169,17 +169,17 @@ module Make (Ltl : Solver.LTL) = struct
                  None) s_sup_list
           |> rev_append pairs) empty r_sup_list
     |> to_seq
-    (* |> Fun.tap (fun res -> *)
-    (*       Msg.debug (fun m -> *)
-    (*             m "eligible_pairs --> %a" *)
-    (*               Fmtc.(braces_ @@ Sequence.pp_seq *)
-    (*                     @@ parens @@ Pair.pp ~sep:", " Tuple.pp Tuple.pp) res)) *)
+  (* |> Fun.tap (fun res -> *)
+  (*       Msg.debug (fun m -> *)
+  (*             m "eligible_pairs --> %a" *)
+  (*               Fmtc.(braces_ @@ Sequence.pp_seq *)
+  (*                     @@ parens @@ Pair.pp ~sep:", " Tuple.pp Tuple.pp) res)) *)
 
 
 
   class ['subst] converter env = object (self : 'self)
     constraint 'subst = (Var.t, Tuple.t) CCList.Assoc.t
-                                                                
+
     inherit ['self] GenGoalRecursor.recursor as super
 
     method visit_'v __subst = Fun.id
@@ -570,7 +570,7 @@ module Make (Ltl : Solver.LTL) = struct
       assert false
 
     method build_Ident subst _ id = fun tuple ->
-      ( match id with
+      (match id with
         | Elo.Var v ->
             if Tuple.equal (CCList.Assoc.get_exn ~eq:Var.equal v subst) tuple
             then
@@ -594,14 +594,14 @@ module Make (Ltl : Solver.LTL) = struct
               env#make_atom r tuple
             else
               false_)
-      (* |> Fun.tap (fun res -> *)
-      (*       Msg.debug (fun m -> *)
-      (*             m "build_Ident [[%a]](%a) (with subst %a) --> %a" *)
-      (*               Elo.pp_ident id *)
-      (*               Tuple.pp tuple *)
-      (*               Fmtc.(List.pp @@ brackets @@ Pair.pp ~sep:":=" Var.pp Tuple.pp) subst *)
-      (*               Ltl.pp res *)
-      (*           )) *)
+    (* |> Fun.tap (fun res -> *)
+    (*       Msg.debug (fun m -> *)
+    (*             m "build_Ident [[%a]](%a) (with subst %a) --> %a" *)
+    (*               Elo.pp_ident id *)
+    (*               Tuple.pp tuple *)
+    (*               Fmtc.(List.pp @@ brackets @@ Pair.pp ~sep:":=" Var.pp Tuple.pp) subst *)
+    (*               Ltl.pp res *)
+    (*           )) *)
 
     method build_None_ __subst = fun _ -> false_
 
@@ -610,7 +610,7 @@ module Make (Ltl : Solver.LTL) = struct
     method build_Prime __subst _ e' = fun tuple -> next @@ e' tuple
 
     method build_RIte __subst _ _ _ f_r e1_r e2_r = fun tuple -> 
-      (f_r @=> lazy (e1_r tuple)) +&& lazy (not_ f_r @=> lazy (e2_r tuple))
+      (f_r @=> lazy (e1_r tuple)) +&& lazy ((not_ f_r) @=> lazy (e2_r tuple))
 
 
     (* rbinop *)
@@ -634,14 +634,14 @@ module Make (Ltl : Solver.LTL) = struct
       let sup_s = (env#must_may_sup subst s).sup in
       let pairs = eligible_pairs (tuple, sup_r, sup_s) in
       vee ~range:pairs (fun (bs, cs) -> lazy (r' bs +&& lazy (s' cs)))
-      (* |> Fun.tap (fun res -> *)
-      (*       Msg.debug (fun m -> *)
-      (*             m "build_Join [[%a . %a]](%a) --> %a" *)
-      (*               Elo.pp_exp r *)
-      (*               Elo.pp_exp s *)
-      (*               Tuple.pp tuple *)
-      (*               Ltl.pp res *)
-      (*           )) *)
+    (* |> Fun.tap (fun res -> *)
+    (*       Msg.debug (fun m -> *)
+    (*             m "build_Join [[%a . %a]](%a) --> %a" *)
+    (*               Elo.pp_exp r *)
+    (*               Elo.pp_exp s *)
+    (*               Tuple.pp tuple *)
+    (*               Ltl.pp res *)
+    (*           )) *)
 
 
 
@@ -663,18 +663,18 @@ module Make (Ltl : Solver.LTL) = struct
       let ar_r = Option.get_exn r.G.arity in
       let t1, t2 = Tuple.split tuple ar_r in
       r' t1 +&& lazy (s' t2)
-      (* |> Fun.tap (fun res -> *)
-      (*       Msg.debug *)
-      (*         (fun m -> m "build_Prod [[%a->%a]](%a) (split as %a, %a) = %a (ar(%a) = %d)" *)
-      (*                     Elo.pp_exp r *)
-      (*                     Elo.pp_exp __s *)
-      (*                     Tuple.pp tuple *)
-      (*                     Tuple.pp t1 *)
-      (*                     Tuple.pp t2 *)
-      (*                     Ltl.pp res *)
-      (*                     Elo.pp_exp r *)
-      (*                     ar_r *)
-      (*         )) *)
+    (* |> Fun.tap (fun res -> *)
+    (*       Msg.debug *)
+    (*         (fun m -> m "build_Prod [[%a->%a]](%a) (split as %a, %a) = %a (ar(%a) = %d)" *)
+    (*                     Elo.pp_exp r *)
+    (*                     Elo.pp_exp __s *)
+    (*                     Tuple.pp tuple *)
+    (*                     Tuple.pp t1 *)
+    (*                     Tuple.pp t2 *)
+    (*                     Ltl.pp res *)
+    (*                     Elo.pp_exp r *)
+    (*                     ar_r *)
+    (*         )) *)
 
     method build_Diff __subst _ _ e' f' = fun tuple ->
       e' tuple +&& lazy (not_ (f' tuple))
@@ -809,8 +809,7 @@ module Make (Ltl : Solver.LTL) = struct
 
     method make_atom (name : Name.t) (t : Tuple.t) =
       assert (Domain.mem name elo.Elo.domain);
-      let atom = Atomic.make name t in
-      Ltl.atomic atom
+      Ltl.atomic @@ Atomic.make name t 
 
     method is_const (name : Name.t) =
       assert (Domain.mem name elo.Elo.domain);
@@ -818,7 +817,7 @@ module Make (Ltl : Solver.LTL) = struct
   end
 
   (* Computes the color (Invar, Static_prop, Init or Temporal) of an
-  elo formula *)                                     
+     elo formula *)                                     
   let color elo elo_fml =
     let open Elo in
     let open Invar_computation in
@@ -827,11 +826,11 @@ module Make (Ltl : Solver.LTL) = struct
     color
 
 
-  
+
   let formula_as_comment fml =
     let str = Fmt.to_to_string Elo.pp_fml fml in
     "-- " ^ String.replace ~which:`All ~sub:"\n" ~by:"\n-- " str
-             
+
   (* Converts an Elo formula to an LTL formula, gathering at the same time the
      rigid and flexible variables having appeared during the walk. *)
   let convert elo elo_fml =
@@ -840,6 +839,6 @@ module Make (Ltl : Solver.LTL) = struct
     let ltl_fml = (new converter env)#visit_fml [] elo_fml in
     (formula_as_comment elo_fml, ltl_fml)
 
-      
+
 end
 

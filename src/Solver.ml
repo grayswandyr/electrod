@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-29 CET 14:25:22 David Chemouil>
+ * Time-stamp: <2017-12-12 CET 13:19:07 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -227,7 +227,6 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
           | _ -> And (p, q)
 
   and or_ p1 p2 = match p1, p2 with
-    | Not notp1, _ -> implies notp1 p2
     | True, _ -> true_
     | False, lazy p -> p
     | Atomic at1, lazy (Atomic at2) when Atomic.equal at1 at2 -> p1
@@ -240,9 +239,9 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
   and not_ p = match p with
     | True -> false_
     | False -> true_ 
-    | And (p, q) -> or_ (not_ p) (lazy (not_ q))
-    | Or (p, q) -> and_ (not_ p) (lazy (not_ q))
-    | Imp (p, q) -> and_ p (lazy (not_ q))
+    (* | And (p, q) -> or_ (not_ p) (lazy (not_ q))
+     * | Or (p, q) -> and_ (not_ p) (lazy (not_ q))
+     * | Imp (p, q) -> and_ p (lazy (not_ q)) *)
     | Not q -> q
     | _ -> Not p
 

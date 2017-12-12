@@ -112,9 +112,9 @@
   -- }
   TRANS
   (((rel-a1 & (!rel-a2 & !rel-a3)) -> next(r-a1)) &
-     ((rel-a1 -> (rel-a2 | rel-a3)) ->
+     (!(rel-a1 & (!rel-a2 & !rel-a3)) ->
         (((rel-a2 & (!rel-a1 & !rel-a3)) -> next(r-a2)) &
-           ((rel-a2 -> (rel-a1 | rel-a3)) ->
+           (!(rel-a2 & (!rel-a1 & !rel-a3)) ->
               ((rel-a3 & (!rel-a1 & !rel-a2)) -> next(r-a3))
            )
         )
