@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-29 CET 12:10:06 David Chemouil>
+ * Time-stamp: <2017-12-13 CET 14:55:56 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 

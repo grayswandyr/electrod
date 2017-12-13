@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-12-13 CET 11:58:41 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -39,14 +39,17 @@ and raw_declaration =
   | DConst of Raw_ident.t * int option * raw_scope
   | DVar of Raw_ident.t * int option * raw_scope * raw_scope option
 
+and raw_multiplicity =
+  [ `Lone | `One ] option
+
 and raw_scope = 
   | SExact of raw_bound
-  | SInexact of raw_bound * raw_bound
+  | SInexact of raw_bound * raw_multiplicity * raw_bound
 
 and raw_bound = 
   | BUniv
   | BRef of Raw_ident.t         (** reference to a previously-defined {i set} *)
-  | BProd of raw_bound * raw_bound
+  | BProd of raw_bound * raw_multiplicity * raw_bound
   | BUnion of raw_bound * raw_bound
   | BElts of raw_element list
 
@@ -83,7 +86,7 @@ let buniv = BUniv
 
 let bref name = BRef name
 
-let bprod b1 b2 = BProd (b1, b2)
+let bprod mult b1 b2 = BProd (mult, b1, b2)
 
 let bunion b1 b2 = BUnion (b1, b2)
 
@@ -91,7 +94,7 @@ let belts elts = BElts elts
 
 let sexact b = SExact b
 
-let sinexact b1 b2 = SInexact (b1, b2)
+let sinexact b1 mult b2 = SInexact (b1, mult, b2)
 
 let dconst atom arity scope = DConst (atom, arity, scope)
 

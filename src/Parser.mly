@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-12-13 CET 14:23:39 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -68,7 +68,7 @@ let exp_no_arity = G.exp (Some 0)
 %nonassoc HASH
 %left OVERRIDE
 %left INTER
-%right ARROW
+%left ARROW
 %left LPROJ
 %left RPROJ
 %left LBRACKET                  (* for box join *)
@@ -127,8 +127,8 @@ next_scope: THEN sc = scope
 %inline scope: 
 	b = bound
 	{ R.sexact b }
-	| b1 = bound b2 = bound
-	{ R.sinexact b1 b2}
+	| b1 = bound mult = boundmult? b2 = bound
+	{ R.sinexact b1 mult b2 }
 
 bound: 
 	UNIV
@@ -137,12 +137,18 @@ bound:
   { R.bref (Raw_ident.ident id $startpos(id) $endpos(id)) }
 	| b = parens(bound)
 	{ b }
-	| b1 = bound ARROW b2 = bound
-	{ R.bprod b1 b2 }
+	| b1 = bound ARROW mult = boundmult? b2 = bound
+	{ R.bprod b1 mult b2 }
 	| b1 = bound PLUS b2 = bound
 	{ R.bunion b1 b2  }
   | elts = braces(element*)
-	{ R.belts elts }
+  { R.belts elts }
+
+boundmult:
+  LONE
+   { `Lone }
+   | ONE
+   { `One }
 
 element:
   i = interval  /* necessarily: at least two 1-tuples */

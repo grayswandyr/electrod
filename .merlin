@@ -1,6 +1,6 @@
 S src/** 
 B _build/**
-FLG -w +A
+FLG -w +A-4
 FLG -short-paths
 PKG cmdliner
 PKG containers

@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-12-13 CET 13:30:29 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -16,15 +16,23 @@
 
 (** Relation scopes. *)
 
+type relation = private
+  | Plain_relation of TupleSet.t * TupleSet.t (** inv: inf in sup *)
+  | Partial_function of int * TupleSet.t (** [int] is the domain arity (inv: >= 0); [inf] = empty *)
+  | Total_function of int * TupleSet.t (** [int] is the domain arity (inv: >= 0); [inf] = empty *)
+                              
 type t = private
   | Exact of TupleSet.t             (** means: lower bound = upper bound *)
-  | Inexact of TupleSet.t * TupleSet.t (** invariant: lower bound <> upper bound *)
+  | Inexact of relation 
 
 
 (** {1 Constructors} *)
                               
 val exact : TupleSet.t -> t
-val inexact : TupleSet.t -> TupleSet.t -> t
+val plain_relation : TupleSet.t -> TupleSet.t -> relation
+val partial_function : int -> TupleSet.t -> relation
+val total_function : int -> TupleSet.t -> relation
+val inexact : relation -> t
 
 (** [included_in ts scope] tells whether [ts] is in the scope (meaning
     it also contains the lower bound of the scope if the latter is

@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-20 CET 17:31:34 David Chemouil>
+ * Time-stamp: <2017-12-13 CET 14:48:20 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -130,7 +130,7 @@ end
     (AT WORST, DELETE THE MESSAGE AND LET THE NUMBER BE LOST). ONLY ADD MESSAGES
     AT THE {b END} OF THE FOLLOWING MESSAGING MODULES. *)
 let code num =
-  Printf.sprintf "%04d" num
+  Printf.sprintf "%03d" num
 
 
 
@@ -387,7 +387,36 @@ module Fatal = struct
   let solver_bug args = err @@ fun m -> args @@
     fun solver msg ->
     m ~header:(code 23)
-      "bug in %s: %s" solver msg 
+      "bug in %s: %s" solver msg
+
+  let no_multiplicity_allowed_here args = err @@ fun m -> args @@
+    fun infile id ->
+    let loc = Raw_ident.location id in
+    m ~header:(code 24)
+      "%a%a: %S: only one toplevel, 'lone' or 'one', multiplicity is allowed\ 
+       for relations"
+      (option @@ colon **> string) infile
+      Loc.pp loc
+      (Raw_ident.basename id)
+
+  let multiplicity_only_in_a_sup args = err @@ fun m -> args @@
+    fun infile id ->
+    let loc = Raw_ident.location id in
+    m ~header:(code 25)
+      "%a%a: %S: a multiplicity is only allowed in the upper bound of an \
+       inexact scope"
+      (option @@ colon **> string) infile
+      Loc.pp loc
+      (Raw_ident.basename id)
+
+  let inf_must_be_empty args = err @@ fun m -> args @@
+    fun infile id ->
+    let loc = Raw_ident.location id in
+    m ~header:(code 26)
+      "%a%a: the lower bound of %S must be empty as it is enumerable"
+      (option @@ colon **> string) infile
+      Loc.pp loc
+      (Raw_ident.basename id)
 end
 
   
@@ -417,10 +446,10 @@ module Warn = struct
   let duplicate_elements args = warn @@ fun m -> args @@
     fun infile id bound_kind pp_bound bound ->
     let loc = Raw_ident.location id in
-    let pp_inf_sup (which : [ `Inf | `Sup] option) = match which with
-      | None -> ""
-      | Some `Inf -> " lower" 
-      | Some `Sup -> " upper" 
+    let pp_inf_sup (which : [ `Inf | `Sup | `Exact]) = match which with
+      | `Exact -> ""
+      | `Inf -> " lower" 
+      | `Sup -> " upper" 
     in
     m ~header:(code 3)
       "%a%a: the%s bound of %s contains duplicate elements...:@ %a\

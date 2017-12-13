@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-12-13 CET 12:00:14 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -40,14 +40,17 @@ and raw_declaration = private
   | DConst of Raw_ident.t * int option * raw_scope
   | DVar of Raw_ident.t * int option * raw_scope * raw_scope option
 
+and raw_multiplicity =
+  [ `Lone | `One ] option
+
 and raw_scope = private
   | SExact of raw_bound
-  | SInexact of raw_bound * raw_bound
+  | SInexact of raw_bound * raw_multiplicity * raw_bound
 
 and raw_bound = private
   | BUniv
   | BRef of Raw_ident.t           (** reference to a previously-defined {i set} *)
-  | BProd of raw_bound * raw_bound
+  | BProd of raw_bound * raw_multiplicity * raw_bound (** None/Some (lone/one) *)
   | BUnion of raw_bound * raw_bound
   | BElts of raw_element list
 
@@ -89,7 +92,7 @@ val buniv : raw_bound
 
 val bref : Raw_ident.t -> raw_bound
 
-val bprod : raw_bound -> raw_bound -> raw_bound
+val bprod : raw_bound -> raw_multiplicity -> raw_bound -> raw_bound
 
 val bunion : raw_bound -> raw_bound -> raw_bound
 
@@ -97,7 +100,7 @@ val belts : raw_element list -> raw_bound
 
 val sexact : raw_bound -> raw_scope
 
-val sinexact : raw_bound -> raw_bound -> raw_scope
+val sinexact : raw_bound -> raw_multiplicity -> raw_bound -> raw_scope
 
 val dconst : Raw_ident.t -> int option -> raw_scope -> raw_declaration
 

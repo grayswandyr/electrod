@@ -136,6 +136,6 @@
   [INFO] SMV file * (glob)
   Starting analysis: * (glob)
   [INFO] Analysis done in * (glob)
-  [E0023] bug in nuXmv: trace is missing a loop state.
+  [E023] bug in nuXmv: trace is missing a loop state.
   Aborting (* (glob)
   [1]

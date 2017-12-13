@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-29 CET 14:25:49 David Chemouil>
+ * Time-stamp: <2017-12-13 CET 14:44:51 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -129,7 +129,7 @@ let check_tuples_arities_and_duplicates infile id = function
          otherwise.
 
          We also pass the [id] of the concerned relation (useful for error message). *)
-let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
+let compute_bound infile domain (which : [ `Inf | `Sup | `Exact ]) id raw_bound =
   let open Relation in
   let open Scope in
   let rec walk = function
@@ -143,22 +143,27 @@ let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
             | None -> Msg.Fatal.undeclared_id (fun args -> args infile ref_id)
             | Some rel ->
                 match rel with
-                  | Const { scope = Exact b; _ }
-                    when TS.inferred_arity b = 1 -> b
-                  | Const { scope = Inexact (inf, sup); _ }
-                    when TS.inferred_arity sup = 1 ->
-                      (match which with
-                        | Some `Inf -> inf
-                        | Some `Sup -> sup
-                        | None ->
-                            Msg.Fatal.inexact_ref_used_in_exact_scope
-                            @@ fun args -> args infile id ref_id
-                      )
-                  | Const _ | Var _ ->
+                  | Const { scope = Exact b; _ } when TS.inferred_arity b = 1 -> b
+                  | Const { scope = (Inexact _ as sc); _ } ->
+                      let sup = Scope.sup sc in
+                      if TS.inferred_arity sup = 1 then
+                        (match which with
+                          | `Inf -> Scope.inf sc
+                          | `Sup -> sup
+                          | `Exact ->
+                              Msg.Fatal.inexact_ref_used_in_exact_scope
+                              @@ fun args -> args infile id ref_id
+                        )
+                      else
+                        Msg.Fatal.should_denote_a_constant_set
+                        @@ fun args -> args infile ref_id
+                  | Const { scope = Exact _; _} | Var _ ->
                       Msg.Fatal.should_denote_a_constant_set
                       @@ fun args -> args infile ref_id
         end
-    | BProd (rb1, rb2) ->
+    | BProd (rb1, Some _, rb2) ->
+        Msg.Fatal.no_multiplicity_allowed_here (fun args -> args infile id)
+    | BProd (rb1, None, rb2) ->
         (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BProd"); *)
         let b1 = walk rb1 in
         let b2 = walk rb2 in
@@ -184,14 +189,54 @@ let compute_bound infile domain (which : [ `Inf | `Sup] option) id raw_bound =
   
 
 let compute_scope infile domain id = function
+  | SExact BProd (_, Some _, _) ->
+      Msg.Fatal.multiplicity_only_in_a_sup (fun args -> args infile id)
+
+      
   | SExact raw_b ->
       (* Msg.debug (fun m -> m "Raw_to_elo.compute_scope:SExact"); *)
-      Scope.exact @@ compute_bound infile domain None id raw_b 
+      Scope.exact @@ compute_bound infile domain `Exact id raw_b 
 
-  | SInexact (raw_inf, raw_sup) ->
+  (* handle when we have a partial/total "function" 
+     with empty domain: r : {} (l)one (sthg) *)
+  | SInexact (raw_inf, Some function_type, raw_sup) ->
+      let inf = compute_bound infile domain `Inf id raw_inf in
+      if not @@ TS.is_empty inf then
+        Msg.Fatal.inf_must_be_empty @@ fun args -> args infile id
+      else
+        let sup = compute_bound infile domain `Sup id raw_sup in
+        (match function_type with
+          | `Lone -> 
+              Scope.(fun s -> inexact @@ partial_function 0 s) sup
+          | `One -> 
+              Scope.(fun s -> inexact @@ total_function 0 s) sup)
+
+  (* handle when we have a partial/total "function" with nonempty domain: r : {}
+     (sthg -> (l)one sthg)
+
+     REMARK: we rely on -> being declared *left associative* in the parser!, so
+     that the multiplicity indeed appears on the toplevel arrow of a scope
+     declaration! *)
+  | SInexact (raw_inf, None, BProd (rb1, Some function_type, rb2)) ->
+      let inf = compute_bound infile domain `Inf id raw_inf in
+      if not @@ TS.is_empty inf then
+        Msg.Fatal.inf_must_be_empty @@ fun args -> args infile id
+      else
+        let sup1 = compute_bound infile domain `Sup id rb1 in
+        let sup2 = compute_bound infile domain `Sup id rb2 in
+        let dom_ar = TS.inferred_arity sup1 in
+        let sup = TS.product sup1 sup2 in
+        (match function_type with
+          | `Lone -> 
+              Scope.(fun s -> inexact @@ partial_function dom_ar s) sup
+          | `One -> 
+              Scope.(fun s -> inexact @@ total_function dom_ar s) sup)
+
+
+  | SInexact (raw_inf, None, raw_sup) ->
       (* Msg.debug (fun m -> m "Raw_to_elo.compute_scope:SInexact"); *)
-      let inf = compute_bound infile domain (Some `Inf) id raw_inf in
-      let sup = compute_bound infile domain (Some `Sup) id raw_sup in
+      let inf = compute_bound infile domain `Inf id raw_inf in
+      let sup = compute_bound infile domain `Sup id raw_sup in
       let ar_inf = TS.inferred_arity inf in
       let ar_sup = TS.inferred_arity sup in
       if ar_inf <> ar_sup && not (TS.is_empty inf) then
@@ -203,7 +248,7 @@ let compute_scope infile domain id = function
       if TS.equal inf sup then
         Scope.exact sup
       else
-        Scope.inexact inf sup
+        Scope.(fun i s -> inexact @@ plain_relation i s) inf sup
           
 
 let check_name infile id domain = 
