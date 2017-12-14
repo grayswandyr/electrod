@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-12-13 CET 13:30:29 David Chemouil>
+ * Time-stamp: <2017-12-14 CET 11:27:35 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -48,6 +48,7 @@ val sup : t -> TupleSet.t
 val must : t -> TupleSet.t
 val may : t -> TupleSet.t
 
+val is_partial : t -> bool
 
 (** 0 if the arity cannot be inferred (= is unknown), [n > 0] otherwise. *)
 val inferred_arity : t -> int 

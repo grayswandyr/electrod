@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-12-14 CET 11:26:16 David Chemouil>
+ * Time-stamp: <2017-12-12 CET 14:52:13 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -14,36 +14,22 @@
  * License-Filename: LICENSES/MPL-2.0.txt
  ******************************************************************************)
 
-(** Provides a transformation from Electrod models to SMV models. Uses
-   enumerations when possible. *)
+(** Provides a transformation from Electrod models to SMV models.  *)
 
 open Containers
 
   
 module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
-  type t = {
-    sym : Symbol.t;             (* hashconsed strings *)
-    const : bool;
-    partial : bool;         (* is 'lone'? *)
-    dom_arity : int option;     (* arity of the domain (>=0) if functional, else None *)
-  }
-  
-  let compare { sym = sym1; _}  { sym = sym2; _ } = Symbol.compare sym1 sym2
-                                                      
-  let compare_string { sym = sym1; _}  { sym = sym2; _ } =
-    Symbol.compare_string sym1 sym2
+  type t = Symbol.t             (* hashconsed strings *)
+    
+  let compare = Symbol.compare
 
-  let pp fmt at = Symbol.pp fmt at.sym
+  let pp = Symbol.pp
 
-  let equal { sym = sym1; _}  { sym = sym2; _ } = Symbol.equal sym1 sym2
+  let equal = Symbol.equal
 
-  let hash at = Symbol.hash at.sym
+  let hash = Symbol.hash
 
-  let domain_arity t = t.dom_arity
-
-  let is_const t = t.const
-                     
-  let is_partial t = t.partial
 
   (* table tracking which pair (name, tuple) a string comes from. Uses
      hahsconsing to make this more efficient *)
@@ -55,18 +41,7 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
 
   let atom_sep = Fmtc.minus
   
-  let make domain name tuple =
-    let rel = Domain.get_exn name domain in
-    let dom_arity =
-      let open Scope in
-      match Relation.scope rel with
-        | Exact _ -> assert false
-        | Inexact Plain_relation _ -> None
-        | Inexact Partial_function (ar, _) -> Some ar
-        | Inexact Total_function (ar, _) -> Some ar
-    in
-    let const = Relation.is_const rel in
-    let partial = rel |> Relation.scope |> Scope.is_partial in
+  let make name tuple =
     let ats = Tuple.to_list tuple in
     let name_str =
       let s = Fmtc.to_to_string Name.pp name in
@@ -81,16 +56,16 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
         rel_sep
         Fmtc.(list ~sep:atom_sep Atom.pp) ats
     in 
-    let sym = Symbol.make full_str in
-    (* keep track of creations to allow to get original pairs back *)
-    HT.add names_and_tuples sym (name, tuple);
-    { sym; dom_arity; const; partial }
+    Symbol.make full_str
+    (* keep trace of creations to allow to get original pairs back *)
+    |> Fun.tap (fun hs -> HT.add names_and_tuples hs (name, tuple))
+
   
-  let split at =
-    HT.get names_and_tuples at.sym
+  let split sym =
+    HT.get names_and_tuples sym
                                  
   let split_string str =
-    HT.get names_and_tuples (Symbol.make str)
+    split @@ Symbol.make str
    
 end
 

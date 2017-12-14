@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-12-14 CET 09:59:37 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -40,6 +40,9 @@ let hash sym =
 
 let compare s1 s2 =
   s1.H.tag - s2.H.tag
+
+let compare_string s1 s2 =
+  String.compare s1.H.node s2.H.node
 
 let equal x1 x2 =
   x1 == x2

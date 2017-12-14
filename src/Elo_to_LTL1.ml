@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-12-11 CET 16:49:52 David Chemouil>
+ * Time-stamp: <2017-12-13 CET 15:44:01 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -809,7 +809,7 @@ module Make (Ltl : Solver.LTL) = struct
 
     method make_atom (name : Name.t) (t : Tuple.t) =
       assert (Domain.mem name elo.Elo.domain);
-      Ltl.atomic @@ Atomic.make name t 
+      Ltl.atomic @@ Atomic.make elo.Elo.domain name t 
 
     method is_const (name : Name.t) =
       assert (Domain.mem name elo.Elo.domain);

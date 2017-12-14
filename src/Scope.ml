@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-12-13 CET 13:26:01 David Chemouil>
+ * Time-stamp: <2017-12-14 CET 11:27:12 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -50,12 +50,16 @@ let total_function dom_arity sup =
 let inexact rel =
   Inexact rel
 
+let is_partial = function
+  | Inexact Partial_function _ -> true
+  | Inexact (Total_function _ | Plain_relation _)
+  | Exact _ -> false
+
 let inferred_arity = function
   | Exact b
   | Inexact (Plain_relation (_, b)
             | (Partial_function (_, b))
             | (Total_function (_, b))) -> TS.inferred_arity b
-
 
 let included_in tupleset = function
   | Exact exact ->

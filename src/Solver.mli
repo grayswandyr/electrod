@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-29 CET 12:43:13 David Chemouil>
+ * Time-stamp: <2017-12-14 CET 11:24:47 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -22,11 +22,23 @@ module type ATOMIC_PROPOSITION =
   sig
     type t
       
-    val make : Name.t -> Tuple.t -> t
+    val make : Domain.t -> Name.t -> Tuple.t -> t
       
     val compare : t -> t -> int
+    (** compare atoms as strings  *)
+    val compare_string : t -> t -> int
     val equal : t -> t -> bool
     val hash  : t -> int
+      
+
+    (** None if non-enumerable; otw Some ar with ar >= 0  *)
+    val domain_arity : t -> int option
+
+    (** Says whether the atomic proposition corresponds to a const or var relation *)
+    val is_const : t -> bool
+
+    (*% Says whether the atomic proposition is partial (= 'lone' enum)  *)
+    val is_partial : t -> bool
 
     (** [split_string s] returns the name and tuple that produced this string, [None]
         in case no such pair has arrived *)

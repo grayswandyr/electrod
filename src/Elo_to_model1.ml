@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-12-13 CET 15:43:52 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -47,9 +47,9 @@ struct
             if not (Name.equal name1 name2) then
               assert false
             else           
-              let at1 = Ltl.Atomic.make name1 tuple1 in
+              let at1 = Ltl.Atomic.make elo.domain name1 tuple1 in
               let at_fml1 = atomic at1 in
-              let at2 = Ltl.Atomic.make name2 tuple2 in
+              let at2 = Ltl.Atomic.make elo.domain name2 tuple2 in
               let at_fml2 = atomic at2 in
               or_ (implies at_fml1 (lazy at_fml2))
                 (lazy (and_ (iff at_fml1 at_fml2) (lazy fml_acc)))

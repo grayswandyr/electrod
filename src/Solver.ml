@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-12-12 CET 13:19:07 David Chemouil>
+ * Time-stamp: <2017-12-14 CET 11:24:56 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -21,10 +21,17 @@ open Containers
 module type ATOMIC_PROPOSITION = sig
   type t
 
-  val make : Name.t -> Tuple.t -> t
+  val make : Domain.t -> Name.t -> Tuple.t -> t
   val compare : t -> t -> int
+  val compare_string : t -> t -> int
   val equal : t -> t -> bool
   val hash  : t -> int
+
+  (* None if non-enumerable; otw Some ar with ar >= 0  *)
+  val domain_arity : t -> int option
+                            
+  val is_const : t -> bool
+  val is_partial : t -> bool  
 
   val split_string : string -> (Name.t * Tuple.t) option
   val split : t -> (Name.t * Tuple.t) option

@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-14 CET 14:06:50 David Chemouil>
+ * Time-stamp: <2017-12-14 CET 09:58:23 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -23,6 +23,8 @@ type t
 val make : string -> t
 
 val compare : t -> t -> int
+
+val compare_string : t -> t -> int
 
 val hash : t -> int
 

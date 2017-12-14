@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-12-06 CET 13:58:12 David Chemouil>
+ * Time-stamp: <2017-12-14 CET 11:37:56 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -281,8 +281,118 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
   let make ~elo ~ init ~invariant ~trans ~property =
     { elo ; init = init ; invariant = invariant ; trans = trans ; property }
 
-  let pp_decl sort out atomic =
-    Fmtc.pf out "%s %a : boolean;" sort Ltl.Atomic.pp atomic
+  let pp_plain_decl vartype out atomic =
+    Fmtc.pf out "%s %a : boolean;" vartype Ltl.Atomic.pp atomic
+
+  (* Takes a sequence of atomic propositions, and prints them. These atoms
+     corresponds to tuples in the 'may' part of a relation, but for given models
+     (and with decomposition in Paridnus), some tuples in the may part may not
+     be used at all in formulas of the SMV model, so before printing we first
+     get the actual tuples that may present. *)
+  let pp_enum_decl vartype out atomics =
+    (* associative map that gathers the possible tuples for a given (frozen) var
+    *)
+    let variable_ranges = ref [] in
+    (* first print the DEFINEs and gather the variables and their ranges *)
+    let pp_decl at = match Ltl.Atomic.domain_arity at with
+      | None -> assert false    (* should have been filtered out before *)
+      | Some ar when ar < 0 -> assert false (* impossible *)
+      | Some ar ->
+          (match Ltl.Atomic.split at with
+            | None -> assert false (* impossible *)
+            | Some (name, tuple) ->
+                let name_str = Name.to_string name in
+                let tuple_str = 
+                  Fmtc.(strf "%a" @@ list ~sep:minus Atom.pp)
+                    (Tuple.to_list tuple)
+                in
+                if ar = 0 then 
+                  begin
+                    variable_ranges :=
+                      List.Assoc.update ~eq:String.equal
+                        ~f:(function
+                             | None -> Some [tuple_str]
+                             | Some tuples -> Some (tuple_str :: tuples))
+                        name_str
+                        !variable_ranges;
+                    (* if the relation is partial, we add a tag for the empty
+                       value; this is a bit stupid because we do this many
+                       times; but there are not that many variables... *)
+                    (if Ltl.Atomic.is_partial at then                    
+                       variable_ranges :=
+                         List.Assoc.update ~eq:String.equal
+                           ~f:(function
+                                | None -> None
+                                | Some tuples ->
+                                    let no_str = "__NO__" ^ name_str in
+                                    if List.mem no_str tuples then
+                                      Some tuples
+                                    else
+                                      Some (no_str :: tuples))
+                           name_str
+                           !variable_ranges);
+                    Fmtc.pf out "DEFINE %a := __%s = %s;@\n"
+                      Fmtc.(pair ~sep:minus string string)
+                      (name_str, tuple_str)
+                      name_str
+                      tuple_str
+                  end
+                else            (* ar > 0 *)
+                  begin
+                    let dom, range = Tuple.split tuple ar in
+                    let name_dom_str =
+                      Fmtc.(strf "%s-%a"
+                              name_str
+                              (list ~sep:minus Atom.pp) (Tuple.to_list dom))
+                    in
+                    let range_str = 
+                      Fmtc.(strf "%a" @@ list ~sep:minus Atom.pp)
+                        (Tuple.to_list range)
+                    in
+                    variable_ranges :=
+                      List.Assoc.update ~eq:String.equal
+                        ~f:(function
+                             | None -> Some [range_str]
+                             | Some tuples -> Some (range_str :: tuples))
+                        name_dom_str
+                        !variable_ranges;
+                    (* if the relation is partial, we add a tag for the empty
+                       value; this is a bit stupid because we do this many
+                       times; but there are not that many variables... *)
+                    (if Ltl.Atomic.is_partial at then                    
+                       variable_ranges :=
+                         List.Assoc.update ~eq:String.equal
+                           ~f:(function
+                                | None -> None
+                                | Some tuples ->
+                                    let no_str = "__NO__" ^ name_dom_str in
+                                    if List.mem no_str tuples then
+                                      Some tuples
+                                    else
+                                      Some (no_str :: tuples))
+                           name_dom_str
+                           !variable_ranges);
+                    Fmtc.pf out "DEFINE %a := __%s = %s;@\n"
+                      Fmtc.(pair ~sep:minus string string)
+                      (name_dom_str, range_str)
+                      name_dom_str
+                      range_str
+                  end
+          )          
+    in
+    Sequence.iter pp_decl atomics;
+    (* then print the variables with their ranges *)
+    !variable_ranges
+    |> List.sort (fun (var1, _) (var2, _) -> String.compare var1 var2)
+    |> List.iter
+         (fun (var, range) ->
+            Fmtc.pf out "%s __%s : @[<hov2>%a@];@\n"
+              vartype
+              var
+              Fmtc.(braces_ @@ list ~sep:(sp **> comma) string)
+              (List.sort String.compare range))
+    
+    
 
   let pp_count_variables ?(margin = 80) out { elo; init; invariant; trans; property } =
     let open Fmtc in
@@ -335,29 +445,38 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     (* sorting before filtering (even when sorting after again) is more
        efficient on a few tests *)
     variables := S.sort_uniq ~cmp:Ltl.Atomic.compare !variables;
-    let rigid =
-      !variables
-      |> S.filter (fun at ->
-            let rel, _ = Option.get_exn @@ Ltl.Atomic.split at in
-            Domain.get_exn rel elo.Elo.domain |> Relation.is_const) 
-      |> S.sort_uniq ~cmp:Ltl.Atomic.compare
+    let sort_atom = S.sort_uniq ~cmp:Ltl.Atomic.compare_string in
+    let r_plain, r_enum, f_plain, f_enum =
+      S.fold
+        (fun (acc_rp, acc_re, acc_fp, acc_fe) at ->
+           if Ltl.Atomic.is_const at then (* rigid *)
+             if Ltl.Atomic.domain_arity at = None then (* plain *)
+               (S.cons at acc_rp, acc_re, acc_fp, acc_fe)
+             else               (* enumerable *)
+               (acc_rp, S.cons at acc_re, acc_fp, acc_fe)
+           else             (* flexible *)
+             if Ltl.Atomic.domain_arity at = None then (* plain *)
+               (acc_rp, acc_re, S.cons at acc_fp, acc_fe)
+             else               (* enumerable *)
+               (acc_rp, acc_re, acc_fp, S.cons at acc_fe))
+        (S.empty, S.empty, S.empty, S.empty)
+        !variables
+      |> fun (res_rp, res_re, res_fp, res_fe) ->
+      (sort_atom res_rp, sort_atom res_re, sort_atom res_fp, sort_atom res_fe)
     in
-    let flexible =      
-      !variables
-      |> S.filter (fun at ->
-            let rel, _ = Option.get_exn @@ Ltl.Atomic.split at in
-            Domain.get_exn rel elo.Elo.domain |> Relation.is_var) 
-      |> S.sort_uniq ~cmp:Ltl.Atomic.compare
-    in
-    (* FROZENVAR *)
+    (* FROZENVAR / PLAIN *)
     S.iter (fun at ->
-          pf out "%a@\n" (pp_decl "FROZENVAR") at
-        ) rigid;
-    (* VAR *)
-    (if not (S.is_empty rigid || S.is_empty flexible) then hardline out ());
+          pf out "%a@\n" (pp_plain_decl "FROZENVAR") at
+        ) r_plain;
+    (* FROZENVAR / ENUM *)
+    pp_enum_decl "VAR" out r_enum;
+    (* VAR / PLAIN *)
+    (if not (S.is_empty r_plain || S.is_empty f_plain) then hardline out ());
     S.iter (fun at ->
-          pf out "%a@\n" (pp_decl "VAR") at
-        ) flexible;
+          pf out "%a@\n" (pp_plain_decl "VAR") at
+        ) f_plain;
+    (* VAR / ENUM *)
+    pp_enum_decl "VAR" out f_enum;
     
     (* close printing *)    
     Format.pp_print_flush out ();
