@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-12-14 CET 23:53:54 David Chemouil>
+ * Time-stamp: <2017-12-15 CET 12:44:39 David>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -343,9 +343,8 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
                 |> S.map
                      (fun tuple ->
                         Pair.map_same tuple_to_string @@ Tuple.split tuple n)
-                |> S.sort
-                     ~cmp:(fun (dom1, _) (dom2, _) -> String.compare dom1 dom2)
-                |> S.group_succ_by
+                |> S.group_by
+                     ~hash:(fun (dom, _) -> Hash.string dom)
                      ~eq:(fun (dom1, _) (dom2, _) -> String.equal dom1 dom2)
               in
               (* Msg.debug (fun m ->
@@ -382,9 +381,9 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
                        vartype 
                        name_str
                        dom_str
-                       (braces_ @@ hvbox @@ list ~sep:(sp **> comma) string)
+                       (braces_ @@ box @@ list ~sep:(sp **> comma) string)
                        (if Ltl.Atomic.is_partial atom then
-                          ("__NO__" ^ name_str ^ "-" ^ dom_str)
+                          (String.concat "" ["__NO__"; name_str; "-"; dom_str])
                           :: List.map snd pairs
                         else
                           List.map snd pairs)
@@ -396,7 +395,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     |> S.sort_uniq      (* keep only atoms with different relation names *)
          ~cmp:(fun at1 at2 ->
                Name.compare (fst @@ atom_name at1) (fst @@ atom_name at2))
-    |> S.iter pp_one_decl
+    |> S.iter (fun at -> Fmtc.hardline out (); pp_one_decl at)
 
   let pp_count_variables ?(margin = 80) out { elo; init; invariant; trans; property } =
     let open Fmtc in
