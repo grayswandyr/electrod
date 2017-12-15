@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-12-15 CET 12:44:39 David>
+ * Time-stamp: <2017-12-15 CET 13:02:44 David>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -314,7 +314,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
               (* add a value for none? *)
               let may_strings_with_empty =
                 if Ltl.Atomic.is_partial atom then
-                  S.cons ("__NO__" ^ name_str) may_strings
+                  S.cons "__NONE__" may_strings
                 else may_strings
               in
               S.iter (fun tuple_str ->
@@ -383,8 +383,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
                        dom_str
                        (braces_ @@ box @@ list ~sep:(sp **> comma) string)
                        (if Ltl.Atomic.is_partial atom then
-                          (String.concat "" ["__NO__"; name_str; "-"; dom_str])
-                          :: List.map snd pairs
+                          "__NONE__" :: List.map snd pairs
                         else
                           List.map snd pairs)
                    ))
