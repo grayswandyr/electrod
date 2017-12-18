@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-12-13 CET 15:44:01 David Chemouil>
+ * Time-stamp: <2017-12-15 CET 16:43:01 David>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -500,11 +500,14 @@ module Make (Ltl : Solver.LTL) = struct
       let _visitors_r1 = [true_]  in
       self#build_Compr env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
 
-    method private allocate_sbs_to_tuples vars l = match vars with
+    method private allocate_sbs_to_tuples
+                     (vars : (Var.t * (Elo.var, Elo.ident) G.exp) list)
+                     (l : Atom.t list) =
+      match vars with
       | [] -> []
       | (_, r)::tl ->
-          let xs, ys = List.take_drop Option.(get_exn r.G.arity) l in
-          Tuple.of_list1 xs :: self#allocate_sbs_to_tuples tl ys
+         let xs, ys = List.take_drop Option.(get_exn r.G.arity) l in (* FIXME: get_exn may return None *)
+         Tuple.of_list1 xs :: self#allocate_sbs_to_tuples tl ys
 
     (* shape: [{ sb1, sb2,... | b }]. Each [sb] is of shape [disj x1, x2 : e] .
 
@@ -580,7 +583,7 @@ module Make (Ltl : Solver.LTL) = struct
         | Elo.Name r ->
             let { must; may; _ } =
               env#must_may_sup subst @@
-              G.exp (Some (env#arity r)) Location.dummy @@ G.ident id
+              G.exp (Some (env#relation_arity r)) Location.dummy @@ G.ident id
             in
             (* Msg.debug (fun m -> *)
             (*       m "build_Ident: must/may(%a) = %a / %a | tuple = %a" *)
@@ -653,16 +656,24 @@ module Make (Ltl : Solver.LTL) = struct
       let lg = Tuple.arity tuple in
       (s' @@ Tuple.of_list1 [Tuple.ith (lg - 1) tuple]) +&& lazy (r' tuple)
 
-    method build_Prod __subst r __s r' s' = fun tuple ->
-      (* Msg.debug (fun m -> *)
-      (*       m "build_Prod <-- [[%a × %a]](%a)" *)
-      (*         Elo.pp_exp r *)
-      (*         Elo.pp_exp __s *)
-      (*         Tuple.pp tuple *)
-      (*     ); *)
-      let ar_r = Option.get_exn r.G.arity in
-      let t1, t2 = Tuple.split tuple ar_r in
-      r' t1 +&& lazy (s' t2)
+    method build_Prod __subst r s r' s' = fun tuple ->
+      Msg.debug (fun m ->
+          m "build_Prod <-- [[%a × %a]](%a)"
+            Elo.pp_exp r
+            Elo.pp_exp s
+            Tuple.pp tuple
+        );
+      (* we need to split [tuple] so we need the arity of [r]. If the
+      arity is [None] (for 'none'), then we must just return
+      false. Otherwise the tuple is split. *)
+      match r.G.arity, s.G.arity with
+      | None, _
+        | _, None -> false_
+      | Some ar_r, Some _ ->
+         let t1, t2 = Tuple.split tuple ar_r in
+         r' t1 +&& lazy (s' t2)
+         
+                       
     (* |> Fun.tap (fun res -> *)
     (*       Msg.debug *)
     (*         (fun m -> m "build_Prod [[%a->%a]](%a) (split as %a, %a) = %a (ar(%a) = %d)" *)
@@ -798,7 +809,7 @@ module Make (Ltl : Solver.LTL) = struct
 
 
   class environment (elo : Elo.t) = object (_ : 'self)
-    method arity name =
+    method relation_arity name =
       match Domain.get name elo.Elo.domain with
         | None -> assert false
         | Some rel -> Relation.arity rel

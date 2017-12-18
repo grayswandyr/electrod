@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-15 CET 15:50:19 David Chemouil>
+ * Time-stamp: <2017-12-15 CET 16:46:24 David>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -51,13 +51,21 @@ let ident_sep = '-'
 
 let tuple = (ident (ident_sep ident)*)
             
-let valu = ident rel_sep tuple 
+(* let valu = ident rel_sep tuple *)
+
+let valu = (letter | digit | '_' | '#' | '$' | '-')+
+
+let ltlspecf = "LTL_" digit+ "_SPECF_" digit+
 
 rule main split_atomic = parse
   | newline
       { new_line lexbuf; main split_atomic lexbuf }
   | whitespace+
-    { main split_atomic lexbuf }
+      { main split_atomic lexbuf }
+
+  (* workaround nuXmv bug *)
+  | ltlspecf whitespace+ '=' whitespace+ ("FALSE" | "TRUE")
+      { main split_atomic lexbuf }
 
   | loop_msg
       { LOOP }
