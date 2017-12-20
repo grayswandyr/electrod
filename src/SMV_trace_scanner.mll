@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-12-15 CET 16:46:24 David>
+ * Time-stamp: <2017-12-19 CET 13:26:19 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -18,7 +18,9 @@
   
 open Lexing
 open SMV_trace_tokens
-     
+
+let met_spurious_variable = ref false
+
 } (* END HEADER *)
 
 
@@ -64,8 +66,14 @@ rule main split_atomic = parse
       { main split_atomic lexbuf }
 
   (* workaround nuXmv bug *)
-  | ltlspecf whitespace+ '=' whitespace+ ("FALSE" | "TRUE")
-      { main split_atomic lexbuf }
+  | (ltlspecf as v) whitespace+ '=' whitespace+ ("FALSE" | "TRUE")
+      {
+        if not !met_spurious_variable then
+          begin
+            met_spurious_variable := true;
+            Msg.Warn.met_spurious_variable (fun args -> args v)
+          end;
+        main split_atomic lexbuf }
 
   | loop_msg
       { LOOP }

@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-12-13 CET 14:48:20 David Chemouil>
+ * Time-stamp: <2017-12-19 CET 13:25:25 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -470,5 +470,11 @@ module Warn = struct
       Loc.pp loc
       (Raw_ident.basename id)
       Extract.pp (Extract.extract infile loc)
+
+  let met_spurious_variable args = warn @@ fun m -> args @@
+    fun var ->
+    m ~header:(code 5)
+      "Spurious variable(s) in the SMV trace: %S"
+      var
 end
 
