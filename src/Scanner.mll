@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-12-15 CET 16:08:56 David>
+ * Time-stamp: <2018-01-13 CET 16:17:38 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -31,7 +31,7 @@ let digit = [ '0'-'9' ]
 
 let positive = ([ '1'-'9'] digit*)
 
-let number = (digit | positive)
+let number = (digit | positive | '-' positive)
                            
 let letter = [ 'A'-'Z' 'a'-'z' ]
 

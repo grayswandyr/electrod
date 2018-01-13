@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Time-stamp: <2017-12-15 CET 16:14:38 David>
+ * Time-stamp: <2018-01-13 CET 16:20:29 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -106,6 +106,9 @@ urelements:
   | at = PLAIN_ID
   | at = IDX_ID
   { R.uplain @@ Raw_ident.ident at $startpos $endpos }
+  | nb = NUMBER
+  { R.uplain @@ Raw_ident.ident (string_of_int nb) $startpos $endpos }
+           
   
 declaration:
 	CONST id = PLAIN_ID ar = colon_w_or_wo_arity sc = scope ioption(SEMI)
@@ -176,7 +179,9 @@ atom:
   at = PLAIN_ID
  | at = IDX_ID
  { Raw_ident.ident at $startpos $endpos } 
-
+ | nb = NUMBER
+ { Raw_ident.ident (string_of_int nb) $startpos $endpos } 
+ 
 
 
 
