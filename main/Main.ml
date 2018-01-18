@@ -1,5 +1,5 @@
 (*******************************************************************************
- * Time-stamp: <2017-12-13 CET 14:55:56 David Chemouil>
+ * Time-stamp: <2018-01-18 CET 11:03:13 David Chemouil>
  * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
@@ -68,6 +68,9 @@ type tool =
   | NuSMV
 
 
+let version = [%blob "../res/version"] 
+
+
 let main style_renderer verbosity tool file scriptfile keep_files no_analysis
       print_generated outcome_format =
   Printexc.record_backtrace true;
@@ -79,7 +82,10 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
 
   Logs.app
     (fun m ->
-       m "%a" Fmtc.(styled `Bold string) "electrod (C) 2016-2017 ONERA");
+       m "%a %s"
+         Fmtc.(styled `Bold string)
+         "electrod (C) 2016-2018 ONERA"
+         version);
 
   Msg.debug (fun m -> m "CWD = %s" (Sys.getcwd ()));
   Msg.debug (fun m -> m "PATH = %s" (Sys.getenv "PATH"));

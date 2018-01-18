@@ -98,9 +98,7 @@ check-config:
 	visitors hashcons ppx_blob printbox > /dev/null
 
 headers:
-	for f in src/* main/* harness/*; do
-		sh util/headache/headache.sh $f;
-	done
+	bash util/headache/headache.sh $f
 
 
 .PHONY: all clean byte native profile debug check-config test doc doc-requisites test-requisites
