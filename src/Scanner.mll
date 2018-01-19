@@ -1,9 +1,7 @@
 (*******************************************************************************
- * Time-stamp: <2018-01-13 CET 16:17:38 David Chemouil>
- * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2017 ONERA
+ * Copyright (C) 2016-2018 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public

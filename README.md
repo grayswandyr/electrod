@@ -25,7 +25,7 @@ Type `electrod --help` to get some help on options.
 
 ## Copyright and license
 
-(C) 2016-2017 ONERA
+(C) 2016-2018 ONERA
 
 electrod is distributed under the terms of the Mozilla Public License v2.0.
 

@@ -19,4 +19,4 @@ echo "(v. $VERSION)" > res/version
 # clean & update headers
 make release
 
-
+echo "Test, run, and then: git flow release finish"
