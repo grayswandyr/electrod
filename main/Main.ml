@@ -1,9 +1,7 @@
 (*******************************************************************************
- * Time-stamp: <2018-01-18 CET 11:03:13 David Chemouil>
- * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2017 ONERA
+ * Copyright (C) 2016-2018 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -68,7 +66,10 @@ type tool =
   | NuSMV
 
 
-let version = [%blob "../res/version"] 
+let version =
+  let s = [%blob "../res/version"] in
+  String.replace ~which:`All ~sub:"\n" ~by:"" s
+  |> String.replace ~which:`All ~sub:"\r" ~by:"" 
 
 
 let main style_renderer verbosity tool file scriptfile keep_files no_analysis

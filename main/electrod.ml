@@ -1,9 +1,7 @@
 (*******************************************************************************
- * Time-stamp: <2017-11-29 CET 12:53:44 David Chemouil>
- * 
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2017 ONERA
+ * Copyright (C) 2016-2018 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -110,7 +108,7 @@ let main_info =
     `S Manpage.s_authors;
     `P {|Julien BRUNEL (ONERA), David CHEMOUIL (ONERA).|};
     `S "COPYRIGHT";
-    `P "Electrod (C) 2016-2017 ONERA.";
+    `P "Electrod (C) 2016-2018 ONERA.";
     `P "Electrod is free software: you can redistribute \
         it and/or modify it under the terms of the Mozilla Public \
         License, v. 2.0. If a copy of the MPL was not distributed with this \
