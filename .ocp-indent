@@ -1,0 +1,5 @@
+with=2
+match_clause=4
+max_indent=6
+strict_comments=true
+align_params=always
