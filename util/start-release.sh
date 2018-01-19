@@ -1,4 +1,4 @@
-#/!bin/bash
+#!/bin/bash
 # run from root of project repo
 
 # $1 contains the version number to create
@@ -19,4 +19,4 @@ echo "(v. $VERSION)" > res/version
 # clean & update headers
 make release
 
-
+echo "Test, run, and then: git flow release finish"
