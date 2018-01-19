@@ -1,1 +1,1 @@
-bin: [ "electrod.native" { "electrod" } ]
+bin: [ "_build/main/electrod.native" { "electrod" } ]
