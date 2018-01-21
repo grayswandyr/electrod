@@ -139,7 +139,7 @@ module Make (Ltl : Solver.LTL) = struct
     else
       let t_to_the_k = ref t in
       let tc = ref t in
-      for i = 2 to k do
+      for _ = 2 to k do
         t_to_the_k := G.(exp t.arity dummy @@ rbinary !t_to_the_k join t);
         tc := G.(exp t.arity dummy @@ rbinary !tc union !t_to_the_k);
       done;
