@@ -67,7 +67,7 @@ type tool =
 
 
 let version =
-  let s = [%blob "../res/version"] in
+  let s = [%blob "res/version"] in
   String.replace ~which:`All ~sub:"\n" ~by:"" s
   |> String.replace ~which:`All ~sub:"\r" ~by:"" 
 

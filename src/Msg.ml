@@ -18,7 +18,7 @@ open Containers
 open Fmtc
 
 (** An abbreviation. *)
-module Loc = Location
+module Loc = Loc
 
 (** {1 Setting up the logging machinery} *)
 
@@ -69,8 +69,8 @@ module Extract = struct
     | Some f ->
         IO.(with_in f @@ fun ic ->
             IO.read_lines ic
-            |> Gen.drop (Int.max 0 Location.(begl loc - 1))
-            |> Gen.take (Int.max 1 Location.(1 + endl loc - begl loc))
+            |> Gen.drop (Int.max 0 Loc.(begl loc - 1))
+            |> Gen.take (Int.max 1 Loc.(1 + endl loc - begl loc))
             |> Gen.to_list)
 
   (* splits the string into 2 parts, the first containing [nb] characters *)
@@ -95,8 +95,8 @@ module Extract = struct
   
   let extract file loc = 
     let lines = lines file loc in
-    let innocent_first_last_idx = Int.max 0 (Location.begc loc) in
-    let suspect_last_last_idx = Int.max 0 (Location.endc loc) in
+    let innocent_first_last_idx = Int.max 0 (Loc.begc loc) in
+    let suspect_last_last_idx = Int.max 0 (Loc.endc loc) in
     match lines with
       | [] -> ("", ([], ""))
       | [line] ->
@@ -111,7 +111,7 @@ module Extract = struct
           let innocent_first, suspect_first =
             split_string first innocent_first_last_idx in
           let suspect_middle, last =
-            List.take_drop (Int.max 0 Location.(endl loc - begl loc - 1)) others in
+            List.take_drop (Int.max 0 Loc.(endl loc - begl loc - 1)) others in
           let last = List.hd last in
           let suspect_last, innocent_last =
             split_string last suspect_last_last_idx in

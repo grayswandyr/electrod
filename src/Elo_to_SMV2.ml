@@ -18,20 +18,20 @@ open Containers
 
   
 module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
-  type t = Symbol.t             (* hashconsed strings *)
+  type t = Sym.t             (* hashconsed strings *)
     
-  let compare = Symbol.compare
+  let compare = Sym.compare
 
-  let pp = Symbol.pp
+  let pp = Sym.pp
 
-  let equal = Symbol.equal
+  let equal = Sym.equal
 
-  let hash = Symbol.hash
+  let hash = Sym.hash
 
 
   (* table tracking which pair (name, tuple) a string comes from. Uses
      hahsconsing to make this more efficient *)
-  module HT = CCHashtbl.Make(Symbol)
+  module HT = CCHashtbl.Make(Sym)
       
   let names_and_tuples = HT.create 179 (* usually less than that many VARs *)
              
@@ -54,7 +54,7 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
         rel_sep
         Fmtc.(list ~sep:atom_sep Atom.pp) ats
     in 
-    Symbol.make full_str
+    Sym.make full_str
     (* keep trace of creations to allow to get original pairs back *)
     |> Fun.tap (fun hs -> HT.add names_and_tuples hs (name, tuple))
 
@@ -63,7 +63,7 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
     HT.get names_and_tuples sym
                                  
   let split_string str =
-    split @@ Symbol.make str
+    split @@ Sym.make str
    
 end
 

@@ -1,0 +1,41 @@
+(jbuild_version 1)
+
+(executable
+ ((name electrod)
+ (public_name electrod)
+ (libraries (cmdliner containers containers.data containers.unix fmt
+											fmt.cli fmt.tty gen hashcons logs.cli logs.fmt mtime.clock.os
+											ppx_deriving.runtime printbox sequence visitors.runtime))
+ (preprocessor_deps
+	("../res/nusmv-default-script.txt"
+	 "../res/nuxmv-default-script.txt"
+	 "../res/version"))
+ (preprocess (action (run ppxfind -legacy
+													visitors.ppx,ppx_deriving.std,ppx_blob --as-pp ${<})))
+ (flags (:standard
+				 (-warn-error -27)
+				 (-warn-error -32)
+				 (-warn-error -33)
+				 (-warn-error -36)))
+ ))
+
+;;; first parser
+
+(menhir ((modules (Parser))))
+
+(ocamllex (Scanner))
+
+;;; other parser
+
+(ocamllex (SMV_trace_scanner))
+
+(menhir
+ ((flags   (--only-tokens))
+  (modules (SMV_trace_tokens))))
+
+(menhir
+ ((merge_into SMV_trace_parser)
+  (flags      (--external-tokens SMV_trace_tokens))
+  (modules    (SMV_trace_parser SMV_trace_tokens))))
+
+

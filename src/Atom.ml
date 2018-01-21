@@ -15,33 +15,33 @@
 open Containers
 
 type t = {
-  sym : Symbol.t;
-  loc : Location.t option
+  sym : Sym.t;
+  loc : Loc.t option
 }
 
-let compare a1 a2 = Symbol.compare a1.sym a2.sym
+let compare a1 a2 = Sym.compare a1.sym a2.sym
 
 let equal a1 a2 =
-  Symbol.equal a1.sym a2.sym
+  Sym.equal a1.sym a2.sym
   (* |> Fun.tap *)
   (*      (fun res -> *)
   (*         (Fmt.epr "Atom.equal %a %a = %B" *)
-  (*            Symbol.pp a1.sym *)
-  (*            Symbol.pp a2.sym *)
+  (*            Sym.pp a1.sym *)
+  (*            Sym.pp a2.sym *)
   (*            res)) *)
 
-let atom ?loc s = { sym = Symbol.make s; loc }
+let atom ?loc s = { sym = Sym.make s; loc }
 
 let of_raw_ident id =
   atom ~loc:(Raw_ident.location id) (Raw_ident.basename id)
  
 
-let hash atom = Symbol.hash atom.sym
+let hash atom = Sym.hash atom.sym
 
 (** Generic interface implementations *)
 
 let pp out { sym; _ } =
-  Symbol.pp out sym
+  Sym.pp out sym
 
 
 

@@ -74,7 +74,7 @@ let rec remove_always_to_invar f =
 
 (* adds an always operator to an (invariant) elo formula if the
    outermost operator is not an always *)
-let rec add_always_to_invar f =
+let add_always_to_invar f =
   let open GenGoal in
   let {prim_fml; fml_loc} = f in
   match prim_fml with

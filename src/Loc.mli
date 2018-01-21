@@ -12,7 +12,7 @@
  * License-Filename: LICENSES/MPL-2.0.txt
  ******************************************************************************)
 
-(** Locations in a file (issued from the parsing phase). *)
+(** Locs in a file (issued from the parsing phase). *)
 
 (** A location in a file represents an interval from a start position to an end one. *)
 type t 

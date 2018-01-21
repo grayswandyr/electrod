@@ -16,9 +16,9 @@ open Containers
 
 
 
-let nuXmv_default_script = [%blob "../res/nuxmv-default-script.txt"]
+let nuXmv_default_script = [%blob "res/nuxmv-default-script.txt"]
 
-let nuSMV_default_script = [%blob "../res/nusmv-default-script.txt"]
+let nuSMV_default_script = [%blob "res/nusmv-default-script.txt"]
 
 
 module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
@@ -122,7 +122,6 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
         pbody (new_this + 1) out body
       end
                     
-    type atomic = At.t
 
     let pp_atomic = At.pp
 
