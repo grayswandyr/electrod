@@ -118,7 +118,7 @@ module Make (Ltl : Solver.LTL) = struct
      squares (t+t.t)+(t+t.t)(t+t.t) + ... *)
 
   let rec iter_squares (acc_term : (Elo.var, Elo.ident) G.exp) k =
-    let open Loc in
+    let open Location in
     match k with
       | 0 -> G.(exp None dummy none)
       | 1 -> acc_term
@@ -134,7 +134,7 @@ module Make (Ltl : Solver.LTL) = struct
      (alternative to iter_squares) t + t.t + t.t.t + ... *)
 
   let iter_tc (t : (Elo.var, Elo.ident) G.exp) k =
-    let open Loc in
+    let open Location in
     if k=0 then G.(exp None dummy none)
     else
       let t_to_the_k = ref t in
@@ -581,7 +581,7 @@ module Make (Ltl : Solver.LTL) = struct
         | Elo.Name r ->
             let { must; may; _ } =
               env#must_may_sup subst @@
-              G.exp (Some (env#relation_arity r)) Loc.dummy @@ G.ident id
+              G.exp (Some (env#relation_arity r)) Location.dummy @@ G.ident id
             in
             (* Msg.debug (fun m -> *)
             (*       m "build_Ident: must/may(%a) = %a / %a | tuple = %a" *)
@@ -758,7 +758,7 @@ module Make (Ltl : Solver.LTL) = struct
       (* let tc_naif = iter_tc r k in *)
       let tc_square = iter_squares r k in
       (* let suptc =  *)
-      (*   (env#must_may_sup (G.exp Loc.dummy @@ G.runary G.tclos r)).sup *)
+      (*   (env#must_may_sup (G.exp Location.dummy @@ G.runary G.tclos r)).sup *)
       (* in *)
       (* let suptc2 = *)
       (*   (env#must_may_sup tc_square).sup *)

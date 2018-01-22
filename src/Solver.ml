@@ -14,7 +14,8 @@
 
 open Containers
     
-[@@@warning "-4"] (* fragile patterns, lots of them as we short-circuit *)
+[@@@warning "-4"]
+[@@@warning "-32"] (* fragile patterns, lots of them as we short-circuit *)
 
 module type ATOMIC_PROPOSITION = sig
   type t

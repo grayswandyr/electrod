@@ -14,11 +14,11 @@
 
 type t = {
   ident : string;
-  loc : Loc.t
+  loc : Location.t
 }
 
 let ident ident begp endp =
-  let loc = Loc.from_positions begp endp in
+  let loc = Location.from_positions begp endp in
   { ident; loc }
 
 let basename { ident; _ } = ident

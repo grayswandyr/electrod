@@ -14,7 +14,7 @@
 
 open Containers
 
-(** Syms are hash-consed strings *)
+(** Symbols are hash-consed strings *)
 
 type t
 

@@ -19,7 +19,7 @@ type t
 
 (** Creates a fresh identifier ([loc] is the location of the originating
     identifier, if there is one). *)
-val fresh : ?sep:string -> ?loc:Loc.t -> string -> t
+val fresh : ?sep:string -> ?loc:Location.t -> string -> t
 
 val fresh_copy : t  -> t
 
