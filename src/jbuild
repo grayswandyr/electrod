@@ -2,23 +2,35 @@
 
 (executable
  ((name electrod)
- (public_name electrod)
- (libraries (cmdliner containers containers.data containers.unix fmt
-											fmt.cli fmt.tty gen hashcons logs.cli logs.fmt mtime.clock.os
-											ppx_deriving.runtime printbox sequence visitors.runtime))
- (preprocessor_deps
-	("../res/nusmv-default-script.txt"
-	 "../res/nuxmv-default-script.txt"
-	 "../res/version"))
- (preprocess (action (run ppxfind -legacy
-													visitors.ppx,ppx_deriving.std,ppx_blob --as-pp ${<})))
- (flags (:standard
-				 (-warn-error -27)
+	(public_name electrod)
+	(modules (electrod Main))
+  (libraries
+   (libelectrod cmdliner fmt fmt.cli fmt.tty logs.cli logs.fmt))
+	(preprocess (action (run ppxfind -legacy ppx_blob --as-pp ${<})))
+	(preprocessor_deps ("../res/version"))
+	(flags (:standard
+					(-warn-error -27)
 ;;;				 (-warn-error -32)
-				 (-warn-error -33)
-				 (-warn-error -36)
-				 (-w -58)))
- ))
+					(-warn-error -33)
+					(-warn-error -36)
+					(-w -58)))
+	))
+
+(library
+ ((name libelectrod)
+	(wrapped false)
+	(modules (:standard \ (electrod Main)))
+	(libraries
+	 (cmdliner containers containers.data containers.unix fmt fmt.tty gen
+		hashcons logs.fmt mtime.clock.os ppx_deriving.runtime printbox
+		sequence visitors.runtime))
+	(preprocessor_deps
+	 ("../res/nusmv-default-script.txt"
+		"../res/nuxmv-default-script.txt"))
+	(preprocess
+	 (action
+		(run ppxfind -legacy visitors.ppx,ppx_deriving.std,ppx_blob --as-pp ${<})))
+	))
 
 ;;; first parser
 

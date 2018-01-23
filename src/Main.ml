@@ -97,8 +97,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
   try
     let raw_to_elo_t = Transfo.tlist [ Raw_to_elo.transfo ] in
     let elo_to_elo_t = Transfo.tlist [ Simplify1.transfo; Simplify2.transfo ] in
-    let elo_to_smv_t = Transfo.tlist
-                         [ Elo_to_SMV1.transfo; (* Elo_to_SMV2.transfo *)] in
+    let elo_to_smv_t = Transfo.tlist [ Elo_to_SMV1.transfo ] in
 
     let elo =
       Parser_main.parse_file file
