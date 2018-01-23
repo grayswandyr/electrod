@@ -337,7 +337,7 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
     | _ -> Neg t
              
   let count ps =
-    match List.filter (fun p -> p <> False) ps with
+    match List.filter (function False -> false | _ -> true) ps with
       | [] -> num 0
       | props -> Count props
                                 

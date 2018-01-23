@@ -451,12 +451,12 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
       S.fold
         (fun (acc_rp, acc_re, acc_fp, acc_fe) at ->
            if Ltl.Atomic.is_const at then (* rigid *)
-             if Ltl.Atomic.domain_arity at = None then (* plain *)
+             if Option.is_none @@ Ltl.Atomic.domain_arity at then (* plain *)
                (S.cons at acc_rp, acc_re, acc_fp, acc_fe)
              else               (* enumerable *)
                (acc_rp, S.cons at acc_re, acc_fp, acc_fe)
            else             (* flexible *)
-             if Ltl.Atomic.domain_arity at = None then (* plain *)
+             if Option.is_none @@ Ltl.Atomic.domain_arity at then (* plain *)
                (acc_rp, acc_re, S.cons at acc_fp, acc_fe)
              else               (* enumerable *)
                (acc_rp, acc_re, acc_fp, S.cons at acc_fe))
@@ -542,11 +542,11 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     Msg.info (fun m ->
           let size, unit_ =
             let s = float_of_int @@ Unix.((stat smv).st_size) in
-            if s < 1_024. then
+            if Float.(s < 1_024.) then
               (s, "B")
-            else if s < 1_048_576. then
+            else if Float.(s < 1_048_576.) then
               (s /. 1_024., "KB")
-            else if s < 1_073_741_824. then
+            else if Float.(s < 1_073_741_824.) then
               (s /. 1_048_576., "MB")
             else
               (s /. 1_073_741_824., "GB")

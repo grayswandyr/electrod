@@ -22,7 +22,7 @@ type ('src, 'dst) t = {
 }
 
 let make name run =
-  assert (name <> "");
+  assert (not @@ String.is_empty name);
   { name; run }
 
 let name { name; _ } = name
@@ -44,7 +44,7 @@ let identity = {
 type ('src, 'dst) tlist =  (string * ('src, 'dst) t) list
 
 let tlist ts =
-  assert (ts <> []);
+  assert (not @@ List.is_empty ts);
   let open List in
   let add transfos t =
     assert (not @@ Assoc.mem ~eq:String.equal t.name transfos);

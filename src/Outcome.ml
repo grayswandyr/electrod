@@ -61,7 +61,7 @@ let sort_states =
   List.map (fun (typ, v) -> (typ, sort v))
 
 let trace nbvars conversion_time analysis_time states =
-  assert (states <> []
+  assert ((not @@ List.is_empty states)
           && List.exists
                (function (Loop, _) -> true | (Plain, _) -> false) states)
   ;
@@ -108,11 +108,13 @@ module PPChrono = struct
     s
 
   let state_as_array ((typ, v) : state) =
-    let ts_strings = List.map (fun (_, ts) -> to_string_width 40 TupleSet.pp ts) v in
-    (if typ = Loop then
-       ts_strings @ [ "LOOP"]
-     else
-       ts_strings @ [ " " ])
+    let ts_strings =
+      List.map (fun (_, ts) -> to_string_width 40 TupleSet.pp ts) v in
+    (match typ with
+      | Loop -> 
+          ts_strings @ [ "LOOP"]
+      | _ ->
+          ts_strings @ [ " " ])
     |> Array.of_list 
   
   let pp out t = match t.trace with
