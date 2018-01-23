@@ -80,7 +80,7 @@ state:
     }
 
 atomic:
-v = ATOMIC EQUAL FALSE
+ ATOMIC EQUAL FALSE
     { None }                
 | v = ATOMIC EQUAL TRUE
     { Some v }

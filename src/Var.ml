@@ -20,7 +20,7 @@ type t = {
   name : string;                (** [name] is a base string used to give a 
                                     human-friendly display *)
   sep : string;
-  loc : Loc.t option
+  loc : Location.t option
 }
 
 let fresh =

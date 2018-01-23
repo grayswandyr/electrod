@@ -18,7 +18,7 @@
     code. *)
 type t = {
   ident : string;
-  loc : Loc.t
+  loc : Location.t
 }
 
 (** {1 Constructor}  *)
@@ -29,7 +29,7 @@ val ident : string -> Lexing.position -> Lexing.position -> t
   
 val basename : t -> string
 
-val location : t -> Loc.t
+val location : t -> Location.t
 
 val eq_name : t -> t -> bool
 

@@ -14,9 +14,10 @@
 													visitors.ppx,ppx_deriving.std,ppx_blob --as-pp ${<})))
  (flags (:standard
 				 (-warn-error -27)
-				 (-warn-error -32)
+;;;				 (-warn-error -32)
 				 (-warn-error -33)
-				 (-warn-error -36)))
+				 (-warn-error -36)
+				 (-w -58)))
  ))
 
 ;;; first parser
