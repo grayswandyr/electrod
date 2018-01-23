@@ -15,7 +15,7 @@ install one of them.
 ## Running
 
 Electrod is primarily aimed at being called by external, more abstract
-tools, such as the Electrum Analyzer.
+tools, such as the [Electrum Analyzer](https://github.com/haslab/Electrum).
 
 However, it can also be run as a standalone tool by calling the
 `electrod` program.
