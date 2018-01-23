@@ -557,7 +557,7 @@ let compute_arities elo =
         let e2' = walk_exp ctx e2 in
         let ar1 = e1'.arity in
         let ar2 = e2'.arity in
-        if Option.equal (=) ar1 ar2 &&
+        if not @@ Option.equal (=) ar1 ar2 &&
            Option.is_some ar1 &&
            Option.is_some ar2 then
           Msg.Fatal.arity_error

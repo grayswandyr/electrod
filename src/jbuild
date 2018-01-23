@@ -10,7 +10,7 @@
 	(preprocessor_deps ("../res/version"))
 	(flags (:standard
 					(-warn-error -27)
-;;;				 (-warn-error -32)
+				 (-warn-error -32)
 					(-warn-error -33)
 					(-warn-error -36)
 					(-w -58)))
@@ -18,12 +18,19 @@
 
 (library
  ((name libelectrod)
+	(public_name electrod.libelectrod)
 	(wrapped false)
 	(modules (:standard \ (electrod Main)))
 	(libraries
 	 (cmdliner containers containers.data containers.unix fmt fmt.tty gen
 		hashcons logs.fmt mtime.clock.os ppx_deriving.runtime printbox
 		sequence visitors.runtime))
+	(flags (:standard
+					(-warn-error -27)
+				 (-warn-error -32)
+					(-warn-error -33)
+					(-warn-error -36)
+					(-w -58)))
 	(preprocessor_deps
 	 ("../res/nusmv-default-script.txt"
 		"../res/nuxmv-default-script.txt"))
@@ -31,6 +38,12 @@
 	 (action
 		(run ppxfind -legacy visitors.ppx,ppx_deriving.std,ppx_blob --as-pp ${<})))
 	))
+
+
+(alias
+ ((name    runtest)
+  (deps    (run_tests.exe))
+  (action  (run ${<}))))
 
 ;;; first parser
 
