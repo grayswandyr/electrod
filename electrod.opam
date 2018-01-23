@@ -8,8 +8,7 @@ license: "MPL-2.0"
 dev-repo: "https://github.com/grayswandyr/electrod.git"
 build: [
   ["jbuilder" "subst"] {pinned}
-  [ "jbuilder" "build" "-p" name "-j" jobs ]
-    { ocaml-native & (os = "linux" | os = "darwin") }
+  ["jbuilder" "build" "-p" name "-j" jobs]
 ]
 build-test: [["jbuilder" "runtest" "-p" name "-j" jobs]]
 depends: [
