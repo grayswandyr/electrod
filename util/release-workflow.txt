@@ -4,7 +4,7 @@
 git flow release start 
 
 # IMMEDIATELY prepare changelog
-echo "### $(git rev-parse --abbrev-ref HEAD | cut -f 2- -d '/') $(date -Idate)" | cat - CHANGES.md > temp && mv temp CHANGES.md
+echo "### $(git rev-parse --abbrev-ref HEAD | cut -f 2- -d '/') ($(date -Idate))" | cat - CHANGES.md > temp && mv temp CHANGES.md
 
 echo "Now update CHANGES.md out of this (and then test \
 		 a little bit until you're happy)"
