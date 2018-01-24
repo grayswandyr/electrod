@@ -8,6 +8,9 @@ build:
 	jbuilder build @install --dev \
 	&& ln -sf _build/install/default/bin/$(TARGET) ./$(TARGET)
 
+doc:
+	BROWSER=x-www-browser topkg doc -r
+
 install: build
 	@jbuilder install
 
