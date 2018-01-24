@@ -3,9 +3,20 @@
 (executable
  ((name electrod)
 	(public_name electrod)
+	(package electrod)
+	(modules (Main electrod))
 	(libraries
-	 (cmdliner containers containers.data containers.unix fmt fmt.cli fmt.tty gen
-		hashcons logs.cli logs.fmt mtime.clock.os ppx_deriving.runtime printbox
+	 (electrod.libelectrod cmdliner fmt fmt.cli fmt.tty logs.cli logs.fmt))
+	))
+
+(library
+ ((name libelectrod)
+	(public_name electrod.libelectrod)
+	(wrapped false)
+	(modules (:standard \ (Main electrod)))
+	(libraries
+	 (cmdliner containers containers.data containers.unix fmt fmt.tty gen
+		hashcons logs.fmt mtime.clock.os ppx_deriving.runtime printbox
 		sequence visitors.runtime))
 	(flags (:standard (-warn-error "-27-32-33-36" -safe-string -w "-58")))
 	(preprocess

@@ -10,23 +10,22 @@ build: [
   ["jbuilder" "subst"] {pinned}
   ["jbuilder" "build" "-p" name "-j" jobs]
 ]
-build-test: [["jbuilder" "runtest" "-p" name "-j" jobs]]
 depends: [
   "ocamlfind" {build}
-  "ocamlbuild" {build}
+  "jbuilder" {build & >="1.0+beta9"}
   "topkg" {build & >= "0.9.0"} 
   "cmdliner" 
   "containers" 
-  "gen" 
-  "sequence" 
-  "logs" 
   "fmt" 
+  "gen" 
+  "hashcons" 
+  "logs" 
   "menhir" 
   "mtime" 
-  "ppx_deriving" 
-  "visitors" 
-  "hashcons" 
   "ppx_blob"
+  "ppx_deriving" 
 	"printbox"
+  "sequence" 
+  "visitors" 
 ]
 available: [ocaml-version >= "4.04"]

@@ -16,9 +16,6 @@
 
 open Containers
 
-
-
-
 (* inspired by Logs_fmt code *)     
 let keyword =
   let open! Logs in
