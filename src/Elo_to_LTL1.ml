@@ -178,7 +178,7 @@ module Make (Ltl : Solver.LTL) = struct
   class ['subst] converter env = object (self : 'self)
     constraint 'subst = (Var.t, Tuple.t) CCList.Assoc.t
 
-    inherit ['self] GenGoalRecursor.recursor as super
+    inherit ['self] GenGoalRecursor.recursor 
 
     method visit_'v __subst = Fun.id
 

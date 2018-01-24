@@ -54,4 +54,4 @@ include P
 let pp_list atoms =
   Fmtc.(braces_ @@ list ~sep:sp pp) atoms
 
-let to_string_list = Fmtc.to_to_string pp_list
+

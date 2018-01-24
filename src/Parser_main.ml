@@ -25,7 +25,7 @@ let check_paragraphs file pars =
   let goal =
     let candidates =
       filter
-        (function Raw.ParGoal g -> true
+        (function Raw.ParGoal _ -> true
                 | Raw.ParInst _ | Raw.ParSym _ | Raw.ParInv _ -> false) pars in
     if length candidates = 1 then (* there must be one goal *)
       match candidates with [ Raw.ParGoal g ] -> g | _ -> assert false

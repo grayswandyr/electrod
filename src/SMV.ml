@@ -135,10 +135,6 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
       | Eq  -> "="
       | Neq  -> "!="
 
-    let styled_parens st ppv_v out v =
-      surround (styled st lparen) (styled st rparen) ppv_v out v
-    
-
 
     (* From NuXmv documentation, from high to low (excerpt, some precedences are ignored because they are not used)
 
@@ -222,8 +218,6 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
 
       in pp upper out f
   end
-
-  let pp_atomic = PP.pp_atomic
 
   let pp_gather_variables ?(next_is_X = true) variables out f =
     Fmtc.pf out "@[<hov2>%a@]" (PP.pp ~next_is_X variables 0) f

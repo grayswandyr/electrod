@@ -198,7 +198,8 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
     | Count of t list
   [@@deriving show]      (* default impl. for pp; to override later *)
 
-  let pp_gather_variables ?(next_is_X = true) _ = pp (* default impl. for pp; to override later *)
+  let pp_gather_variables ?(next_is_X = true) _ =
+    let _ = next_is_X in pp (* default impl. for pp; to override later *)
 
   (* let equal_tcomp_node x y = match x, y with  *)
   (*   | Lte, Lte *)

@@ -18,7 +18,10 @@
 	 (cmdliner containers containers.data containers.unix fmt fmt.tty gen
 		hashcons logs.fmt mtime.clock.os ppx_deriving.runtime printbox
 		sequence visitors.runtime))
-	(flags (:standard (-warn-error "-27-32-33-36" -safe-string -w "-58")))
+	(flags
+	 (:standard
+		(-w "-33-58" ; -33 unused open -58 missing cmx file
+				-g -safe-string -strict-formats -strict-sequence -short-paths)))
 	(preprocess
 	 (action
 		(run ppxfind -legacy visitors.ppx,ppx_deriving.std,ppx_blob --as-pp ${<})))

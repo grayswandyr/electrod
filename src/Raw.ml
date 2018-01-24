@@ -110,5 +110,3 @@ let decl_id = function
   | DConst (id, _, _)
   | DVar (id, _, _, _) -> id
 
-let raw_bound_location = Location.span 
-

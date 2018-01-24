@@ -159,7 +159,7 @@ let compute_bound infile domain (which : [ `Inf | `Sup | `Exact ]) id raw_bound 
                       Msg.Fatal.should_denote_a_constant_set
                       @@ fun args -> args infile ref_id
         end
-    | BProd (rb1, Some _, rb2) ->
+    | BProd (_, Some _, _) ->
         Msg.Fatal.no_multiplicity_allowed_here (fun args -> args infile id)
     | BProd (rb1, None, rb2) ->
         (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BProd"); *)

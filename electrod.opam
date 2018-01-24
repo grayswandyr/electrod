@@ -7,7 +7,7 @@ bug-reports: "https://github.com/grayswandyr/electrod/issues"
 license: "MPL-2.0"
 dev-repo: "https://github.com/grayswandyr/electrod.git"
 build: [
-  ["jbuilder" "subst"] {pinned}
+  ["jbuilder" "subst" "-p" name] {pinned}
   ["jbuilder" "build" "-p" name "-j" jobs]
 ]
 depends: [
@@ -24,7 +24,7 @@ depends: [
   "mtime" 
   "ppx_blob"
   "ppx_deriving" 
-	"printbox"
+  "printbox"
   "sequence" 
   "visitors" 
 ]
