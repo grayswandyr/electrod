@@ -66,12 +66,6 @@ type tool =
   | NuSMV
 
 
-let version =
-  let s = [%blob "res/version"] in
-  String.replace ~which:`All ~sub:"\n" ~by:"" s
-  |> String.replace ~which:`All ~sub:"\r" ~by:"" 
-
-
 let main style_renderer verbosity tool file scriptfile keep_files no_analysis
       print_generated outcome_format =
   Printexc.record_backtrace true;
@@ -83,10 +77,9 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
 
   Logs.app
     (fun m ->
-       m "%a %s"
+       m "%a"
          Fmtc.(styled `Bold string)
-         "electrod (C) 2016-2018 ONERA %%VERSION_NUM%% %%VERSION_NUM%% %%VCS_COMMIT_ID%%"
-         version);
+         "electrod (C) 2016-2018 ONERA (%%VERSION%%)");
 
   Msg.debug (fun m -> m "CWD = %s" (Sys.getcwd ()));
   Msg.debug (fun m -> m "PATH = %s" (Sys.getenv "PATH"));

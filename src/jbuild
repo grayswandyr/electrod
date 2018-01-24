@@ -3,47 +3,24 @@
 (executable
  ((name electrod)
 	(public_name electrod)
-	(modules (electrod Main))
-  (libraries
-   (libelectrod cmdliner fmt fmt.cli fmt.tty logs.cli logs.fmt))
-	(preprocess (action (run ppxfind -legacy ppx_blob --as-pp ${<})))
-	(preprocessor_deps ("../res/version"))
-	(flags (:standard
-					(-warn-error -27)
-				 (-warn-error -32)
-					(-warn-error -33)
-					(-warn-error -36)
-					(-w -58)))
-	))
-
-(library
- ((name libelectrod)
-	(public_name electrod.libelectrod)
-	(wrapped false)
-	(modules (:standard \ (electrod Main)))
 	(libraries
-	 (cmdliner containers containers.data containers.unix fmt fmt.tty gen
-		hashcons logs.fmt mtime.clock.os ppx_deriving.runtime printbox
+	 (cmdliner containers containers.data containers.unix fmt fmt.cli fmt.tty gen
+		hashcons logs.cli logs.fmt mtime.clock.os ppx_deriving.runtime printbox
 		sequence visitors.runtime))
-	(flags (:standard
-					(-warn-error -27)
-				 (-warn-error -32)
-					(-warn-error -33)
-					(-warn-error -36)
-					(-w -58)))
-	(preprocessor_deps
-	 ("../res/nusmv-default-script.txt"
-		"../res/nuxmv-default-script.txt"))
+	(flags (:standard (-warn-error "-27-32-33-36" -safe-string -w "-58")))
 	(preprocess
 	 (action
 		(run ppxfind -legacy visitors.ppx,ppx_deriving.std,ppx_blob --as-pp ${<})))
+	(preprocessor_deps 
+	 ("../res/nusmv-default-script.txt"
+		"../res/nuxmv-default-script.txt"
+		"../res/version"))
 	))
 
-
-(alias
- ((name    runtest)
-  (deps    (run_tests.exe))
-  (action  (run ${<}))))
+;;(alias
+;; ((name    runtest)
+;;  (deps    (run_tests.exe))
+;;  (action  (run ${<}))))
 
 ;;; first parser
 
@@ -63,5 +40,3 @@
  ((merge_into SMV_trace_parser)
   (flags      (--external-tokens SMV_trace_tokens))
   (modules    (SMV_trace_parser SMV_trace_tokens))))
-
-

@@ -2,8 +2,16 @@
 
 TARGET = electrod
 
-all:
-	jbuilder build && ln -sf _build/install/default/bin/$(TARGET) ./$(TARGET)
+all: build
+
+build:
+	jbuilder build @install && ln -sf _build/install/default/bin/$(TARGET) ./$(TARGET)
+
+install: build
+	@jbuilder install
+
+uninstall:
+	@jbuilder uninstall
 
 clean:
 	@jbuilder clean

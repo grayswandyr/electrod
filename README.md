@@ -1,7 +1,16 @@
 # electrod - Formal analysis for the Electrod formal specification language
 
-Electrod is a model finder for first-order linear temporal logic with
-relations, transitive closure and partial domains.
+%%VERSION%%
+
+Electrod is a model finder inspired by Kodkod. It takes as input a
+model expressed in a mixture of relational first-order logic (RFOL)
+over bounded domains and linear temporal logic (LTL) over an unbounded
+time horizon.
+
+Then Electrod compiles the model to a problem for a solver (currently
+the NuSMV and nuXmv tools) to produce example or counter-example traces.
+
+Electrod is mainly meant to be used as a backend for the Electrum Analyzer.
 
 See the file [INSTALL.md](INSTALL.md) for building and installation instructions.
 
