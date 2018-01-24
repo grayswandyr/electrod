@@ -12,9 +12,9 @@
  * License-Filename: LICENSES/MPL-2.0.txt
  ******************************************************************************)
 
-(** Symbols are hash-consed strings *)
-
 open Containers
+
+(** Symbols are hash-consed strings *)
 
 type t
 

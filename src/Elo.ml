@@ -103,7 +103,7 @@ let pp out { domain; instance; invariants; goal; _ } =
 
 (* substitution *)
 let substitute = object (_ : 'self)
-  inherit [_] G.map as super
+  inherit [_] G.map 
 
   method visit_'v _ = Fun.id
 

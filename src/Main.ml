@@ -16,9 +16,6 @@
 
 open Containers
 
-
-
-
 (* inspired by Logs_fmt code *)     
 let keyword =
   let open! Logs in
@@ -66,12 +63,6 @@ type tool =
   | NuSMV
 
 
-let version =
-  let s = [%blob "../res/version"] in
-  String.replace ~which:`All ~sub:"\n" ~by:"" s
-  |> String.replace ~which:`All ~sub:"\r" ~by:"" 
-
-
 let main style_renderer verbosity tool file scriptfile keep_files no_analysis
       print_generated outcome_format =
   Printexc.record_backtrace true;
@@ -83,10 +74,9 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
 
   Logs.app
     (fun m ->
-       m "%a %s"
+       m "%a"
          Fmtc.(styled `Bold string)
-         "electrod (C) 2016-2018 ONERA"
-         version);
+         "electrod (C) 2016-2018 ONERA (%%VERSION%%)");
 
   Msg.debug (fun m -> m "CWD = %s" (Sys.getcwd ()));
   Msg.debug (fun m -> m "PATH = %s" (Sys.getenv "PATH"));
@@ -97,8 +87,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
   try
     let raw_to_elo_t = Transfo.tlist [ Raw_to_elo.transfo ] in
     let elo_to_elo_t = Transfo.tlist [ Simplify1.transfo; Simplify2.transfo ] in
-    let elo_to_smv_t = Transfo.tlist
-                         [ Elo_to_SMV1.transfo; (* Elo_to_SMV2.transfo *)] in
+    let elo_to_smv_t = Transfo.tlist [ Elo_to_SMV1.transfo ] in
 
     let elo =
       Parser_main.parse_file file

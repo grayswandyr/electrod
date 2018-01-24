@@ -16,9 +16,9 @@ open Containers
 
 
 
-let nuXmv_default_script = [%blob "../res/nuxmv-default-script.txt"]
+let nuXmv_default_script = [%blob "res/nuxmv-default-script.txt"]
 
-let nuSMV_default_script = [%blob "../res/nusmv-default-script.txt"]
+let nuSMV_default_script = [%blob "res/nusmv-default-script.txt"]
 
 
 module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
@@ -122,7 +122,6 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
         pbody (new_this + 1) out body
       end
                     
-    type atomic = At.t
 
     let pp_atomic = At.pp
 
@@ -135,10 +134,6 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
       | Gt  -> ">"
       | Eq  -> "="
       | Neq  -> "!="
-
-    let styled_parens st ppv_v out v =
-      surround (styled st lparen) (styled st rparen) ppv_v out v
-    
 
 
     (* From NuXmv documentation, from high to low (excerpt, some precedences are ignored because they are not used)
@@ -223,8 +218,6 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
 
       in pp upper out f
   end
-
-  let pp_atomic = PP.pp_atomic
 
   let pp_gather_variables ?(next_is_X = true) variables out f =
     Fmtc.pf out "@[<hov2>%a@]" (PP.pp ~next_is_X variables 0) f
@@ -452,12 +445,12 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
       S.fold
         (fun (acc_rp, acc_re, acc_fp, acc_fe) at ->
            if Ltl.Atomic.is_const at then (* rigid *)
-             if Ltl.Atomic.domain_arity at = None then (* plain *)
+             if Option.is_none @@ Ltl.Atomic.domain_arity at then (* plain *)
                (S.cons at acc_rp, acc_re, acc_fp, acc_fe)
              else               (* enumerable *)
                (acc_rp, S.cons at acc_re, acc_fp, acc_fe)
            else             (* flexible *)
-             if Ltl.Atomic.domain_arity at = None then (* plain *)
+             if Option.is_none @@ Ltl.Atomic.domain_arity at then (* plain *)
                (acc_rp, acc_re, S.cons at acc_fp, acc_fe)
              else               (* enumerable *)
                (acc_rp, acc_re, acc_fp, S.cons at acc_fe))
@@ -543,11 +536,11 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     Msg.info (fun m ->
           let size, unit_ =
             let s = float_of_int @@ Unix.((stat smv).st_size) in
-            if s < 1_024. then
+            if Float.(s < 1_024.) then
               (s, "B")
-            else if s < 1_048_576. then
+            else if Float.(s < 1_048_576.) then
               (s /. 1_024., "KB")
-            else if s < 1_073_741_824. then
+            else if Float.(s < 1_073_741_824.) then
               (s /. 1_048_576., "MB")
             else
               (s /. 1_073_741_824., "GB")

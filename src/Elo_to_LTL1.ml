@@ -139,7 +139,7 @@ module Make (Ltl : Solver.LTL) = struct
     else
       let t_to_the_k = ref t in
       let tc = ref t in
-      for i = 2 to k do
+      for _ = 2 to k do
         t_to_the_k := G.(exp t.arity dummy @@ rbinary !t_to_the_k join t);
         tc := G.(exp t.arity dummy @@ rbinary !tc union !t_to_the_k);
       done;
@@ -178,7 +178,7 @@ module Make (Ltl : Solver.LTL) = struct
   class ['subst] converter env = object (self : 'self)
     constraint 'subst = (Var.t, Tuple.t) CCList.Assoc.t
 
-    inherit ['self] GenGoalRecursor.recursor as super
+    inherit ['self] GenGoalRecursor.recursor 
 
     method visit_'v __subst = Fun.id
 
@@ -237,7 +237,11 @@ module Make (Ltl : Solver.LTL) = struct
               |> cartesian_product
               (* remove lines where there are tuples in common if [disj = true] *)
               |> (if disj then
-                    filter (fun l -> length l = length @@ sort_uniq l) else Fun.id)
+                    filter
+                      (fun l ->
+                         let sorted = sort_uniq ~cmp:Tuple.compare l in
+                         length l = length sorted)
+                  else Fun.id)
               (* |> Fun.tap (fun res -> Msg.debug (fun m-> *)
               (*       m "tuples_of_sim_binding (disj:%B) vars:%a domain:%a@\n  -->@ %a " *)
               (*         disj *)
@@ -708,7 +712,8 @@ module Make (Ltl : Solver.LTL) = struct
       let mustpart =
         wedge
           ~range:(TS.to_seq must)
-          (fun t -> lazy (if proj1 t = proj1 tuple then false_ else true_))
+          (fun t -> lazy (if Tuple.equal (proj1 t) (proj1 tuple)
+                          then false_ else true_))
       in
       (* [newmay] helps compute the last AND above: it removes duplicate tuples
          that may appear in this translation: *)

@@ -27,7 +27,7 @@ let fresh_var base exp =
 
 (* simplify Elo goals *)
 class simplify = object (self : 'self)
-  inherit Simplify1.simplify as super
+  inherit Simplify1.simplify 
 
   (* change relation qualifiers into formulas *)
   method! visit_Qual env qual exp =

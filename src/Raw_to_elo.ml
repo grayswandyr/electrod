@@ -79,7 +79,7 @@ let compute_tuples infile domain = function
           (fun t ->
              if not @@ TS.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain
              then [t] else []) atoms in
-      (if absent <> [] then
+      (if not @@ List.is_empty absent then
          Msg.Fatal.undeclared_atoms
          @@ fun args -> args
                           infile 
@@ -100,7 +100,7 @@ let compute_tuples infile domain = function
           (fun t ->
              if not @@ TS.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain
              then [t] else []) atoms in
-      (if absent <> [] then
+      (if not @@ List.is_empty absent then
          Msg.Fatal.undeclared_atoms
          @@ fun args ->
          args infile
@@ -159,7 +159,7 @@ let compute_bound infile domain (which : [ `Inf | `Sup | `Exact ]) id raw_bound 
                       Msg.Fatal.should_denote_a_constant_set
                       @@ fun args -> args infile ref_id
         end
-    | BProd (rb1, Some _, rb2) ->
+    | BProd (_, Some _, _) ->
         Msg.Fatal.no_multiplicity_allowed_here (fun args -> args infile id)
     | BProd (rb1, None, rb2) ->
         (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BProd"); *)
@@ -535,7 +535,7 @@ let compute_arities elo =
     | (True | False) as b -> b
     | Qual (ROne, exp) ->
         let exp' = walk_exp ctx exp in
-        if exp'.arity = None then
+        if Option.is_none exp'.arity then
           Msg.Fatal.arity_error
             (fun args -> args elo.Elo.file exp
               @@ Fmtc.strf
@@ -544,7 +544,7 @@ let compute_arities elo =
         else qual rone exp'
     | Qual (RSome, exp) ->
         let exp' = walk_exp ctx exp in
-        if exp'.arity = None then
+        if Option.is_none exp'.arity then
           Msg.Fatal.arity_error
             (fun args -> args elo.Elo.file exp
               @@ Fmtc.strf
@@ -557,9 +557,9 @@ let compute_arities elo =
         let e2' = walk_exp ctx e2 in
         let ar1 = e1'.arity in
         let ar2 = e2'.arity in
-        if ar1 <> ar2 &&
-           ar1 <> None &&
-           ar2 <> None then
+        if not @@ Option.equal (=) ar1 ar2 &&
+           Option.is_some ar1 &&
+           Option.is_some ar2 then
           Msg.Fatal.arity_error
             (fun args ->
                args elo.Elo.file e2
@@ -618,7 +618,7 @@ let compute_arities elo =
 
 
   and return_exp exp ar pe =
-    assert (ar <> Some 0);
+    assert (not @@ Option.equal (=) ar (Some 0));
     Result.return { exp with arity = ar; prim_exp = pe }
 
   (* this function returns a [result] to factor the error messages out and also
@@ -641,7 +641,7 @@ let compute_arities elo =
     | RUn (op, e) ->
         let e' = walk_exp ctx e in
         let ar = e'.arity in
-        if ar <> Some 2 then
+        if not @@ Option.equal (=) ar (Some 2) then
           Result.fail "arity should be 2"
         else
           return_exp exp ar (runary op e')
@@ -651,57 +651,57 @@ let compute_arities elo =
         let ar1 = e1'.arity in
         let ar2 = e2'.arity in
         (match op with
-          | Union when ar1 = ar2 || ar2 = None ->
+          | Union when Option.equal (=) ar1 ar2 || Option.is_none ar2 ->
               return_exp exp ar1 @@ rbinary e1' op e2'
-          | Union when ar1 = None ->
+          | Union when Option.is_none ar1 ->
               return_exp exp ar2 @@ rbinary e1' op e2'
           | Union ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
                    (str_exp e1')
                    (str_exp e2'))
-          | Diff when ar1 = None ->
+          | Diff when Option.is_none ar1 ->
               return_exp exp None @@ rbinary e1' op e2'
-          | Diff when ar1 = ar2 || ar2 = None ->
+          | Diff when Option.equal (=) ar1 ar2 || Option.is_none ar2 ->
               return_exp exp ar1 @@ rbinary e1' op e2'
           | Diff ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
                    (str_exp e1')
                    (str_exp e2'))
-          | Inter when ar1 = None || ar2 = None ->
+          | Inter when Option.is_none ar1 || Option.is_none ar2 ->
               return_exp exp None @@ rbinary e1' op e2'
-          | Inter when ar1 = ar2 ->
+          | Inter when Option.equal (=)ar1 ar2 ->
               return_exp exp ar1 @@ rbinary e1' op e2'
           | Inter ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
                    (str_exp e1')
                    (str_exp e2'))
-          | Over when ar1 = ar2 ->
+          | Over when Option.equal (=) ar1 ar2 ->
               if CCOpt.compare CCInt.compare ar1 (Some 1) <= 0 then
                 Result.fail
                   (Fmtc.strf "arity of %s is < 2" (str_exp e1'))
               else
                 return_exp exp ar1 @@ rbinary e1' op e2'
-          | Over when ar1 = None ->
+          | Over when Option.is_none ar1 ->
               return_exp exp ar2  @@ rbinary e1' op e2'
-          | Over when ar2 = None ->
+          | Over when Option.is_none ar2 ->
               return_exp exp ar1 @@ rbinary e1' op e2'
           | Over ->
               Result.fail
                 (Fmtc.strf "incompatible arities between %s and %s"
                    (str_exp e1')
                    (str_exp e2'))
-          | LProj when ar1 = None ->
+          | LProj when Option.is_none ar1 ->
               return_exp exp None @@ rbinary e1' op e2'
-          | LProj when ar1 = Some 1 ->
+          | LProj when Option.equal (=) ar1 (Some 1) ->
               return_exp exp ar2 @@ rbinary e1' op e2'
           | LProj ->
               Result.fail "left projection should be on a set"
-          | RProj when ar2 = None ->
+          | RProj when Option.is_none ar2 ->
               return_exp exp None @@ rbinary e1' op e2'
-          | RProj when ar2 = Some 1 ->
+          | RProj when Option.equal (=) ar2 (Some 1) ->
               return_exp exp ar1 @@ rbinary e1' op e2'
           | RProj ->
               Result.fail "right projection should be on a set"
@@ -714,7 +714,7 @@ let compute_arities elo =
                 | _, None -> return_exp exp None @@ rbinary e1' op e2')
           | Join ->
               let ar_join = join_arity ar1 ar2 in
-              if ar_join = None then
+              if Option.is_none ar_join then
                 Result.fail @@
                 Fmtc.strf "wrong arities for the dot join of %s and %s"
                   (str_exp e1') (str_exp e2')
@@ -748,7 +748,7 @@ let compute_arities elo =
                @@ rbinary arg join r
             ) args' call'
         in
-        if res.arity = None || res.arity = Some 0 then
+        if Option.is_none res.arity || Option.equal (=) res.arity (Some 0) then
           Result.fail "wrong arities for the box join"
         else
           return_exp exp res.arity @@ boxjoin call' args'
