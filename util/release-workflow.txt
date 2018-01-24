@@ -3,18 +3,17 @@
 # $1 contains the version number to create
 git flow release start $1
 
-# if needed, change, clean & update headers
-bash util/headache/headache.sh
-
-# prepare changelog
-DATE=`date -Idate` && \
-		echo "### $1 ($DATE)" | cat - CHANGES.md > temp && mv temp CHANGES.md
+# IMMEDIATELY prepare changelog
+echo "### $(git describe --always --dirty) $(date -Idate)" | cat - CHANGES.md > temp && mv temp CHANGES.md
 
 echo "Now update CHANGES.md out of this (and then test \
 		 a little bit until you're happy)"
 topkg status
 
-git ci -am "preparing release $1"
+# if needed, change, clean & update headers
+bash util/headache/headache.sh
+
+git ci -am "release v$(git rev-parse --abbrev-ref HEAD | cut -f 2- -d '/')"
 
 git push origin
 
