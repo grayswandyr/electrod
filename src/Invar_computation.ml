@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * 
  * SPDX-License-Identifier: MPL-2.0
- * License-Filename: LICENSES/MPL-2.0.txt
+ * License-Filename: LICENSE.md
  ******************************************************************************)
 
 open Containers
@@ -74,7 +74,7 @@ let rec remove_always_to_invar f =
 
 (* adds an always operator to an (invariant) elo formula if the
    outermost operator is not an always *)
-let rec add_always_to_invar f =
+let add_always_to_invar f =
   let open GenGoal in
   let {prim_fml; fml_loc} = f in
   match prim_fml with
@@ -82,39 +82,39 @@ let rec add_always_to_invar f =
     | _ -> {prim_fml = lunary G f; fml_loc}
 
 
-class ['env] invarComputation = object (self : 'self)
-  inherit ['self] GenGoal.fold as super
+class ['e] invarComputation = object (_ : 'self)
+  inherit ['self] GenGoal.fold
 
-  method visit_'v (env : 'env) = Fun.id
+  method visit_'v (__env : 'e) = Fun.id
 
-  method visit_'i (env : 'env) = Fun.id
+  method visit_'i (__env : 'e) = Fun.id
 
-  method build_fml (env : 'env) f' _ = f' 
+  method build_fml (__env : 'e) f' _ = f' 
 
-  method build_Run (env : 'env) blk' =
+  method build_Run (__env : 'e) blk' =
     List.fold_left
       max_color_wiwt
       Static_prop
       blk'
 
-  method build_Check (env : 'env) blk' =
+  method build_Check (__env : 'e) blk' =
     List.fold_left
       max_color_wiwt
       Static_prop
       blk'
 
 
-  method build_True (env : 'env) = Static_prop
+  method build_True (__env : 'e) = Static_prop
 
-  method build_False (env : 'env) = Static_prop
+  method build_False (__env : 'e) = Static_prop
 
-  method build_Block (env : 'env) blk_colors =
+  method build_Block (__env : 'e) blk_colors =
     List.fold_left
       max_color
       Static_prop
       blk_colors
 
-  method build_FIte (env : 'env) f t e =
+  method build_FIte (__env : 'e) f t e =
     match f, t, e with
     | Static_prop, Static_prop, Static_prop -> Static_prop
     | (Init | Static_prop) , (Init | Static_prop) , (Init | Static_prop)
@@ -124,18 +124,18 @@ class ['env] invarComputation = object (self : 'self)
       -> Primed_prop
     | _ , _, _ -> Temporal
 
-  method build_Let (env : 'env) bs' block'= assert false (* SIMPLIFIED *)
+  method build_Let (__env : 'e) __bs' __block'= assert false (* SIMPLIFIED *)
 
   (* quant *)
 
-  method build_Quant (env : 'env) quant' sim_bindings_colors blk_colors =
+  method build_Quant (__env : 'e) quant' sim_bindings_colors blk_colors =
     let blk_color =
       List.fold_left
         max_color_wiwt
         Static_prop
         blk_colors
     in
-    let max_color_for_simbindings color_acc (disj1, vars1, e1)  =
+    let max_color_for_simbindings color_acc (__disj1, __vars1, e1)  =
       max_color_wiwt color_acc e1
     in      
     let sim_bindings_color =
@@ -146,108 +146,108 @@ class ['env] invarComputation = object (self : 'self)
     in
     quant' sim_bindings_color blk_color
 
-  method build_One (env : 'env) = max_color
+  method build_One (__env : 'e) = max_color
 
-  method build_Lone (env : 'env) = max_color
+  method build_Lone (__env : 'e) = max_color
 
-  method build_All (env : 'env) =  max_color
+  method build_All (__env : 'e) =  max_color
 
-  method build_No (env : 'env) =  max_color
+  method build_No (__env : 'e) =  max_color
 
-  method build_Some_ (env : 'env) =  max_color    
+  method build_Some_ (__env : 'e) =  max_color    
 
   (* lbinop *)      
 
-  method build_LBin (env : 'env) f1' op' f2' = op' f1' f2'
+  method build_LBin (__env : 'e) f1' op' f2' = op' f1' f2'
 
-  method build_And (env : 'env) = max_color
+  method build_And (__env : 'e) = max_color
 
-  method build_Iff (env : 'env) = max_color_wiwt
+  method build_Iff (__env : 'e) = max_color_wiwt
 
-  method build_Imp (env : 'env)  = max_color_wiwt
+  method build_Imp (__env : 'e)  = max_color_wiwt
 
-  method build_U (env : 'env) _ _ = Temporal
+  method build_U (__env : 'e) _ _ = Temporal
 
-  method build_Or (env : 'env)  = max_color_wiwt
+  method build_Or (__env : 'e)  = max_color_wiwt
 
-  method build_R (env : 'env) _ _ = Temporal
+  method build_R (__env : 'e) _ _ = Temporal
 
-  method build_S (env : 'env) _ _ = Temporal
+  method build_S (__env : 'e) _ _ = Temporal
 
   (* lunop *)                     
 
-  method build_LUn (env : 'env) op' f' =
+  method build_LUn (__env : 'e) op' f' =
     op' f'
 
-  method build_X (env : 'env) f' =
+  method build_X (__env : 'e) f' =
     match f' with
     | Static_prop | Init -> Primed_prop
     | _ -> Temporal
 
-  method build_F (env : 'env) _ = Temporal
+  method build_F (__env : 'e) _ = Temporal
 
-  method build_G (env : 'env) f' =
+  method build_G (__env : 'e) f' =
     match f' with
     | Init | Static_prop | Invar -> Invar
     | Primed_prop | Trans -> Trans 
     | _ -> Temporal
 
-  method build_H (env : 'env) _ = Temporal
+  method build_H (__env : 'e) _ = Temporal
 
-  method build_O (env : 'env) _ = Temporal
+  method build_O (__env : 'e) _ = Temporal
 
-  method build_P (env : 'env) _ = Temporal
+  method build_P (__env : 'e) _ = Temporal
 
-  method build_Not (env : 'env) f' =
+  method build_Not (__env : 'e) f' =
     max_color_wiwt Static_prop f'
 
   (* compo_op *)
 
-  method build_RComp (env : 'env) f1' op' f2' =
+  method build_RComp (__env : 'e) f1' op' f2' =
     op' f1' f2'
 
-  method build_REq (env : 'env) = max_color_wiwt
+  method build_REq (__env : 'e) = max_color_wiwt
 
-  method build_In (env : 'env)  = max_color_wiwt
+  method build_In (__env : 'e)  = max_color_wiwt
 
-  method build_NotIn (env : 'env) = max_color_wiwt
+  method build_NotIn (__env : 'e) = max_color_wiwt
 
-  method build_RNEq (env : 'env) = max_color_wiwt
+  method build_RNEq (__env : 'e) = max_color_wiwt
 
   (* icomp_op *)
 
-  method build_IComp (env : 'env) e1' op' e2' =
+  method build_IComp (__env : 'e) e1' op' e2' =
     op' e1' e2'
 
-  method build_Gt (env : 'env) = max_color_wiwt
+  method build_Gt (__env : 'e) = max_color_wiwt
 
-  method build_Gte (env : 'env) = max_color_wiwt
+  method build_Gte (__env : 'e) = max_color_wiwt
 
-  method build_IEq (env : 'env) = max_color_wiwt
+  method build_IEq (__env : 'e) = max_color_wiwt
 
-  method build_INEq (env : 'env) = max_color_wiwt
+  method build_INEq (__env : 'e) = max_color_wiwt
 
-  method build_Lt (env : 'env) = max_color_wiwt
+  method build_Lt (__env : 'e) = max_color_wiwt
 
-  method build_Lte (env : 'env) = max_color_wiwt
+  method build_Lte (__env : 'e) = max_color_wiwt
 
   (* rqualify *)
 
-  method build_Qual (env : 'env) (q' : bool) (r' : goal_color) = assert false (* SIMPLIFIED *)
+  method build_Qual (__env : 'e) (__q' : bool) (__r' : goal_color) = assert false (* SIMPLIFIED *)
 
-  method build_RLone (env : 'env) = assert false (* SIMPLIFIED *)
+  method build_RLone (__env : 'e) = assert false (* SIMPLIFIED *)
 
-  method build_RNo (env : 'env) = assert false (* SIMPLIFIED *)
+  method build_RNo (__env : 'e) = assert false (* SIMPLIFIED *)
 
-  method build_ROne (env : 'env) = assert false (* SIMPLIFIED *)
+  method build_ROne (__env : 'e) = assert false (* SIMPLIFIED *)
 
-  method build_RSome (env : 'env) = assert false (* SIMPLIFIED *)
+  method build_RSome (__env : 'e) = assert false (* SIMPLIFIED *)
 
   (************************** exp  ********************************)
 
-  method build_exp (env : 'env) pe' _ _ = pe'
+  method build_exp (__env : 'e) pe' _ _ = pe'
 
-  method build_Compr (env : 'env) sbs' b' =
+  method build_Compr (__env : 'e) sbs' b' =
     let blk_color =
       List.fold_left
         max_color_wiwt
@@ -256,7 +256,7 @@ class ['env] invarComputation = object (self : 'self)
     in
 
     let max_color_for_simbindings (color_acc : goal_color)
-          ((disj1, vars1, e1) : bool * Elo.var list * goal_color)  =
+          ((__disj1, __vars1, e1) : bool * Elo.var list * goal_color)  =
       max_color_wiwt color_acc e1
     in      
     let sim_bindings_color =
@@ -268,15 +268,15 @@ class ['env] invarComputation = object (self : 'self)
 
     max_color_wiwt sim_bindings_color blk_color
 
-  method build_Iden (env : 'env) = Static_prop
+  method build_Iden (__env : 'e) = Static_prop
 
-  method build_BoxJoin (env : 'env) call' args' = (* SIMPLIFIED *)
+  method build_BoxJoin (__env : 'e) __call' __args' = (* SIMPLIFIED *)
     assert false
 
-  method build_Ident (env : 'env) id =
+  method build_Ident (env : 'e) id =
     let open Elo in
     match id with
-      | Var v ->
+      | Var _ ->
           Static_prop
       | Name r ->
           if env#is_const r then
@@ -284,16 +284,16 @@ class ['env] invarComputation = object (self : 'self)
           else
             Init
 
-  method build_None_ (env : 'env) = Static_prop
+  method build_None_ (__env : 'e) = Static_prop
 
-  method build_Univ (env : 'env) = Static_prop
+  method build_Univ (__env : 'e) = Static_prop
 
-  method build_Prime (env : 'env) f' =
+  method build_Prime (__env : 'e) f' =
     match f' with
     | Static_prop | Init -> Primed_prop
     | _ -> Temporal
 
-  method build_RIte (env : 'env) f' t' e' =
+  method build_RIte (__env : 'e) f' t' e' =
     match f', t', e' with
     | Static_prop, Static_prop, Static_prop -> Static_prop
     | (Init | Static_prop) , (Init | Static_prop) , (Init | Static_prop)
@@ -306,48 +306,48 @@ class ['env] invarComputation = object (self : 'self)
 
   (* rbinop *)
 
-  method build_RBin (env : 'env) f1' op' f2' =
+  method build_RBin (__env : 'e) f1' op' f2' =
     op' f1' f2'
 
-  method build_Union (env : 'env)  = max_color_wiwt
+  method build_Union (__env : 'e)  = max_color_wiwt
 
 
-  method build_Inter (env : 'env) = max_color_wiwt
+  method build_Inter (__env : 'e) = max_color_wiwt
 
-  method build_Join (env : 'env) = max_color_wiwt
+  method build_Join (__env : 'e) = max_color_wiwt
 
-  method build_LProj (env : 'env) = max_color_wiwt
-  method build_Prod (env : 'env) = max_color_wiwt
+  method build_LProj (__env : 'e) = max_color_wiwt
+  method build_Prod (__env : 'e) = max_color_wiwt
 
-  method build_RProj (env : 'env) = max_color_wiwt
-  method build_Diff (env : 'env) = max_color_wiwt
-  method build_Over (env : 'env) = max_color_wiwt                           
+  method build_RProj (__env : 'e) = max_color_wiwt
+  method build_Diff (__env : 'e) = max_color_wiwt
+  method build_Over (__env : 'e) = max_color_wiwt                           
   (* runop *)
 
-  method build_RUn (env : 'env) op' e' = op' e'
+  method build_RUn (__env : 'e) op' e' = op' e'
 
-  method build_RTClos (env : 'env) = Fun.id
+  method build_RTClos (__env : 'e) = Fun.id
 
-  method build_Transpose (env : 'env) = Fun.id
+  method build_Transpose (__env : 'e) = Fun.id
 
-  method build_TClos (env : 'env) = Fun.id
+  method build_TClos (__env : 'e) = Fun.id
 
 
   (*********************************** iexp **************************************)
 
-  method build_iexp (env : 'env) iexp' _ = iexp'
+  method build_iexp (__env : 'e) iexp' _ = iexp'
 
-  method build_IBin (env : 'env) i1' op' i2' = op' i1' i2'
+  method build_IBin (__env : 'e) i1' op' i2' = op' i1' i2'
 
-  method build_IUn (env : 'env) op' i' = op' i'
+  method build_IUn (__env : 'e) op' i' = op' i'
 
-  method build_Num (env : 'env) _ = Static_prop
+  method build_Num (__env : 'e) _ = Static_prop
 
-  method build_Add (env : 'env) = max_color_wiwt
+  method build_Add (__env : 'e) = max_color_wiwt
 
-  method build_Neg (env : 'env) = max_color_wiwt Static_prop
+  method build_Neg (__env : 'e) = max_color_wiwt Static_prop
 
-  method build_Sub (env : 'env) = max_color_wiwt
+  method build_Sub (__env : 'e) = max_color_wiwt
 
-  method build_Card (env : 'env) r' = r'
+  method build_Card (__env : 'e) r' = r'
 end

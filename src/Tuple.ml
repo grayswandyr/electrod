@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * 
  * SPDX-License-Identifier: MPL-2.0
- * License-Filename: LICENSES/MPL-2.0.txt
+ * License-Filename: LICENSE.md
  ******************************************************************************)
 
 (*${*) open Containers (*$}*)
@@ -23,12 +23,8 @@ type t = Atom.t Array.t
 
 (* Constructors *)
 
-let of_array arr =
-  assert (Array.length arr > 0);
-  arr
-
 let of_list1 xs =
-  assert (xs <> []);
+  assert (not @@ List.is_empty xs);
   Array.of_list xs 
 
 let tuple1 at =

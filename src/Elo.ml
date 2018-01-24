@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * 
  * SPDX-License-Identifier: MPL-2.0
- * License-Filename: LICENSES/MPL-2.0.txt
+ * License-Filename: LICENSE.md
  ******************************************************************************)
 
 (** Definition of the type for Electrod models.  *)
@@ -103,7 +103,7 @@ let pp out { domain; instance; invariants; goal; _ } =
 
 (* substitution *)
 let substitute = object (_ : 'self)
-  inherit [_] G.map as super
+  inherit [_] G.map 
 
   method visit_'v _ = Fun.id
 

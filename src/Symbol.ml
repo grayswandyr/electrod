@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * 
  * SPDX-License-Identifier: MPL-2.0
- * License-Filename: LICENSES/MPL-2.0.txt
+ * License-Filename: LICENSE.md
  ******************************************************************************)
 
 open Containers
@@ -43,7 +43,7 @@ let compare_string s1 s2 =
   String.compare s1.H.node s2.H.node
 
 let equal x1 x2 =
-  x1 == x2
+  Pervasives.(x1 = x2)
 
 let pp out at =
   (* Format.fprintf out "%s/%d" at.H.node at.H.tag *)

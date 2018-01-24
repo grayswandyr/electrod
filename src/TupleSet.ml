@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * 
  * SPDX-License-Identifier: MPL-2.0
- * License-Filename: LICENSES/MPL-2.0.txt
+ * License-Filename: LICENSE.md
  ******************************************************************************)
 
 open Containers
@@ -119,7 +119,7 @@ let override r s =
     filter
       (fun tr ->
          not @@ TS.exists
-                  (fun ts1 -> Tuple.(ith 0 tr = ith 0 ts1)) s) r
+                  (fun ts1 -> Tuple.(Atom.equal (ith 0 tr) (ith 0 ts1))) s) r
   in
   TS.union s in_r_but_not_in_s1
 

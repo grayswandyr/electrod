@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * 
  * SPDX-License-Identifier: MPL-2.0
- * License-Filename: LICENSES/MPL-2.0.txt
+ * License-Filename: LICENSE.md
  ******************************************************************************)
 
 open Containers
@@ -75,7 +75,7 @@ type raw_paragraph =
 let interval id1 id2 = (id1, id2)
 
 let etuple ats =
-  assert (ats <> []);
+  assert (not @@ List.is_empty ats);
   ETuple ats
 
 let eintvl intvl = EIntvl intvl
@@ -109,6 +109,4 @@ let problem file raw_univ raw_decls raw_goal raw_invar raw_inst raw_syms =
 let decl_id = function
   | DConst (id, _, _)
   | DVar (id, _, _, _) -> id
-
-let raw_bound_location = Location.span 
 

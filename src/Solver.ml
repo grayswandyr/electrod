@@ -9,12 +9,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * 
  * SPDX-License-Identifier: MPL-2.0
- * License-Filename: LICENSES/MPL-2.0.txt
+ * License-Filename: LICENSE.md
  ******************************************************************************)
 
 open Containers
     
-[@@@warning "-4"] (* fragile patterns, lots of them as we short-circuit *)
+[@@@warning "-4"]
+[@@@warning "-32"] (* fragile patterns, lots of them as we short-circuit *)
 
 module type ATOMIC_PROPOSITION = sig
   type t
@@ -197,7 +198,8 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
     | Count of t list
   [@@deriving show]      (* default impl. for pp; to override later *)
 
-  let pp_gather_variables ?(next_is_X = true) _ = pp (* default impl. for pp; to override later *)
+  let pp_gather_variables ?(next_is_X = true) _ =
+    let _ = next_is_X in pp (* default impl. for pp; to override later *)
 
   (* let equal_tcomp_node x y = match x, y with  *)
   (*   | Lte, Lte *)
@@ -336,7 +338,7 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
     | _ -> Neg t
              
   let count ps =
-    match List.filter (fun p -> p <> False) ps with
+    match List.filter (function False -> false | _ -> true) ps with
       | [] -> num 0
       | props -> Count props
                                 

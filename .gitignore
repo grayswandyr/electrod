@@ -1,3 +1,5 @@
+*.install
+*/.merlin
 _build/
 *.native
 *.byte

@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * 
  * SPDX-License-Identifier: MPL-2.0
- * License-Filename: LICENSES/MPL-2.0.txt
+ * License-Filename: LICENSE.md
  ******************************************************************************)
 
 (** Compared to Simplify1, this version maps qualified relations to formulas
@@ -27,7 +27,7 @@ let fresh_var base exp =
 
 (* simplify Elo goals *)
 class simplify = object (self : 'self)
-  inherit Simplify1.simplify as super
+  inherit Simplify1.simplify 
 
   (* change relation qualifiers into formulas *)
   method! visit_Qual env qual exp =

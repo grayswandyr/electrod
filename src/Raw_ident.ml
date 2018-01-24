@@ -9,7 +9,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * 
  * SPDX-License-Identifier: MPL-2.0
- * License-Filename: LICENSES/MPL-2.0.txt
+ * License-Filename: LICENSE.md
  ******************************************************************************)
 
 type t = {
@@ -26,9 +26,6 @@ let basename { ident; _ } = ident
 let location { loc; _ } = loc
 
 let eq_name i1 i2 = i1.ident = i2.ident
-
-let pp out { ident; _} =
-  Fmtc.string out ident
 
 
  

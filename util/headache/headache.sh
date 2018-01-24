@@ -3,7 +3,7 @@
 # the for loop below
 shopt -s nullglob  
 
-for dir in main src harness; do
+for dir in src; do
 	cd $dir
 	for f in *; do
 			# [[]] bash (and zsh ...) extension of PSOIX []

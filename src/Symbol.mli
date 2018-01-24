@@ -9,12 +9,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * 
  * SPDX-License-Identifier: MPL-2.0
- * License-Filename: LICENSES/MPL-2.0.txt
+ * License-Filename: LICENSE.md
  ******************************************************************************)
 
-(** Symbols are hash-consed strings *)
-
 open Containers
+
+(** Symbols are hash-consed strings *)
 
 type t
 

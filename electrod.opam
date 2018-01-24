@@ -1,31 +1,31 @@
 opam-version: "1.2"
 name: "electrod"
-version: "0.1.1"
 maintainer: "David Chemouil <david.chemouil+git@onera.fr>"
 authors: ["David Chemouil" "Julien Brunel"]
-homepage: "https://forge.onera.fr/projects/electrod"
+homepage: "https://github.com/grayswandyr/electrod/"
 bug-reports: "https://github.com/grayswandyr/electrod/issues"
 license: "MPL-2.0"
 dev-repo: "https://github.com/grayswandyr/electrod.git"
 build: [
-  [make] { ocaml-native & (os = "linux" | os = "darwin")}
+  ["jbuilder" "subst" "-p" name] {pinned}
+  ["jbuilder" "build" "-p" name "-j" jobs]
 ]
-remove: ["ocamlfind" "remove" "electrod"]
 depends: [
   "ocamlfind" {build}
-  "ocamlbuild" {build}
+  "jbuilder" {build & >="1.0+beta9"}
+  "topkg" {build & >= "0.9.0"} 
   "cmdliner" 
   "containers" 
-  "gen" 
-  "sequence" 
-  "logs" 
   "fmt" 
+  "gen" 
+  "hashcons" 
+  "logs" 
   "menhir" 
   "mtime" 
-  "ppx_deriving" 
-  "visitors" 
-  "hashcons" 
   "ppx_blob"
-	"printbox"
+  "ppx_deriving" 
+  "printbox"
+  "sequence" 
+  "visitors" 
 ]
 available: [ocaml-version >= "4.04"]
