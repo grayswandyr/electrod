@@ -1,5 +1,4 @@
 opam-version: "1.2"
-name: "electrod"
 maintainer: "David Chemouil <david.chemouil+git@onera.fr>"
 authors: ["David Chemouil" "Julien Brunel"]
 homepage: "https://github.com/grayswandyr/electrod/"
