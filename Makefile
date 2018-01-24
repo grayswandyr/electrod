@@ -5,7 +5,8 @@ TARGET = electrod
 all: build
 
 build:
-	jbuilder build @install && ln -sf _build/install/default/bin/$(TARGET) ./$(TARGET)
+	jbuilder build @install --dev \
+	&& ln -sf _build/install/default/bin/$(TARGET) ./$(TARGET)
 
 install: build
 	@jbuilder install

@@ -13,8 +13,7 @@
 		(run ppxfind -legacy visitors.ppx,ppx_deriving.std,ppx_blob --as-pp ${<})))
 	(preprocessor_deps 
 	 ("../res/nusmv-default-script.txt"
-		"../res/nuxmv-default-script.txt"
-		"../res/version"))
+		"../res/nuxmv-default-script.txt"))
 	))
 
 ;;(alias
