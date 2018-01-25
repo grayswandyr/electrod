@@ -12,9 +12,9 @@ build: [
 depends: [
   "ocamlfind" {build}
   "jbuilder" {build & >="1.0+beta9"}
-  "topkg" {build & >= "0.9.0"} 
-  "cmdliner" 
-  "containers" 
+  "ppxfind" {build} 
+  "cmdliner" { >= "1.0.2"  }
+  "containers" { >= "2.0+alpha1" }
   "fmt" 
   "gen" 
   "hashcons" 
