@@ -1,0 +1,17 @@
+*.install
+*/.merlin
+_build/
+*.native
+*.byte
+*.docdir
+*.annot
+*.cmo
+*.cma
+*.cmi
+*.a
+*.o
+*.cmx
+*.cmxs
+*.cmxa
+*.sw[op]
+*.odocl
