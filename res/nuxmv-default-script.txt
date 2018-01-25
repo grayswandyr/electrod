@@ -5,5 +5,5 @@ flatten_hierarchy;
 build_flat_model;
 encode_variables;
 build_boolean_model;
-check_ltlspec_klive;
+check_ltlspec_ic3;
 quit -x
