@@ -35,6 +35,8 @@ let get = Map.get
 
 let to_list = Map.to_list
 
+let of_list = Map.of_list
+
 let univ_atoms domain =
   let open Relation in
   let open Scope in

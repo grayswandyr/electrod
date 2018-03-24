@@ -101,6 +101,13 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
             Msg.debug (fun m -> m "After simplify1 =@\n%a@." (Elo.pp) elo))
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Simplification done"))
     in
+
+    let (old_names, new_domain) = Rename.rename_domain elo.Elo.domain in
+
+    Fmt.pf Fmt.stdout "%a@\n" Fmtc.(list ~sep:semi @@ parens @@ pair ~sep:comma Name.pp Name.pp) old_names;
+
+    Fmtc.pf Fmt.stdout "%a@\n" Domain.pp new_domain;
+    
     let before_conversion = Mtime_clock.now () in
     let model =
       Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) elo

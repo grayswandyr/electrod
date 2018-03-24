@@ -15,7 +15,7 @@
 	(wrapped false)
 	(modules (:standard \ (Main electrod)))
 	(libraries
-	 (cmdliner containers containers.data containers.unix fmt fmt.tty gen
+	 (containers containers.data containers.unix fmt fmt.tty gen
 		hashcons logs.fmt mtime.clock.os ppx_deriving.runtime printbox
 		sequence visitors.runtime))
 	(flags
