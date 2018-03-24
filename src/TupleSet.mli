@@ -12,6 +12,8 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
+open Containers
+
 (** Type for sets of tuples. *)
 
 
@@ -94,6 +96,11 @@ val transitive_closure_is : t -> t
 val filter : (Tuple.t -> bool) -> t -> t
 
 val map : (Tuple.t -> Tuple.t) -> t -> t
+
+val rename
+  :  (Atom.t, Atom.t) List.Assoc.t
+  -> t
+  -> t
 
 val to_seq : t -> Tuple.t CCSet.sequence
 val to_list : t -> Tuple.t list

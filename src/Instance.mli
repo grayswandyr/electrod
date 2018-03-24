@@ -12,6 +12,8 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
+open Containers
+    
 (** An instance is a set of relations whose value is a fixed tuple set. *)
 
 (** Virtually: a map between relation names and sets of tuples. *)
@@ -43,6 +45,13 @@ val get : Name.t -> t -> TupleSet.t option
 val to_list : t -> (Name.t * TupleSet.t) list
 
 val to_map : t -> TupleSet.t Name.Map.t
+
+
+val rename 
+  :  (Atom.t, Atom.t) List.Assoc.t
+  -> (Name.t, Name.t) List.Assoc.t
+  -> t
+  -> t
 
 include Intf.Print.S with type t := t
 

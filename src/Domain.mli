@@ -44,6 +44,8 @@ val univ_atoms : t -> TupleSet.t
 (** Returns the map as an association list *)
 val to_list : t -> (Name.t * Relation.t) list
 
+val of_list : (Name.t * Relation.t) list -> t
+
 (** Returns the "may" and "must" tuple sets associated to a relation name.  *)
 val must : Name.t -> t -> TupleSet.t
 val may : Name.t -> t -> TupleSet.t
@@ -54,7 +56,14 @@ val musts : ?with_univ_and_ident:bool -> t -> (Name.t, TupleSet.t) List.Assoc.t
 
 
 (** Returns the association list between relation names and their arity.  *)
-val arities : t -> (Name.t, int) List.Assoc.t 
+val arities : t -> (Name.t, int) List.Assoc.t
+
+(** Returns a new domain where atoms and relations have been renamed.  *)
+val rename
+  :  (Atom.t, Atom.t) List.Assoc.t
+  -> (Name.t, Name.t) List.Assoc.t
+  -> t
+  -> t
 
 (** For every entry in [inst], [update_domain_with_instance dom inst] replaces
     the corresponding relation in [dom] with the exact scope given by [inst]. *)

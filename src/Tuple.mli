@@ -12,6 +12,8 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
+open Containers
+    
 (** Tuples of atoms. *)
 
 type t (** invariant: atoms <> empty *)
@@ -54,6 +56,12 @@ val split : t -> int -> (t * t)
 
 (** [all_different t] tells whether all atoms in a tuple are different.  *)
 val all_different : t -> bool
+
+val rename
+  :  (Atom.t, Atom.t) List.Assoc.t
+  -> t
+  -> t
+
 
 (** [to_1tuples t] splits a tuple into as many 1-tuples at its length.  *)
 val to_1tuples : t -> t list

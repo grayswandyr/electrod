@@ -62,6 +62,13 @@ let print_generated =
   Arg.(value & flag & info ["pg"; "print-generated"] ~doc)
 
 
+let long_names = 
+  let doc =
+    {|If present, use long relation and atom names in the generated file.|}
+  in
+  Arg.(value & flag & info ["ln"; "long-names"] ~doc)
+
+
 let outcome_format = 
   let doc =
     {|Format for the outcome of analysis. 
@@ -91,7 +98,8 @@ let main_term =
         $ keep_files
         $ no_analysis
         $ print_generated
-        $ outcome_format)
+        $ outcome_format
+        $ long_names)
 
   
 let main_info =

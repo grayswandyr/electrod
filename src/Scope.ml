@@ -110,7 +110,14 @@ let pp out = function
   | Inexact Total_function (dom_ar, sup) -> 
       Fmtc.(box @@ triple string int (box2 TS.pp)) out ("one {}", dom_ar, sup)
         
-
+let rename atom_renaming = function
+  | Exact bound -> Exact (TS.rename atom_renaming bound)
+  | Inexact Plain_relation (inf, sup) ->
+      Inexact (Plain_relation (TS.rename atom_renaming inf, TS.rename atom_renaming sup))
+  | Inexact Partial_function (dom_ar, sup) -> 
+      Inexact (Partial_function (dom_ar, TS.rename atom_renaming sup))
+  | Inexact Total_function (dom_ar, sup) -> 
+      Inexact (Total_function (dom_ar, TS.rename atom_renaming sup))
  
 
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)

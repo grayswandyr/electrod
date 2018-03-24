@@ -18,6 +18,9 @@ watch:
 doc:
 	BROWSER=x-www-browser topkg doc -r
 
+show-deps:
+	jbuilder external-lib-deps --missing --dev @install
+
 install: build
 	@jbuilder install
 
