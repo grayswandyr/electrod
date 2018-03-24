@@ -12,6 +12,8 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
+open Containers
+    
 (** Relation scopes. *)
 
 type relation = private
@@ -51,6 +53,10 @@ val is_partial : t -> bool
 (** 0 if the arity cannot be inferred (= is unknown), [n > 0] otherwise. *)
 val inferred_arity : t -> int 
 
+val rename
+  :  (Atom.t, Atom.t) List.Assoc.t
+  -> t
+  -> t
 
 
 include Intf.Print.S with type t := t

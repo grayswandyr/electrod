@@ -12,6 +12,8 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
+open Containers
+    
 (** Type of relations. *)
 
 (** A relation is either static (const) or dynamic (var). In the latter case, it
@@ -48,6 +50,12 @@ val scope : t -> Scope.t
 val must : t -> TupleSet.t
 val may : t -> TupleSet.t
 val sup : t -> TupleSet.t
+
+val rename
+  :  (Atom.t, Atom.t) List.Assoc.t
+  -> (Name.t, Name.t) List.Assoc.t
+  -> t
+  -> t
 
 val pp : ?print_name:bool -> Format.formatter -> t -> unit
 

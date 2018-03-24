@@ -33,6 +33,8 @@ let get = Map.get
 
 let to_list = Map.to_list
 
+let of_list = Map.of_list
+
 let to_map x = x
 
 
@@ -46,7 +48,13 @@ let pp out rels =
   end
 
 
- 
+let rename atom_renaming name_renaming inst =
+  to_list inst
+  |> List.map (fun (name, ts) ->
+        (List.assoc ~eq:Name.equal name name_renaming,
+         TupleSet.rename atom_renaming ts))
+  |> of_list
+    
 
 
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)

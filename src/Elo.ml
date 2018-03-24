@@ -56,11 +56,15 @@ type t = {
   instance : Instance.t;
   sym : Symmetry.t list;
   invariants : (var, ident) G.fml list; 
-  goal : goal;       
+  goal : goal;
+  atom_renaming : (Atom.t, Atom.t) List.Assoc.t;
+  name_renaming : (Name.t, Name.t) List.Assoc.t;
 }
 
 let make file domain instance sym invariants goal =
-  { file; domain; instance; sym; invariants; goal }
+  { file; domain; instance; sym;
+    invariants; goal; atom_renaming = [];
+    name_renaming = [] }
 
 
 (* pretty printers *)
@@ -160,4 +164,18 @@ end
 
 
 
- 
+(* renames relation/set names *)
+let rename =  object (_ : 'self)
+  inherit [_] G.map 
+
+  method visit_'v _ (v : var) = v
+
+  method visit_'i _ = Fun.id
+
+  method! visit_Ident
+          (relation_renaming : (Name.t, Name.t) List.Assoc.t)
+          (id : ident) =
+    match id with
+      | Name name -> G.ident (Name (List.assoc ~eq:Name.equal name relation_renaming))
+      | Var _ -> G.ident id
+end

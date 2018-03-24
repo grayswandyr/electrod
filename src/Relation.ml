@@ -93,5 +93,17 @@ let sup = function
   | Var { scope; _ } ->
       Scope.sup scope
 
+
+let rename atom_renaming name_renaming rel = match rel with
+  | Const const ->
+      Const { const with
+                name = List.assoc ~eq:Name.equal const.name name_renaming;
+                scope = Scope.rename atom_renaming const.scope }
+  | Var var ->
+      Var { var with
+              name = List.assoc ~eq:Name.equal var.name name_renaming;
+              scope = Scope.rename atom_renaming var.scope;
+              fby = Option.map (Scope.rename atom_renaming) var.fby }
+
 let to_string ?(print_name = true) rel =
   Fmtc.to_to_string (pp ~print_name) rel

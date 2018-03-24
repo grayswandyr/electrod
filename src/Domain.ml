@@ -100,8 +100,13 @@ let update_domain_with_instance domain instance =
   in
   Map.merge_safe ~f:keep_instance domain (Instance.to_map instance)
   
-
-
+let rename atom_renaming name_renaming domain =
+  to_list domain 
+  |> List.map (fun (name, rel) ->
+        (List.assoc ~eq:Name.equal name name_renaming,
+         Relation.rename atom_renaming name_renaming rel))
+  |> of_list
+  
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 
  

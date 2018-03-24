@@ -213,3 +213,5 @@ let mem t bnd =
   TS.mem t bnd
 
   
+let rename atom_renaming ts =
+  TS.map (Tuple.rename atom_renaming) ts
