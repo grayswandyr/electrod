@@ -611,6 +611,9 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
           Msg.Fatal.solver_bug (fun args ->
                 args cmd "trace is missing a loop state.")
         else
-          Outcome.trace nbvars conversion_time analysis_time trace
+          let atom_back_renaming = List.map (fun (x, y) -> (y, x)) elo.atom_renaming in
+          let name_back_renaming = List.map (fun (x, y) -> (y, x)) elo.name_renaming in
+          Outcome.trace (atom_back_renaming, name_back_renaming)
+            nbvars conversion_time analysis_time trace
         
   end

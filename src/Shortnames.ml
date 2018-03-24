@@ -46,20 +46,37 @@ let compute_atom_renaming elo =
         (atom, new_atom))
 
 
-let rename_elo elo =
-  let atom_renaming = compute_atom_renaming elo in 
-  let name_renaming = compute_relation_renaming elo in
-  Fmt.pf Fmt.stdout "%a@\n"
-    Fmtc.(brackets @@ list ~sep:semi @@ parens @@ pair ~sep:comma Atom.pp Atom.pp) atom_renaming;
-  Fmt.pf Fmt.stdout "%a@\n"
-    Fmtc.(brackets @@ list ~sep:semi @@ parens @@ pair ~sep:comma Name.pp Name.pp) name_renaming;
-  Elo.{
-    elo with
-      domain = Domain.rename atom_renaming name_renaming elo.domain;
-      goal = Elo.rename#visit_t name_renaming elo.goal;
-      invariants = List.map (Elo.rename#visit_fml name_renaming) elo.invariants;
-      sym = List.map (Symmetry.rename atom_renaming name_renaming) elo.sym;
-      instance = Instance.rename atom_renaming name_renaming elo.instance;
-      atom_renaming;
-      name_renaming
-  }
+let rename_elo long_names elo =
+  if long_names then
+    let id_renaming l = List.map (fun x -> (x, x)) l in
+    Elo.{
+      elo with
+        atom_renaming =
+          id_renaming (Domain.univ_atoms elo.Elo.domain
+                       |> TupleSet.to_list |> List.map (Tuple.ith 0));
+        name_renaming =
+          id_renaming (Domain.to_list elo.Elo.domain |> List.map fst);
+    }
+  else
+    let atom_renaming = compute_atom_renaming elo in 
+    let name_renaming = compute_relation_renaming elo in
+    let open Fmtc in
+    Msg.debug (fun m ->
+          m "Atom renaming:@ %a"
+            (brackets @@ list ~sep:semi @@ parens @@ pair ~sep:comma Atom.pp Atom.pp)
+            atom_renaming);
+    Msg.debug (fun m ->
+          m "Name renaming:@ %a"
+            (brackets @@ list ~sep:semi @@ parens @@ pair ~sep:comma Name.pp Name.pp)
+            name_renaming);
+    Elo.{
+      elo with
+        domain = Domain.rename atom_renaming name_renaming elo.domain;
+        goal = Elo.rename#visit_t name_renaming elo.goal;
+        invariants = List.map (Elo.rename#visit_fml name_renaming) elo.invariants;
+        sym = List.map (Symmetry.rename atom_renaming name_renaming) elo.sym;
+        instance = Instance.rename atom_renaming name_renaming elo.instance;
+        atom_renaming;
+        name_renaming
+    }
+

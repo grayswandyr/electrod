@@ -64,7 +64,7 @@ type tool =
 
 
 let main style_renderer verbosity tool file scriptfile keep_files no_analysis
-      print_generated outcome_format =
+      print_generated outcome_format long_names =
   Printexc.record_backtrace true;
 
   Fmt_tty.setup_std_outputs ?style_renderer ();
@@ -96,13 +96,12 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Static analysis done"))
       |> Fun.tap (fun elo ->
             Msg.debug (fun m -> m "After raw_to_elo =@\n%a@." (Elo.pp) elo))
+      |> Shortnames.rename_elo long_names 
       |> Transfo.(get_exn elo_to_elo_t "simplify1" |> run)
       |> Fun.tap (fun elo ->
             Msg.debug (fun m -> m "After simplify1 =@\n%a@." (Elo.pp) elo))
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Simplification done"))
     in
-
-    let elo = Shortnames.rename_elo elo in
 
     let before_conversion = Mtime_clock.now () in
     let model =
