@@ -493,7 +493,10 @@ iexpr:
     let (e1, e2) = e in
     G.iexp (Location.from_positions $startpos $endpos)
     @@ G.(ibinary e1 sub e2)  } 
-
+  
+	| e = parens(iexpr)
+	        { e }
+  
 %inline two_iexprs:
   e1 = iexpr COMMA e2 = iexpr
   { (e1, e2) }
