@@ -14,33 +14,84 @@
 
 open Containers
     
-type t = string
+(* type t = string
+ * 
+ * 
+ * let name s = s
+ * 
+ * let dummy =
+ *   let c = ref 0 in
+ *   fun () ->
+ *     "dummy!" ^ (string_of_int @@ CCRef.get_then_incr c)
+ * 
+ * let of_raw_ident id = Raw_ident.basename id
+ * 
+ * let univ = "univ"
+ * 
+ * let iden = "iden"
+ * 
+ * let equal = String.equal
+ * 
+ * let compare = String.compare
+ * 
+ * let style = `Cyan
+ * 
+ * let pp out name =
+ *   Fmtc.(styled style string) out name
+ * 
+ * 
+ * module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
+ * include P 
+ * 
+ * module Map = CCMap.Make(struct type t = string let compare = CCOrd.string end) *)
 
+module H = Hashcons
 
-let name s = s
+type t = string H.hash_consed
 
+module S = H.Make(struct
+    type t = string
+    let hash = String.hash
+		let equal = String.equal 
+  end)
+  
+(* ********************* *)
+(* table for hashconsing *)
+(* ********************* *)
+let table = S.create 271
+(* ********************* *)
+           
+let name s =
+  S.hashcons table s
+ 
 let dummy =
   let c = ref 0 in
   fun () ->
-    "dummy!" ^ (string_of_int @@ CCRef.get_then_incr c)
+    name @@ "dummy!" ^ (string_of_int @@ CCRef.get_then_incr c)
 
-let of_raw_ident id = Raw_ident.basename id
+let hash sym =
+  sym.H.hkey
 
-let univ = "univ"
+let compare s1 s2 =
+  s1.H.tag - s2.H.tag
 
-let iden = "iden"
 
-let equal = String.equal
+let equal x1 x2 =
+  x1.H.tag = x2.H.tag
 
-let compare = String.compare
+let of_raw_ident id = name @@ Raw_ident.basename id
+
+let univ = name "univ"
+
+let iden = name "iden"
 
 let style = `Cyan
 
 let pp out name =
-  Fmtc.(styled style string) out name
+  Fmtc.(styled style string) out name.H.node
 
 
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 
 
-module Map = CCMap.Make(struct type t = string let compare = CCOrd.string end)
+module Map = CCMap.Make(struct type nonrec t = t let compare = compare end)

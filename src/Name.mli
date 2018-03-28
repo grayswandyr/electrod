@@ -34,6 +34,8 @@ val equal : t -> t -> bool
   
 val compare : t -> t -> int
 
+val hash : t -> int
+
 val style : Fmt.style
 
 include Intf.Print.S with type t := t
