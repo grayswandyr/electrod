@@ -65,6 +65,13 @@ type tool =
 
 let main style_renderer verbosity tool file scriptfile keep_files no_analysis
       print_generated outcome_format long_names =
+
+  let long_names =              (* Debug ==> long names *)
+    match verbosity with
+      | Some Logs.Debug -> true
+      | None | Some _ -> long_names
+  in
+  
   Printexc.record_backtrace true;
 
   Fmt_tty.setup_std_outputs ?style_renderer ();
