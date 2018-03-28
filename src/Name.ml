@@ -77,7 +77,7 @@ let compare s1 s2 =
 
 
 let equal x1 x2 =
-  x1.H.tag = x2.H.tag
+  Pervasives.(x1 == x2)
 
 let of_raw_ident id = name @@ Raw_ident.basename id
 
