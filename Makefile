@@ -31,3 +31,5 @@ clean:
 	@jbuilder clean
 	@git clean -dfXq
 	@rm -f ./$(TARGET)
+
+include $(shell ocamlfind query visitors)/Makefile.preprocess
