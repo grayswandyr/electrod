@@ -16,3 +16,4 @@ _build/
 *.cmxa
 *.sw[op]
 *.odocl
+.vscode/*

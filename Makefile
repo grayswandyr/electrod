@@ -15,6 +15,9 @@ watch:
 		make ; \
 	done
 
+utop:
+	jbuilder utop src/
+
 doc:
 	BROWSER=x-www-browser topkg doc -r
 

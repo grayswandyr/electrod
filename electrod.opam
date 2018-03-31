@@ -21,7 +21,6 @@ depends: [
   "logs" 
   "menhir" 
   "mtime" 
-  "ppx_blob"
   "ppx_deriving" 
   "printbox"
   "sequence" 
