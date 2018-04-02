@@ -218,7 +218,7 @@ let icomp exp1 rcomp exp2 = hfml @@ IComp (exp1, rcomp, exp2)
 let lbinary fml1 binop fml2 = hfml @@ LBin (fml1, binop, fml2)
 
 let sim_binding disj nbvars range : sim_binding =
-  assert (nbvars <> 0);
+  assert (nbvars > 0);
   assert (not disj || nbvars > 1);
   (disj, nbvars, range)
 
@@ -278,7 +278,9 @@ let univ = hexp @@ exp ~ar:1 @@ Univ
 
 let iden = hexp @@ exp ~ar:2 @@ Iden
 
-let var ~ar n = hexp @@ exp ~ar @@ Var n
+let var ~ar n = 
+  assert (n > 0);
+  hexp @@ exp ~ar @@ Var n
 
 let name ~ar x = hexp @@ exp ~ar @@ Name x
 
@@ -360,27 +362,25 @@ let neg = Neg
 let add = Add
 
 let sub = Sub
-
-(* TESTS
-
+(* 
+   let%test _ = 
    let e1 = 
    runary ~ar:2 transpose 
    @@ rbinary ~ar:2 
    (name ~ar:2 @@ Name.name "r") 
    inter 
    (runary ~ar:2 tclos @@ name ~ar:2 @@ Name.name "s")
-
+   in
    let e2 = 
    runary ~ar:2 transpose 
    @@ rbinary ~ar:2 
    (name ~ar:2 @@ Name.name "r") 
    inter 
    (runary ~ar:2 tclos @@ name ~ar:2 @@ Name.name "s")
-
-   let _ = e1 == e2
+   in
+   e1 == e2
 
 *)
-
 
 (******************************************************************************
  *  Pretty-printing TODO: handle De Bruijn indices
@@ -448,14 +448,7 @@ let pp_quant out x =
 let pp_var out v =
   Fmtc.pf out "x/%d" v
 
-let pp_binding ~sep pp_exp out (v, e) =
-  let open Fmtc in
-  pf out "%a@ %a@ %a"
-    pp_var v
-    sep ()
-    pp_exp e
-
-let pp_sim_binding pp_exp out (disj, vars, e) =
+let pp_sim_binding pp_exp out (disj, vars, e : sim_binding) =
   let open Fmtc in
   pf out "%a%a :@ %a"
     (if disj then kwd_styled string else nop) "disj "
@@ -464,12 +457,10 @@ let pp_sim_binding pp_exp out (disj, vars, e) =
 
 let pp pp_fml out (Run fml) =
   let open Fmtc in
-  begin
-    (kwd_styled pf) out "run@ ";
-    pf out "  %a" (box @@ list @@ pp_fml) fml
-  end
+  (kwd_styled pf) out "run@ ";
+  pf out "  %a" (box @@ list @@ pp_fml) fml
 
-let pp_block pp_fml out fmls = 
+let pp_block pp_fml out (fmls : block) = 
   let open Fmtc in
   pf out "@[<b 0>{@[<hv>%a@]@,}@]"
     (list ~sep:(sp **> semi) @@ pp_fml) fmls
@@ -521,6 +512,7 @@ let pp_ofml pp_fml pp_exp pp_iexp out =
     | Block fmls ->
         pp_block pp_fml out fmls
 
+
 let pp_runop out = 
   let open Fmtc in
   function
@@ -551,7 +543,7 @@ let pp_prim_exp pp_fml pp_exp out =
         (styled Name.style pf) out "iden"
     | Name id ->
         pf out "%a" Name.pp id
-    | Var v -> 
+    | Var v -> (* TODO fix this of course *)
         pp_var out v
     | RUn (op, e) ->
         pf out "@[<2>(%a%a)@]"
@@ -587,8 +579,6 @@ let pp_prim_exp pp_fml pp_exp out =
     | Prime e ->
         pf out "%a'" pp_exp e
 
-let pp_exp pp_fml pp_exp out (Exp { node = e; _ }) =
-  pp_prim_exp pp_fml pp_exp out e.prim_oexp
 
 let pp_iunop out = 
   let open Fmtc in
@@ -601,7 +591,7 @@ let pp_ibinop out =
     | Add -> pf out "+"
     | Sub -> pf out "-"
 
-let pp_iexp pp_exp pp_iexp out = 
+let pp_oiexp pp_exp pp_iexp out = 
   let open Fmtc in
   function
     | Num n ->
@@ -617,3 +607,26 @@ let pp_iexp pp_exp pp_iexp out =
           pp_ibinop op
           pp_iexp e2
 
+
+
+let rec pp_fml out (Fml { node; _ }) =
+  pp_ofml pp_fml pp_exp pp_iexp out node
+
+and pp_iexp out (Iexp { node; _ }) =
+  pp_oiexp pp_exp pp_iexp out node
+
+and pp_exp out (Exp { node = e; _ }) =
+  pp_prim_exp pp_fml pp_exp out e.prim_exp 
+
+(* 
+
+(* f is a subformula of g TODO check correct hashconsing *)
+let f = quant all (sim_binding true 2 @@ univ) 
+  [rcomp (var ~ar:1 1) in_ univ]
+
+let g = quant some (sim_binding false 1 univ) 
+  [quant all (sim_binding true 2 @@ univ) 
+    [rcomp (var ~ar:1 1) in_ univ]]
+
+    
+ *)
