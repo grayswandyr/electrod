@@ -68,7 +68,7 @@ and raw_symmetry = ((Raw_ident.t * raw_tuple) list) *
 
 (** This definition is here just to be used in the parser ((to avoid cyclic
     dependencies). The puprose of paragraphs is to deal easily and efficiently
-    with {i permutation} of these (see {!Parser_main} for more
+    with {i permutation} of these (see {!Parse_main} for more
     information).)  *)
 type raw_paragraph =
   | ParGoal of raw_goal

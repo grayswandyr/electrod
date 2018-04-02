@@ -67,7 +67,7 @@ let compute_univ infile raw_univ =
   let dedup = check_duplicate_atoms infile atoms in
   let bound = List.map Tuple.tuple1 dedup |> TS.of_tuples in
   Relation.(const Name.univ 1 @@ Scope.exact bound) (* 1 = arity *)
-       
+
 (* returns a list of tuples (possibly 1-tuples corresponding to plain atoms) *)
 let compute_tuples infile domain = function
   (* a list of  1-tuples (coming from indexed id's) *)
@@ -83,7 +83,7 @@ let compute_tuples infile domain = function
          Msg.Fatal.undeclared_atoms
          @@ fun args -> args
                           infile 
-                          (Location.span
+                          (Loc.span
                            @@ Pair.map_same Raw_ident.location intvl)
                           absent);      
       let dedup = check_duplicate_atoms infile atoms in
@@ -104,7 +104,7 @@ let compute_tuples infile domain = function
          Msg.Fatal.undeclared_atoms
          @@ fun args ->
          args infile
-           (Location.span
+           (Loc.span
             @@ Pair.map_same Raw_ident.location List.(hd ids, hd @@ last 1 ids))
            absent); 
       [Tuple.of_list1 atoms]
@@ -119,14 +119,14 @@ let check_tuples_arities_and_duplicates infile id = function
         Msg.Fatal.incompatible_arities (fun args -> args infile id);
       TS.of_tuples tuples
 
-      (* [`Inf] and [`Sup] tell whether we are computing a lower of upper bound:
-         this is important as a bound may be defined out of other ones, so we
-         should know whether we need the lower or upper bound of the relations
-         referred to. The variants are in an [option] which is set to [None] if
-         the scope is exact (in which case, the variants are of no use); [Some]
-         otherwise.
+(* [`Inf] and [`Sup] tell whether we are computing a lower of upper bound:
+   this is important as a bound may be defined out of other ones, so we
+   should know whether we need the lower or upper bound of the relations
+   referred to. The variants are in an [option] which is set to [None] if
+   the scope is exact (in which case, the variants are of no use); [Some]
+   otherwise.
 
-         We also pass the [id] of the concerned relation (useful for error message). *)
+   We also pass the [id] of the concerned relation (useful for error message). *)
 let compute_bound infile domain (which : [ `Inf | `Sup | `Exact ]) id raw_bound =
   let open Relation in
   let open Scope in
@@ -184,13 +184,13 @@ let compute_bound infile domain (which : [ `Inf | `Sup | `Exact ]) id raw_bound 
         bnd
   in
   walk raw_bound 
-  
+
 
 let compute_scope infile domain id = function
   | SExact BProd (_, Some _, _) ->
       Msg.Fatal.multiplicity_only_in_a_sup (fun args -> args infile id)
 
-      
+
   | SExact raw_b ->
       (* Msg.debug (fun m -> m "Raw_to_elo.compute_scope:SExact"); *)
       Scope.exact @@ compute_bound infile domain `Exact id raw_b 
@@ -247,7 +247,7 @@ let compute_scope infile domain id = function
         Scope.exact sup
       else
         Scope.(fun i s -> inexact @@ plain_relation i s) inf sup
-          
+
 
 let check_name infile id domain = 
   let name = Name.of_raw_ident id in
@@ -273,7 +273,7 @@ let compute_decl infile domain = function
       let computed_arity = Scope.inferred_arity scope in
       let arity = decide_arity infile id specified_arity computed_arity in
       Relation.const (Name.of_raw_ident id) arity scope
-        
+
   | DVar (id, specified_arity, init, fby) ->
       (* Msg.debug (fun m -> m "Raw_to_elo.compute_decl:DVar"); *)
       check_name infile id domain;
@@ -326,7 +326,7 @@ let check_assignment_in_scope infile domain id tupleset =
     | Some Relation.Const { scope; _ } when not @@ Scope.included_in tupleset scope ->
         Msg.Fatal.instance_not_in_scope (fun args -> args infile id)
     | Some (Relation.Const _) -> ()
-        
+
 
 
 (* [domain]: already-computed domain *)
@@ -363,26 +363,26 @@ let compute_symmetries (pb : Raw.raw_problem) =
     let tuple = Tuple.of_list1 @@ List.map Atom.of_raw_ident raw_tuple in
     (name, tuple)
   in
-      
+
   let compute_single_sym (sym:(Raw_ident.t * Raw.raw_tuple) list
-                        * (Raw_ident.t * Raw.raw_tuple) list) =
-  match sym with
-  | [], [] -> Symmetry.make [] []
-  (* impossible case: only one side of the symmetry is empty *)
-  | [], _ | _, [] -> assert false 
-  | l1, l2 ->
-     let len1 = List.length l1 in
-     let len2 = List.length l2 in
-     if (len1 <> len2) then
-       let (id, _) = List.hd l1 in     
-       Msg.Fatal.symmetry_wrongly_defined (fun args -> args pb.file id)
-     else
-       Symmetry.make (List.map compute_single_sym_term l1)
-                     (List.map compute_single_sym_term l2)
+                              * (Raw_ident.t * Raw.raw_tuple) list) =
+    match sym with
+      | [], [] -> Symmetry.make [] []
+      (* impossible case: only one side of the symmetry is empty *)
+      | [], _ | _, [] -> assert false 
+      | l1, l2 ->
+          let len1 = List.length l1 in
+          let len2 = List.length l2 in
+          if (len1 <> len2) then
+            let (id, _) = List.hd l1 in     
+            Msg.Fatal.symmetry_wrongly_defined (fun args -> args pb.file id)
+          else
+            Symmetry.make (List.map compute_single_sym_term l1)
+              (List.map compute_single_sym_term l2)
   in
   List.map compute_single_sym pb.raw_syms    
-           
- (*******************************************************************************
+
+(*******************************************************************************
  *  Walking along raw goals to get variables and relation names out of raw_idents
  *******************************************************************************)
 
@@ -744,7 +744,7 @@ let compute_arities elo =
             (fun arg r ->
                GenGoal.exp
                  Option.(map2 (+) (pure (-2)) @@ map2 (+) arg.arity r.arity)
-                 Location.(span (arg.exp_loc, r.exp_loc))
+                 Loc.(span (arg.exp_loc, r.exp_loc))
                @@ rbinary arg join r
             ) args' call'
         in
@@ -816,8 +816,8 @@ let compute_arities elo =
           goal = walk_goal init elo.goal }
 
 
-            
-            
+
+
 (*******************************************************************************
  *  Declaration of the whole transformation
  *******************************************************************************)
@@ -829,5 +829,5 @@ let whole raw_pb =
   let (invars, goal) = refine_identifiers raw_pb in
   Elo.make raw_pb.file domain instance syms invars goal
   |> compute_arities 
-  
+
 let transfo = Transfo.make "raw_to_elo" whole (* temporary *)

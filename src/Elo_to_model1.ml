@@ -129,9 +129,9 @@ struct
       | hd::tl ->
           let premise = 
             List.fold_left
-              (fun x y -> fml (Location.span (x.fml_loc, y.fml_loc))
+              (fun x y -> fml (Loc.span (x.fml_loc, y.fml_loc))
                 @@ lbinary x and_ y)
-              (fml Location.dummy true_) tl
+              (fml Loc.dummy true_) tl
           in
           let rhs_fml =
             match hd.prim_fml with

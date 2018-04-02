@@ -15,6 +15,9 @@
 (** {b Actual main function.} *)
 
 open Containers
+module M = struct
+  let __x = Elo_goal.var 0
+end
 
 (* inspired by Logs_fmt code *)     
 let keyword =
@@ -71,7 +74,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
       | Some Logs.Debug -> true
       | None | Some _ -> long_names
   in
-  
+
   Printexc.record_backtrace true;
 
   Fmt_tty.setup_std_outputs ?style_renderer ();
@@ -98,7 +101,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
 
     let elo =
       Parser_main.parse_file file
-      |> Fun.tap (fun _ -> Msg.info (fun m -> m "Parsing done"))
+      |> Fun.tap (fun _ -> Msg.info (fun m -> m "Parse done"))
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Static analysis done"))
       |> Fun.tap (fun elo ->

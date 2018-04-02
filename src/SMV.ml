@@ -23,7 +23,7 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
 
   module PP = struct
     open Fmtc
-    
+
     let rainbow =
       let r = ref 0 in
       fun () ->
@@ -69,7 +69,7 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
       else                      (* no paremtheses *)
         (* so keep [this] precedence *)
         pr this
-      
+
     let infixl ?(paren = false) ?(align_par = true)
           upper this middle left right out (m, l, r) =
       rainbow_paren ~paren ~align_par upper this out @@
@@ -81,7 +81,7 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
         sp out ();
         right (new_this + 1) out r (* left associativity => increment the precedence *)
       end
-                    
+
 
     let infixr ?(paren = false) ?(align_par = true)
           upper this middle left right out (m, l, r) =
@@ -115,7 +115,7 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
         styled `Bold pprefix out prefix;
         pbody (new_this + 1) out body
       end
-                    
+
 
     let pp_atomic = At.pp
 
@@ -150,9 +150,9 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
 
        -> (the only right associative op)
 
-    
-NOTE: precedences for LTL connectives are not specified, hence we force parenthesising of these.
-*)
+
+       NOTE: precedences for LTL connectives are not specified, hence we force parenthesising of these.
+    *)
 
     let pp ?(next_is_X = true) variables upper out f =
       let rec pp upper out f =
@@ -241,11 +241,11 @@ NOTE: precedences for LTL connectives are not specified, hence we force parenthe
   (*     Fmt.epr "and_ (implies_ p @@ lazy q) (implies_ r @@ lazy s) -->@  %a@\n" pp f5; *)
   (*     Fmt.epr "implies p (lazy (and_ (implies q @@ lazy r) (lazy (implies r @@ lazy s)))) -->@  %a@\n" pp f6; *)
   (*     Fmt.epr "implies p (lazy (and_ (implies (and_ q (lazy p)) @@ lazy r) (lazy (implies r @@ lazy s)))) -->@  %a@\n" pp f7; *)
-      
+
   (*     flush_all () *)
   (*   end *)
 
-  
+
 end
 
 module Make_SMV_file_format (Ltl : Solver.LTL)
@@ -256,12 +256,12 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
   type atomic = Ltl.Atomic.t
 
   type t = {
-      elo : Elo.t;
-      init : (string * ltl) Sequence.t;
-      invariant : (string * ltl) Sequence.t;
-      trans : (string * ltl) Sequence.t;
-      property : string * ltl 
-    }
+    elo : Elo.t;
+    init : (string * ltl) Sequence.t;
+    invariant : (string * ltl) Sequence.t;
+    trans : (string * ltl) Sequence.t;
+    property : string * ltl 
+  }
 
   let make ~elo ~ init ~invariant ~trans ~property =
     { elo ; init = init ; invariant = invariant ; trans = trans ; property }
@@ -444,10 +444,10 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
              else               (* enumerable *)
                (acc_rp, S.cons at acc_re, acc_fp, acc_fe)
            else             (* flexible *)
-             if Option.is_none @@ Ltl.Atomic.domain_arity at then (* plain *)
-               (acc_rp, acc_re, S.cons at acc_fp, acc_fe)
-             else               (* enumerable *)
-               (acc_rp, acc_re, acc_fp, S.cons at acc_fe))
+           if Option.is_none @@ Ltl.Atomic.domain_arity at then (* plain *)
+             (acc_rp, acc_re, S.cons at acc_fp, acc_fe)
+           else               (* enumerable *)
+             (acc_rp, acc_re, acc_fp, S.cons at acc_fe))
         (S.empty, S.empty, S.empty, S.empty)
         !variables
       |> fun (res_rp, res_re, res_fp, res_fe) ->
@@ -457,14 +457,14 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     S.iter (fun at -> pf out "%a@\n" (pp_plain_decl "FROZENVAR") at) r_plain;
     (* FROZENVAR / ENUM *)
     pp_enum_decl elo "FROZENVAR" out r_enum;
-    
+
     (* VAR / PLAIN *)
     (if not (S.is_empty r_plain || S.is_empty f_plain) then hardline out ());
     S.iter (fun at -> pf out "%a@\n" (pp_plain_decl "VAR") at) f_plain;
-    
+
     (* VAR / ENUM *)
     pp_enum_decl elo "VAR" out f_enum;
-    
+
     (* close printing *)    
     Format.pp_print_flush out ();
     Format.pp_set_margin out old_margin;
@@ -475,7 +475,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
 
   let pp ?(margin = 80) out { elo; init; invariant; trans; property } =
     ignore (pp_count_variables ~margin out { elo; init; invariant; trans; property })
-  
+
   (* write in temp file *)
   let make_model_file dir infile model =
     let src_file = Filename.basename infile in
@@ -483,17 +483,17 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     let nbvars = ref 0 in
     IO.with_out tgt 
       (fun out ->
-          nbvars := pp_count_variables (Format.formatter_of_out_channel out) model);
+         nbvars := pp_count_variables (Format.formatter_of_out_channel out) model);
     (tgt, !nbvars)
 
-  
+
   let make_script_file dir = function
     | Solver.File filename -> filename (* script given on the command line *)
     | Solver.Default default ->
         let tgt = Filename.temp_file ~temp_dir:dir "electrod-" ".scr" in
         IO.with_out tgt (fun out -> IO.write_line out default);
         tgt
-  
+
   (* TODO pass script as argument *)
   (* TODO allow to specify a user script *)
   let analyze ~conversion_time ~cmd ~script ~keep_files
@@ -609,5 +609,5 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
           let name_back_renaming = List.map (fun (x, y) -> (y, x)) elo.name_renaming in
           Outcome.trace (atom_back_renaming, name_back_renaming)
             nbvars conversion_time analysis_time trace
-        
-  end
+
+end

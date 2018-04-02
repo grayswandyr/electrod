@@ -18,7 +18,7 @@ open Containers
 open Fmtc
 
 (** An abbreviation. *)
-module Location = Location
+module Loc = Loc
 
 (** {1 Setting up the logging machinery} *)
 
@@ -69,8 +69,8 @@ module Extract = struct
     | Some f ->
         IO.(with_in f @@ fun ic ->
             IO.read_lines ic
-            |> Gen.drop (Int.max 0 Location.(begl loc - 1))
-            |> Gen.take (Int.max 1 Location.(1 + endl loc - begl loc))
+            |> Gen.drop (Int.max 0 Loc.(begl loc - 1))
+            |> Gen.take (Int.max 1 Loc.(1 + endl loc - begl loc))
             |> Gen.to_list)
 
   (* splits the string into 2 parts, the first containing [nb] characters *)
@@ -95,8 +95,8 @@ module Extract = struct
   
   let extract file loc = 
     let lines = lines file loc in
-    let innocent_first_last_idx = Int.max 0 (Location.begc loc) in
-    let suspect_last_last_idx = Int.max 0 (Location.endc loc) in
+    let innocent_first_last_idx = Int.max 0 (Loc.begc loc) in
+    let suspect_last_last_idx = Int.max 0 (Loc.endc loc) in
     match lines with
       | [] -> ("", ([], ""))
       | [line] ->
@@ -111,7 +111,7 @@ module Extract = struct
           let innocent_first, suspect_first =
             split_string first innocent_first_last_idx in
           let suspect_middle, last =
-            List.take_drop (Int.max 0 Location.(endl loc - begl loc - 1)) others in
+            List.take_drop (Int.max 0 Loc.(endl loc - begl loc - 1)) others in
           let last = List.hd last in
           let suspect_last, innocent_last =
             split_string last suspect_last_last_idx in
@@ -139,24 +139,24 @@ module Fatal = struct
 
   let lexical args = err @@ fun m -> args @@
     fun infile lexbuf msg ->
-    let loc = Location.from_positions
+    let loc = Loc.from_positions
                 (Lexing.lexeme_start_p lexbuf)
                 (Lexing.lexeme_end_p lexbuf) in
     m ~header:(code 1)
       "%a%a: lexical error: %s"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       msg
 
   let syntax args = err @@ fun m -> args @@
     fun file lexbuf ->
-    let loc = Location.from_positions
+    let loc = Loc.from_positions
                 (Lexing.lexeme_start_p lexbuf)
                 (Lexing.lexeme_end_p lexbuf) in
     m ~header:(code 2)
       "%s:%a: syntax error %a%a"
       file
-      Location.pp loc
+      Loc.pp loc
       (* (print_extract ~color:error_color) (file, loc); *)
       string (Lexing.lexeme lexbuf)
       (hardline **< Extract.pp) (Extract.extract (Some file) loc)
@@ -170,7 +170,7 @@ module Fatal = struct
       "%a%a: syntax error: %S is not a valid suffix \
        for indexed identifiers%a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       name
       (hardline **< Extract.pp) (Extract.extract infile loc)
 
@@ -183,11 +183,11 @@ module Fatal = struct
       "%a%S (%a) and %S (%a) have different_prefixes%a"
       (option @@ sp **> colon **> string) infile
       (Raw_ident.basename first)
-      Location.pp first_loc
+      Loc.pp first_loc
       (Raw_ident.basename last)
-      Location.pp last_loc
+      Loc.pp last_loc
       (hardline **<
-       Extract.pp) (Extract.extract infile (Location.span (first_loc, last_loc)))
+       Extract.pp) (Extract.extract infile (Loc.span (first_loc, last_loc)))
 
 
   let not_an_interval args = err @@ fun m -> args @@
@@ -198,11 +198,11 @@ module Fatal = struct
       "%a%S (%a) and %S (%a) do not define a valid (increasing) range of atoms%a"
       (option @@ sp **> colon **> string) infile
       (Raw_ident.basename first)
-      Location.pp first_loc
+      Loc.pp first_loc
       (Raw_ident.basename last)
-      Location.pp last_loc
+      Loc.pp last_loc
       (hardline **<
-       Extract.pp) (Extract.extract infile (Location.span (first_loc, last_loc)))
+       Extract.pp) (Extract.extract infile (Loc.span (first_loc, last_loc)))
 
   let rel_name_already_used args = err @@ fun m -> args @@
     fun infile id ->
@@ -210,7 +210,7 @@ module Fatal = struct
     m ~header:(code 6)
       "%a%a: identifier %S already used%a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
       
@@ -220,7 +220,7 @@ module Fatal = struct
     m ~header:(code 7)
       "%a%a: identifier %S unknown%a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
 
@@ -230,7 +230,7 @@ module Fatal = struct
     m ~header:(code 8)
       "%a%a: %S does not denote a constant set%a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
 
@@ -240,7 +240,7 @@ module Fatal = struct
     m ~header:(code 9)
       "%a%a: inconsistent arities used in some tuples for %S%a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
 
@@ -249,7 +249,7 @@ module Fatal = struct
     m ~header:(code 10)
       "%a%a: atom(s) not declared in 'univ': %a%a"
       (option @@ colon **> string) infile
-      Location.pp loc 
+      Loc.pp loc 
       (vbox2 @@ list ~sep:sp Atom.pp) absent
       (hardline **< Extract.pp) (Extract.extract infile loc)
 
@@ -260,7 +260,7 @@ module Fatal = struct
       "%a%a: lower bound of %S is not included in upper bound@\n%a@\n\
       lower bound = %a@\nupper bound = %a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
       (Extract.pp) (Extract.extract infile loc)
       (box2 @@ pp_bound) inf
@@ -273,7 +273,7 @@ module Fatal = struct
       "%a%a: %S is declared as exact but \
        refers to relation %S which has inexact bounds%a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
       (Raw_ident.basename ref_id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
@@ -284,7 +284,7 @@ module Fatal = struct
     m ~header:(code 13)
       "%a%a: %s%a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       msg
       (hardline **< Extract.pp) (Extract.extract infile loc)
       
@@ -295,7 +295,7 @@ module Fatal = struct
       "%a%a: inconsistent arities used in the 'init' (%d) and \
        'then' (%d) parts for %S%a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       init
       fby
       (Raw_ident.basename id)
@@ -307,7 +307,7 @@ module Fatal = struct
     m ~header:(code 15)
       "%a%a: the arity of %S cannot be inferred, specify it explicitly%a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
       
@@ -318,7 +318,7 @@ module Fatal = struct
       "%a%a: discrepancy between the specified (%d) and \
        inferred (%d) arities for %S%a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       specified_arity
       computed_arity
       (Raw_ident.basename id)
@@ -331,7 +331,7 @@ module Fatal = struct
       "%a%a: %S refers to a variable relation, its value cannot be fixed in \
        an instance%a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
       
@@ -342,7 +342,7 @@ module Fatal = struct
       "%a%a: the value given for %S in the instance does not comply with \
        the declared scope%a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
       
@@ -352,7 +352,7 @@ module Fatal = struct
     m ~header:(code 19)
       "%a%a: instance %S already declared%a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
       (hardline **< Extract.pp) (Extract.extract infile loc)
 
@@ -370,7 +370,7 @@ module Fatal = struct
       "%a%a: left-hand-side and right-hand-side of symmetry do
        not have the same length%a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (hardline **< Extract.pp) (Extract.extract infile loc)
 
   let solver_failed args = err @@ fun m -> args @@
@@ -394,7 +394,7 @@ module Fatal = struct
       "%a%a: %S: only one toplevel, 'lone' or 'one', multiplicity is allowed\ 
        for relations"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
 
   let multiplicity_only_in_a_sup args = err @@ fun m -> args @@
@@ -404,7 +404,7 @@ module Fatal = struct
       "%a%a: %S: a multiplicity is only allowed in the upper bound of an \
        inexact scope"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
 
   let inf_must_be_empty args = err @@ fun m -> args @@
@@ -413,7 +413,7 @@ module Fatal = struct
     m ~header:(code 26)
       "%a%a: the lower bound of %S must be empty as it is enumerable"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
 end
 
@@ -437,7 +437,7 @@ module Warn = struct
     m ~header:(code 2)
       "%a%a: %s is always empty@\n%a" 
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
       Extract.pp (Extract.extract infile loc)
 
@@ -453,7 +453,7 @@ module Warn = struct
       "%a%a: the%s bound of %s contains duplicate elements...:@ %a\
        @\n...ignoring them and continuing with:@ %a"
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (pp_inf_sup bound_kind)
       (Raw_ident.basename id)
       Extract.pp (Extract.extract infile loc)
@@ -465,7 +465,7 @@ module Warn = struct
     m ~header:(code 4)
       "%a%a: keyword \"disj\" ignored as %S is a single variable@\n%a" 
       (option @@ colon **> string) infile
-      Location.pp loc
+      Loc.pp loc
       (Raw_ident.basename id)
       Extract.pp (Extract.extract infile loc)
 

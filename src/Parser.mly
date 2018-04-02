@@ -244,51 +244,51 @@ formula_semi:
 
 formula :
      TRUE
-	{ G.fml (Location.from_positions $startpos $endpos)
+	{ G.fml (Loc.from_positions $startpos $endpos)
     @@ G.true_ }
   
 	| FALSE
-	{ G.fml (Location.from_positions $startpos $endpos)
+	{ G.fml (Loc.from_positions $startpos $endpos)
     @@ G.false_ }
   
 	| qual = rqualify e = expr
-	{ G.fml (Location.from_positions $startpos $endpos)
+	{ G.fml (Loc.from_positions $startpos $endpos)
     @@ G.qual qual e }
   
 	| e1 = expr op = comp_op e2 = expr
-	{ G.fml (Location.from_positions $startpos $endpos)
+	{ G.fml (Loc.from_positions $startpos $endpos)
     @@ G.rcomp e1 op e2 }
   
 	| e1 = iexpr op = icomp_op e2 = iexpr
-	{ G.fml (Location.from_positions $startpos $endpos)
+	{ G.fml (Loc.from_positions $startpos $endpos)
     @@ G.icomp e1 op e2 }
 
 	| op = lunop f = formula
-	{ G.fml (Location.from_positions $startpos $endpos)
+	{ G.fml (Loc.from_positions $startpos $endpos)
     @@ G.lunary op f }
   
   | f1 = formula op = lbinop f2 = formula
-	{ G.fml (Location.from_positions $startpos $endpos)
+	{ G.fml (Loc.from_positions $startpos $endpos)
     @@ G.lbinary f1 op f2 }
 	
 	| q = quant decls = comma_sep1(ae_decl) block = f_block_or_bar
-	{ G.fml (Location.from_positions $startpos $endpos)
+	{ G.fml (Loc.from_positions $startpos $endpos)
     @@ G.quant q decls block }
   
 	| LET decls = comma_sep1(let_decl) block = f_block_or_bar
-	{ G.fml (Location.from_positions $startpos $endpos)
+	{ G.fml (Loc.from_positions $startpos $endpos)
     @@ G.let_ decls block}
       
 	|  f = formula IMPLIES t = formula ELSE e = formula 
-	{ G.fml (Location.from_positions $startpos $endpos)
+	{ G.fml (Loc.from_positions $startpos $endpos)
     @@ G.fite f t e }
       
 	|  f = formula IMPLIES t = formula 
-	{ G.fml (Location.from_positions $startpos $endpos)
+	{ G.fml (Loc.from_positions $startpos $endpos)
     @@ G.lbinary f G.impl t  }
       
 	| f = f_block
-	{ G.fml (Location.from_positions $startpos $endpos)
+	{ G.fml (Loc.from_positions $startpos $endpos)
     @@ G.block f }
   
 	| f = parens(formula)
@@ -366,47 +366,47 @@ formula :
   
 expr:
   NONE 
-	{ exp_no_arity (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Loc.from_positions $startpos $endpos)
     @@ G.none }
   
 	| UNIV
-	{ exp_no_arity (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Loc.from_positions $startpos $endpos)
     @@ G.univ}
   
 	| IDEN
-	{ exp_no_arity (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Loc.from_positions $startpos $endpos)
     @@ G.iden }
   
 /*	| INT
-	{ exp_no_arity (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Loc.from_positions $startpos $endpos)
     @@ G.int }*/
   
   | id = PLAIN_ID
-	{ exp_no_arity (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Loc.from_positions $startpos $endpos)
     @@ G.ident @@ Raw_ident.ident id $startpos $endpos}
       
 	| op = runop e = expr
-	{ exp_no_arity (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Loc.from_positions $startpos $endpos)
     @@ G.runary op e }
   
 	| e1 = expr op  = rbinop e2 = expr
-	{ exp_no_arity (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Loc.from_positions $startpos $endpos)
     @@ G.rbinary e1 op e2 }
   
 	| f = formula IMPLIES t = expr ELSE e = expr
-	{ exp_no_arity (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Loc.from_positions $startpos $endpos)
     @@ G.rite f t e}
   
 	| exp = expr args = brackets(comma_sep1(expr))
-	{ exp_no_arity (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Loc.from_positions $startpos $endpos)
     @@ G.boxjoin exp args }
   
 	| compr = braces(compr_body)
-	{ exp_no_arity (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Loc.from_positions $startpos $endpos)
     @@ compr}
   
 	| e = expr PRIME
-	{ exp_no_arity (Location.from_positions $startpos $endpos)
+	{ exp_no_arity (Loc.from_positions $startpos $endpos)
     @@ G.prime e}
   
 	| e = parens(expr)
@@ -475,23 +475,23 @@ expr:
   
 iexpr:
   n = NUMBER
-  { G.iexp (Location.from_positions $startpos $endpos)
+  { G.iexp (Loc.from_positions $startpos $endpos)
     @@ G.num n  }
   | HASH e = expr
-  { G.iexp (Location.from_positions $startpos $endpos)
+  { G.iexp (Loc.from_positions $startpos $endpos)
     @@ G.card e  }
   | NEG e = brackets(iexpr)
-  { G.iexp (Location.from_positions $startpos $endpos)
+  { G.iexp (Loc.from_positions $startpos $endpos)
     @@ G.(iunary neg e) } 
   | ADD e = brackets(two_iexprs)
       {
         let (e1, e2) = e in
-        G.iexp (Location.from_positions $startpos $endpos)
+        G.iexp (Loc.from_positions $startpos $endpos)
     @@ G.(ibinary e1 add e2)  }
   | SUB e = brackets(two_iexprs)
   { 
     let (e1, e2) = e in
-    G.iexp (Location.from_positions $startpos $endpos)
+    G.iexp (Loc.from_positions $startpos $endpos)
     @@ G.(ibinary e1 sub e2)  } 
   
 	| e = parens(iexpr)

@@ -18,7 +18,7 @@
 type t 
 
 (** [atom ~loc:loc s] creates an atom with name [s] and optional location [loc]. *)
-val atom : ?loc:Location.t -> string -> t
+val atom : ?loc:Loc.t -> string -> t
 
 (** creates an atom out of a raw_ident. *)
 val of_raw_ident : Raw_ident.t -> t

@@ -21,7 +21,7 @@ type ('v, 'i) t =
 
 and ('v, 'i) fml = {
   prim_fml : ('v, 'i) prim_fml;
-  fml_loc : (Location.t [@opaque])
+  fml_loc : (Loc.t [@opaque])
 }
 
 and ('v, 'i) prim_fml =
@@ -90,7 +90,7 @@ and icomp_op =
 
 and ('v, 'i) exp = {
   prim_exp : ('v, 'i) prim_exp;
-  exp_loc : (Location.t [@opaque]);
+  exp_loc : (Loc.t [@opaque]);
   arity : (int option [@opaque]);   (* None for none or Some n where n > 0 *)
 }
 
@@ -131,7 +131,7 @@ and rbinop =
 
 and ('v, 'i) iexp = {
   prim_iexp : ('v, 'i) prim_iexp;
-  iexp_loc : (Location.t [@opaque])
+  iexp_loc : (Loc.t [@opaque])
 }
 
 and ('v, 'i) prim_iexp =
