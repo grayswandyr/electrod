@@ -83,7 +83,7 @@ and icomp_op =
   | Gte 
 
 and ('fml, 'exp, 'iexp) oexp = {
-      prim_oexp : ('fml, 'exp, 'iexp) prim_oexp;
+      prim_exp : ('fml, 'exp, 'iexp) prim_oexp;
       arity : (int [@opaque]);   (* 0 = "polymorphic" arity (that of none) *)
     }
 
@@ -162,15 +162,16 @@ let exp_table : (fml, exp, iexp) oexp HC.t =
 let iexp_table : (fml, exp, iexp) oiexp HC.t =
   HC.create 197
 
-let hfml f = Fml (HC.hashcons fml_table f)
+let hfml f : fml = 
+  Fml (HC.hashcons fml_table f)
 
-let oexp ~ar prim_oexp =
-  { prim_oexp; arity = ar; }
+let exp ~ar (prim_exp : prim_exp) =
+  { prim_exp; arity = ar; }
 
-let hexp oe =
+let hexp oe : exp =
   Exp (HC.hashcons exp_table oe)
 
-let hiexp oie = 
+let hiexp oie : iexp = 
   Iexp (HC.hashcons iexp_table oie)
 
 
@@ -208,7 +209,7 @@ let true_ = hfml @@ True
 
 let false_ = hfml @@ False
 
-let qual qual exp = hfml @@ Qual (qual, exp)
+let qual qual e = hfml @@ Qual (qual, e)
 
 let rcomp exp1 rcomp exp2 = hfml @@ RComp (exp1, rcomp, exp2)
 
@@ -217,11 +218,11 @@ let icomp exp1 rcomp exp2 = hfml @@ IComp (exp1, rcomp, exp2)
 let lbinary fml1 binop fml2 = hfml @@ LBin (fml1, binop, fml2)
 
 let sim_binding disj nbvars range : sim_binding =
-  assert (nbvars > 0);
+  assert (nbvars <> 0);
   assert (not disj || nbvars > 1);
   (disj, nbvars, range)
 
-let quant quant (decl : sim_binding) block = 
+let quant quant (decl : sim_binding) (block : block) = 
   assert (not List.(is_empty block));
   hfml @@ Quant (quant, decl, block)
 
@@ -271,30 +272,30 @@ let historically = H
 
 let previous = P
 
-let none = hexp @@ oexp ~ar:0 @@ None_
+let none = hexp @@ exp ~ar:0 @@ None_
 
-let univ = hexp @@ oexp ~ar:1 @@ Univ
+let univ = hexp @@ exp ~ar:1 @@ Univ
 
-let iden = hexp @@ oexp ~ar:2 @@ Iden
+let iden = hexp @@ exp ~ar:2 @@ Iden
 
-let var ~ar n = hexp @@ oexp ~ar @@ Var n
+let var ~ar n = hexp @@ exp ~ar @@ Var n
 
-let name ~ar x = hexp @@ oexp ~ar @@ Name x
+let name ~ar x = hexp @@ exp ~ar @@ Name x
 
-let runary ~ar runop e = hexp @@ oexp ~ar @@ RUn (runop, e)
+let runary ~ar runop e = hexp @@ exp ~ar @@ RUn (runop, e)
 
-let rbinary ~ar exp1 rbinop exp2 = hexp @@ oexp ~ar @@ RBin (exp1, rbinop, exp2)
+let rbinary ~ar exp1 rbinop exp2 = hexp @@ exp ~ar @@ RBin (exp1, rbinop, exp2)
 
-let rite ~ar cdt then_ else_ = hexp @@ oexp ~ar @@ RIte (cdt, then_, else_)
+let rite ~ar cdt then_ else_ = hexp @@ exp ~ar @@ RIte (cdt, then_, else_)
 
 (* TODO get rid of box join (here)? *)
-let boxjoin ~ar caller callee = hexp @@ oexp ~ar @@ BoxJoin (caller, callee)
+let boxjoin ~ar caller callee = hexp @@ exp ~ar @@ BoxJoin (caller, callee)
 
 let compr ~ar (decl : sim_binding) block =
   assert (not (List.is_empty block));
-  hexp @@ oexp ~ar @@ Compr (decl, block)
+  hexp @@ exp ~ar @@ Compr (decl, block)
 
-let prime ~ar e = hexp @@ oexp ~ar @@ Prime e
+let prime ~ar e = hexp @@ exp ~ar @@ Prime e
 
 let in_ = In
 
@@ -348,9 +349,9 @@ let join = Join
 
 let num n = hiexp @@ Num n
 
-let card exp = hiexp @@ Card exp
+let card e = hiexp @@ Card e
 
-let iunary op exp = hiexp @@ IUn (op, exp)
+let iunary op e = hiexp @@ IUn (op, e)
 
 let ibinary exp1 op exp2 = hiexp @@ IBin (exp1, op, exp2)
 
@@ -454,12 +455,12 @@ let pp_binding ~sep pp_exp out (v, e) =
     sep ()
     pp_exp e
 
-let pp_sim_binding pp_exp out (disj, vars, exp) =
+let pp_sim_binding pp_exp out (disj, vars, e) =
   let open Fmtc in
   pf out "%a%a :@ %a"
     (if disj then kwd_styled string else nop) "disj "
     (list ~sep:comma pp_var) (Sequence.to_list Int.Infix.(0 --^ vars))
-    pp_exp exp
+    pp_exp e
 
 let pp pp_fml out (Run fml) =
   let open Fmtc in
@@ -480,8 +481,8 @@ let pp_ofml pp_fml pp_exp pp_iexp out =
         (kwd_styled pf) out "true"
     | False ->
         (kwd_styled pf) out "false"
-    | Qual (q, exp) ->
-        pf out "@[<2>(%a@ %a)@]" pp_rqualify q pp_exp exp
+    | Qual (q, e) ->
+        pf out "@[<2>(%a@ %a)@]" pp_rqualify q pp_exp e
     | RComp (e1, op, e2) ->
         pf out "@[<2>(%a@ %a@ %a)@]"
           pp_exp e1
@@ -572,9 +573,9 @@ let pp_prim_exp pp_fml pp_exp out =
           pp_exp t
           (kwd_styled string) "else"
           pp_exp e
-    | BoxJoin (exp, args) ->
+    | BoxJoin (e, args) ->
         pf out "@[<2>(%a%a)@]"
-          pp_exp exp
+          pp_exp e
           (brackets @@ list ~sep:(sp **> comma) @@ pp_exp) args          
     | Compr (sim_binding, blk) ->
         pf out "%a"
@@ -586,8 +587,8 @@ let pp_prim_exp pp_fml pp_exp out =
     | Prime e ->
         pf out "%a'" pp_exp e
 
-let pp_exp pp_fml pp_exp out (Exp { node = exp; _ }) =
-  pp_prim_exp pp_fml pp_exp out exp.prim_oexp
+let pp_exp pp_fml pp_exp out (Exp { node = e; _ }) =
+  pp_prim_exp pp_fml pp_exp out e.prim_oexp
 
 let pp_iunop out = 
   let open Fmtc in
@@ -605,8 +606,8 @@ let pp_iexp pp_exp pp_iexp out =
   function
     | Num n ->
         pf out "%d" n
-    | Card exp ->
-        pf out "@[<2>(# %a)@]" pp_exp exp
+    | Card e ->
+        pf out "@[<2>(# %a)@]" pp_exp e
     | IUn (op, iexp) ->
         pf out "@[<2>(%a%a)@]" pp_iunop op
           pp_iexp iexp
