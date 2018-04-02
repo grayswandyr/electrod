@@ -17,12 +17,8 @@ open Containers
 module HC = Hashcons
 
 (** De Bruijn-style formulas and expressions *)
-(* TODO: De Bruijn indices start at 0 or 1? *)
 
-type ('fml, 'exp, 'iexp) ot =
-  | Run of ('fml, 'exp, 'iexp) ofml list [@@unboxed]
-
-and ('fml, 'exp, 'iexp) ofml =
+type ('fml, 'exp, 'iexp) ofml =
     | True 
   | False
   | Qual of rqualify * 'exp
@@ -138,8 +134,7 @@ and ibinop =
                        ancestors = ["VisitorsRuntime.map"] } 
 ]
 
-
-type t =  (fml, exp, iexp) ot
+type t = | Run of fml list [@@unboxed]
 
 and fml = Fml of (fml, exp, iexp) ofml HC.hash_consed [@@unboxed]
 
@@ -383,7 +378,7 @@ let sub = Sub
 *)
 
 (******************************************************************************
- *  Pretty-printing TODO: handle De Bruijn indices
+ *  Pretty-printing
  *****************************************************************************)
 
 let kwd_styled pf = Fmtc.(styled `Bold) pf
@@ -445,74 +440,6 @@ let pp_quant out x =
   | Some_ -> "some"
   | No -> "no"
 
-let pp_var out v =
-  Fmtc.pf out "x/%d" v
-
-let pp_sim_binding pp_exp out (disj, vars, e : sim_binding) =
-  let open Fmtc in
-  pf out "%a%a :@ %a"
-    (if disj then kwd_styled string else nop) "disj "
-    (list ~sep:comma pp_var) (Sequence.to_list Int.Infix.(0 --^ vars))
-    pp_exp e
-
-let pp pp_fml out (Run fml) =
-  let open Fmtc in
-  (kwd_styled pf) out "run@ ";
-  pf out "  %a" (box @@ list @@ pp_fml) fml
-
-let pp_block pp_fml out (fmls : block) = 
-  let open Fmtc in
-  pf out "@[<b 0>{@[<hv>%a@]@,}@]"
-    (list ~sep:(sp **> semi) @@ pp_fml) fmls
-
-let pp_ofml pp_fml pp_exp pp_iexp out = 
-  let open Fmtc in
-  function
-    | True ->
-        (kwd_styled pf) out "true"
-    | False ->
-        (kwd_styled pf) out "false"
-    | Qual (q, e) ->
-        pf out "@[<2>(%a@ %a)@]" pp_rqualify q pp_exp e
-    | RComp (e1, op, e2) ->
-        pf out "@[<2>(%a@ %a@ %a)@]"
-          pp_exp e1
-          pp_comp_op op
-          pp_exp e2
-    | IComp (e1, op, e2) ->
-        pf out "@[<2>(%a@ %a@ %a)@]"
-          pp_iexp e1
-          pp_icomp_op op
-          pp_iexp e2
-    | LUn (op, fml) ->
-        pf out "@[<2>(%a@ %a)@]" pp_lunop op pp_fml fml
-    | LBin (f1, op, f2) ->
-        pf out "@[<2>(%a@ %a@ %a)@]"
-          pp_fml f1
-          pp_lbinop op
-          pp_fml f2        
-    | Quant (q, decl, blk) ->
-        pf out "@[<2>(%a %a@ %a)@]"
-          pp_quant q
-          (pp_sim_binding pp_exp) decl
-          (pp_block pp_fml) blk       
-    (* | Let (bindings, blk) ->
-       pf out "%a %a@ %a"
-       (kwd_styled string) "let"
-       (list ~sep:(sp **> comma) @@ pp_binding ~sep:equal) bindings
-       (pp_block pp_fml) blk *)
-    | FIte (c, t, e) ->
-        (* pf out "@[<hv2>(%a@ @[implies %a@]@ @[else %a@])@]" *)
-        pf out "@[<hv>(%a) %a@;<1 2>@[(%a@])@;%a@;<1 2>@[(%a@])@]"
-          pp_fml c
-          (kwd_styled string) "implies"
-          pp_fml t
-          (kwd_styled string) "else"
-          pp_fml e
-    | Block fmls ->
-        pp_block pp_fml out fmls
-
-
 let pp_runop out = 
   let open Fmtc in
   function
@@ -532,54 +459,6 @@ let pp_rbinop out =
     | Diff -> pf out "-"
     | Join -> pf out "-"
 
-let pp_prim_exp pp_fml pp_exp out = 
-  let open Fmtc in
-  function
-    | None_ ->
-        (styled Name.style pf) out "none"
-    | Univ ->
-        (styled Name.style pf) out "univ"
-    | Iden ->
-        (styled Name.style pf) out "iden"
-    | Name id ->
-        pf out "%a" Name.pp id
-    | Var v -> (* TODO fix this of course *)
-        pp_var out v
-    | RUn (op, e) ->
-        pf out "@[<2>(%a%a)@]"
-          pp_runop op
-          pp_exp e
-    | RBin (e1, Join, e2) ->    (* special one for join *)
-        pf out "@[<2>(%a.%a)@]"
-          pp_exp e1
-          pp_exp e2
-    | RBin (e1, op, e2) ->
-        pf out "@[<2>(%a@ %a@ %a)@]"
-          pp_exp e1
-          pp_rbinop op
-          pp_exp e2
-    | RIte (c, t, e) ->
-        pf out "@[<hv>%a %a@;<1 2>@[%a@]@;%a@;<1 2>@[%a@]@]"
-          pp_fml c
-          (kwd_styled string) "implies"
-          pp_exp t
-          (kwd_styled string) "else"
-          pp_exp e
-    | BoxJoin (e, args) ->
-        pf out "@[<2>(%a%a)@]"
-          pp_exp e
-          (brackets @@ list ~sep:(sp **> comma) @@ pp_exp) args          
-    | Compr (sim_binding, blk) ->
-        pf out "%a"
-          (braces_ @@
-           pair ~sep:sp
-             (pp_sim_binding pp_exp) 
-             (pp_block pp_fml))
-          (sim_binding, blk)
-    | Prime e ->
-        pf out "%a'" pp_exp e
-
-
 let pp_iunop out = 
   let open Fmtc in
   function
@@ -591,42 +470,165 @@ let pp_ibinop out =
     | Add -> pf out "+"
     | Sub -> pf out "-"
 
-let pp_oiexp pp_exp pp_iexp out = 
+(* TODO fix this *)
+let pp_var out v =
+  Fmtc.pf out "v/%d" v
+
+let pp_osim_binding stacked pp_exp out (disj, vars, e : sim_binding) =
+  let open Fmtc in
+  pf out "%a%a :@ %a"
+    (if disj then kwd_styled string else nop) "disj "
+    (list ~sep:(sp **> comma) pp_var) 
+    (Sequence.to_list Int.Infix.((stacked + 1) -- (stacked + vars)))
+    (pp_exp stacked) e
+
+let pp_oblock stacked pp_fml out (fmls : block) = 
+  let open Fmtc in
+  pf out "@[<b 0>{@[<hv>%a@]@,}@]"
+    (list ~sep:(sp **> semi) @@ pp_fml stacked) fmls
+
+let pp_ofml stacked pp_fml pp_exp pp_iexp out = 
+  let open Fmtc in
+  function
+    | True ->
+        (kwd_styled pf) out "true"
+    | False ->
+        (kwd_styled pf) out "false"
+    | Qual (q, e) ->
+        pf out "@[<2>(%a@ %a)@]" 
+          pp_rqualify q 
+          (pp_exp stacked) e
+    | RComp (e1, op, e2) ->
+        pf out "@[<2>(%a@ %a@ %a)@]"
+          (pp_exp stacked) e1
+          pp_comp_op op
+          (pp_exp stacked) e2
+    | IComp (e1, op, e2) ->
+        pf out "@[<2>(%a@ %a@ %a)@]"
+          (pp_iexp stacked) e1
+          pp_icomp_op op
+          (pp_iexp stacked) e2
+    | LUn (op, fml) ->
+        pf out "@[<2>(%a@ %a)@]" pp_lunop op (pp_fml stacked) fml
+    | LBin (f1, op, f2) ->
+        pf out "@[<2>(%a@ %a@ %a)@]"
+          (pp_fml stacked) f1
+          pp_lbinop op
+          (pp_fml stacked) f2        
+    | Quant (q, ((_, nbvars, _) as decl), blk) ->
+        pf out "@[<2>(%a %a@ %a)@]"
+          pp_quant q
+          (pp_osim_binding stacked pp_exp) decl
+          (pp_oblock (stacked + nbvars) pp_fml) blk       
+    (* | Let (bindings, blk) ->
+       pf out "%a %a@ %a"
+       (kwd_styled string) "let"
+       (list ~sep:(sp **> comma) @@ pp_binding ~sep:equal) bindings
+       (pp_block pp_fml) blk *)
+    | FIte (c, t, e) ->
+        (* pf out "@[<hv2>(%a@ @[implies %a@]@ @[else %a@])@]" *)
+        pf out "@[<hv>(%a) %a@;<1 2>@[(%a@])@;%a@;<1 2>@[(%a@])@]"
+          (pp_fml stacked) c
+          (kwd_styled string) "implies"
+          (pp_fml stacked) t
+          (kwd_styled string) "else"
+          (pp_fml stacked) e
+    | Block fmls ->
+        pp_oblock stacked pp_fml out fmls
+
+let pp_prim_oexp stacked pp_fml pp_exp out = 
+  let open Fmtc in
+  function
+    | None_ ->
+        (styled Name.style pf) out "none"
+    | Univ ->
+        (styled Name.style pf) out "univ"
+    | Iden ->
+        (styled Name.style pf) out "iden"
+    | Name id ->
+        pf out "%a" Name.pp id
+    | Var v ->
+        assert (v <= stacked); 
+        pp_var out (1 + stacked - v)
+    | RUn (op, e) ->
+        pf out "@[<2>(%a%a)@]"
+          pp_runop op
+          (pp_exp stacked) e
+    | RBin (e1, Join, e2) ->    (* special one for join *)
+        pf out "@[<2>(%a.%a)@]"
+          (pp_exp stacked) e1
+          (pp_exp stacked) e2
+    | RBin (e1, op, e2) ->
+        pf out "@[<2>(%a@ %a@ %a)@]"
+          (pp_exp stacked) e1
+          pp_rbinop op
+          (pp_exp stacked) e2
+    | RIte (c, t, e) ->
+        pf out "@[<hv>%a %a@;<1 2>@[%a@]@;%a@;<1 2>@[%a@]@]"
+          (pp_fml stacked) c
+          (kwd_styled string) "implies"
+          (pp_exp stacked) t
+          (kwd_styled string) "else"
+          (pp_exp stacked) e
+    | BoxJoin (e, args) ->
+        pf out "@[<2>(%a%a)@]"
+          (pp_exp stacked) e
+          (brackets @@ list ~sep:(sp **> comma) @@ (pp_exp stacked)) args          
+    | Compr ((_, nbvars, _ as decl), blk) ->
+        pf out "%a"
+          (braces_ @@
+           pair ~sep:sp
+             (pp_osim_binding stacked pp_exp) 
+             (pp_oblock (stacked + nbvars) pp_fml))
+          (decl, blk)
+    | Prime e ->
+        pf out "%a'" (pp_exp stacked) e
+
+let pp_oiexp stacked pp_exp pp_iexp out = 
   let open Fmtc in
   function
     | Num n ->
         pf out "%d" n
     | Card e ->
-        pf out "@[<2>(# %a)@]" pp_exp e
+        pf out "@[<2>(# %a)@]" 
+          (pp_exp stacked) e
     | IUn (op, iexp) ->
-        pf out "@[<2>(%a%a)@]" pp_iunop op
-          pp_iexp iexp
+        pf out "@[<2>(%a%a)@]" 
+          pp_iunop op
+          (pp_iexp stacked) iexp
     | IBin (e1, op, e2) -> 
         pf out "@[<2>(%a@ %a@ %a)@]"
-          pp_iexp e1
+          (pp_iexp stacked) e1
           pp_ibinop op
-          pp_iexp e2
+          (pp_iexp stacked) e2
 
 
+let rec pp_fml stacked out (Fml { node; _ }) =
+  pp_ofml stacked pp_fml pp_exp pp_iexp out node
 
-let rec pp_fml out (Fml { node; _ }) =
-  pp_ofml pp_fml pp_exp pp_iexp out node
+and pp_iexp stacked out (Iexp { node; _ }) =
+  pp_oiexp stacked pp_exp pp_iexp out node
 
-and pp_iexp out (Iexp { node; _ }) =
-  pp_oiexp pp_exp pp_iexp out node
+and pp_prim_exp stacked out pe =
+  pp_prim_oexp stacked pp_fml pp_exp out pe
 
-and pp_exp out (Exp { node = e; _ }) =
-  pp_prim_exp pp_fml pp_exp out e.prim_exp 
+and pp_exp stacked out (Exp { node = e; _ }) =
+  pp_prim_exp stacked out e.prim_exp 
+
+let pp out (Run fmls : t) =
+  let open Fmtc in
+  (kwd_styled pf) out "run@ ";
+  pf out "  %a" (box @@ list @@ pp_fml 0) fmls
 
 (* 
 
-(* f is a subformula of g TODO check correct hashconsing *)
-let f = quant all (sim_binding true 2 @@ univ) 
-  [rcomp (var ~ar:1 1) in_ univ]
+   (* f is a subformula of g TODO check correct hashconsing *)
+   let f = quant all (sim_binding true 2 @@ univ) 
+   [rcomp (var ~ar:1 1) in_ univ]
 
-let g = quant some (sim_binding false 1 univ) 
-  [quant all (sim_binding true 2 @@ univ) 
-    [rcomp (var ~ar:1 1) in_ univ]]
+   let g = quant some (sim_binding false 1 univ) 
+   [quant all (sim_binding true 2 @@ univ) 
+   [rcomp (var ~ar:1 1) in_ univ]]
 
-    
- *)
+
+*)
