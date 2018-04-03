@@ -21,7 +21,7 @@ open GenGoal
 
 module TS = TupleSet
 
-module L = Loc
+module L = Location
 
 let fresh_var base exp =
   Var.fresh ~loc:exp.exp_loc base 

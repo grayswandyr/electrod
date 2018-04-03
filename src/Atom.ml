@@ -16,7 +16,7 @@ open Containers
 
 type t = {
   sym : Symbol.t;
-  loc : Loc.t option
+  loc : Location.t option
 }
 
 let compare a1 a2 = Symbol.compare a1.sym a2.sym

@@ -83,7 +83,7 @@ let compute_tuples infile domain = function
          Msg.Fatal.undeclared_atoms
          @@ fun args -> args
                           infile 
-                          (Loc.span
+                          (Location.span
                            @@ Pair.map_same Raw_ident.location intvl)
                           absent);      
       let dedup = check_duplicate_atoms infile atoms in
@@ -104,7 +104,7 @@ let compute_tuples infile domain = function
          Msg.Fatal.undeclared_atoms
          @@ fun args ->
          args infile
-           (Loc.span
+           (Location.span
             @@ Pair.map_same Raw_ident.location List.(hd ids, hd @@ last 1 ids))
            absent); 
       [Tuple.of_list1 atoms]
@@ -744,7 +744,7 @@ let compute_arities elo =
             (fun arg r ->
                GenGoal.exp
                  Option.(map2 (+) (pure (-2)) @@ map2 (+) arg.arity r.arity)
-                 Loc.(span (arg.exp_loc, r.exp_loc))
+                 Location.(span (arg.exp_loc, r.exp_loc))
                @@ rbinary arg join r
             ) args' call'
         in
