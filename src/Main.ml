@@ -15,6 +15,8 @@
 (** {b Actual main function.} *)
 
 open Containers
+open Libelectrod
+
 module M = struct
   let __x = Elo_goal.var 0
 end
@@ -129,9 +131,9 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
     (* Msg.debug (fun m -> *)
     (* m "Borne sup de la tc de r : %a " TupleSet.pp tc_r); *)
     let cmd, script = match tool, scriptfile with
-      | NuXmv, None -> ("nuXmv", Solver.Default Scripts.nuXmv_default_script)
+      | NuXmv, None -> ("nuXmv", Solver.Default SMV.nuXmv_default_script)
       | NuXmv, Some s -> ("nuXmv", Solver.File s)
-      | NuSMV, None -> ("NuSMV", Solver.Default Scripts.nuSMV_default_script)
+      | NuSMV, None -> ("NuSMV", Solver.Default SMV.nuSMV_default_script)
       | NuSMV, Some s -> ("NuSMV", Solver.File s)
     in
 

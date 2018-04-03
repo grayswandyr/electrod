@@ -16,6 +16,7 @@
 
 open Containers
 open Cmdliner
+open Libelectrod
  
 let infile =
   let doc = "File to process." in
@@ -108,11 +109,11 @@ let main_info =
     `S Manpage.s_files;
     `P {|Default SCRIPT_FILE for nuXmv:|};
     `Noblank;
-    `Pre Scripts.nuXmv_default_script;
+    `Pre SMV.nuXmv_default_script;
     `Noblank;
     `P {|Default SCRIPT_FILE for NuSMV:|};
     `Noblank;
-    `Pre Scripts.nuSMV_default_script;
+    `Pre SMV.nuSMV_default_script;
     `S Manpage.s_authors;
     `P {|Julien BRUNEL (ONERA), David CHEMOUIL (ONERA).|};
     `S "COPYRIGHT";

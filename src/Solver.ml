@@ -157,7 +157,6 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
     | Gt 
     | Eq 
     | Neq 
-  [@@deriving show]
 
   (* let hash_tcomp = function *)
   (*   | Lte -> 3 *)
@@ -196,7 +195,9 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
     | Minus of term * term 
     | Neg of term 
     | Count of t list
-  [@@deriving show]      (* default impl. for pp; to override later *)
+
+  let pp _ _ =    (* default impl. for pp; to override later *)
+    failwith "Solver.LTL_from_Atomic.pp not implemented (on purpose)"
 
   let pp_gather_variables ?(next_is_X = true) _ =
     let _ = next_is_X in pp (* default impl. for pp; to override later *)

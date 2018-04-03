@@ -131,10 +131,9 @@ and ibinop =
   | Sub
 [@@deriving visitors { variety = "map"; name = "omap"},
             visitors { variety = "fold"; name = "ofold";
-                       ancestors = ["VisitorsRuntime.map"] } 
-]
+                       ancestors = ["VisitorsRuntime.map"] }]
 
-type t = | Run of fml list [@@unboxed]
+type t = Run of fml list [@@unboxed]
 
 and fml = Fml of (fml, exp, iexp) ofml HC.hash_consed [@@unboxed]
 
@@ -605,6 +604,9 @@ let pp_oiexp stacked pp_exp pp_iexp out =
 
 let rec pp_fml stacked out (Fml { node; _ }) =
   pp_ofml stacked pp_fml pp_exp pp_iexp out node
+
+and pp_block stacked out fmls =
+  pp_oblock stacked pp_fml out fmls
 
 and pp_iexp stacked out (Iexp { node; _ }) =
   pp_oiexp stacked pp_exp pp_iexp out node

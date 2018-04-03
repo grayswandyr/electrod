@@ -23,6 +23,7 @@ module type ATOMIC_PROPOSITION =
     val make : Domain.t -> Name.t -> Tuple.t -> t
       
     val compare : t -> t -> int
+
     (** compare atoms as strings  *)
     val compare_string : t -> t -> int
     val equal : t -> t -> bool

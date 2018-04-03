@@ -15,6 +15,11 @@
 open Containers
 
 
+let nuXmv_default_script = Scripts.nuXmv_default_script
+
+let nuSMV_default_script = Scripts.nuSMV_default_script
+
+
 module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION)
   : Solver.LTL with module Atomic = At = struct
   module I = Solver.LTL_from_Atomic(At) 

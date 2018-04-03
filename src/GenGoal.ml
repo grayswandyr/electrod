@@ -33,8 +33,8 @@ and ('v, 'i) prim_fml =
   | LUn of lunop * ('v, 'i) fml
   | LBin of ('v, 'i) fml * lbinop * ('v, 'i) fml
   | Quant of quant
-            * ('v, 'i) sim_binding list (** nonempty *)
-            * ('v, 'i) block
+             * ('v, 'i) sim_binding list (** nonempty *)
+             * ('v, 'i) block
   | Let of (('v, 'i) binding) list * ('v, 'i) block (** nonempty *)
   | FIte of ('v, 'i) fml * ('v, 'i) fml * ('v, 'i) fml      
   | Block of ('v, 'i) block
@@ -146,8 +146,9 @@ and iunop =
 and ibinop =
   | Add
   | Sub
-[@@deriving visitors { variety = "fold" ; ancestors = ["VisitorsRuntime.map"] },
-            visitors { variety = "map"}]
+[@@deriving  visitors { variety = "map"},
+             visitors { variety = "fold"; 
+                        ancestors = ["VisitorsRuntime.map"]}]
 
 let true_ = True
 
@@ -174,7 +175,7 @@ let lbinary fml1 binop fml2 = match fml1.prim_fml, binop, fml2.prim_fml with
   | (False | Block [ { prim_fml = False; _ }]), Imp, _
   | _, Imp, (True | Block [ { prim_fml = True; _ }]) -> true_
   | (True | Block [ { prim_fml = True; _ }]), Imp, _ -> fml2.prim_fml
-  
+
   | _ -> LBin (fml1, binop, fml2)
 
 let quant quant decls block = 
@@ -381,7 +382,7 @@ and pp_prim_fml pp_v pp_i out =
           (pp_block pp_v pp_i) blk
     | FIte (c, t, e) ->
         (* pf out "@[<hv2>(%a@ @[implies %a@]@ @[else %a@])@]" *)
-          pf out "@[<hv>(%a) %a@;<1 2>@[(%a@])@;%a@;<1 2>@[(%a@])@]"
+        pf out "@[<hv>(%a) %a@;<1 2>@[(%a@])@;%a@;<1 2>@[(%a@])@]"
           (pp_fml pp_v pp_i) c
           (kwd_styled string) "implies"
           (pp_fml pp_v pp_i) t
@@ -495,7 +496,7 @@ and pp_prim_exp pp_v pp_i out =
           pp_rbinop op
           (pp_exp pp_v pp_i) e2
     | RIte (c, t, e) ->
-          pf out "@[<hv>%a %a@;<1 2>@[%a@]@;%a@;<1 2>@[%a@]@]"
+        pf out "@[<hv>%a %a@;<1 2>@[%a@]@;%a@;<1 2>@[%a@]@]"
           (pp_fml pp_v pp_i) c
           (kwd_styled string) "implies"
           (pp_exp pp_v pp_i) t
@@ -517,9 +518,9 @@ and pp_prim_exp pp_v pp_i out =
 and pp_runop out = 
   let open Fmtc in
   function
-  | Transpose -> pf out "~"
-  | TClos -> pf out "^"
-  | RTClos -> pf out "*"
+    | Transpose -> pf out "~"
+    | TClos -> pf out "^"
+    | RTClos -> pf out "*"
 
 and pp_rbinop out = 
   let open Fmtc in
