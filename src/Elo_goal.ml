@@ -21,7 +21,6 @@ module HC = Hashcons
 type ('fml, 'exp, 'iexp) ofml =
     | True 
   | False
-  | Qual of rqualify * 'exp
   | RComp of 'exp * comp_op * 'exp
   | IComp of 'iexp * icomp_op * 'iexp
   | LUn of lunop * 'fml
@@ -43,8 +42,6 @@ and quant =
     | All 
   | Some_ 
   | No 
-  | One 
-  | Lone 
 
 and lbinop = 
     | And 
@@ -92,15 +89,8 @@ and ('fml, 'exp, 'iexp) prim_oexp =
   | RUn of runop * 'exp
   | RBin of 'exp * rbinop * 'exp
   | RIte of 'fml * 'exp * 'exp
-  | BoxJoin of 'exp * 'exp list (** <> []  *)
   | Compr of 'exp osim_binding * 'fml oblock
   | Prime of 'exp
-
-and rqualify = 
-    | ROne 
-  | RLone 
-  | RSome 
-  | RNo 
 
 and runop = 
     | Transpose 
@@ -203,8 +193,6 @@ let true_ = hfml @@ True
 
 let false_ = hfml @@ False
 
-let qual qual e = hfml @@ Qual (qual, e)
-
 let rcomp exp1 rcomp exp2 = hfml @@ RComp (exp1, rcomp, exp2)
 
 let icomp exp1 rcomp exp2 = hfml @@ IComp (exp1, rcomp, exp2)
@@ -234,9 +222,6 @@ let some = Some_
 
 let no_ = No
 
-let lone = Lone
-
-let one = One
 
 let and_ = And
 
@@ -284,9 +269,6 @@ let rbinary ~ar exp1 rbinop exp2 = hexp @@ exp ~ar @@ RBin (exp1, rbinop, exp2)
 
 let rite ~ar cdt then_ else_ = hexp @@ exp ~ar @@ RIte (cdt, then_, else_)
 
-(* TODO get rid of box join (here)? *)
-let boxjoin ~ar caller callee = hexp @@ exp ~ar @@ BoxJoin (caller, callee)
-
 let compr ~ar (decl : sim_binding) block =
   assert (not (List.is_empty block));
   hexp @@ exp ~ar @@ Compr (decl, block)
@@ -312,14 +294,6 @@ let lte = Lte
 let gt = Gt
 
 let gte = Gte
-
-let rone = ROne
-
-let rsome = RSome
-
-let rlone = RLone
-
-let rno = RNo
 
 let transpose = Transpose
 
@@ -382,14 +356,6 @@ let sub = Sub
 
 let kwd_styled pf = Fmtc.(styled `Bold) pf
 
-let pp_rqualify out x =
-  Fmtc.(kwd_styled pf) out
-  @@ match x with
-  | ROne -> "one"
-  | RLone -> "lone"
-  | RSome -> "some"
-  | RNo -> "no"
-
 let pp_comp_op out =
   let open Fmtc in
   function
@@ -433,8 +399,6 @@ let pp_lbinop out x =
 let pp_quant out x =
   Fmtc.(kwd_styled pf) out
   @@ match x with
-  | Lone -> "lone"
-  | One -> "one"
   | All -> "all"
   | Some_ -> "some"
   | No -> "no"
@@ -493,10 +457,6 @@ let pp_ofml stacked pp_fml pp_exp pp_iexp out =
         (kwd_styled pf) out "true"
     | False ->
         (kwd_styled pf) out "false"
-    | Qual (q, e) ->
-        pf out "@[<2>(%a@ %a)@]" 
-          pp_rqualify q 
-          (pp_exp stacked) e
     | RComp (e1, op, e2) ->
         pf out "@[<2>(%a@ %a@ %a)@]"
           (pp_exp stacked) e1
@@ -568,11 +528,7 @@ let pp_prim_oexp stacked pp_fml pp_exp out =
           (kwd_styled string) "implies"
           (pp_exp stacked) t
           (kwd_styled string) "else"
-          (pp_exp stacked) e
-    | BoxJoin (e, args) ->
-        pf out "@[<2>(%a%a)@]"
-          (pp_exp stacked) e
-          (brackets @@ list ~sep:(sp **> comma) @@ (pp_exp stacked)) args          
+          (pp_exp stacked) e 
     | Compr ((_, nbvars, _ as decl), blk) ->
         pf out "%a"
           (braces_ @@

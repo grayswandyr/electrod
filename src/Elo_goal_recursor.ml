@@ -91,10 +91,6 @@ class virtual ['self] orecursor = object (self : 'self)
     self#build_True env
   method visit_False env =
     self#build_False env
-  method visit_Qual env _visitors_c0 _visitors_c1 =
-    let _visitors_r0 = self#visit_rqualify env _visitors_c0 in
-    let _visitors_r1 = self#visit_'exp env _visitors_c1 in
-    self#build_Qual env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
   method visit_RComp env _visitors_c0 _visitors_c1 _visitors_c2 =
     let _visitors_r0 = self#visit_'exp env _visitors_c0 in
     let _visitors_r1 = self#visit_comp_op env _visitors_c1 in
@@ -133,8 +129,6 @@ class virtual ['self] orecursor = object (self : 'self)
         self#visit_True env
     | False ->
         self#visit_False env
-    | Qual (_visitors_c0, _visitors_c1) ->
-        self#visit_Qual env _visitors_c0 _visitors_c1
     | RComp (_visitors_c0, _visitors_c1, _visitors_c2) ->
         self#visit_RComp env _visitors_c0 _visitors_c1 _visitors_c2
     | IComp (_visitors_c0, _visitors_c1, _visitors_c2) ->
@@ -177,10 +171,6 @@ class virtual ['self] orecursor = object (self : 'self)
         self#visit_Some_ env
     | No ->
         self#visit_No env
-    | One ->
-        self#visit_One env
-    | Lone ->
-        self#visit_Lone env
   method visit_And env =
     self#build_And env
   method visit_Or env =
@@ -346,8 +336,6 @@ class virtual ['self] orecursor = object (self : 'self)
         self#visit_RBin env _visitors_c0 _visitors_c1 _visitors_c2
     | RIte (_visitors_c0, _visitors_c1, _visitors_c2) ->
         self#visit_RIte env _visitors_c0 _visitors_c1 _visitors_c2
-    | BoxJoin (_visitors_c0, _visitors_c1) ->
-        self#visit_BoxJoin env _visitors_c0 _visitors_c1
     | Compr (_visitors_c0, _visitors_c1) ->
         self#visit_Compr env _visitors_c0 _visitors_c1
     | Prime _visitors_c0 ->
@@ -360,16 +348,6 @@ class virtual ['self] orecursor = object (self : 'self)
     self#build_RSome env
   method visit_RNo env =
     self#build_RNo env
-  method visit_rqualify env _visitors_this =
-    match _visitors_this with
-    | ROne ->
-        self#visit_ROne env
-    | RLone ->
-        self#visit_RLone env
-    | RSome ->
-        self#visit_RSome env
-    | RNo ->
-        self#visit_RNo env
   method visit_Transpose env =
     self#build_Transpose env
   method visit_TClos env =
