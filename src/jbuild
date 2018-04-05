@@ -21,13 +21,14 @@
 	 (:standard
 		(-w "-33-58" ; -33 unused open -58 missing cmx file
 				-g -safe-string -strict-formats -strict-sequence -short-paths)))
+	(inline_tests)
 	(preprocess 
 		(per_module
       ((action 
 				(run ppxfind -legacy visitors.ppx,ppx_deriving.std --as-pp ${<})) 
 		 		(GenGoal Elo_goal))
-      #; ((pps (ppx_inline_test)) 
-		 	#; 	((modules (:standard \ (Main electrod GenGoal Elo_goal)))))
+      ((pps (ppx_inline_test ppx_expect)) 
+		 		(Cooked_to_elo))
 		))
 	))
 

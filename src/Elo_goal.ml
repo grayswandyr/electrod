@@ -19,7 +19,7 @@ module HC = Hashcons
 (** De Bruijn-style formulas and expressions *)
 
 type ('fml, 'exp, 'iexp) ofml =
-    | True 
+  | True 
   | False
   | RComp of 'exp * comp_op * 'exp
   | IComp of 'iexp * icomp_op * 'iexp
@@ -39,12 +39,12 @@ and 'exp osim_binding = disj * int * 'exp
 and disj = (bool [@opaque]) 
 
 and quant = 
-    | All 
+  | All 
   | Some_ 
   | No 
 
 and lbinop = 
-    | And 
+  | And 
   | Or 
   | Imp 
   | Iff 
@@ -53,7 +53,7 @@ and lbinop =
   | S                           (* since *)
 
 and lunop = 
-    | F
+  | F
   | G
   | Not 
   | O                           (* once *)
@@ -62,13 +62,13 @@ and lunop =
   | P                           (* previous *)
 
 and comp_op = 
-    | In 
+  | In 
   | NotIn 
   | REq 
   | RNEq
 
 and icomp_op =
-    | IEq
+  | IEq
   | INEq
   | Lt 
   | Lte 
@@ -76,12 +76,12 @@ and icomp_op =
   | Gte 
 
 and ('fml, 'exp, 'iexp) oexp = {
-      prim_exp : ('fml, 'exp, 'iexp) prim_oexp;
-      arity : (int [@opaque]);   (* 0 = "polymorphic" arity (that of none) *)
-    }
+  prim_exp : ('fml, 'exp, 'iexp) prim_oexp;
+  arity : (int [@opaque]);   (* 0 = "polymorphic" arity (that of none) *)
+}
 
 and ('fml, 'exp, 'iexp) prim_oexp =
-    | None_ 
+  | None_ 
   | Univ 
   | Iden 
   | Var of int
@@ -93,12 +93,12 @@ and ('fml, 'exp, 'iexp) prim_oexp =
   | Prime of 'exp
 
 and runop = 
-    | Transpose 
+  | Transpose 
   | TClos 
   | RTClos 
 
 and rbinop = 
-    | Union 
+  | Union 
   | Inter 
   | Over 
   | LProj 
@@ -108,16 +108,16 @@ and rbinop =
   | Join
 
 and ('fml, 'exp, 'iexp) oiexp =
-    | Num of (int [@opaque])
+  | Num of (int [@opaque])
   | Card of 'exp
   | IUn of iunop * 'iexp
   | IBin of 'iexp * ibinop * 'iexp
 
 and iunop =
-    | Neg
+  | Neg
 
 and ibinop =
-    | Add
+  | Add
   | Sub
 [@@deriving visitors { variety = "map"; name = "omap"},
             visitors { variety = "fold"; name = "ofold";
