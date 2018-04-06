@@ -478,14 +478,8 @@ let pp_ofml stacked pp_fml pp_exp pp_iexp out =
         pf out "@[<2>(%a %a@ %a)@]"
           pp_quant q
           (pp_osim_binding stacked pp_exp) decl
-          (pp_oblock (stacked + nbvars) pp_fml) blk       
-    (* | Let (bindings, blk) ->
-       pf out "%a %a@ %a"
-       (kwd_styled string) "let"
-       (list ~sep:(sp **> comma) @@ pp_binding ~sep:equal) bindings
-       (pp_block pp_fml) blk *)
+          (pp_oblock (stacked + nbvars) pp_fml) blk
     | FIte (c, t, e) ->
-        (* pf out "@[<hv2>(%a@ @[implies %a@]@ @[else %a@])@]" *)
         pf out "@[<hv>(%a) %a@;<1 2>@[(%a@])@;%a@;<1 2>@[(%a@])@]"
           (pp_fml stacked) c
           (kwd_styled string) "implies"
@@ -508,7 +502,7 @@ let pp_prim_oexp stacked pp_fml pp_exp out =
         pf out "%a" Name.pp id
     | Var v ->
         assert (v <= stacked); 
-        pp_var out (1 + stacked - v)
+        pp_var out (stacked - v)
     | RUn (op, e) ->
         pf out "@[<2>(%a%a)@]"
           pp_runop op
