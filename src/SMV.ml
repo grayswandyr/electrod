@@ -261,7 +261,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
   type atomic = Ltl.Atomic.t
 
   type t = {
-    elo : Elo.t;
+    elo : Ast.t;
     init : (string * ltl) Sequence.t;
     invariant : (string * ltl) Sequence.t;
     trans : (string * ltl) Sequence.t;
@@ -291,7 +291,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
       let name_str = Name.to_string name in
       (* To avoid changin the generation of LTL formulas, we generate DEFINEs of
          the form `DEFINE x_a1_b1 := x_a1 = b1` (for x of domain arity 1) *)
-      let may = Domain.may name elo.Elo.domain |> TupleSet.to_seq in
+      let may = Domain.may name elo.Ast.domain |> TupleSet.to_seq in
       (* where to split tuples (if necessary)? *)
       let dom_ar = Ltl.Atomic.domain_arity atom in
       match dom_ar with
@@ -591,7 +591,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
            changed w.r.t. the previous state.). *)
         let module P =
           SMV_trace_parser.Make(struct
-            let base = Domain.musts ~with_univ_and_ident:false elo.Elo.domain
+            let base = Domain.musts ~with_univ_and_ident:false elo.Ast.domain
           end)
         in
         let trace =

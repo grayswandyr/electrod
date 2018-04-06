@@ -28,7 +28,7 @@
 				(run ppxfind -legacy visitors.ppx,ppx_deriving.std --as-pp ${<})) 
 		 		(GenGoal Elo_goal))
       ((pps (ppx_inline_test ppx_expect)) 
-		 		(Cooked_to_elo))
+		 		(Ast_to_elo))
 		))
 	))
 

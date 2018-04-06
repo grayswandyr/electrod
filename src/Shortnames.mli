@@ -16,4 +16,4 @@
     generated files). *)
 
 (** [true] ==> rename, otherwise, keep original names  *)
-val rename_elo : bool -> Elo.t -> Elo.t
+val rename_elo : bool -> Ast.t -> Ast.t

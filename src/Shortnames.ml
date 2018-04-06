@@ -44,7 +44,7 @@ let encode_relation = make_encode 'A'
 let is_univ_or_iden n = List.mem ~eq:Name.equal n [Name.iden; Name.univ] 
 
 let compute_relation_renaming elo =
-  Domain.to_list elo.Elo.domain 
+  Domain.to_list elo.Ast.domain 
   |> List.mapi (fun i (name, _) ->
         if is_univ_or_iden name then
           (name, name)          (* do not rename univ and iden *)
@@ -60,7 +60,7 @@ let compute_relation_renaming elo =
             (name, new_name))
 
 let compute_atom_renaming elo = 
-  Domain.univ_atoms elo.Elo.domain
+  Domain.univ_atoms elo.Ast.domain
   |> TupleSet.to_list
   |> List.mapi (fun i tuple ->
         let atom = Tuple.ith 0 tuple in
@@ -71,13 +71,13 @@ let compute_atom_renaming elo =
 let rename_elo long_names elo =
   if long_names then            (* long_names = true ==> renaming is identity *)
     let id_renaming l = List.map (fun x -> (x, x)) l in
-    Elo.{
+    Ast.{
       elo with
         atom_renaming =
-          id_renaming (Domain.univ_atoms elo.Elo.domain
+          id_renaming (Domain.univ_atoms elo.Ast.domain
                        |> TupleSet.to_list |> List.map (Tuple.ith 0));
         name_renaming =
-          id_renaming (Domain.to_list elo.Elo.domain |> List.map fst);
+          id_renaming (Domain.to_list elo.Ast.domain |> List.map fst);
     }
   else
     let atom_renaming = compute_atom_renaming elo in 
@@ -93,11 +93,11 @@ let rename_elo long_names elo =
             (brackets @@ list ~sep:semi
              @@ parens @@ pair ~sep:comma Name.pp Name.pp)
             name_renaming);
-    Elo.{
+    Ast.{
       elo with
         domain = Domain.rename atom_renaming name_renaming elo.domain;
-        goal = Elo.rename#visit_t name_renaming elo.goal;
-        invariants = List.map (Elo.rename#visit_fml name_renaming) elo.invariants;
+        goal = Ast.rename#visit_t name_renaming elo.goal;
+        invariants = List.map (Ast.rename#visit_fml name_renaming) elo.invariants;
         sym = List.map (Symmetry.rename atom_renaming name_renaming) elo.sym;
         instance = Instance.rename atom_renaming name_renaming elo.instance;
         atom_renaming;

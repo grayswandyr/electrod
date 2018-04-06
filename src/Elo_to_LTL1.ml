@@ -31,7 +31,7 @@ module Make (Ltl : Solver.LTL) = struct
 
   type ltl = Ltl.t
 
-  type goal = Elo.goal
+  type goal = Ast.goal
 
   (***************************************************************** 
    * Semantic function
@@ -117,7 +117,7 @@ module Make (Ltl : Solver.LTL) = struct
   (* computes the transitive closure of the term acc_term by k iterative
      squares (t+t.t)+(t+t.t)(t+t.t) + ... *)
 
-  let rec iter_squares (acc_term : (Elo.var, Elo.ident) G.exp) k =
+  let rec iter_squares (acc_term : (Ast.var, Ast.ident) G.exp) k =
     let open Location in
     match k with
       | 0 -> G.(exp None dummy none)
@@ -133,7 +133,7 @@ module Make (Ltl : Solver.LTL) = struct
   (* computes the transitive closure of the term t by k joins
      (alternative to iter_squares) t + t.t + t.t.t + ... *)
 
-  let iter_tc (t : (Elo.var, Elo.ident) G.exp) k =
+  let iter_tc (t : (Ast.var, Ast.ident) G.exp) k =
     let open Location in
     if k=0 then G.(exp None dummy none)
     else
@@ -215,7 +215,7 @@ module Make (Ltl : Solver.LTL) = struct
     method build_Quant subst quant sim_bindings blk _ sim_bindings' _ =
       Msg.debug
         (fun m -> m "build_Quant <-- %a"
-                    (Elo.pp_prim_fml)
+                    (Ast.pp_prim_fml)
                     (G.quant quant sim_bindings blk)
         );
       match quant with
@@ -225,11 +225,11 @@ module Make (Ltl : Solver.LTL) = struct
             assert (List.length sim_bindings = 1); (* SIMPLIFIED *)
             let disj, xs, s = List.hd sim_bindings in
             let _, _, s' = List.hd sim_bindings' in
-            let tuples_of_sim_binding ~disj (vars : Elo.var list) (dom : Tuple.t list) =
+            let tuples_of_sim_binding ~disj (vars : Ast.var list) (dom : Tuple.t list) =
               let open List in
               (* (\* substituitons take [Var.t] keys *\) *)
-              (* let xs = map (fun (Elo.BVar v) -> v) vars in *)
-              (* let tuples_as_idents = map (fun t1 -> G.ident @@ Elo.Tuple t1) dom in *)
+              (* let xs = map (fun (Ast.BVar v) -> v) vars in *)
+              (* let tuples_as_idents = map (fun t1 -> G.ident @@ Ast.Tuple t1) dom in *)
               let lg = length vars in
               (* create as many copies as necessary (= nb of variables) of the domain *)
               init lg (fun _ -> dom)
@@ -245,7 +245,7 @@ module Make (Ltl : Solver.LTL) = struct
               (* |> Fun.tap (fun res -> Msg.debug (fun m-> *)
               (*       m "tuples_of_sim_binding (disj:%B) vars:%a domain:%a@\n  -->@ %a " *)
               (*         disj *)
-              (*         Fmtc.(brackets @@ list ~sep:sp Elo.pp_var) vars *)
+              (*         Fmtc.(brackets @@ list ~sep:sp Ast.pp_var) vars *)
               (*         Fmtc.(braces @@ list ~sep:comma Tuple.pp) dom *)
               (*         Fmtc.(vbox @@ brackets @@ list ~sep:cut *)
               (*               @@ hvbox2 @@ brackets *)
@@ -255,8 +255,8 @@ module Make (Ltl : Solver.LTL) = struct
             in
             let sub_for tuples =
               (* let tuples_as_idents = *)
-              (*   List.map (fun t1 -> G.ident @@ Elo.Tuple t1) tuples in *)
-              let xs_as_vars = List.map (fun (Elo.BVar v) -> v) xs in
+              (*   List.map (fun t1 -> G.ident @@ Ast.Tuple t1) tuples in *)
+              let xs_as_vars = List.map (fun (Ast.BVar v) -> v) xs in
               (* we zip the bound variables and the 1-tuples to get a list of
                  substitutions *)
               List.combine xs_as_vars tuples
@@ -289,7 +289,7 @@ module Make (Ltl : Solver.LTL) = struct
                     (* |> Fun.tap (fun s -> *)
                     (*       Msg.debug (fun m -> *)
                     (*             m "build_Quant: [[%a]]_[%a] -->@ %a" *)
-                    (*               Elo.pp_block blk *)
+                    (*               Ast.pp_block blk *)
                     (*               Fmtc.(list @@ Pair.pp ~sep:":=" Var.pp Tuple.pp) (sub_for tuples @ subst) *)
                     (*               Ltl.pp s *)
                     (*           )) *)
@@ -307,7 +307,7 @@ module Make (Ltl : Solver.LTL) = struct
             in
             Msg.debug (fun m ->
                   m "build_Quant: must(%a) = %a@\nmustpart = %a@\nENTERING MAYPART"
-                    Elo.pp_exp s
+                    Ast.pp_exp s
                     TS.pp must
                     Ltl.pp mustpart);
             let maypart =
@@ -335,7 +335,7 @@ module Make (Ltl : Solver.LTL) = struct
             in
             Msg.debug (fun m ->
                   m "build_Quant: may(%a) = %a@\nmaypart = %a"
-                    (Elo.pp_exp) s
+                    (Ast.pp_exp) s
                     TS.pp may
                     Ltl.pp (Lazy.force maypart));
             (smallop mustpart maypart)
@@ -343,8 +343,8 @@ module Make (Ltl : Solver.LTL) = struct
                   Msg.debug (fun m ->
                         m "build_Quant [[%a %a %a]] -->@ %a"
                           G.pp_quant quant
-                          (Fmtc.(list ~sep:comma) @@ Elo.pp_sim_binding) sim_bindings
-                          Elo.pp_block blk
+                          (Fmtc.(list ~sep:comma) @@ Ast.pp_sim_binding) sim_bindings
+                          Ast.pp_block blk
                           Ltl.pp res
                       ))
 
@@ -365,9 +365,9 @@ module Make (Ltl : Solver.LTL) = struct
     (* |> Fun.tap (fun res -> *)
     (*       Msg.debug (fun m -> *)
     (*             m "build_LBin [[%a %a %a]] -->@ %a" *)
-    (*               Elo.pp_fml f1 *)
+    (*               Ast.pp_fml f1 *)
     (*               G.pp_lbinop op *)
-    (*               Elo.pp_fml f2 *)
+    (*               Ast.pp_fml f2 *)
     (*               Ltl.pp res *)
     (*           )) *)
 
@@ -393,7 +393,7 @@ module Make (Ltl : Solver.LTL) = struct
     (*       Msg.debug (fun m -> *)
     (*             m "[[%a %a]] -->@ %a" *)
     (*               G.pp_lunop op *)
-    (*               Elo.pp_fml f *)
+    (*               Ast.pp_fml f *)
     (*               Ltl.pp res *)
     (*           )) *)
 
@@ -418,9 +418,9 @@ module Make (Ltl : Solver.LTL) = struct
     (* |> Fun.tap (fun res -> *)
     (*       Msg.debug  *)
     (*         (fun m -> m "build_RComp [[%a %a %a]] --> %a" *)
-    (*                     Elo.pp_exp f1 *)
+    (*                     Ast.pp_exp f1 *)
     (*                     G.pp_comp_op op *)
-    (*                     Elo.pp_exp f2 *)
+    (*                     Ast.pp_exp f2 *)
     (*                     Ltl.pp res) *)
     (*     ) *)
 
@@ -443,11 +443,11 @@ module Make (Ltl : Solver.LTL) = struct
     method build_In subst r __s r' s' =
       let { must; may; _} = env#must_may_sup subst r in
       (* Msg.debug (fun m -> m "build_In: %a in %a@\nmust(%a) = %a@\nmay(%a) = %a" *)
-      (*                       Elo.pp_exp r *)
-      (*                       Elo.pp_exp __s *)
-      (*                       Elo.pp_exp r *)
+      (*                       Ast.pp_exp r *)
+      (*                       Ast.pp_exp __s *)
+      (*                       Ast.pp_exp r *)
       (*                       TS.pp must *)
-      (*                       Elo.pp_exp r *)
+      (*                       Ast.pp_exp r *)
       (*                       TS.pp may *)
       (*           ); *)
       wedge ~range:(TS.to_seq must) (fun t -> lazy (s' t))
@@ -503,7 +503,7 @@ module Make (Ltl : Solver.LTL) = struct
       self#build_Compr env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
 
     method private allocate_sbs_to_tuples
-                     (vars : (Var.t * (Elo.var, Elo.ident) G.exp) list)
+                     (vars : (Var.t * (Ast.var, Ast.ident) G.exp) list)
                      (l : Atom.t list) =
       match vars with
       | [] -> []
@@ -523,23 +523,23 @@ module Make (Ltl : Solver.LTL) = struct
       (* compute the subtitution of elements in [tuple] for all bound variables *)
       let ranging_vars = 
         List.(flat_map (fun (_, vs, r) ->
-              List.map (fun (Elo.BVar v) -> (v, r)) vs) sbs) in
+              List.map (fun (Ast.BVar v) -> (v, r)) vs) sbs) in
       let split_tuples =
         self#allocate_sbs_to_tuples ranging_vars @@ Tuple.to_list tuple in
-      (* let split =  List.map Fun.(G.ident % Elo.tuple_ident) split_tuples in *)
+      (* let split =  List.map Fun.(G.ident % Ast.tuple_ident) split_tuples in *)
       let all_vars =
         List.flat_map (fun (_, vs, _) ->
-              List.map (fun (Elo.BVar v) -> v) vs) sbs in
+              List.map (fun (Ast.BVar v) -> v) vs) sbs in
       let sub = List.combine all_vars split_tuples @ subst in
       (* Msg.debug (fun m -> *)
       (*       m "build_Compr: tuple = %a split = %a sub = %a " *)
       (*         Tuple.pp tuple *)
       (*         Fmtc.(brackets *)
       (*               @@ list ~sep:sp *)
-      (*               @@ Elo.pp_prim_exp) split *)
+      (*               @@ Ast.pp_prim_exp) split *)
       (*         Fmtc.(list @@ brackets  *)
       (*               @@ pair ~sep:(const string " <- ") Var.pp *)
-      (*               @@ Elo.pp_prim_exp) sub *)
+      (*               @@ Ast.pp_prim_exp) sub *)
       (*     ); *)
       (* semantics of [b] is [[ b [atoms / variables] ]] *)
       let b' = self#visit_prim_fml sub @@ G.block b
@@ -548,7 +548,7 @@ module Make (Ltl : Solver.LTL) = struct
       let sub_tuples = List.combine all_vars split_tuples in
       let get_tuple vs =
         vs
-        |> List.flat_map (fun (Elo.BVar v) ->
+        |> List.flat_map (fun (Ast.BVar v) ->
               Tuple.to_list @@
               List.Assoc.get_exn ~eq:Var.equal v sub_tuples) 
         |> Tuple.of_list1
@@ -576,13 +576,13 @@ module Make (Ltl : Solver.LTL) = struct
 
     method build_Ident subst _ id = fun tuple ->
       (match id with
-        | Elo.Var v ->
+        | Ast.Var v ->
             if Tuple.equal (CCList.Assoc.get_exn ~eq:Var.equal v subst) tuple
             then
               true_
             else
               false_
-        | Elo.Name r ->
+        | Ast.Name r ->
             let { must; may; _ } =
               env#must_may_sup subst @@
               G.exp (Some (env#relation_arity r)) Location.dummy @@ G.ident id
@@ -602,7 +602,7 @@ module Make (Ltl : Solver.LTL) = struct
     (* |> Fun.tap (fun res -> *)
     (*       Msg.debug (fun m -> *)
     (*             m "build_Ident [[%a]](%a) (with subst %a) --> %a" *)
-    (*               Elo.pp_ident id *)
+    (*               Ast.pp_ident id *)
     (*               Tuple.pp tuple *)
     (*               Fmtc.(List.pp @@ brackets @@ Pair.pp ~sep:":=" Var.pp Tuple.pp) subst *)
     (*               Ltl.pp res *)
@@ -632,8 +632,8 @@ module Make (Ltl : Solver.LTL) = struct
       (* let open List in *)
       (* Msg.debug (fun m -> *)
       (*       m "build_Join <-- [[%a . %a]](%a) " *)
-      (*         Elo.pp_exp r *)
-      (*         Elo.pp_exp s *)
+      (*         Ast.pp_exp r *)
+      (*         Ast.pp_exp s *)
       (*         Tuple.pp tuple); *)
       let sup_r = (env#must_may_sup subst r).sup in
       let sup_s = (env#must_may_sup subst s).sup in
@@ -642,8 +642,8 @@ module Make (Ltl : Solver.LTL) = struct
     (* |> Fun.tap (fun res -> *)
     (*       Msg.debug (fun m -> *)
     (*             m "build_Join [[%a . %a]](%a) --> %a" *)
-    (*               Elo.pp_exp r *)
-    (*               Elo.pp_exp s *)
+    (*               Ast.pp_exp r *)
+    (*               Ast.pp_exp s *)
     (*               Tuple.pp tuple *)
     (*               Ltl.pp res *)
     (*           )) *)
@@ -661,8 +661,8 @@ module Make (Ltl : Solver.LTL) = struct
     method build_Prod __subst r s r' s' = fun tuple ->
       Msg.debug (fun m ->
           m "build_Prod <-- [[%a × %a]](%a)"
-            Elo.pp_exp r
-            Elo.pp_exp s
+            Ast.pp_exp r
+            Ast.pp_exp s
             Tuple.pp tuple
         );
       (* we need to split [tuple] so we need the arity of [r]. If the
@@ -679,13 +679,13 @@ module Make (Ltl : Solver.LTL) = struct
     (* |> Fun.tap (fun res -> *)
     (*       Msg.debug *)
     (*         (fun m -> m "build_Prod [[%a->%a]](%a) (split as %a, %a) = %a (ar(%a) = %d)" *)
-    (*                     Elo.pp_exp r *)
-    (*                     Elo.pp_exp __s *)
+    (*                     Ast.pp_exp r *)
+    (*                     Ast.pp_exp __s *)
     (*                     Tuple.pp tuple *)
     (*                     Tuple.pp t1 *)
     (*                     Tuple.pp t2 *)
     (*                     Ltl.pp res *)
-    (*                     Elo.pp_exp r *)
+    (*                     Ast.pp_exp r *)
     (*                     ar_r *)
     (*         )) *)
 
@@ -703,8 +703,8 @@ module Make (Ltl : Solver.LTL) = struct
     method build_Over subst __r s r' s' = fun tuple ->
       Msg.debug (fun m ->
             m "build_Over <-- [[%a ++ %a]](%a)"
-              Elo.pp_exp __r
-              Elo.pp_exp s
+              Ast.pp_exp __r
+              Ast.pp_exp s
               Tuple.pp tuple
           );
       let { must; may; _ } = env#must_may_sup subst s in
@@ -733,8 +733,8 @@ module Make (Ltl : Solver.LTL) = struct
               Msg.debug
                 (fun m ->
                    m "build_Over [[%a ++ %a]](%a) = %a"
-                     Elo.pp_exp __r
-                     Elo.pp_exp s
+                     Ast.pp_exp __r
+                     Ast.pp_exp s
                      Tuple.pp tuple
                      Ltl.pp res
                 ))
@@ -753,11 +753,11 @@ module Make (Ltl : Solver.LTL) = struct
     method build_TClos subst r __r' =
       Msg.debug
         (fun m -> m "Elo_to_LTL1.build_TClos <-- %a"
-                    Elo.pp_exp r);
+                    Ast.pp_exp r);
       let { sup ; _ } = env#must_may_sup subst r in
       (* Msg.debug *)
       (*   (fun m -> m "Elo_to_LTL1.build_TClos: sup(%a) = %a" *)
-      (*               Elo.pp_exp r *)
+      (*               Ast.pp_exp r *)
       (*               TS.pp sup); *)
       let k = compute_tc_length sup in
       (* let tc_naif = iter_tc r k in *)
@@ -771,14 +771,14 @@ module Make (Ltl : Solver.LTL) = struct
       Msg.debug (fun m ->
             m "TC bound: %d" k);
       (* Msg.debug (fun m -> *)
-      (*     m "terme de TC naif : (%a)" (Elo.pp_exp) (tc_naif)); *)
+      (*     m "terme de TC naif : (%a)" (Ast.pp_exp) (tc_naif)); *)
       Msg.debug (fun m ->
-            m "TC term using iterative squares: %a" (Elo.pp_exp) (tc_square));
+            m "TC term using iterative squares: %a" (Ast.pp_exp) (tc_square));
       (* Msg.debug (fun m -> *)
-      (*     m "sup(%a) = %a" (Elo.pp_prim_exp) (G.runary G.tclos r) *)
+      (*     m "sup(%a) = %a" (Ast.pp_prim_exp) (G.runary G.tclos r) *)
       (*       TS.pp suptc); *)
       (* Msg.debug (fun m -> *)
-      (*     m "sup(%a) = %a" (Elo.pp_exp) (tc_square) *)
+      (*     m "sup(%a) = %a" (Ast.pp_exp) (tc_square) *)
       (*       TS.pp suptc2); *)
 
       self#visit_exp subst tc_square
@@ -811,29 +811,29 @@ module Make (Ltl : Solver.LTL) = struct
   end                           (* end converter *)
 
 
-  class environment (elo : Elo.t) = object (_ : 'self)
+  class environment (elo : Ast.t) = object (_ : 'self)
     method relation_arity name =
-      match Domain.get name elo.Elo.domain with
+      match Domain.get name elo.Ast.domain with
         | None -> assert false
         | Some rel -> Relation.arity rel
 
     method must_may_sup (subst : (Var.t, Tuple.t) CCList.Assoc.t)
-             (exp : (Elo.var, Elo.ident) G.exp) =
-      bounds subst elo.Elo.domain exp
+             (exp : (Ast.var, Ast.ident) G.exp) =
+      bounds subst elo.Ast.domain exp
 
     method make_atom (name : Name.t) (t : Tuple.t) =
-      assert (Domain.mem name elo.Elo.domain);
-      Ltl.atomic @@ Atomic.make elo.Elo.domain name t 
+      assert (Domain.mem name elo.Ast.domain);
+      Ltl.atomic @@ Atomic.make elo.Ast.domain name t 
 
     method is_const (name : Name.t) =
-      assert (Domain.mem name elo.Elo.domain);
-      Domain.get_exn name elo.Elo.domain |> Relation.is_const
+      assert (Domain.mem name elo.Ast.domain);
+      Domain.get_exn name elo.Ast.domain |> Relation.is_const
   end
 
   (* Computes the color (Invar, Static_prop, Init or Temporal) of an
      elo formula *)                                     
   let color elo elo_fml =
-    let open Elo in
+    let open Ast in
     let open Invar_computation in
     let env = new environment elo in
     let color = (new invarComputation)#visit_fml env elo_fml in
@@ -842,13 +842,13 @@ module Make (Ltl : Solver.LTL) = struct
 
 
   let formula_as_comment fml =
-    let str = Fmt.to_to_string Elo.pp_fml fml in
+    let str = Fmt.to_to_string Ast.pp_fml fml in
     "-- " ^ String.replace ~which:`All ~sub:"\n" ~by:"\n-- " str
 
-  (* Converts an Elo formula to an LTL formula, gathering at the same time the
+  (* Converts an Ast formula to an LTL formula, gathering at the same time the
      rigid and flexible variables having appeared during the walk. *)
   let convert elo elo_fml =
-    let open Elo in
+    let open Ast in
     let env = new environment elo in    
     let ltl_fml = (new converter env)#visit_fml [] elo_fml in
     (formula_as_comment elo_fml, ltl_fml)

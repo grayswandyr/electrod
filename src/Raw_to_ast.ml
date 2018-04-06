@@ -72,7 +72,7 @@ let compute_univ infile raw_univ =
 let compute_tuples infile domain = function
   (* a list of  1-tuples (coming from indexed id's) *)
   | EIntvl intvl ->
-      (* Msg.debug (fun m -> m "Raw_to_elo.compute_tuples:EIntvl"); *)
+      (* Msg.debug (fun m -> m "Raw_to_ast.compute_tuples:EIntvl"); *)
       let atoms = interval_to_atoms infile intvl in
       let absent =   (* compute 1-tuples/atoms absent from univ, if there are *)
         List.flat_map
@@ -91,7 +91,7 @@ let compute_tuples infile domain = function
   | ETuple [] -> assert false   (* grammatically impossible *)
   (* a single n-ary tuple *)
   | ETuple ids ->
-      (* Msg.debug (fun m -> m "Raw_to_elo.compute_tuples:ETuple"); *)
+      (* Msg.debug (fun m -> m "Raw_to_ast.compute_tuples:ETuple"); *)
       let atoms = List.map (fun id -> Raw_ident.basename id |> Atom.atom) ids in
       (* to check if all atoms in the tuple are in univ, we do as if every atom
          was a 1-tuple and then check whether this 1-tuple is indeed in univ *)
@@ -132,10 +132,10 @@ let compute_bound infile domain (which : [ `Inf | `Sup | `Exact ]) id raw_bound 
   let open Scope in
   let rec walk = function
     | BUniv ->
-        (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BUniv"); *)
+        (* Msg.debug (fun m -> m "Raw_to_ast.compute_bound:BUniv"); *)
         Domain.univ_atoms domain
     | BRef ref_id ->
-        (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BRef"); *)
+        (* Msg.debug (fun m -> m "Raw_to_ast.compute_bound:BRef"); *)
         begin
           match Domain.get (Name.of_raw_ident ref_id) domain with
             | None -> Msg.Fatal.undeclared_id (fun args -> args infile ref_id)
@@ -162,12 +162,12 @@ let compute_bound infile domain (which : [ `Inf | `Sup | `Exact ]) id raw_bound 
     | BProd (_, Some _, _) ->
         Msg.Fatal.no_multiplicity_allowed_here (fun args -> args infile id)
     | BProd (rb1, None, rb2) ->
-        (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BProd"); *)
+        (* Msg.debug (fun m -> m "Raw_to_ast.compute_bound:BProd"); *)
         let b1 = walk rb1 in
         let b2 = walk rb2 in
         TS.product b1 b2
     | BUnion (rb1, rb2) ->
-        (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BUnion"); *)
+        (* Msg.debug (fun m -> m "Raw_to_ast.compute_bound:BUnion"); *)
         let b1 = walk rb1 in
         let b2 = walk rb2 in 
         if TS.inferred_arity b1 = TS.inferred_arity b2 then
@@ -175,7 +175,7 @@ let compute_bound infile domain (which : [ `Inf | `Sup | `Exact ]) id raw_bound 
         else
           Msg.Fatal.incompatible_arities @@ fun args -> args infile id
     | BElts elts ->
-        (* Msg.debug (fun m -> m "Raw_to_elo.compute_bound:BElts"); *)
+        (* Msg.debug (fun m -> m "Raw_to_ast.compute_bound:BElts"); *)
         let tuples = List.flat_map (compute_tuples infile domain) elts in 
         let bnd = check_tuples_arities_and_duplicates infile id tuples in
         if TS.size bnd <> List.length tuples then
@@ -192,7 +192,7 @@ let compute_scope infile domain id = function
 
 
   | SExact raw_b ->
-      (* Msg.debug (fun m -> m "Raw_to_elo.compute_scope:SExact"); *)
+      (* Msg.debug (fun m -> m "Raw_to_ast.compute_scope:SExact"); *)
       Scope.exact @@ compute_bound infile domain `Exact id raw_b 
 
   (* handle when we have a partial/total "function" 
@@ -232,7 +232,7 @@ let compute_scope infile domain id = function
 
 
   | SInexact (raw_inf, None, raw_sup) ->
-      (* Msg.debug (fun m -> m "Raw_to_elo.compute_scope:SInexact"); *)
+      (* Msg.debug (fun m -> m "Raw_to_ast.compute_scope:SInexact"); *)
       let inf = compute_bound infile domain `Inf id raw_inf in
       let sup = compute_bound infile domain `Sup id raw_sup in
       let ar_inf = TS.inferred_arity inf in
@@ -266,7 +266,7 @@ let decide_arity infile id specified_arity computed_arity =
 
 let compute_decl infile domain = function      
   | DConst (id, specified_arity, raw_scope) ->
-      (* Msg.debug (fun m -> m "Raw_to_elo.compute_decl:DConst"); *)
+      (* Msg.debug (fun m -> m "Raw_to_ast.compute_decl:DConst"); *)
       check_name infile id domain;
       let scope = compute_scope infile domain id raw_scope in
       (* deal with posisble mismatch btw the computed arity and that declared *)
@@ -275,7 +275,7 @@ let compute_decl infile domain = function
       Relation.const (Name.of_raw_ident id) arity scope
 
   | DVar (id, specified_arity, init, fby) ->
-      (* Msg.debug (fun m -> m "Raw_to_elo.compute_decl:DVar"); *)
+      (* Msg.debug (fun m -> m "Raw_to_ast.compute_decl:DVar"); *)
       check_name infile id domain;
       let init_scope = compute_scope infile domain id init in
       let fby_scope = CCOpt.map (compute_scope infile domain id) fby in
@@ -308,7 +308,7 @@ let compute_domain (pb : Raw.raw_problem) =
     let rel = compute_decl pb.file dom decl in
     Domain.add name rel dom 
     (* |> tap Msg.debug *)
-    (*   (fun m -> m "Raw_to_elo.compute_domain:update add %a ⇒ %a" *)
+    (*   (fun m -> m "Raw_to_ast.compute_domain:update add %a ⇒ %a" *)
     (*               Name.pp name (Fmtc.hbox @@ Domain.pp) newdom) *)
   in
   List.fold_left update init pb.raw_decls
@@ -424,7 +424,7 @@ let refine_identifiers raw_pb =
   and walk_binding ctx (v, exp) =
     let exp2 = walk_exp ctx exp in
     let var = (Var.fresh_of_raw_ident v) in
-    ((v, Elo.var_ident var) :: ctx, (Elo.bound_var var, exp2))
+    ((v, Ast.var_ident var) :: ctx, (Ast.bound_var var, exp2))
 
   and walk_sim_bindings ctx = function
     | [] -> (ctx, [])
@@ -446,8 +446,8 @@ let refine_identifiers raw_pb =
     in
     let exp2 = walk_exp ctx exp in
     let bvars =
-      List.map (fun v -> Elo.bound_var (Var.fresh (Raw_ident.basename v))) vs in
-    let vars = List.map Elo.var_ident_of_bound_var bvars in
+      List.map (fun v -> Ast.bound_var (Var.fresh (Raw_ident.basename v))) vs in
+    let vars = List.map Ast.var_ident_of_bound_var bvars in
     (List.(combine vs vars |> rev) @ ctx, (disj2, bvars, exp2))      
 
   and walk_block ctx blk =
@@ -492,11 +492,11 @@ let refine_identifiers raw_pb =
   let init_ctx =
     List.map
       (fun decl ->
-         Pair.dup_map (fun id -> Elo.name_ident (Name.of_raw_ident id))
+         Pair.dup_map (fun id -> Ast.name_ident (Name.of_raw_ident id))
          @@ Raw.decl_id decl)
       raw_pb.raw_decls
     @ [ (Raw_ident.ident "univ" Lexing.dummy_pos Lexing.dummy_pos,
-         Elo.name_ident Name.univ) ]
+         Ast.name_ident Name.univ) ]
   in
   let walk_goal = function
     | Run fml -> run @@ List.map Fun.(snd % walk_fml init_ctx) fml
@@ -522,10 +522,10 @@ let join_arity ar1 ar2 = match ar1, ar2 with
   | None, None -> None
 
 let str_exp =
-  Fmtc.to_to_string (Fmtc.hbox2 Elo.pp_exp)
+  Fmtc.to_to_string (Fmtc.hbox2 Ast.pp_exp)
 
 let compute_arities elo = 
-  let open Elo in 
+  let open Ast in 
   let open GenGoal in
   (* ctx is a map from identifiers to their arity  *)
   let rec walk_fml ctx fml =
@@ -537,7 +537,7 @@ let compute_arities elo =
         let exp' = walk_exp ctx exp in
         if Option.is_none exp'.arity then
           Msg.Fatal.arity_error
-            (fun args -> args elo.Elo.file exp
+            (fun args -> args elo.Ast.file exp
               @@ Fmtc.strf
                    "enclosing formula is false as %s is always empty"
                    (str_exp exp))
@@ -546,7 +546,7 @@ let compute_arities elo =
         let exp' = walk_exp ctx exp in
         if Option.is_none exp'.arity then
           Msg.Fatal.arity_error
-            (fun args -> args elo.Elo.file exp
+            (fun args -> args elo.Ast.file exp
               @@ Fmtc.strf
                    "enclosing formula is false as %s is always empty"
                    (str_exp exp))
@@ -562,7 +562,7 @@ let compute_arities elo =
            Option.is_some ar2 then
           Msg.Fatal.arity_error
             (fun args ->
-               args elo.Elo.file e2
+               args elo.Ast.file e2
                  (Fmtc.strf "arity of %s (%a) incompatible with that of %s (%a)"
                     (str_exp e1)
                     Fmtc.(option ~none:(const string "none") int) ar1
@@ -614,7 +614,7 @@ let compute_arities elo =
   and walk_exp ctx exp =
     match walk_prim_exp ctx exp with
       | Ok exp' -> exp'
-      | Error msg -> Msg.Fatal.arity_error (fun args -> args elo.Elo.file exp msg)
+      | Error msg -> Msg.Fatal.arity_error (fun args -> args elo.Ast.file exp msg)
 
 
   and return_exp exp ar pe =
@@ -630,10 +630,10 @@ let compute_arities elo =
     | None_ ->
         return_exp exp None None_
     | Univ ->
-        let arity = ctx#arity (Elo.Name Name.univ) in
+        let arity = ctx#arity (Ast.Name Name.univ) in
         return_exp exp arity Univ
     | Iden ->
-        let arity = ctx#arity (Elo.Name Name.iden) in
+        let arity = ctx#arity (Ast.Name Name.iden) in
         return_exp exp arity Iden 
     | Ident id ->
         let arity = ctx#arity id in
@@ -781,29 +781,29 @@ let compute_arities elo =
   in
   let init = object
     val arities =
-      Domain.arities elo.Elo.domain
-      |> List.map (fun (n, a) -> (Elo.Name n, Some a))
+      Domain.arities elo.Ast.domain
+      |> List.map (fun (n, a) -> (Ast.Name n, Some a))
     (* |> Fun.tap (fun ars -> *)
     (*       Msg.debug (fun m -> *)
     (*             m "compute_arities.initial arities = %a" *)
     (*               Fmtc.(brackets @@ *)
     (*                     list ~sep:sp *)
     (*                     @@ pair ~sep:(const string "→") *)
-    (*                          Elo.pp_ident (option int)) ars )) *)
+    (*                          Ast.pp_ident (option int)) ars )) *)
 
-    val domain = elo.Elo.domain
+    val domain = elo.Ast.domain
 
     method update pairs =
       (* Msg.debug (fun m -> *)
       (*       m "compute_arities.update %a" *)
       (*         Fmtc.(list ~sep:sp @@ pair Var.pp (option int)) pairs); *)
-      {< arities = (List.map (fun (v, ar) -> (Elo.Var v, ar)) pairs) @ arities >}
+      {< arities = (List.map (fun (v, ar) -> (Ast.Var v, ar)) pairs) @ arities >}
 
     method arity ident =
-      List.Assoc.get_exn ~eq:Elo.equal_ident ident arities
+      List.Assoc.get_exn ~eq:Ast.equal_ident ident arities
       (* |> Fun.tap (fun ar -> *)
       (*       Msg.debug (fun m -> m "compute_arities.arity %a --> %a" *)
-      (*                             Elo.pp_ident ident *)
+      (*                             Ast.pp_ident ident *)
       (*                             Fmtc.(option int) ar *)
       (*                 )) *)
   end
@@ -811,7 +811,7 @@ let compute_arities elo =
   let walk_goal ctx = function
     | Run fmls -> run @@ List.map (walk_fml ctx) fmls
   in
-  Elo.{ elo with
+  Ast.{ elo with
           invariants = List.map (walk_fml init) elo.invariants;
           goal = walk_goal init elo.goal }
 
@@ -827,7 +827,7 @@ let whole raw_pb =
   let syms = compute_symmetries raw_pb in
   let instance = compute_instances domain raw_pb in
   let (invars, goal) = refine_identifiers raw_pb in
-  Elo.make raw_pb.file domain instance syms invars goal
+  Ast.make raw_pb.file domain instance syms invars goal
   |> compute_arities 
 
 let transfo = Transfo.make "raw_to_elo" whole (* temporary *)

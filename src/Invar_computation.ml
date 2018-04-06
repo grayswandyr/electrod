@@ -256,7 +256,7 @@ class ['e] invarComputation = object (_ : 'self)
     in
 
     let max_color_for_simbindings (color_acc : goal_color)
-          ((__disj1, __vars1, e1) : bool * Elo.var list * goal_color)  =
+          ((__disj1, __vars1, e1) : bool * Ast.var list * goal_color)  =
       max_color_wiwt color_acc e1
     in      
     let sim_bindings_color =
@@ -274,7 +274,7 @@ class ['e] invarComputation = object (_ : 'self)
     assert false
 
   method build_Ident (env : 'e) id =
-    let open Elo in
+    let open Ast in
     match id with
       | Var _ ->
           Static_prop

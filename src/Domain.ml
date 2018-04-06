@@ -94,7 +94,7 @@ let update_domain_with_instance domain instance =
         Some (relation_of_instance_item inst_entry dom_entry)
     | `Left dom_entry -> Some dom_entry
     | `Right _ ->
-        (* cannot happen: Raw_to_elo checked that every 
+        (* cannot happen: Raw_to_ast checked that every 
            instance is in the domain *)
         assert false
   in

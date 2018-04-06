@@ -12,7 +12,7 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-(** Computation of bounds for Elo expressions. *)
+(** Computation of bounds for Ast expressions. *)
 
 type bounds = {
   must : TupleSet.t;
@@ -25,4 +25,4 @@ type bounds = {
 val bounds : 
   (Var.t, Tuple.t) CCList.Assoc.t ->
   Domain.t ->
-  (Elo.var, Elo.ident) GenGoal.exp -> bounds
+  (Ast.var, Ast.ident) GenGoal.exp -> bounds

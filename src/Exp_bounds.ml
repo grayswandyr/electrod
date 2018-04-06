@@ -30,12 +30,12 @@ let rec bounds subst domain exp =
          m
            "Exp_bounds.bounds@ %a@ with@\nsubst= %a@\n%a@\nmust(%a)=@ \
             %a@\nsup(%a)=@ %a@."
-           Elo.pp_exp exp
+           Ast.pp_exp exp
            Fmtc.(brackets @@ list @@ parens @@ pair Var.pp Tuple.pp) subst
            Domain.pp domain
-           Elo.pp_exp exp
+           Ast.pp_exp exp
            TS.pp must
-           Elo.pp_exp exp
+           Ast.pp_exp exp
            TS.pp sup)
   );
   { must; sup; may = TS.diff sup must }  
@@ -62,7 +62,7 @@ and bounds_prim_exp subst domain pe =
   let open G in 
   match pe with         
   | BoxJoin (_,_) -> assert false (* SIMPLIFIED *)
-  | Ident (Elo.Var v) -> 
+  | Ident (Ast.Var v) -> 
      let singleton =
        TS.singleton @@ CCList.Assoc.get_exn ~eq:Var.equal v subst
      in
@@ -73,7 +73,7 @@ and bounds_prim_exp subst domain pe =
                 m "bounds_prim_exp(%a) =[exact] %a"
                   Var.pp v
                   TS.pp singleton))
-  | Ident (Elo.Name n) -> 
+  | Ident (Ast.Name n) -> 
      let rel = Domain.get_exn n domain in
      make_bounds (Relation.must rel) (Relation.sup rel)
   | None_ ->
@@ -96,9 +96,9 @@ and bounds_prim_exp subst domain pe =
                 m
                   "bounds_prim_exp(TClos):@\n\
                    must(%a) = %a@\nmay(%a) = %a"
-                  Elo.pp_prim_exp pe
+                  Ast.pp_prim_exp pe
                   TS.pp res.must
-                  Elo.pp_prim_exp pe
+                  Ast.pp_prim_exp pe
                   TS.pp res.may))
   | RUn (RTClos, e) -> 
      let iden = Domain.get_exn Name.iden domain in
@@ -111,9 +111,9 @@ and bounds_prim_exp subst domain pe =
                 m
                   "bounds_prim_exp(TClos):@\n\
                    must(%a) = %a@\nmay(%a) = %a"
-                  Elo.pp_prim_exp pe
+                  Ast.pp_prim_exp pe
                   TS.pp res.must
-                  Elo.pp_prim_exp pe
+                  Ast.pp_prim_exp pe
                   TS.pp res.may))
 
   | RBin (e1, Union ,e2) -> 
@@ -173,11 +173,11 @@ and bounds_prim_exp subst domain pe =
             @\nmust(%a) = @[<hov>%a@]\
             @\nsup(%a) = @[<hov>%a@]"
            (Fmtc.(list ~sep:(const string ": "))
-            @@ Elo.pp_sim_binding)
+            @@ Ast.pp_sim_binding)
            sim_bindings
            TS.pp pmust
            (Fmtc.(list ~sep:(const string ": "))
-            @@ Elo.pp_sim_binding)
+            @@ Ast.pp_sim_binding)
            sim_bindings
            TS.pp psup);
      make_bounds pmust psup
@@ -216,7 +216,7 @@ and bounds_sim_bindings
       fbound
       domain
       (subst : (Var.t, Tuple.t) CCList.Assoc.t)
-      (sbs : (Elo.var, Elo.ident) G.sim_binding list)
+      (sbs : (Ast.var, Ast.ident) G.sim_binding list)
     : Tuple.t list =  
   let open! List in
   match sbs with
@@ -234,7 +234,7 @@ and bounds_sim_bindings
        bounds_sim_binding fbound domain subst disj vs r
      in
      (* cast to create a substitution below *)
-     let vars = map (fun (Elo.BVar v) -> v) vs in
+     let vars = map (fun (Ast.BVar v) -> v) vs in
      (* as explained above in the example: for every possible combination
            of tuples in [hd_bnd], we have to substitute *this* combination in
            the tail, then compute the resulting product and add it to the
@@ -255,7 +255,7 @@ and bounds_sim_bindings
    by substituting in the tail according to the substitutions induced by the
    said head tuples *)
 and product_for_one_hd_combination fbound domain subst vars
-                                   (tail : (Elo.var, Elo.ident) G.sim_binding list)
+                                   (tail : (Ast.var, Ast.ident) G.sim_binding list)
                                    (hd_combination : Tuple.t list)
     : Tuple.t list =
   let open! List in
@@ -276,7 +276,7 @@ and bounds_sim_binding
       (subst : (Var.t, Tuple.t) CCList.Assoc.t) 
       disj
       vars
-      (dom : (Elo.var, Elo.ident) G.exp)
+      (dom : (Ast.var, Ast.ident) G.exp)
     : Tuple.t list list
   =
   let open List in
@@ -319,7 +319,7 @@ and bounds_sim_binding
 (*   (fun m -> *)
 (*      m "bounds_sim_binding %B %a %a --> @[<hov>%a@]" *)
 (*        disj *)
-(*        Fmtc.(list ~sep:(const string ", ")@@ Elo.pp_var) vars *)
+(*        Fmtc.(list ~sep:(const string ", ")@@ Ast.pp_var) vars *)
 (*        Fmtc.(list ~sep:sp @@ Tuple.pp) range_bnd *)
 (*        Fmtc.(brackets @@ list ~sep:sp @@ brackets @@ list ~sep:sp @@ Tuple.pp) res) *)
 

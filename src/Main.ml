@@ -98,7 +98,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
 
   (* begin work *)
   try
-    let raw_to_elo_t = Transfo.tlist [ Raw_to_elo.transfo ] in
+    let raw_to_elo_t = Transfo.tlist [ Raw_to_ast.transfo ] in
     let elo_to_elo_t = Transfo.tlist [ Simplify1.transfo; Simplify2.transfo ] in
     let elo_to_smv_t = Transfo.tlist [ Elo_to_SMV1.transfo ] in
 
@@ -108,11 +108,11 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
       |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Static analysis done"))
       |> Fun.tap (fun elo ->
-            Msg.debug (fun m -> m "After raw_to_elo =@\n%a@." (Elo.pp) elo))
+            Msg.debug (fun m -> m "After raw_to_elo =@\n%a@." (Ast.pp) elo))
       |> Shortnames.rename_elo long_names 
       |> Transfo.(get_exn elo_to_elo_t "simplify1" |> run)
       |> Fun.tap (fun elo ->
-            Msg.debug (fun m -> m "After simplify1 =@\n%a@." (Elo.pp) elo))
+            Msg.debug (fun m -> m "After simplify1 =@\n%a@." (Ast.pp) elo))
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Simplification done"))
     in
 

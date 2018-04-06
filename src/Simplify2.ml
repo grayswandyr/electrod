@@ -25,14 +25,14 @@ module TS = TupleSet
 let fresh_var base exp =
   Var.fresh ~loc:exp.exp_loc base 
 
-(* simplify Elo goals *)
+(* simplify Ast goals *)
 class simplify = object (self : 'self)
   inherit Simplify1.simplify 
 
   (* change relation qualifiers into formulas *)
   method! visit_Qual env qual exp =
     Msg.debug (fun m -> m "Simplify2.visit_Qual <-- %a"
-                          Elo.pp_prim_fml
+                          Ast.pp_prim_fml
                 @@ GenGoal.qual qual exp);
     let prim_fml = match qual with
       | ROne ->
@@ -48,13 +48,13 @@ class simplify = object (self : 'self)
     |> Fun.tap
     @@ fun res ->
     Msg.debug (fun m -> m "Simplify2.visit_Qual --> %a"
-                          Elo.pp_prim_fml res)
+                          Ast.pp_prim_fml res)
 
 end
 
 
 let run elo =
-  let open Elo in
+  let open Ast in
   Msg.debug (fun m -> m "Entering Simplify2.simplify_fml");
   { elo with goal = (new simplify)#visit_t () elo.goal }
   

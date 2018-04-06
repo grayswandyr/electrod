@@ -175,15 +175,15 @@ module type MODEL = sig
   type atomic
 
   type t = private {
-    elo : Elo.t;   
-    init : (string * ltl) Sequence.t; (* fst: string repr of Elo formula *)
-    invariant : (string * ltl) Sequence.t; (* fst: string repr of Elo formula *)
-    trans : (string * ltl) Sequence.t; (* fst: string repr of Elo formula *)
-    property : string * ltl                (* fst: string repr of Elo formula *)
+    elo : Ast.t;   
+    init : (string * ltl) Sequence.t; (* fst: string repr of Ast formula *)
+    invariant : (string * ltl) Sequence.t; (* fst: string repr of Ast formula *)
+    trans : (string * ltl) Sequence.t; (* fst: string repr of Ast formula *)
+    property : string * ltl                (* fst: string repr of Ast formula *)
   }
 
   val make :
-    elo:Elo.t
+    elo:Ast.t
     -> init:(string * ltl) Sequence.t
     -> invariant:(string * ltl) Sequence.t
     -> trans:(string * ltl) Sequence.t 
@@ -204,7 +204,7 @@ module type MODEL = sig
     -> script:script_type
     -> keep_files:bool
     -> no_analysis:bool
-    -> elo:Elo.t
+    -> elo:Ast.t
     -> file:string -> t -> Outcome.t
 
   val pp : ?margin:int -> Format.formatter -> t -> unit

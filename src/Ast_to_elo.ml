@@ -22,9 +22,9 @@ let get_var x stack = match List.find_idx (fun v -> Var.equal x v) stack with
   | Some (i, _) -> i
 
 let new_env vars stack = 
-  List.rev_map (function Elo.BVar v -> v) vars @ stack
+  List.rev_map (function Ast.BVar v -> v) vars @ stack
 
-let rec convert_fml stack ({ prim_fml; _ }: (Elo.var, Elo.ident) GenGoal.fml) =
+let rec convert_fml stack ({ prim_fml; _ }: (Ast.var, Ast.ident) GenGoal.fml) =
   match prim_fml with
     | Qual (_, _) -> assert false (* simplified *)
     | Let (_, _) -> assert false (* simplified *)
@@ -94,7 +94,7 @@ and convert_lbinop (op : GenGoal.lbinop) = match op with
   | S -> E.since
 
 and convert_exp stack 
-      ({ prim_exp; arity; _ } : (Elo.var, Elo.ident) GenGoal.exp) =
+      ({ prim_exp; arity; _ } : (Ast.var, Ast.ident) GenGoal.exp) =
   let ar = convert_arity arity in
   match prim_exp with
     | BoxJoin (_, _) -> assert false (* simplified *)
@@ -135,7 +135,7 @@ and convert_rbinop (op : GenGoal.rbinop) = match op with
   | Join -> E.join
 
 and convert_iexp stack 
-      ({ prim_iexp; _ } : (Elo.var, Elo.ident) GenGoal.iexp) = 
+      ({ prim_iexp; _ } : (Ast.var, Ast.ident) GenGoal.iexp) = 
   match prim_iexp with
     | Num n -> E.num n
     | Card e -> E.card @@ convert_exp stack e
@@ -170,16 +170,16 @@ module Test = struct
     [%expect{| (some v/1 : univ {(all disj v/2, v/3 : univ {(v/2 in univ)})}) |}]
 
   open GenGoal
-  open Elo
+  open Ast
   let x = Var.fresh "x"
   let y = Var.fresh "y"
-  let f : (Elo.var, Elo.ident) fml =
+  let f : (Ast.var, Ast.ident) fml =
     fml Location.dummy @@ quant all [ (true, [bound_var x; bound_var y], exp (Some 1) Location.dummy univ)] [ fml Location.dummy @@ rcomp (exp (Some 1) Location.dummy @@ ident @@ var_ident x) in_ (exp (Some 1) Location.dummy univ)]
-  let g : (Elo.var, Elo.ident) fml =
+  let g : (Ast.var, Ast.ident) fml =
     fml Location.dummy @@ quant all [ (true, [bound_var x; bound_var y], exp (Some 1) Location.dummy univ)] [ fml Location.dummy @@ rcomp (exp (Some 1) Location.dummy @@ ident @@ var_ident x) in_ (exp (Some 1) Location.dummy univ)]
 
-  let f' = Cooked_to_elo.(convert_fml []) f
-  let g' = Cooked_to_elo.(convert_fml []) g
+  let f' = Ast_to_elo.(convert_fml []) f
+  let g' = Ast_to_elo.(convert_fml []) g
 
   let%test _ =
     Pervasives.(f' == g')
@@ -204,14 +204,14 @@ module Test = struct
       |}
   let ast  = 
     cst 
-    |> Transfo.run Raw_to_elo.transfo
+    |> Transfo.run Raw_to_ast.transfo
     |> Shortnames.rename_elo true
     |> Transfo.run Simplify2.transfo
   let elo_goal = convert_goal ast.goal 
 
   let%expect_test _ =
     Fmt.pr "AST:@\n%a@\nELO:@\n%a"
-      Elo.pp_goal ast.goal
+      Ast.pp_goal ast.goal
       Elo_goal.pp elo_goal;
     [%expect {|
       AST:
@@ -241,7 +241,7 @@ module Test = struct
       |}
   let ast  = 
     cst 
-    |> Transfo.run Raw_to_elo.transfo
+    |> Transfo.run Raw_to_ast.transfo
     |> Shortnames.rename_elo true
     |> Transfo.run Simplify2.transfo
   let elo_goal = convert_goal ast.goal 
@@ -252,7 +252,7 @@ module Test = struct
 
   let%expect_test _ =
     Fmt.pr "AST:@\n%a@\nELO:@\n%a"
-      Elo.pp_goal ast.goal
+      Ast.pp_goal ast.goal
       Elo_goal.pp elo_goal;
     [%expect {|
       AST:
