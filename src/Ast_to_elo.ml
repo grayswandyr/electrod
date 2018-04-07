@@ -4,7 +4,7 @@ open Containers
 (* This module is supposed to happen after a simplification that addresses: 
    let bindings, *multiple* sim_bindings, quantified expressions, no lone/one quantifier; the input is also supposed to be arity-correct *)
 
-module E = Elo_goal
+module E = Elo2
 
 let convert_arity = function
   | None -> 0
@@ -99,7 +99,6 @@ and convert_exp stack
   match prim_exp with
     | BoxJoin (_, _) -> assert false (* simplified *)
     | Compr ([], _) -> assert false (* impossible *)
-    | Compr (_::_::_, _) -> assert false (* simplified *)
     | None_ -> E.none
     | Univ -> E.univ
     | Iden -> E.iden
@@ -114,10 +113,13 @@ and convert_exp stack
         E.rite ~ar (convert_fml stack c) 
           (convert_exp stack t) (convert_exp stack e)
     | Prime e -> E.prime ~ar @@ convert_exp stack e
-    | Compr ([(disj, vars, range)], block) -> 
-        let range' = convert_exp stack range in
+    | Compr (decls, block) -> 
+        let decls' = 
+          List.map (fun (disj, vars, range) -> 
+                (disj, List.length vars, convert_exp stack range)) decls in
+        let vars = List.flat_map (fun (_, vars, _) -> vars) decls in
         let block' = convert_block (new_env vars stack) block in
-        E.compr ~ar (disj, List.length vars, range') block'
+        E.compr ~ar decls' block'
 
 and convert_runop (op : GenGoal.runop) = match op with
   | Transpose -> E.transpose
@@ -212,7 +214,7 @@ module Test = struct
   let%expect_test _ =
     Fmt.pr "AST:@\n%a@\nELO:@\n%a"
       Ast.pp_goal ast.goal
-      Elo_goal.pp elo_goal;
+      Elo2.pp_goal elo_goal;
     [%expect {|
       AST:
       run
@@ -253,7 +255,7 @@ module Test = struct
   let%expect_test _ =
     Fmt.pr "AST:@\n%a@\nELO:@\n%a"
       Ast.pp_goal ast.goal
-      Elo_goal.pp elo_goal;
+      Elo2.pp_goal elo_goal;
     [%expect {|
       AST:
       run

@@ -1,18 +1,15 @@
 [@@@warning "-27"]
 
+open Elo2
 
-open Elo_goal
 
-let toto = ""
-
-class virtual ['self] orecursor = object (self : 'self)
+class virtual ['self] recursor = object (self : 'self)
   inherit [_] VisitorsRuntime.fold
   inherit [_] VisitorsRuntime.map
   method virtual build_Add : _
   method virtual build_All : _
   method virtual build_And : _
   method virtual build_Block : _
-  method virtual build_BoxJoin : _
   method virtual build_Card : _
   method virtual build_Compr : _
   method virtual build_Diff : _
@@ -37,7 +34,6 @@ class virtual ['self] orecursor = object (self : 'self)
   method virtual build_LBin : _
   method virtual build_LProj : _
   method virtual build_LUn : _
-  method virtual build_Lone : _
   method virtual build_Lt : _
   method virtual build_Lte : _
   method virtual build_Name : _
@@ -48,25 +44,19 @@ class virtual ['self] orecursor = object (self : 'self)
   method virtual build_NotIn : _
   method virtual build_Num : _
   method virtual build_O : _
-  method virtual build_One : _
   method virtual build_Or : _
   method virtual build_Over : _
   method virtual build_P : _
   method virtual build_Prime : _
   method virtual build_Prod : _
-  method virtual build_Qual : _
   method virtual build_Quant : _
   method virtual build_R : _
   method virtual build_RBin : _
   method virtual build_RComp : _
   method virtual build_REq : _
   method virtual build_RIte : _
-  method virtual build_RLone : _
   method virtual build_RNEq : _
-  method virtual build_RNo : _
-  method virtual build_ROne : _
   method virtual build_RProj : _
-  method virtual build_RSome : _
   method virtual build_RTClos : _
   method virtual build_RUn : _
   method virtual build_S : _
@@ -81,6 +71,12 @@ class virtual ['self] orecursor = object (self : 'self)
   method virtual build_Var : _
   method virtual build_X : _
   method virtual build_oexp : _
+  method visit_exp env exp =
+    self#visit_'exp env exp
+  method visit_iexp env iexp =
+    self#visit_'iexp env iexp
+  method visit_fml env fml =
+    self#visit_'fml env fml
   method visit_'exp env (Exp { node; _}) =
     (self # visit_oexp env node)
   method visit_'fml env (Fml { node; _}) =
@@ -112,16 +108,23 @@ class virtual ['self] orecursor = object (self : 'self)
     self#build_LBin env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2
   method visit_Quant env _visitors_c0 _visitors_c1 _visitors_c2 =
     let _visitors_r0 = self#visit_quant env _visitors_c0 in
-    let _visitors_r1 = self#visit_osim_binding env _visitors_c1 in
-    let _visitors_r2 = self#visit_oblock env _visitors_c2 in
+    let _visitors_r1 =
+      (fun (_visitors_c0, _visitors_c1, _visitors_c2) ->
+         let _visitors_r0 =
+           (fun _visitors_this -> _visitors_this) _visitors_c0 in
+         let _visitors_r1 =
+           (fun _visitors_this -> _visitors_this) _visitors_c1 in
+         let _visitors_r2 = self#visit_'exp env _visitors_c2 in
+         (_visitors_r0, _visitors_r1, _visitors_r2)) _visitors_c1 in
+    let _visitors_r2 = self#visit_list self#visit_'fml env _visitors_c2 in
     self#build_Quant env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2
   method visit_FIte env _visitors_c0 _visitors_c1 _visitors_c2 =
     let _visitors_r0 = self#visit_'fml env _visitors_c0 in
     let _visitors_r1 = self#visit_'fml env _visitors_c1 in
     let _visitors_r2 = self#visit_'fml env _visitors_c2 in
     self#build_FIte env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2
-  method visit_Block env _visitors_c0 _visitors_c0 =
-    let _visitors_r0 = self#visit_oblock env _visitors_c0 in
+  method visit_Block env _visitors_c0 =
+    let _visitors_r0 = self#visit_list self#visit_'fml env _visitors_c0 in
     self#build_Block env _visitors_r0
   method visit_ofml env _visitors_this =
     match _visitors_this with
@@ -143,26 +146,12 @@ class virtual ['self] orecursor = object (self : 'self)
         self#visit_FIte env _visitors_c0 _visitors_c1 _visitors_c2
     | Block _visitors_c0 ->
         self#visit_Block env _visitors_c0
-  method visit_oblock env =
-    self#visit_list self#visit_'fml env
-  method visit_osim_binding env
-           (_visitors_c0, _visitors_c1, _visitors_c2) =
-    let _visitors_r0 = self#visit_disj env _visitors_c0 in
-    let _visitors_r1 = self#visit_int env _visitors_c1 in
-    let _visitors_r2 = self#visit_'exp env _visitors_c2 in
-    (_visitors_r0, _visitors_r1, _visitors_r2)
-  method visit_disj env _visitors_this =
-    _visitors_this
   method visit_All env =
     self#build_All env
   method visit_Some_ env =
     self#build_Some_ env
   method visit_No env =
     self#build_No env
-  method visit_One env =
-    self#build_One env
-  method visit_Lone env =
-    self#build_Lone env
   method visit_quant env _visitors_this =
     match _visitors_this with
     | All ->
@@ -279,7 +268,7 @@ class virtual ['self] orecursor = object (self : 'self)
     let _visitors_r0 = self#visit_prim_oexp env _visitors_this.prim_exp in
     let _visitors_r1 =
       (fun _visitors_this -> _visitors_this) _visitors_this.arity in
-    self#build_oexp env _visitors_r0 _visitors_r1
+    self#build_oexp env _visitors_this _visitors_r0 _visitors_r1
   method visit_None_ env =
     self#build_None_ env
   method visit_Univ env =
@@ -287,7 +276,8 @@ class virtual ['self] orecursor = object (self : 'self)
   method visit_Iden env =
     self#build_Iden env
   method visit_Var env _visitors_c0 =
-    let _visitors_r0 = self#visit_int env _visitors_c0 in
+    let _visitors_r0 =
+      (fun _visitors_this -> _visitors_this) _visitors_c0 in
     self#build_Var env _visitors_c0 _visitors_r0
   method visit_Name env _visitors_c0 =
     let _visitors_r0 =
@@ -307,13 +297,18 @@ class virtual ['self] orecursor = object (self : 'self)
     let _visitors_r1 = self#visit_'exp env _visitors_c1 in
     let _visitors_r2 = self#visit_'exp env _visitors_c2 in
     self#build_RIte env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0 _visitors_r1 _visitors_r2
-  method visit_BoxJoin env _visitors_c0 _visitors_c1 =
-    let _visitors_r0 = self#visit_'exp env _visitors_c0 in
-    let _visitors_r1 = self#visit_list self#visit_'exp env _visitors_c1 in
-    self#build_BoxJoin env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
   method visit_Compr env _visitors_c0 _visitors_c1 =
-    let _visitors_r0 = self#visit_osim_binding env _visitors_c0 in
-    let _visitors_r1 = self#visit_oblock env _visitors_c1 in
+    let _visitors_r0 =
+      self#visit_list
+        (fun env (_visitors_c0, _visitors_c1, _visitors_c2) ->
+           let _visitors_r0 =
+             (fun _visitors_this -> _visitors_this) _visitors_c0 in
+           let _visitors_r1 =
+             (fun _visitors_this -> _visitors_this) _visitors_c1 in
+           let _visitors_r2 = self#visit_'exp env _visitors_c2 in
+           (_visitors_r0, _visitors_r1, _visitors_r2)) env
+        _visitors_c0 in
+    let _visitors_r1 = self#visit_list self#visit_'fml env _visitors_c1 in
     self#build_Compr env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
   method visit_Prime env _visitors_c0 =
     let _visitors_r0 = self#visit_'exp env _visitors_c0 in
@@ -340,14 +335,6 @@ class virtual ['self] orecursor = object (self : 'self)
         self#visit_Compr env _visitors_c0 _visitors_c1
     | Prime _visitors_c0 ->
         self#visit_Prime env _visitors_c0
-  method visit_ROne env =
-    self#build_ROne env
-  method visit_RLone env =
-    self#build_RLone env
-  method visit_RSome env =
-    self#build_RSome env
-  method visit_RNo env =
-    self#build_RNo env
   method visit_Transpose env =
     self#build_Transpose env
   method visit_TClos env =

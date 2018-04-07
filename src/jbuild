@@ -26,7 +26,7 @@
 		(per_module
       ((action 
 				(run ppxfind -legacy visitors.ppx,ppx_deriving.std --as-pp ${<})) 
-		 		(GenGoal Elo_goal))
+		 		(GenGoal Elo2))
       ((pps (ppx_inline_test ppx_expect)) 
 		 		(Ast_to_elo))
 		))

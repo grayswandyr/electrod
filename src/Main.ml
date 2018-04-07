@@ -17,11 +17,6 @@
 open Containers
 open Libelectrod
 
-module M = struct
-  let __x = Elo_goal.var 0
-  let __s = Elo_goal_recursor.toto
-end
-
 (* inspired by Logs_fmt code *)     
 let keyword =
   let open! Logs in
