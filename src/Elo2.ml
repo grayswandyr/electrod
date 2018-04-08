@@ -207,10 +207,10 @@ type t = {
   name_renaming : (Name.t, Name.t) List.Assoc.t;
 }
 
-let make file domain instance sym invariants goal =
+let make file domain instance sym invariants goal atom_renaming name_renaming =
   { file; domain; instance; sym;
-    invariants; goal; atom_renaming = [];
-    name_renaming = [] }
+    invariants; goal; atom_renaming;
+    name_renaming }
 
 
 let arity (Exp { node = { arity; _ }; _ }) = arity
@@ -286,7 +286,7 @@ let univ = hexp @@ exp ~ar:1 @@ Univ
 let iden = hexp @@ exp ~ar:2 @@ Iden
 
 let var ~ar n = 
-  assert (n > 0);
+  assert (n >= 0);
   hexp @@ exp ~ar @@ Var n
 
 let name ~ar x = hexp @@ exp ~ar @@ Name x

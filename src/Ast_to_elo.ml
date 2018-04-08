@@ -153,6 +153,12 @@ and convert_ibinop (op : GenGoal.ibinop) = match op with
 let convert_goal (GenGoal.Run fmls) = 
   E.run @@ convert_block [] fmls
 
+let convert (ast : Ast.t) =
+  let invariants = convert_block [] ast.invariants in
+  let goal = convert_goal ast.goal in 
+  E.make 
+    ast.file ast.domain ast.instance ast.sym invariants goal 
+    ast.atom_renaming ast.name_renaming
 
 module Test = struct
   let%test _ =

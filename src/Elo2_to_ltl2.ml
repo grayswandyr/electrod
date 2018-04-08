@@ -472,6 +472,26 @@ module Make (Ltl : Solver.LTL) = struct
     method build_X (_ : stack) (a : ltl) : ltl = next a
     method build_oexp (_ : stack) __e e' __ar tuple = e' tuple
 
-  end
+  end (* class *)
+
+
+  (* Computes the color (Invar, Static_prop, Init or Temporal) of an
+     elo formula *)                                     
+  let color elo elo_fml =
+    (new Invar_computation2.computer elo)#visit_fml () elo_fml 
+
+
+
+  let formula_as_comment fml =
+    let str = Fmt.to_to_string (Elo2.pp_fml 0) fml in
+    "-- " ^ String.replace ~which:`All ~sub:"\n" ~by:"\n-- " str
+
+  (* Converts an Ast formula to an LTL formula, gathering at the same time the
+     rigid and flexible variables having appeared during the walk. *)
+  let convert elo elo_fml =
+    let env = new environment elo in    
+    let ltl_fml = (new converter env)#visit_fml [] elo_fml in
+    (formula_as_comment elo_fml, ltl_fml)
+
 
 end

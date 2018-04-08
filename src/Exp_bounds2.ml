@@ -79,12 +79,6 @@ and bounds_prim_exp subst domain pe =
                 TS.singleton tuple
               in
               make_bounds singleton singleton
-              |> Fun.tap
-                   (fun _ ->
-                      Msg.debug (fun m ->
-                            m "bounds_prim_exp(%a) =[exact] %a"
-                              Fmtc.int v
-                              TS.pp singleton))
         end
     | Name n -> 
         let rel = Domain.get_exn n domain in

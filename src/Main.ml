@@ -93,23 +93,27 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
 
   (* begin work *)
   try
-    let raw_to_elo_t = Transfo.tlist [ Raw_to_ast.transfo ] in
-    let elo_to_elo_t = Transfo.tlist [ Simplify1.transfo; Simplify2.transfo ] in
-    let elo_to_smv_t = Transfo.tlist [ Elo_to_SMV1.transfo ] in
+    let raw_to_ast_t = Transfo.tlist [ Raw_to_ast.transfo ] in
+    let ast_to_ast_t = Transfo.tlist [ Simplify1.transfo; Simplify2.transfo ] in
 
-    let elo =
+    let elo_to_smv_t = Transfo.tlist [ Elo2_to_SMV1.transfo ] in
+
+    let ast =
       Parser_main.parse_file file
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Parse done"))
-      |> Transfo.(get_exn raw_to_elo_t "raw_to_elo" |> run)
+      |> Transfo.(get_exn raw_to_ast_t "raw_to_elo" |> run)
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Static analysis done"))
       |> Fun.tap (fun elo ->
             Msg.debug (fun m -> m "After raw_to_elo =@\n%a@." (Ast.pp) elo))
       |> Shortnames.rename_elo long_names 
-      |> Transfo.(get_exn elo_to_elo_t "simplify1" |> run)
+      |> Transfo.(get_exn ast_to_ast_t "simplify1" |> run)
       |> Fun.tap (fun elo ->
             Msg.debug (fun m -> m "After simplify1 =@\n%a@." (Ast.pp) elo))
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Simplification done"))
+
     in
+
+    let elo = Ast_to_elo.convert ast in
 
     let before_conversion = Mtime_clock.now () in
     let model =
@@ -122,15 +126,16 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
             Mtime.Span.pp conversion_time
         );
 
+
     (* let sup_r = Domain.sup (Name.name "r") elo.domain in *)
     (* let tc_r = TupleSet.transitive_closure sup_r in *)
     (* Msg.debug (fun m -> *)
     (* m "Borne sup de la tc de r : %a " TupleSet.pp tc_r); *)
     let cmd, script = match tool, scriptfile with
-      | NuXmv, None -> ("nuXmv", Solver.Default SMV.nuXmv_default_script)
-      | NuXmv, Some s -> ("nuXmv", Solver.File s)
-      | NuSMV, None -> ("NuSMV", Solver.Default SMV.nuSMV_default_script)
-      | NuSMV, Some s -> ("NuSMV", Solver.File s)
+      | NuXmv, None -> ("nuXmv", Solver2.Default SMV.nuXmv_default_script)
+      | NuXmv, Some s -> ("nuXmv", Solver2.File s)
+      | NuSMV, None -> ("NuSMV", Solver2.Default SMV.nuSMV_default_script)
+      | NuSMV, Some s -> ("NuSMV", Solver2.File s)
     in
 
     if print_generated then
@@ -139,10 +144,12 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
                --------------------------------------------------------------------------------@\n\
                %a\
                --------------------------------------------------------------------------------"
-              (Elo_to_SMV1.pp ~margin:80) model);
+              (Elo2_to_SMV1.pp ~margin:80) model);
 
-    let res = Elo_to_SMV1.analyze ~conversion_time ~cmd ~keep_files ~no_analysis
-                ~elo:elo ~script ~file model in
+    let res = 
+      Elo2_to_SMV1.analyze ~conversion_time ~cmd ~keep_files ~no_analysis
+        ~elo:elo ~script ~file model 
+    in
     (if not no_analysis then begin
         (* store the trace *)
         IO.with_out (Filename.chop_extension file ^ ".xml")
