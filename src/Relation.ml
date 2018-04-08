@@ -24,6 +24,19 @@ let const name arity scope = Const { name; arity; scope }
 
 let var name arity scope fby =  Var { name; arity; scope; fby }
 
+let equal rel1 rel2 = match rel1, rel2 with
+  | Const c1, Const c2 -> 
+      Name.equal c1.name c2.name
+      && c1.arity = c2.arity 
+      && Scope.equal c1.scope c2.scope 
+  | Var c1, Var c2 ->
+      Name.equal c1.name c2.name
+      && c1.arity = c2.arity 
+      && Scope.equal c1.scope c2.scope 
+      && Option.equal Scope.equal c1.fby c2.fby
+  | Const _, Var _
+  | Var _, Const _ -> false
+
 
 let arity = function
   | Const { arity; _ }
@@ -35,7 +48,7 @@ let name = function
 
 let is_set rel =
   arity rel = 1
-  
+
 let is_nary rel =
   arity rel > 1
 

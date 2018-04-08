@@ -34,6 +34,8 @@ val partial_function : int -> TupleSet.t -> relation
 val total_function : int -> TupleSet.t -> relation
 val inexact : relation -> t
 
+val equal : t -> t -> bool
+
 (** [included_in ts scope] tells whether [ts] is in the scope (meaning
     it also contains the lower bound of the scope if the latter is
     inexact.) *)

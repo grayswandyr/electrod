@@ -22,7 +22,4 @@ type bounds = {
 
 (** Computes the must/may/sup bounds of an expression [exp], given the [domain]
     and a substitution [subst] (substituting a tuple for a DB index) *)
-val bounds : 
-  Tuple.t list ->
-  Domain.t ->
-  Elo2.exp -> bounds
+val bounds_exp : (Tuple.t list * Domain.t * Elo2.exp) -> bounds

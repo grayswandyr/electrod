@@ -35,6 +35,8 @@ val arity : t -> int
 
 val name : t -> Name.t
 
+val equal : t -> t -> bool
+
 (** Tells whether the relation is a set or a relation of arity > 1. *)
 val is_set : t -> bool
   

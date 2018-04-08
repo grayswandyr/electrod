@@ -46,6 +46,8 @@ val to_list : t -> (Name.t * Relation.t) list
 
 val of_list : (Name.t * Relation.t) list -> t
 
+val equal : t -> t -> bool
+
 (** Returns the "may" and "must" tuple sets associated to a relation name.  *)
 val must : Name.t -> t -> TupleSet.t
 val may : Name.t -> t -> TupleSet.t

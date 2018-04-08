@@ -19,6 +19,8 @@ module Map = Name.Map
 
 type t = Relation.t Map.t
 
+let equal dom1 dom2 = Map.equal Relation.equal dom1 dom2
+
 let empty =
   Map.empty
 

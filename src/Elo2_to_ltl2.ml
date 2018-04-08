@@ -178,7 +178,7 @@ module Make (Ltl : Solver.LTL) = struct
 
     method must_may_sup (subst : stack)
              (exp : G.exp) =
-      Exp_bounds2.bounds subst elo.Elo2.domain exp
+      Exp_bounds2.bounds_exp (subst, elo.Elo2.domain, exp)
 
     method make_atom (name : Name.t) (t : Tuple.t) =
       assert (Domain.mem name elo.Elo2.domain);
