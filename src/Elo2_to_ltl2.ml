@@ -171,14 +171,15 @@ module Make (Ltl : Solver.LTL) = struct
 
 
   class environment (elo : Elo2.t) = object (_ : 'self)
+    val bounds_exp_aux = Exp_bounds2.make_bounds_exp elo.Elo2.domain
+
+    method must_may_sup (subst : stack) (exp : G.exp) =
+      bounds_exp_aux (exp, subst)
+
     method relation_arity name =
       match Domain.get name elo.Elo2.domain with
         | None -> assert false
         | Some rel -> Relation.arity rel
-
-    method must_may_sup (subst : stack)
-             (exp : G.exp) =
-      Exp_bounds2.bounds_exp (subst, elo.Elo2.domain, exp)
 
     method make_atom (name : Name.t) (t : Tuple.t) =
       assert (Domain.mem name elo.Elo2.domain);
@@ -240,8 +241,9 @@ module Make (Ltl : Solver.LTL) = struct
     *)
     method build_Compr (_ : stack) = failwith "TODO"
 
-    method build_Diff (_ : stack) (_ : G.exp) (_ : G.exp) e' f' = fun (tuple : Tuple.t) ->
-      e' tuple +&& lazy (not_ (f' tuple))
+    method build_Diff (_ : stack) (_ : G.exp) (_ : G.exp) e' f' = 
+      fun (tuple : Tuple.t) ->
+        e' tuple +&& lazy (not_ (f' tuple))
     method build_F (_ : stack) (a : ltl) : ltl = eventually a
     method build_FIte (_ : stack) _ _ _ (c : ltl) (t : ltl) (e : ltl) : ltl  = 
       ifthenelse c t e

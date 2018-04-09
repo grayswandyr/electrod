@@ -27,167 +27,160 @@ let pp_subst out subst =
   Fmtc.(brackets @@ list @@ parens @@ pair int Tuple.pp) out
     (List.mapi (fun i tuple -> (i, tuple)) subst)
 
-
-(* Helper function.  NOTICE: [may] is voluntarily wrong because its
-   computation can be costly while the interesting [may] is that of the
-   toplevel expression for which it's called, so it's fixed in [bounds]
-   above *)
-let make_bounds must sup =
-  (* (if not (TS.subset must sup) then
-     Msg.err (fun m ->
-     m
-     "Exp_bounds.bounds@ %a@ with@\nsubst= %a@\n%a@\nmust(%a)=@ \
-     %a@\nsup(%a)=@ %a@."
-     (G.pp_exp @@ List.length subst) exp
-     pp_subst subst
-     Domain.pp domain
-     (G.pp_exp @@ List.length subst) exp
-     TS.pp must
-     (G.pp_exp @@ List.length subst) exp
-     TS.pp sup)
-     ); *)
-  { must; sup; may = TS.diff sup must }     
-
-
-(* In all the following functions, [subst] is a *stack*, meaning 
+(* In all the following functions, [subst] is a *stack* ot tuples, meaning 
    tuples (corresponding to DB indices) appear reversed wrt their order of binding. Then index 0 refers to the last binding. *)
+let make_bounds_exp =
+  let return_bounds (exp, subst) must sup =
+    (if not (TS.subset must sup) then
+       Msg.err (fun m ->
+             m
+               "%s.bounds@ %a@ with@\nsubst= %a@\n@\nmust(%a)=@ \
+                %a@\nsup(%a)=@ %a@."
+               __FILE__
+               (G.pp_exp @@ List.length subst) exp
+               pp_subst subst
+               (G.pp_exp @@ List.length subst) exp
+               TS.pp must
+               (G.pp_exp @@ List.length subst) exp
+               TS.pp sup)
+    );
+    { must; sup; may = TS.diff sup must }    
+  in 
+  let eq x1 x2 = 
+    CCEqual.(pair 
+               physical
+               (list Tuple.equal)) x1 x2
+  in
+  let hash x = 
+    Hash.(pair 
+            (fun (G.Exp { hkey; _ }) -> hkey)
+            (list Tuple.hash) ) x
+  in 
+  (* let cb ~in_cache (e, subst) __value =
+     Fmtc.(pr "@[<h>Cache search for %a: %B@]@\n" 
+     (pair ~sep:sp (brackets @@ list ~sep:comma Tuple.pp) 
+     (G.pp_exp (List.length subst))) 
+     (subst, e)
+     in_cache)
+     in *)
+  let cache = CCCache.unbounded ~eq ~hash 1793 in
+  fun domain ->
+    CCCache.with_cache_rec cache 
+      begin 
+        fun fbounds_exp 
+          (G.Exp { node = { prim_exp = pe; _ }; _ }, subst as args) ->
+          let open G in 
+          match pe with         
+            | Var v -> 
+                begin match List.get_at_idx v subst with
+                  | None ->
+                      Fmt.kstrf failwith 
+                        "%s.bounds_prim_exp: no variable %d in substitution %a" __FILE__ 
+                        v
+                        pp_subst subst
+                  | Some tuple ->
+                      let singleton =
+                        TS.singleton tuple
+                      in
+                      return_bounds args singleton singleton
+                end
+            | Name n -> 
+                let rel = Domain.get_exn n domain in
+                return_bounds args (Relation.must rel) (Relation.sup rel)
+            | None_ ->
+                return_bounds args TS.empty TS.empty
+            | Univ ->
+                let univ = Domain.univ_atoms domain in
+                return_bounds args univ univ
+            | Iden ->
+                let iden = Domain.get_exn Name.iden domain in
+                return_bounds args (Relation.must iden) (Relation.sup iden)
+            | RUn (Transpose, e) ->
+                let b = fbounds_exp (e, subst) in
+                return_bounds args (TS.transpose b.must) (TS.transpose b.sup)
+            | RUn (TClos, e) -> 
+                let b = fbounds_exp (e, subst) in
+                return_bounds args (TS.transitive_closure b.must) (TS.transitive_closure b.sup)
+                |> Fun.tap
+                     (fun res ->
+                        Msg.debug (fun m ->
+                              m
+                                "bounds_prim_exp(TClos):@\n\
+                                 must(%a) = %a@\nmay(%a) = %a"
+                                (G.pp_prim_exp @@ List.length subst) pe
+                                TS.pp res.must
+                                (G.pp_prim_exp @@ List.length subst) pe
+                                TS.pp res.may))
+            | RUn (RTClos, e) -> 
+                let iden = Domain.get_exn Name.iden domain in
+                let b = fbounds_exp (e, subst) in
+                return_bounds args (TS.union (TS.transitive_closure b.must) @@ Relation.must iden)
+                  (TS.union (TS.transitive_closure b.sup) @@ Relation.sup iden)
+                |> Fun.tap
+                     (fun res ->
+                        Msg.debug (fun m ->
+                              m
+                                "bounds_prim_exp(TClos):@\n\
+                                 must(%a) = %a@\nmay(%a) = %a"
+                                (G.pp_prim_exp @@ List.length subst) pe
+                                TS.pp res.must
+                                (G.pp_prim_exp @@ List.length subst) pe
+                                TS.pp res.may))
 
-(* TODO? 20171010: Considering the possibly large number of walks to perform on
-   expressions, we could cache the results for *ground* expressions as their
-   bounds are known. One way to do so would be to equip expressions with a field
-   telling if the term is ground and its bound is already known. Left for future
-   optimization if it's needed in practice (which may not be the case
-   considering that real models will enjoy symmetries that may make the actual
-   number of walks not so large...). *)
-let eq x1 x2 = 
-  CCEqual.(triple 
-             (list Tuple.equal) 
-             (Domain.equal) 
-             physical) x1 x2
-
-let hash x = 
-  Hash.(triple 
-          (list Tuple.hash) 
-          (Hash.poly) 
-          (fun (G.Exp { hkey; _ }) -> hkey)) x
-
-let bounds_exp =
-  CCCache.(with_cache_rec (lru ~eq ~hash 256)) 
-    begin 
-      fun fbounds_exp 
-        (subst, domain, G.Exp { node = { prim_exp = pe; _ }; _ }) ->
-        let open G in 
-        match pe with         
-          | Var v -> 
-              begin match List.get_at_idx v subst with
-                | None ->
-                    Fmt.kstrf failwith 
-                      "%s.bounds_prim_exp: no variable %d in substitution %a" __FILE__ 
-                      v
-                      pp_subst subst
-                | Some tuple ->
-                    let singleton =
-                      TS.singleton tuple
-                    in
-                    make_bounds singleton singleton
-              end
-          | Name n -> 
-              let rel = Domain.get_exn n domain in
-              make_bounds (Relation.must rel) (Relation.sup rel)
-          | None_ ->
-              make_bounds TS.empty TS.empty
-          | Univ ->
-              let univ = Domain.univ_atoms domain in
-              make_bounds univ univ
-          | Iden ->
-              let iden = Domain.get_exn Name.iden domain in
-              make_bounds (Relation.must iden) (Relation.sup iden)
-          | RUn (Transpose, e) ->
-              let b = fbounds_exp (subst, domain, e) in
-              make_bounds (TS.transpose b.must) (TS.transpose b.sup)
-          | RUn (TClos, e) -> 
-              let b = fbounds_exp (subst, domain, e) in
-              make_bounds (TS.transitive_closure b.must) (TS.transitive_closure b.sup)
-              |> Fun.tap
-                   (fun res ->
-                      Msg.debug (fun m ->
-                            m
-                              "bounds_prim_exp(TClos):@\n\
-                               must(%a) = %a@\nmay(%a) = %a"
-                              (G.pp_prim_exp @@ List.length subst) pe
-                              TS.pp res.must
-                              (G.pp_prim_exp @@ List.length subst) pe
-                              TS.pp res.may))
-          | RUn (RTClos, e) -> 
-              let iden = Domain.get_exn Name.iden domain in
-              let b = fbounds_exp (subst, domain, e) in
-              make_bounds (TS.union (TS.transitive_closure b.must) @@ Relation.must iden)
-                (TS.union (TS.transitive_closure b.sup) @@ Relation.sup iden)
-              |> Fun.tap
-                   (fun res ->
-                      Msg.debug (fun m ->
-                            m
-                              "bounds_prim_exp(TClos):@\n\
-                               must(%a) = %a@\nmay(%a) = %a"
-                              (G.pp_prim_exp @@ List.length subst) pe
-                              TS.pp res.must
-                              (G.pp_prim_exp @@ List.length subst) pe
-                              TS.pp res.may))
-
-          | RBin (e1, Union ,e2) -> 
-              let b1 = fbounds_exp (subst, domain, e1) in
-              let b2 = fbounds_exp (subst, domain, e2) in
-              make_bounds (TS.union b1.must b2.must) (TS.union b1.sup b2.sup)
-          | RBin (e1, Inter ,e2) -> 
-              let b1 = fbounds_exp (subst, domain, e1) in
-              let b2 = fbounds_exp (subst, domain, e2) in
-              make_bounds (TS.inter b1.must b2.must) (TS.inter b1.sup b2.sup)
-          | RBin (e1, Over ,e2) -> 
-              let b1 = fbounds_exp (subst, domain, e1) in
-              let b2 = fbounds_exp (subst, domain, e2) in
-              make_bounds (TS.override b1.must b2.must) (TS.override b1.sup b2.sup)
-          | RBin (e1, LProj ,e2) -> 
-              let b1 = fbounds_exp (subst, domain, e1) in
-              let b2 = fbounds_exp (subst, domain, e2) in
-              make_bounds (TS.lproj b1.must b2.must) (TS.lproj b1.sup b2.sup)
-          | RBin (e1, RProj ,e2) -> 
-              let b1 = fbounds_exp (subst, domain, e1) in
-              let b2 = fbounds_exp (subst, domain, e2) in
-              make_bounds (TS.rproj b1.must b2.must) (TS.rproj b1.sup b2.sup)
-          | RBin (e1, Prod ,e2) -> 
-              let b1 = fbounds_exp (subst, domain, e1) in
-              let b2 = fbounds_exp (subst, domain, e2) in
-              make_bounds (TS.product b1.must b2.must) (TS.product b1.sup b2.sup)
-          | RBin (e1, Diff ,e2) -> 
-              let b1 = fbounds_exp (subst, domain, e1) in
-              let b2 = fbounds_exp (subst, domain, e2) in
-              (* compute the tuples that are necessarily in e1 and necessarily not in e2 *)
-              let must_diff = TS.filter (fun tup -> not (TS.mem tup b2.sup)) b1.must in
-              make_bounds must_diff (TS.diff b1.sup b2.must) (* b2.MUST! *)
-          | RBin (e1, Join ,e2) -> 
-              let b1 = fbounds_exp (subst, domain, e1) in
-              let b2 = fbounds_exp (subst, domain, e2) in
-              make_bounds (TS.join b1.must b2.must) (TS.join b1.sup b2.sup)
-          | RIte (_, e1, e2) ->
-              let b1 = fbounds_exp (subst, domain, e1) in
-              let b2 = fbounds_exp (subst, domain, e2) in
-              make_bounds (TS.inter b1.must b2.must) (TS.union b1.sup b2.sup) 
-          | Prime e ->
-              fbounds_exp (subst, domain, e)
-          | Compr (__sim_binding, _) ->
-              (* The must of a compr set is empty. Indeed, it would be wrong
-                 to compute the must from the sim_bindings only, because the
-                 formula could be in contradiction with this must. Taking the
-                 formula into account is not possible, so we consider an empty
-                 must. *)
-              (* let pmust = TS.empty in  
-                 let psup =
-                 TS.of_tuples
-                 @@ bounds_sim_binding (fun { sup; _} -> sup) domain [] sim_binding
-                 in
-                 make_bounds pmust psup *)
-              failwith (__FILE__ ^ ".bounds(Compr) : TODO!")
-    end
+            | RBin (e1, Union ,e2) -> 
+                let b1 = fbounds_exp (e1, subst) in
+                let b2 = fbounds_exp (e2, subst) in
+                return_bounds args (TS.union b1.must b2.must) (TS.union b1.sup b2.sup)
+            | RBin (e1, Inter ,e2) -> 
+                let b1 = fbounds_exp (e1, subst) in
+                let b2 = fbounds_exp (e2, subst) in
+                return_bounds args (TS.inter b1.must b2.must) (TS.inter b1.sup b2.sup)
+            | RBin (e1, Over ,e2) -> 
+                let b1 = fbounds_exp (e1, subst) in
+                let b2 = fbounds_exp (e2, subst) in
+                return_bounds args (TS.override b1.must b2.must) (TS.override b1.sup b2.sup)
+            | RBin (e1, LProj ,e2) -> 
+                let b1 = fbounds_exp (e1, subst) in
+                let b2 = fbounds_exp (e2, subst) in
+                return_bounds args (TS.lproj b1.must b2.must) (TS.lproj b1.sup b2.sup)
+            | RBin (e1, RProj ,e2) -> 
+                let b1 = fbounds_exp (e1, subst) in
+                let b2 = fbounds_exp (e2, subst) in
+                return_bounds args (TS.rproj b1.must b2.must) (TS.rproj b1.sup b2.sup)
+            | RBin (e1, Prod ,e2) -> 
+                let b1 = fbounds_exp (e1, subst) in
+                let b2 = fbounds_exp (e2, subst) in
+                return_bounds args (TS.product b1.must b2.must) (TS.product b1.sup b2.sup)
+            | RBin (e1, Diff ,e2) -> 
+                let b1 = fbounds_exp (e1, subst) in
+                let b2 = fbounds_exp (e2, subst) in
+                (* compute the tuples that are necessarily in e1 and necessarily not in e2 *)
+                let must_diff = TS.filter (fun tup -> not (TS.mem tup b2.sup)) b1.must in
+                return_bounds args must_diff (TS.diff b1.sup b2.must) (* b2.MUST! *)
+            | RBin (e1, Join ,e2) -> 
+                let b1 = fbounds_exp (e1, subst) in
+                let b2 = fbounds_exp (e2, subst) in
+                return_bounds args (TS.join b1.must b2.must) (TS.join b1.sup b2.sup)
+            | RIte (_, e1, e2) ->
+                let b1 = fbounds_exp (e1, subst) in
+                let b2 = fbounds_exp (e2, subst) in
+                return_bounds args (TS.inter b1.must b2.must) (TS.union b1.sup b2.sup) 
+            | Prime e ->
+                fbounds_exp (e, subst)
+            | Compr (__sim_binding, _) ->
+                (* The must of a compr set is empty. Indeed, it would be wrong
+                   to compute the must from the sim_bindings only, because the
+                   formula could be in contradiction with this must. Taking the
+                   formula into account is not possible, so we consider an empty
+                   must. *)
+                (* let pmust = TS.empty in  
+                   let psup =
+                   TS.of_tuples
+                   @@ bounds_sim_binding (fun { sup; _} -> sup) domain [] sim_binding
+                   in
+                   return_bounds args pmust psup *)
+                failwith (__FILE__ ^ ".bounds(Compr) : TODO!")
+      end
 
 (* Computes the bounds for a sim_binding, in the case of a set defined by
    comprehension.

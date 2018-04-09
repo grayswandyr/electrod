@@ -161,6 +161,10 @@ let convert (ast : Ast.t) =
     ast.atom_renaming ast.name_renaming
 
 module Test = struct
+
+  open GenGoal
+  open Ast
+
   let%test _ =
     let open E in
     let t = rbinary ~ar:1 (var ~ar:1 1) join (name ~ar:2 @@ Name.name "r") in
@@ -177,8 +181,6 @@ module Test = struct
     Printf.printf "%s" s;
     [%expect{| (some v/1 : univ {(all disj v/2, v/3 : univ {(v/2 in univ)})}) |}]
 
-  open GenGoal
-  open Ast
   let x = Var.fresh "x"
   let y = Var.fresh "y"
   let f : (Ast.var, Ast.ident) fml =
@@ -186,8 +188,8 @@ module Test = struct
   let g : (Ast.var, Ast.ident) fml =
     fml Location.dummy @@ quant all [ (true, [bound_var x; bound_var y], exp (Some 1) Location.dummy univ)] [ fml Location.dummy @@ rcomp (exp (Some 1) Location.dummy @@ ident @@ var_ident x) in_ (exp (Some 1) Location.dummy univ)]
 
-  let f' = Ast_to_elo.(convert_fml []) f
-  let g' = Ast_to_elo.(convert_fml []) g
+  let f' = convert_fml [] f
+  let g' = convert_fml [] g
 
   let%test _ =
     Pervasives.(f' == g')
