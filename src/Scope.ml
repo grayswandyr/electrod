@@ -14,7 +14,7 @@
 
 open Containers
 
-module TS = TupleSet
+module TS = Tuple_set
 
 type relation =
   | Plain_relation of TS.t * TS.t  

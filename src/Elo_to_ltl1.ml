@@ -18,8 +18,8 @@
 open Containers
 open Exp_bounds2
 
-module G = Elo2
-module TS = TupleSet
+module G = Elo
+module TS = Tuple_set
 
 type stack = Tuple.t list
 
@@ -170,30 +170,30 @@ module Make (Ltl : Solver.LTL) = struct
 
 
 
-  class environment (elo : Elo2.t) = object (_ : 'self)
-    val bounds_exp_aux = Exp_bounds2.make_bounds_exp elo.Elo2.domain
+  class environment (elo : Elo.t) = object (_ : 'self)
+    val bounds_exp_aux = Exp_bounds2.make_bounds_exp elo.Elo.domain
 
     method must_may_sup (subst : stack) (exp : G.exp) =
       bounds_exp_aux (exp, subst)
 
     method relation_arity name =
-      match Domain.get name elo.Elo2.domain with
+      match Domain.get name elo.Elo.domain with
         | None -> assert false
         | Some rel -> Relation.arity rel
 
     method make_atom (name : Name.t) (t : Tuple.t) =
-      assert (Domain.mem name elo.Elo2.domain);
-      Ltl.atomic @@ Atomic.make elo.Elo2.domain name t 
+      assert (Domain.mem name elo.Elo.domain);
+      Ltl.atomic @@ Atomic.make elo.Elo.domain name t 
 
     method is_const (name : Name.t) =
-      assert (Domain.mem name elo.Elo2.domain);
-      Domain.get_exn name elo.Elo2.domain |> Relation.is_const
+      assert (Domain.mem name elo.Elo.domain);
+      Domain.get_exn name elo.Elo.domain |> Relation.is_const
   end
 
   class ['subst] converter (env : environment) = object (self : 'self)
     constraint 'subst = stack  (* a stack *)
 
-    inherit ['self] Elo2_recursor.recursor 
+    inherit ['self] Elo_recursor.recursor 
 
     method build_Add (_ : stack) (a : term) (b : term) : term = plus a b
     method build_All (_ : stack) = G.all
@@ -480,12 +480,12 @@ module Make (Ltl : Solver.LTL) = struct
   (* Computes the color (Invar, Static_prop, Init or Temporal) of an
      elo formula *)                                     
   let color elo elo_fml =
-    (new Invar_computation2.computer elo)#visit_fml () elo_fml 
+    (new Invar_computation.computer elo)#visit_fml () elo_fml 
 
 
 
   let formula_as_comment fml =
-    let str = Fmt.to_to_string (Elo2.pp_fml 0) fml in
+    let str = Fmt.to_to_string (Elo.pp_fml 0) fml in
     "-- " ^ String.replace ~which:`All ~sub:"\n" ~by:"\n-- " str
 
   (* Converts an Ast formula to an LTL formula, gathering at the same time the

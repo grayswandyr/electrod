@@ -26,7 +26,7 @@
 		(per_module
       ((action 
 				(run ppxfind -legacy visitors.ppx,ppx_deriving.std --as-pp ${<})) 
-		 		(GenGoal Elo2))
+		 		(Gen_goal Elo))
       ((pps (ppx_inline_test ppx_expect)) 
 		 		(Ast_to_elo))
 		))
@@ -54,13 +54,13 @@
 
 ;;; other parser
 
-(ocamllex (SMV_trace_scanner))
+(ocamllex (Smv_trace_scanner))
 
 (menhir
  ((flags   (--only-tokens))
-  (modules (SMV_trace_tokens))))
+  (modules (Smv_trace_tokens))))
 
 (menhir
- ((merge_into SMV_trace_parser)
-  (flags      (--external-tokens SMV_trace_tokens))
-  (modules    (SMV_trace_parser SMV_trace_tokens))))
+ ((merge_into Smv_trace_parser)
+  (flags      (--external-tokens Smv_trace_tokens))
+  (modules    (Smv_trace_parser Smv_trace_tokens))))

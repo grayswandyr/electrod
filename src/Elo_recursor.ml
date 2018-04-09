@@ -1,6 +1,6 @@
 [@@@warning "-27"]
 
-open Elo2
+open Elo
 
 
 class virtual ['self] recursor = object (self : 'self)

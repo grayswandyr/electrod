@@ -4,7 +4,7 @@ open Containers
 (* This module is supposed to happen after a simplification that addresses: 
    let bindings, *multiple* sim_bindings, quantified expressions, no lone/one quantifier; the input is also supposed to be arity-correct *)
 
-module E = Elo2
+module E = Elo
 
 let convert_arity = function
   | None -> 0
@@ -24,7 +24,7 @@ let get_var x stack = match List.find_idx (fun v -> Var.equal x v) stack with
 let new_env vars stack = 
   List.rev_map (function Ast.BVar v -> v) vars @ stack
 
-let rec convert_fml stack ({ prim_fml; _ }: (Ast.var, Ast.ident) GenGoal.fml) =
+let rec convert_fml stack ({ prim_fml; _ }: (Ast.var, Ast.ident) Gen_goal.fml) =
   match prim_fml with
     | Qual (_, _) -> assert false (* simplified *)
     | Let (_, _) -> assert false (* simplified *)
@@ -55,19 +55,19 @@ let rec convert_fml stack ({ prim_fml; _ }: (Ast.var, Ast.ident) GenGoal.fml) =
 and convert_block stack fmls = 
   List.map (convert_fml stack) fmls
 
-and convert_quant (q : GenGoal.quant) = match q with
+and convert_quant (q : Gen_goal.quant) = match q with
   | One | Lone -> assert false (* simplified *)
   | All -> E.all
   | Some_ -> E.some
   | No -> E.no_
 
-and convert_comp_op (comp : GenGoal.comp_op) = match comp with
+and convert_comp_op (comp : Gen_goal.comp_op) = match comp with
   | In -> E.in_
   | NotIn -> E.not_in
   | REq -> E.req
   | RNEq -> E.rneq
 
-and convert_icomp_op (comp : GenGoal.icomp_op) = match comp with
+and convert_icomp_op (comp : Gen_goal.icomp_op) = match comp with
   | IEq -> E.ieq
   | INEq -> E.ineq
   | Lt -> E.lt
@@ -75,7 +75,7 @@ and convert_icomp_op (comp : GenGoal.icomp_op) = match comp with
   | Gt -> E.gt
   | Gte -> E.gte
 
-and convert_lunop (op : GenGoal.lunop) = match op with
+and convert_lunop (op : Gen_goal.lunop) = match op with
   | F -> E.sometime
   | G -> E.always
   | Not -> E.not_
@@ -84,7 +84,7 @@ and convert_lunop (op : GenGoal.lunop) = match op with
   | H -> E.historically
   | P -> E.previous
 
-and convert_lbinop (op : GenGoal.lbinop) = match op with
+and convert_lbinop (op : Gen_goal.lbinop) = match op with
   | And -> E.and_
   | Or -> E.or_
   | Imp -> E.impl
@@ -94,7 +94,7 @@ and convert_lbinop (op : GenGoal.lbinop) = match op with
   | S -> E.since
 
 and convert_exp stack 
-      ({ prim_exp; arity; _ } : (Ast.var, Ast.ident) GenGoal.exp) =
+      ({ prim_exp; arity; _ } : (Ast.var, Ast.ident) Gen_goal.exp) =
   let ar = convert_arity arity in
   match prim_exp with
     | BoxJoin (_, _) -> assert false (* simplified *)
@@ -121,12 +121,12 @@ and convert_exp stack
         let block' = convert_block (new_env vars stack) block in
         E.compr ~ar decls' block'
 
-and convert_runop (op : GenGoal.runop) = match op with
+and convert_runop (op : Gen_goal.runop) = match op with
   | Transpose -> E.transpose
   | TClos -> E.tclos
   | RTClos -> E.rtclos
 
-and convert_rbinop (op : GenGoal.rbinop) = match op with
+and convert_rbinop (op : Gen_goal.rbinop) = match op with
   | Union -> E.union
   | Inter -> E.inter
   | Over -> E.over
@@ -137,7 +137,7 @@ and convert_rbinop (op : GenGoal.rbinop) = match op with
   | Join -> E.join
 
 and convert_iexp stack 
-      ({ prim_iexp; _ } : (Ast.var, Ast.ident) GenGoal.iexp) = 
+      ({ prim_iexp; _ } : (Ast.var, Ast.ident) Gen_goal.iexp) = 
   match prim_iexp with
     | Num n -> E.num n
     | Card e -> E.card @@ convert_exp stack e
@@ -146,11 +146,11 @@ and convert_iexp stack
         E.ibinary (convert_iexp stack e1) 
           (convert_ibinop op) (convert_iexp stack e2)
 
-and convert_ibinop (op : GenGoal.ibinop) = match op with
+and convert_ibinop (op : Gen_goal.ibinop) = match op with
   | Add -> E.add
   | Sub -> E.sub
 
-let convert_goal (GenGoal.Run fmls) = 
+let convert_goal (Gen_goal.Run fmls) = 
   E.run @@ convert_block [] fmls
 
 let convert (ast : Ast.t) =
@@ -162,7 +162,7 @@ let convert (ast : Ast.t) =
 
 module Test = struct
 
-  open GenGoal
+  open Gen_goal
   open Ast
 
   let%test _ =
@@ -222,7 +222,7 @@ module Test = struct
   let%expect_test _ =
     Fmt.pr "AST:@\n%a@\nELO:@\n%a"
       Ast.pp_goal ast.goal
-      Elo2.pp_goal elo_goal;
+      Elo.pp_goal elo_goal;
     [%expect {|
       AST:
       run
@@ -263,7 +263,7 @@ module Test = struct
   let%expect_test _ =
     Fmt.pr "AST:@\n%a@\nELO:@\n%a"
       Ast.pp_goal ast.goal
-      Elo2.pp_goal elo_goal;
+      Elo.pp_goal elo_goal;
     [%expect {|
       AST:
       run

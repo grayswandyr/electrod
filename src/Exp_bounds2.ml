@@ -14,8 +14,8 @@
 
 open Containers
 
-module G = Elo2
-module TS = TupleSet
+module G = Elo
+module TS = Tuple_set
 
 type bounds = {
   must : TS.t;

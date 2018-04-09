@@ -61,7 +61,7 @@ let compute_relation_renaming elo =
 
 let compute_atom_renaming elo = 
   Domain.univ_atoms elo.Ast.domain
-  |> TupleSet.to_list
+  |> Tuple_set.to_list
   |> List.mapi (fun i tuple ->
         let atom = Tuple.ith 0 tuple in
         let new_atom = Atom.atom @@ encode_atom i in
@@ -75,7 +75,7 @@ let rename_elo long_names elo =
       elo with
         atom_renaming =
           id_renaming (Domain.univ_atoms elo.Ast.domain
-                       |> TupleSet.to_list |> List.map (Tuple.ith 0));
+                       |> Tuple_set.to_list |> List.map (Tuple.ith 0));
         name_renaming =
           id_renaming (Domain.to_list elo.Ast.domain |> List.map fst);
     }

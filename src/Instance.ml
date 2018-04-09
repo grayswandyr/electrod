@@ -17,7 +17,7 @@ open Containers
 module Map = Name.Map
 
 
-type t = TupleSet.t Map.t
+type t = Tuple_set.t Map.t
 
 let empty = Map.empty
 
@@ -44,7 +44,7 @@ let pp out rels =
     (styled `Bold pf) out "inst@ ";
     pf out "  %a"
       (vbox @@ Map.pp ~sep:" " ~arrow:" = " ~start:"" ~stop:""
-                 (styled `Cyan Name.pp) TupleSet.pp) rels
+                 (styled `Cyan Name.pp) Tuple_set.pp) rels
   end
 
 
@@ -52,7 +52,7 @@ let rename atom_renaming name_renaming inst =
   to_list inst
   |> List.map (fun (name, ts) ->
         (List.assoc ~eq:Name.equal name name_renaming,
-         TupleSet.rename atom_renaming ts))
+         Tuple_set.rename atom_renaming ts))
   |> of_list
     
 

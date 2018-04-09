@@ -15,7 +15,7 @@
 open Containers
 open Raw
 
-module TS = TupleSet
+module TS = Tuple_set
 
 (*******************************************************************************
  *  Domain computation
@@ -387,7 +387,7 @@ let compute_symmetries (pb : Raw.raw_problem) =
  *******************************************************************************)
 
 let refine_identifiers raw_pb =
-  let open GenGoal in
+  let open Gen_goal in
   let rec walk_fml ctx fml =
     let ctx2, f = walk_prim_fml ctx fml.prim_fml in
     (ctx2, { fml with prim_fml = f })
@@ -526,7 +526,7 @@ let str_exp =
 
 let compute_arities elo = 
   let open Ast in 
-  let open GenGoal in
+  let open Gen_goal in
   (* ctx is a map from identifiers to their arity  *)
   let rec walk_fml ctx fml =
     { fml with prim_fml = walk_prim_fml ctx fml.prim_fml }
@@ -742,7 +742,7 @@ let compute_arities elo =
         let res =
           List.fold_right
             (fun arg r ->
-               GenGoal.exp
+               Gen_goal.exp
                  Option.(map2 (+) (pure (-2)) @@ map2 (+) arg.arity r.arity)
                  Location.(span (arg.exp_loc, r.exp_loc))
                @@ rbinary arg join r

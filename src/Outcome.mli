@@ -47,7 +47,7 @@ val trace
   :  (Atom.t, Atom.t) CCList.Assoc.t * (Name.t * Name.t) list
   -> int -> Mtime.span -> Mtime.span -> state list -> t
 
-val valuation : (Name.t, TupleSet.t) List.Assoc.t -> valuation
+val valuation : (Name.t, Tuple_set.t) List.Assoc.t -> valuation
 
 val plain_state : valuation -> state
   

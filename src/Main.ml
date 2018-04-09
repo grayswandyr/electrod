@@ -96,7 +96,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
     let raw_to_ast_t = Transfo.tlist [ Raw_to_ast.transfo ] in
     let ast_to_ast_t = Transfo.tlist [ Simplify1.transfo; Simplify2.transfo ] in
 
-    let elo_to_smv_t = Transfo.tlist [ Elo2_to_SMV1.transfo ] in
+    let elo_to_smv_t = Transfo.tlist [ Elo_to_smv1.transfo ] in
 
     let ast =
       Parser_main.parse_file file
@@ -128,14 +128,14 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
 
 
     (* let sup_r = Domain.sup (Name.name "r") elo.domain in *)
-    (* let tc_r = TupleSet.transitive_closure sup_r in *)
+    (* let tc_r = Tuple_set.transitive_closure sup_r in *)
     (* Msg.debug (fun m -> *)
-    (* m "Borne sup de la tc de r : %a " TupleSet.pp tc_r); *)
+    (* m "Borne sup de la tc de r : %a " Tuple_set.pp tc_r); *)
     let cmd, script = match tool, scriptfile with
-      | NuXmv, None -> ("nuXmv", Solver2.Default SMV.nuXmv_default_script)
-      | NuXmv, Some s -> ("nuXmv", Solver2.File s)
-      | NuSMV, None -> ("NuSMV", Solver2.Default SMV.nuSMV_default_script)
-      | NuSMV, Some s -> ("NuSMV", Solver2.File s)
+      | NuXmv, None -> ("nuXmv", Solver.Default Smv.nuXmv_default_script)
+      | NuXmv, Some s -> ("nuXmv", Solver.File s)
+      | NuSMV, None -> ("NuSMV", Solver.Default Smv.nuSMV_default_script)
+      | NuSMV, Some s -> ("NuSMV", Solver.File s)
     in
 
     if print_generated then
@@ -144,10 +144,10 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
                --------------------------------------------------------------------------------@\n\
                %a\
                --------------------------------------------------------------------------------"
-              (Elo2_to_SMV1.pp ~margin:80) model);
+              (Elo_to_smv1.pp ~margin:80) model);
 
     let res = 
-      Elo2_to_SMV1.analyze ~conversion_time ~cmd ~keep_files ~no_analysis
+      Elo_to_smv1.analyze ~conversion_time ~cmd ~keep_files ~no_analysis
         ~elo:elo ~script ~file model 
     in
     (if not no_analysis then begin

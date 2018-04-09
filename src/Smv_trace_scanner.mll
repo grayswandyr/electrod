@@ -15,7 +15,7 @@
 { (* BEGIN HEADER *)
   
 open Lexing
-open SMV_trace_tokens
+open Smv_trace_tokens
 
 let met_spurious_variable = ref false
 

@@ -17,7 +17,7 @@
 
 
 
-open GenGoal
+open Gen_goal
 
 class virtual ['self] recursor = object (self : 'self)
   inherit [_] VisitorsRuntime.map

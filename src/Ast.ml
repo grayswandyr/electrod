@@ -17,7 +17,7 @@
 
 open Containers
 
-module G = GenGoal
+module G = Gen_goal
 
 (* variables introduced by a binder *)
 type var = BVar of Var.t

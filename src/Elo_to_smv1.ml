@@ -92,13 +92,13 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
    
 end
 
-module SMV_LTL = SMV2.Make_SMV_LTL(SMV_atom)
+module SMV_LTL = Smv.Make_SMV_LTL(SMV_atom)
 
-module SMV_file_format = SMV2.Make_SMV_file_format(SMV_LTL)
+module SMV_file_format = Smv.Make_SMV_file_format(SMV_LTL)
 
-module Elo_to_SMV_LTL = Elo2_to_ltl2.Make(SMV_LTL)
+module Elo_to_SMV_LTL = Elo_to_ltl1.Make(SMV_LTL)
 
-module Elo_to_SMV_model = Elo2_to_model1.Make(SMV_LTL)(Elo_to_SMV_LTL)(SMV_file_format)
+module Elo_to_SMV_model = Elo_to_model1.Make(SMV_LTL)(Elo_to_SMV_LTL)(SMV_file_format)
 
 let pp = SMV_file_format.pp
 

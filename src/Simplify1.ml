@@ -17,9 +17,9 @@
 (** EXPECTED TO BE BE DONE AFTER CHECKING ARITIES. *)
 
 open Containers
-open GenGoal
+open Gen_goal
 
-module TS = TupleSet
+module TS = Tuple_set
 
 module L = Location
 

@@ -18,9 +18,9 @@
 (** EXPECTED TO BE BE DONE AFTER CHECKING ARITIES. *)
 
 open Containers
-open GenGoal
+open Gen_goal
 
-module TS = TupleSet
+module TS = Tuple_set
 
 let fresh_var base exp =
   Var.fresh ~loc:exp.exp_loc base 
@@ -33,7 +33,7 @@ class simplify = object (self : 'self)
   method! visit_Qual env qual exp =
     Msg.debug (fun m -> m "Simplify2.visit_Qual <-- %a"
                           Ast.pp_prim_fml
-                @@ GenGoal.qual qual exp);
+                @@ Gen_goal.qual qual exp);
     let prim_fml = match qual with
       | ROne ->
           icomp (iexp exp.exp_loc @@ card exp) ieq (iexp exp.exp_loc @@ num 1)

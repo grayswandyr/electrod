@@ -12,7 +12,7 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-(** Abstract type for a converter from Ast models to (abstract) LTL formulas.  *)
+(** Abstract type for a converter from Elo models to (abstract) LTL formulas.  *)
 
 open Containers
 
@@ -21,13 +21,13 @@ module type S = sig
   type ltl                      (* ltl formula *)
 
   val color :
-    Ast.t ->
-    (Ast.var, Ast.ident) GenGoal.fml ->
+    Elo.t ->
+    Elo.fml ->
     Invar_computation.goal_color
 
   val convert :
-    Ast.t ->
-    (Ast.var, Ast.ident) GenGoal.fml ->
+    Elo.t ->
+    Elo.fml ->
     string * ltl
 
 end

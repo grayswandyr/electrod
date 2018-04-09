@@ -14,9 +14,9 @@
 
 (** Type for "raw" ASTs yielded by the Electrod parser. *)
 
-type raw_goal = (Raw_ident.t, Raw_ident.t) GenGoal.t
+type raw_goal = (Raw_ident.t, Raw_ident.t) Gen_goal.t
 
-type raw_block = (Raw_ident.t, Raw_ident.t) GenGoal.block
+type raw_block = (Raw_ident.t, Raw_ident.t) Gen_goal.block
 
 type raw_problem = {
   file : string option;
