@@ -41,7 +41,7 @@ let create_new_vars_and_assoc_list_and_comp_fml vs ar =
            @@ rcomp
                 (exp ar L.dummy
                  @@ ident @@ Ast.var_ident var)
-                REq
+                req
                 (exp ar L.dummy new_var_as_ident)
           )
           and_

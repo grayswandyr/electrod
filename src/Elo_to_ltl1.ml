@@ -432,7 +432,8 @@ module Make (Ltl : Solver.LTL) = struct
       let lg = Tuple.arity tuple in
       (s' @@ Tuple.of_list1 [Tuple.ith (lg - 1) tuple]) +&& lazy (r' tuple)
     method build_RTClos subst r _ = fun tuple ->
-      self#build_Iden subst tuple +|| lazy (self#visit_RUn subst G.TClos r tuple)
+      self#build_Iden subst tuple 
+      +|| lazy (self#visit_RUn subst G.tclos r tuple)
     method build_RUn (_ : stack) (_ : G.runop) (e : G.exp) op' e'  = op' e e'
     method build_S (_ : stack) (a : ltl) (b : ltl) : ltl = since a b
     method build_Some_ (_ : stack) = G.some

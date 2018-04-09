@@ -135,9 +135,9 @@ struct
           let rhs_fml =
             match node with
               | LUn (Not, subfml) -> subfml
-              | _ -> lunary Not hd
+              | _ -> lunary not_ hd
           in
-          lbinary premise Imp rhs_fml
+          lbinary premise impl rhs_fml
 
   let run elo =
     let open Elo in

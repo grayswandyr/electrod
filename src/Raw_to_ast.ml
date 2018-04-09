@@ -599,7 +599,7 @@ let compute_arities elo =
         let ar = exp'.arity in
         let ctx' = ctx#update [(v, ar)] in
         let bs', ctx'' = walk_bindings ctx' bs in
-        ((BVar v, exp')::bs', ctx'')
+        ((bound_var v, exp')::bs', ctx'')
 
   and walk_sim_bindings ctx = function
     | [] -> ([], ctx)
@@ -628,16 +628,16 @@ let compute_arities elo =
      order to easily set the mutable fields of the said expression. *)
   and walk_prim_exp ctx exp = match exp.prim_exp with
     | None_ ->
-        return_exp exp None None_
+        return_exp exp None none
     | Univ ->
-        let arity = ctx#arity (Ast.Name Name.univ) in
-        return_exp exp arity Univ
+        let arity = ctx#arity (name_ident Name.univ) in
+        return_exp exp arity univ
     | Iden ->
-        let arity = ctx#arity (Ast.Name Name.iden) in
-        return_exp exp arity Iden 
+        let arity = ctx#arity (name_ident Name.iden) in
+        return_exp exp arity iden
     | Ident id ->
         let arity = ctx#arity id in
-        return_exp exp arity (Ident id)
+        return_exp exp arity (ident id)
     | RUn (op, e) ->
         let e' = walk_exp ctx e in
         let ar = e'.arity in
@@ -782,7 +782,7 @@ let compute_arities elo =
   let init = object
     val arities =
       Domain.arities elo.Ast.domain
-      |> List.map (fun (n, a) -> (Ast.Name n, Some a))
+      |> List.map (fun (n, a) -> (name_ident n, Some a))
     (* |> Fun.tap (fun ars -> *)
     (*       Msg.debug (fun m -> *)
     (*             m "compute_arities.initial arities = %a" *)
@@ -797,7 +797,8 @@ let compute_arities elo =
       (* Msg.debug (fun m -> *)
       (*       m "compute_arities.update %a" *)
       (*         Fmtc.(list ~sep:sp @@ pair Var.pp (option int)) pairs); *)
-      {< arities = (List.map (fun (v, ar) -> (Ast.Var v, ar)) pairs) @ arities >}
+      {< arities = 
+           (List.map (fun (v, ar) -> (var_ident v, ar)) pairs) @ arities >}
 
     method arity ident =
       List.Assoc.get_exn ~eq:Ast.equal_ident ident arities
