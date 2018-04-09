@@ -523,10 +523,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
       end
     in
     (* TODO check whether nuXmv is installed first *)
-    let dir =
-      if keep_files then Filename.dirname file
-      else Filename.get_temp_dir_name ()
-    in
+    let dir = Filename.dirname file in
     let scr = make_script_file dir script in
     let before_generation = Mtime_clock.now () in
     let smv, nbvars = make_model_file dir file model in

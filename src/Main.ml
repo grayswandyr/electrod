@@ -100,7 +100,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
 
     let ast =
       Parser_main.parse_file file
-      |> Fun.tap (fun _ -> Msg.info (fun m -> m "Parse done"))
+      |> Fun.tap (fun _ -> Msg.info (fun m -> m "Parsing done"))
       |> Transfo.(get_exn raw_to_ast_t "raw_to_elo" |> run)
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Static analysis done"))
       |> Fun.tap (fun elo ->
@@ -119,18 +119,13 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
     let model =
       Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) elo
     in
-    let conversion_time = Mtime.span before_conversion @@ Mtime_clock.now ()
+    let conversion_time = 
+      Mtime.span before_conversion @@ Mtime_clock.now () 
     in
     Msg.info (fun m ->
           m "Conversion done in %a"
-            Mtime.Span.pp conversion_time
-        );
+            Mtime.Span.pp conversion_time);
 
-
-    (* let sup_r = Domain.sup (Name.name "r") elo.domain in *)
-    (* let tc_r = Tuple_set.transitive_closure sup_r in *)
-    (* Msg.debug (fun m -> *)
-    (* m "Borne sup de la tc de r : %a " Tuple_set.pp tc_r); *)
     let cmd, script = match tool, scriptfile with
       | NuXmv, None -> ("nuXmv", Solver.Default Smv.nuXmv_default_script)
       | NuXmv, Some s -> ("nuXmv", Solver.File s)

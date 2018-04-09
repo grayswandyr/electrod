@@ -44,9 +44,8 @@ let script =
 
 let keep_files =
   let doc =
-    {|If present, keep the generated model and script files in the same 
-      directory as ELECTROD_FILE (otherwise, files are generated in an 
-      OS-specific directory for temporary files). |}
+    {|If present, keep the generated model and script files (in the same 
+      directory as ELECTROD_FILE). |}
   in
   Arg.(value & flag & info ["kg"; "keep-generated"] ~doc)
 
