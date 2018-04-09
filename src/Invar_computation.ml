@@ -316,3 +316,9 @@ class ['self] computer (elo : Elo.t) = object (_ : 'self)
 
   method build_Card () r' = r'
 end
+
+
+  (* Computes the color (Invar, Static_prop, Init or Temporal) of an
+     elo formula *)                                     
+  let color elo elo_fml =
+    (new computer elo)#visit_fml () elo_fml 

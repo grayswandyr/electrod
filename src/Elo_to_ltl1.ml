@@ -476,14 +476,6 @@ module Make (Ltl : Solver.LTL) = struct
 
   end (* class *)
 
-
-  (* Computes the color (Invar, Static_prop, Init or Temporal) of an
-     elo formula *)                                     
-  let color elo elo_fml =
-    (new Invar_computation.computer elo)#visit_fml () elo_fml 
-
-
-
   let formula_as_comment fml =
     let str = Fmt.to_to_string (Elo.pp_fml 0) fml in
     "-- " ^ String.replace ~which:`All ~sub:"\n" ~by:"\n-- " str

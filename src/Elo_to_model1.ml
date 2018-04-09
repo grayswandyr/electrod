@@ -72,7 +72,7 @@ struct
     let (invf, tmp_restf) =
       List.partition_map
         (fun fml ->
-           let color = ConvertFormulas.color elo fml in
+           let color = Invar_computation.color elo fml in
            (* Msg.debug (fun m ->
               m "Color of formula %a : %a\n"
               Elo.pp_fml fml Invar_computation.pp color); *)
@@ -85,7 +85,7 @@ struct
     let (transf, tmp_restf2) =
       List.partition_map
         (fun fml ->
-           let color = ConvertFormulas.color elo fml in
+           let color = Invar_computation.color elo fml in
            (* Msg.debug (fun m ->
               m "Color of formula %a : %a\n"
               Elo.pp_fml fml Invar_computation.pp color); *)
@@ -98,7 +98,7 @@ struct
     let (initf, restf) =
       List.partition_map
         (fun fml ->
-           let color = ConvertFormulas.color elo fml in
+           let color = Invar_computation.color elo fml in
            (* Msg.debug (fun m ->
               m "Color of formula %a : %a\n"
               Elo.pp_fml fml Invar_computation.pp color); *)
