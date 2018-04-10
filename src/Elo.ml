@@ -476,7 +476,6 @@ let pp_ibinop out =
     | Add -> pf out "+"
     | Sub -> pf out "-"
 
-(* TODO fix this *)
 let pp_var out v =
   Fmtc.pf out "v/%d" v
 
@@ -487,6 +486,15 @@ let pp_osim_binding stacked pp_exp out (disj, vars, e) =
     (list ~sep:(sp **> comma) pp_var) 
     (Sequence.to_list Int.Infix.((stacked + 1) -- (stacked + vars)))
     (pp_exp stacked) e
+
+let rec pp_osim_bindings stacked pp_exp out sim_bindings =
+  let open Fmtc in
+  match sim_bindings with 
+    | [] -> ()
+    | (_, vars, _ as hd)::tl ->
+        pp_osim_binding stacked pp_exp out hd;
+        (sp **> comma) out ();
+        pp_osim_bindings (stacked + vars) pp_exp out tl
 
 let pp_oblock stacked pp_fml out fmls = 
   let open Fmtc in
@@ -572,7 +580,7 @@ let pp_prim_oexp stacked pp_fml pp_exp out =
         pf out "%a"
           (braces_ @@
            pair ~sep:sp
-             (list @@ pp_osim_binding stacked pp_exp) 
+             (pp_osim_bindings stacked pp_exp) 
              (pp_oblock (stacked + nbvars) pp_fml))
           (decls, blk)
     | Prime e ->
@@ -649,10 +657,10 @@ let pp_fml_stats __out inf  =
   pr "expressions" @@ HC.stats exp_table;
   pr "integer expressions" @@ HC.stats iexp_table;
   Format.(printf "%a@." 
-          (vbox @@ list 
-           @@ hbox 
-           @@ pair ~sep:(const string "-->") 
-                (fun out data -> (pp_fml 100) out (Fml data)) 
-                int))
+            (vbox @@ list 
+             @@ hbox 
+             @@ pair ~sep:(const string "-->") 
+                  (fun out data -> (pp_fml 0) out (Fml data)) 
+                  int))
     stats;
-    HC.iter (fun data -> Fmt.pr "%a@\n" (pp_fml 100) (Fml data)) fml_table 
+  HC.iter (fun data -> Fmt.pr "%a@\n" (pp_fml 0) (Fml data)) fml_table 

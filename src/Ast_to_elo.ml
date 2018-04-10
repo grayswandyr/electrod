@@ -35,6 +35,11 @@ let get_var x stack = match List.find_idx (fun v -> Var.equal x v) stack with
   | Some (i, _) -> i
 
 let new_env vars stack = 
+  Msg.info (fun m -> 
+        m "Ast_to_elo.new_env: stacking %a onto %a"
+          Fmt.(brackets @@ list ~sep:comma Ast.pp_var) (List.rev vars)
+          Fmt.(brackets @@ list ~sep:comma Var.pp) stack
+      );
   List.rev_map (function Ast.BVar v -> v) vars @ stack
 
 let rec convert_fml stack ({ prim_fml; _ }: (Ast.var, Ast.ident) Gen_goal.fml) =
@@ -127,12 +132,19 @@ and convert_exp stack
           (convert_exp stack t) (convert_exp stack e)
     | Prime e -> E.prime ~ar @@ convert_exp stack e
     | Compr (decls, block) -> 
-        let decls' = 
-          List.map (fun (disj, vars, range) -> 
-                (disj, List.length vars, convert_exp stack range)) decls in
+        let decls' = convert_sim_bindings stack decls in 
         let vars = List.flat_map (fun (_, vars, _) -> vars) decls in
         let block' = convert_block (new_env vars stack) block in
         E.compr ~ar decls' block'
+        |> Fun.tap (fun e -> Msg.info (fun m -> m "Ast_to_elo.convert_Compr@ @[<hov2>%a@]@ --> @[<hov2>%a@]" Ast.pp_prim_exp prim_exp (E.pp_exp 0) e))
+
+and convert_sim_bindings 
+      stack (decls : (Ast.var, Ast.ident) Gen_goal.sim_binding list) = 
+  match decls with
+    | [] -> []
+    | (disj, vars, range)::tl ->
+        let hd' = (disj, List.length vars, convert_exp stack range) in 
+        hd' :: convert_sim_bindings (new_env vars stack) tl
 
 and convert_runop (op : Gen_goal.runop) = match op with
   | Transpose -> E.transpose
@@ -173,132 +185,132 @@ let convert (ast : Ast.t) =
     ast.file ast.domain ast.instance ast.sym invariants goal 
     ast.atom_renaming ast.name_renaming
 (* 
-module Test = struct
+   module Test = struct
 
-  open Gen_goal
-  open Ast
+   open Gen_goal
+   open Ast
 
-  let%test _ =
-    let open E in
-    let t = rbinary ~ar:1 (var ~ar:1 1) join (name ~ar:2 @@ Name.name "r") in
-    let u = rbinary ~ar:1 (var ~ar:1 1) join (name ~ar:2 @@ Name.name "r") in
-    Pervasives.(t == u)
+   let%test _ =
+   let open E in
+   let t = rbinary ~ar:1 (var ~ar:1 1) join (name ~ar:2 @@ Name.name "r") in
+   let u = rbinary ~ar:1 (var ~ar:1 1) join (name ~ar:2 @@ Name.name "r") in
+   Pervasives.(t == u)
 
-  let%expect_test _ =
-    let g = 
-      let open E in
-      quant some (sim_binding false 1 univ)
-        [quant all (sim_binding true 2 @@ univ)
-           [rcomp (var ~ar:1 1) in_ univ]] in
-    let s = Fmt.to_to_string (E.pp_fml 0) g in 
-    Printf.printf "%s" s;
-    [%expect{| (some v/1 : univ {(all disj v/2, v/3 : univ {(v/2 in univ)})}) |}]
+   let%expect_test _ =
+   let g = 
+   let open E in
+   quant some (sim_binding false 1 univ)
+   [quant all (sim_binding true 2 @@ univ)
+   [rcomp (var ~ar:1 1) in_ univ]] in
+   let s = Fmt.to_to_string (E.pp_fml 0) g in 
+   Printf.printf "%s" s;
+   [%expect{| (some v/1 : univ {(all disj v/2, v/3 : univ {(v/2 in univ)})}) |}]
 
-  let x = Var.fresh "x"
-  let y = Var.fresh "y"
-  let f : (Ast.var, Ast.ident) fml =
-    fml Location.dummy @@ quant all [ (true, [bound_var x; bound_var y], exp (Some 1) Location.dummy univ)] [ fml Location.dummy @@ rcomp (exp (Some 1) Location.dummy @@ ident @@ var_ident x) in_ (exp (Some 1) Location.dummy univ)]
-  let g : (Ast.var, Ast.ident) fml =
-    fml Location.dummy @@ quant all [ (true, [bound_var x; bound_var y], exp (Some 1) Location.dummy univ)] [ fml Location.dummy @@ rcomp (exp (Some 1) Location.dummy @@ ident @@ var_ident x) in_ (exp (Some 1) Location.dummy univ)]
+   let x = Var.fresh "x"
+   let y = Var.fresh "y"
+   let f : (Ast.var, Ast.ident) fml =
+   fml Location.dummy @@ quant all [ (true, [bound_var x; bound_var y], exp (Some 1) Location.dummy univ)] [ fml Location.dummy @@ rcomp (exp (Some 1) Location.dummy @@ ident @@ var_ident x) in_ (exp (Some 1) Location.dummy univ)]
+   let g : (Ast.var, Ast.ident) fml =
+   fml Location.dummy @@ quant all [ (true, [bound_var x; bound_var y], exp (Some 1) Location.dummy univ)] [ fml Location.dummy @@ rcomp (exp (Some 1) Location.dummy @@ ident @@ var_ident x) in_ (exp (Some 1) Location.dummy univ)]
 
-  let f' = convert_fml [] f
-  let g' = convert_fml [] g
+   let f' = convert_fml [] f
+   let g' = convert_fml [] g
 
-  let%test _ =
-    Pervasives.(f' == g')
-
-
-  let%expect_test _ =
-    let fs = Fmt.to_to_string (E.pp_fml 0) f' in 
-    let gs = Fmt.to_to_string (E.pp_fml 0) f' in 
-    Printf.printf "%s" fs;
-    [%expect{| (all disj v/1, v/2 : univ {(v/1 in univ)}) |}];
-    Printf.printf "%s" gs;
-    [%expect{| (all disj v/1, v/2 : univ {(v/1 in univ)}) |}]
-
-  let cst = 
-    Parser_main.parse_string 
-      {| 
-         univ : { a b c d };
-         const r : univ->univ;
-         run
-         all disj x, y : r.univ, z : x.iden {
-         some z : univ | { x, y : univ | x =z } in iden };
-      |}
-  let ast  = 
-    cst 
-    |> Transfo.run Raw_to_ast.transfo
-    |> Shortnames.rename_elo true
-    |> Transfo.run Simplify2.transfo
-  let elo_goal = convert_goal ast.goal 
-
-  let%expect_test _ =
-    Fmt.pr "AST:@\n%a@\nELO:@\n%a"
-      Ast.pp_goal ast.goal
-      Elo.pp_goal elo_goal;
-    [%expect {|
-      AST:
-      run
-        (all disj x/2, y/3 : (r.univ)
-          {(all z/4 : (x/2.iden)
-             {(some z/5 : univ {({ x/6, y/7 : univ {(x/6 = z/5)} } in iden)})})
-          })
-      ELO:
-      run
-        (all disj v/1, v/2 : (r.univ)
-          {(all v/3 : (v/1.iden)
-             {(some v/4 : univ {({ v/5, v/6 : univ {(v/5 = v/4)} } in iden)})})
-          }) |}]
+   let%test _ =
+   Pervasives.(f' == g')
 
 
-  let cst = 
-    Parser_main.parse_string 
-      {| 
-         univ : { a b c d };
-         const r : univ->univ;
-         run
-         all disj x, y : r.univ, z : x.iden {
-            some z : univ | { x, y : univ | x =z } in iden };
-         all disj u, v : r.univ, z : u.iden {
-            some z : univ | { x, v : univ | x =z } in iden };
-      |}
-  let ast  = 
-    cst 
-    |> Transfo.run Raw_to_ast.transfo
-    |> Shortnames.rename_elo true
-    |> Transfo.run Simplify2.transfo
-  let elo_goal = convert_goal ast.goal 
+   let%expect_test _ =
+   let fs = Fmt.to_to_string (E.pp_fml 0) f' in 
+   let gs = Fmt.to_to_string (E.pp_fml 0) f' in 
+   Printf.printf "%s" fs;
+   [%expect{| (all disj v/1, v/2 : univ {(v/1 in univ)}) |}];
+   Printf.printf "%s" gs;
+   [%expect{| (all disj v/1, v/2 : univ {(v/1 in univ)}) |}]
 
-  let%test _ = match elo_goal with
-    | Run [f1;f2] -> Pervasives.(f1 == f2)
-    | Run _ -> false
+   let cst = 
+   Parser_main.parse_string 
+   {| 
+   univ : { a b c d };
+   const r : univ->univ;
+   run
+   all disj x, y : r.univ, z : x.iden {
+   some z : univ | { x, y : univ | x =z } in iden };
+   |}
+   let ast  = 
+   cst 
+   |> Transfo.run Raw_to_ast.transfo
+   |> Shortnames.rename_elo true
+   |> Transfo.run Simplify2.transfo
+   let elo_goal = convert_goal ast.goal 
 
-  let%expect_test _ =
-    Fmt.pr "AST:@\n%a@\nELO:@\n%a"
-      Ast.pp_goal ast.goal
-      Elo.pp_goal elo_goal;
-    [%expect {|
-      AST:
-      run
-        (all disj x/8, y/9 : (r.univ)
-          {(all z/10 : (x/8.iden)
-             {(some z/11 : univ {({ x/12, y/13 : univ {(x/12 = z/11)} } in iden)})})
-          })
-        (all disj u/14, v/15 : (r.univ)
-          {(all z/16 : (u/14.iden)
-             {(some z/17 : univ {({ x/18, v/19 : univ {(x/18 = z/17)} } in iden)})})
-          })
-      ELO:
-      run
-        (all disj v/1, v/2 : (r.univ)
-          {(all v/3 : (v/1.iden)
-             {(some v/4 : univ {({ v/5, v/6 : univ {(v/5 = v/4)} } in iden)})})
-          })
-        (all disj v/1, v/2 : (r.univ)
-          {(all v/3 : (v/1.iden)
-             {(some v/4 : univ {({ v/5, v/6 : univ {(v/5 = v/4)} } in iden)})})
-          }) |}]
+   let%expect_test _ =
+   Fmt.pr "AST:@\n%a@\nELO:@\n%a"
+   Ast.pp_goal ast.goal
+   Elo.pp_goal elo_goal;
+   [%expect {|
+   AST:
+   run
+   (all disj x/2, y/3 : (r.univ)
+   {(all z/4 : (x/2.iden)
+   {(some z/5 : univ {({ x/6, y/7 : univ {(x/6 = z/5)} } in iden)})})
+   })
+   ELO:
+   run
+   (all disj v/1, v/2 : (r.univ)
+   {(all v/3 : (v/1.iden)
+   {(some v/4 : univ {({ v/5, v/6 : univ {(v/5 = v/4)} } in iden)})})
+   }) |}]
 
 
+   let cst = 
+   Parser_main.parse_string 
+   {| 
+   univ : { a b c d };
+   const r : univ->univ;
+   run
+   all disj x, y : r.univ, z : x.iden {
+   some z : univ | { x, y : univ | x =z } in iden };
+   all disj u, v : r.univ, z : u.iden {
+   some z : univ | { x, v : univ | x =z } in iden };
+   |}
+   let ast  = 
+   cst 
+   |> Transfo.run Raw_to_ast.transfo
+   |> Shortnames.rename_elo true
+   |> Transfo.run Simplify2.transfo
+   let elo_goal = convert_goal ast.goal 
 
-end *)
+   let%test _ = match elo_goal with
+   | Run [f1;f2] -> Pervasives.(f1 == f2)
+   | Run _ -> false
+
+   let%expect_test _ =
+   Fmt.pr "AST:@\n%a@\nELO:@\n%a"
+   Ast.pp_goal ast.goal
+   Elo.pp_goal elo_goal;
+   [%expect {|
+   AST:
+   run
+   (all disj x/8, y/9 : (r.univ)
+   {(all z/10 : (x/8.iden)
+   {(some z/11 : univ {({ x/12, y/13 : univ {(x/12 = z/11)} } in iden)})})
+   })
+   (all disj u/14, v/15 : (r.univ)
+   {(all z/16 : (u/14.iden)
+   {(some z/17 : univ {({ x/18, v/19 : univ {(x/18 = z/17)} } in iden)})})
+   })
+   ELO:
+   run
+   (all disj v/1, v/2 : (r.univ)
+   {(all v/3 : (v/1.iden)
+   {(some v/4 : univ {({ v/5, v/6 : univ {(v/5 = v/4)} } in iden)})})
+   })
+   (all disj v/1, v/2 : (r.univ)
+   {(all v/3 : (v/1.iden)
+   {(some v/4 : univ {({ v/5, v/6 : univ {(v/5 = v/4)} } in iden)})})
+   }) |}]
+
+
+
+   end *)

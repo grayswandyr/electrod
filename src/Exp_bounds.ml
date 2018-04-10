@@ -27,8 +27,40 @@ let pp_subst out subst =
   Fmtc.(brackets @@ list @@ parens @@ pair int Tuple.pp) out
     (List.mapi (fun i tuple -> (i, tuple)) subst)
 
+
+(* says whether all tuples in a list are different from one another *)
+let rec alldiff (tuples : Tuple.t list) : bool = match tuples with
+  | [] -> true
+  | hd::tl when List.mem ~eq:Tuple.equal hd tl -> false
+  | _::tl -> alldiff tl 
+
+(* [sets] is a list of tuple sets, but a tuple set is expected to be given as a list of tuples. Returns a list of tuple lists: each of these represents a single tuple in the cartesian product, but not concatenated into a single long tuple yet (because these tuples will have to be composed with others before creating a really-long tuple) 
+
+   E.g.: suppose `set = [(1, 2); (3, 4)]`. 
+   Then we obtain, for `n = 3`:
+
+   [
+   [(3, 4); (3, 4); (3, 4)]; 
+   [(3, 4); (3, 4); (1, 2)]; 
+   [(3, 4); (1, 2); (3, 4)];
+   [(3, 4); (1, 2); (1, 2)]; 
+   [(1, 2); (3, 4); (3, 4)]; 
+   [(1, 2); (3, 4); (1, 2)];
+   [(1, 2); (1, 2); (3, 4)]; 
+   [(1, 2); (1, 2); (1, 2)]
+   ] 
+*)
+
+let nproduct 
+      (n : int) (disj : bool) (set : Tuple.t list) : Tuple.t list list = 
+  List.repeat n [set]
+  (* returns (a list of) lists of tuples: *)
+  |> List.cartesian_product  
+  (* possibly remove such lists that contain several instance of the same tuple *)
+  |> if disj then List.filter alldiff else Fun.id 
+
 (* In all the following functions, [subst] is a *stack* ot tuples, meaning 
-   tuples (corresponding to DB indices) appear reversed wrt their order of binding. Then index 0 refers to the last binding. *)
+   tuples (corresponding to DB indices) appear reversed wrt their order of binding. Then index 0 refers to the last (nearest) binding. *)
 let make_bounds_exp =
   let return_bounds (exp, subst) must sup =
     (if not (TS.subset must sup) then
@@ -164,22 +196,56 @@ let make_bounds_exp =
             | RIte (_, e1, e2) ->
                 let b1 = fbounds_exp (e1, subst) in
                 let b2 = fbounds_exp (e2, subst) in
-                return_bounds args (TS.inter b1.must b2.must) (TS.union b1.sup b2.sup) 
+                return_bounds args 
+                  (TS.inter b1.must b2.must) (TS.union b1.sup b2.sup) 
             | Prime e ->
                 fbounds_exp (e, subst)
-            | Compr (__sim_binding, _) ->
+            | Compr (sim_bindings, _) ->
                 (* The must of a compr set is empty. Indeed, it would be wrong
                    to compute the must from the sim_bindings only, because the
                    formula could be in contradiction with this must. Taking the
                    formula into account is not possible, so we consider an empty
                    must. *)
-                (* let pmust = TS.empty in  
-                   let psup =
-                   TS.of_tuples
-                   @@ bounds_sim_binding (fun { sup; _} -> sup) domain [] sim_binding
-                   in
-                   return_bounds args pmust psup *)
-                failwith (__FILE__ ^ ".bounds(Compr) : TODO!")
+                let sup_sim_binding
+                      (subst : Tuple.t list) (disj, nbvars, range)
+                  : Tuple.t list list = 
+                  let { sup; _ } = fbounds_exp (range, subst) in
+                  let sup_as_list = TS.to_list sup in 
+                  (* compute the exponent for this bindings *)
+                  nproduct nbvars disj sup_as_list  
+                in 
+                let rec sup_sim_bindings 
+                          (subst : Tuple.t list) sim_bindings 
+                  : Tuple.t list = 
+                  match sim_bindings with 
+                    | [] -> assert false
+                    | [sim_binding] -> 
+                        (* compute the product of bounds for the head sim_binding *)
+                        sup_sim_binding subst sim_binding
+                        (* base case => convert back into a list of tuples *)
+                        |> List.map Tuple.concat 
+                    | hd::tl -> 
+                        let hd_sup = sup_sim_binding subst hd in 
+                        (* as tail bindings may depend on the head, update the substitution *)   
+
+                        List.fold_left 
+                          (fun acc line -> 
+                             acc @ sup_sim_bindings (line @ subst) tl)
+                          []
+                          hd_sup
+                in
+
+                let sup_list = sup_sim_bindings subst sim_bindings in 
+                return_bounds args TS.empty (TS.of_tuples sup_list)
+
+                |> Fun.tap (fun { sup; _} -> 
+                      Msg.info (fun m -> 
+                            m "bounds Compr %a %a = %a@."
+                              (Elo.pp_prim_exp 0) pe 
+                              pp_subst subst 
+                              TS.pp sup
+                          ))
+
       end
 
 (* Computes the bounds for a sim_binding, in the case of a set defined by
@@ -211,6 +277,7 @@ let make_bounds_exp =
 
    [subst] is a substitution from already-visited sim_bindings. [fbound] is the
    function returning the bound (say the must or the sup).  *)
+
 (* and bounds_sim_bindings
    fbound
    domain
@@ -321,10 +388,4 @@ let make_bounds_exp =
    (*        Fmtc.(list ~sep:(const string ", ")@@ G.pp_var) vars *)
    (*        Fmtc.(list ~sep:sp @@ Tuple.pp) range_bnd *)
    (*        Fmtc.(brackets @@ list ~sep:sp @@ brackets @@ list ~sep:sp @@ Tuple.pp) res) *)
-
-
-   (* says whether all tuples in a list are diffferent form one another *)
-   and __all_different (tuples : Tuple.t list) : bool = match tuples with
-   | [] -> true
-   | hd::tl when List.mem ~eq:Tuple.equal hd tl -> false
-   | _::tl -> __all_different tl *)
+*)

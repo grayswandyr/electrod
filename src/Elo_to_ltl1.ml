@@ -16,7 +16,7 @@
     implementation of LTL *)
 
 open Containers
-open Exp_bounds2
+open Exp_bounds
 
 module G = Elo
 module TS = Tuple_set
@@ -171,7 +171,7 @@ module Make (Ltl : Solver.LTL) = struct
 
 
   class environment (elo : Elo.t) = object (_ : 'self)
-    val bounds_exp_aux = Exp_bounds2.make_bounds_exp elo.Elo.domain
+    val bounds_exp_aux = Exp_bounds.make_bounds_exp elo.Elo.domain
 
     method must_may_sup (subst : stack) (exp : G.exp) =
       bounds_exp_aux (exp, subst)
@@ -239,7 +239,7 @@ module Make (Ltl : Solver.LTL) = struct
        substitutions and then compute separately the semantics of every binding,
        before computing the whole resulting formula.
     *)
-    method build_Compr (_ : stack) = failwith "TODO"
+    method build_Compr (_ : stack) = failwith (__FILE__ ^".build_Compr: TODO")
 
     method build_Diff (_ : stack) (_ : G.exp) (_ : G.exp) e' f' = 
       fun (tuple : Tuple.t) ->

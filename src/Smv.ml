@@ -498,8 +498,6 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
         IO.with_out tgt (fun out -> IO.write_line out default);
         tgt
 
-  (* TODO pass script as argument *)
-  (* TODO allow to specify a user script *)
   let analyze ~conversion_time ~cmd ~script ~keep_files
         ~no_analysis ~elo ~file model : Outcome.t=
     let keep_or_remove_files scr smv =

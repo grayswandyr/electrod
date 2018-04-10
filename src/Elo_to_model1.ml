@@ -162,7 +162,7 @@ struct
             Elo.pp elo);
 
     (* walk through formulas, convert them to LTL and accumulate rigid
-       and flexible variables. TODO: replace sequences by sets. *)
+       and flexible variables. *)
     (* let exception Early_stop in *)
     let translate_formulas fmls =
       (* try *)

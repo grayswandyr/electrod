@@ -161,7 +161,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
                              (Outcome.pp ~format:outcome_format) res)
       end);
 
-    Msg.info (fun m -> 
+    Msg.debug (fun m -> 
           m "Count references to hashconsed formulas:@\n@[<v2>%a@]"
             Elo.pp_fml_stats 10
         );

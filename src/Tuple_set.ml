@@ -31,11 +31,11 @@ include P
 
 
 let to_list = TS.elements
-                
+
 let to_seq = TS.to_seq
 
 let of_seq = TS.of_seq
-               
+
 let empty = TS.empty
 
 let of_tuples tuples =
@@ -70,15 +70,15 @@ let subset b1 b2 =
 
 let equal b1 b2 =
   TS.equal b1 b2
-  (* |> Fun.tap (fun res -> *)
-  (*       Msg.debug *)
-  (*         (fun m -> m "equal %a %a -> %B" *)
-  (*                     pp b1 pp b2 res)) *)
+(* |> Fun.tap (fun res -> *)
+(*       Msg.debug *)
+(*         (fun m -> m "equal %a %a -> %B" *)
+(*                     pp b1 pp b2 res)) *)
 
 let compare b1 b2 =
   TS.compare b1 b2
-    
-    
+
+
 let product b1 b2 =
   let prod =
     Sequence.product (TS.to_seq b1) (TS.to_seq b2)
@@ -212,6 +212,6 @@ let transitive_closure_is b =
 let mem t bnd =
   TS.mem t bnd
 
-  
+
 let rename atom_renaming ts =
   TS.map (Tuple.rename atom_renaming) ts
