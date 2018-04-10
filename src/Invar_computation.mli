@@ -14,6 +14,21 @@
 
 (** Helpers for sorting formulas into invariants, and other types of formulas *)
 
+
+
+(** 
+   Static_prop: a proposition that does not include any variable relation
+   nor any temporal operator.
+   Primed_prop: a propostion that may include variabale and constant
+   relations, without any temporal operator except un-nested X (next) or
+   prime.
+   Invar: proposition of the form always (phi) where phi does not include
+   any temporal operator (the color pf phi is Init or Static_prop).
+   Init: proposition without any temporal operator.
+   Trans: proposition of the form always (phi) where the color of phi is
+   Primed_prop.
+   Temporal: any other proposition.
+*)
 type goal_color = private
     Static_prop
   | Primed_prop
@@ -22,9 +37,14 @@ type goal_color = private
   | Trans
   | Temporal
 val to_string : goal_color -> string
+
 val pp : Format.formatter -> goal_color -> unit
 
+(** removes the top level always operator in an invariant elo formula *)
 val remove_always_from_invar : Elo.fml -> Elo.fml
+
+(** adds an always operator to an (invariant) elo formula if the
+   outermost operator is not an always *)
 val add_always_to_invar : Elo.fml -> Elo.fml
 
 (** Computes the color of a formula *)

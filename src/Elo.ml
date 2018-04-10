@@ -137,17 +137,31 @@ let exp_table : (fml, exp, iexp) oexp HC.t =
 let iexp_table : (fml, exp, iexp) oiexp HC.t =
   HC.create 197
 
+(* to trace the number a piece of data is referenced in the hashconsed syntax DAG *)
+
+module Fml_count = CCHashtbl.Make(struct 
+    type t = (fml, exp, iexp) ofml HC.hash_consed 
+    let hash HC.{ hkey; _ } = hkey
+    let equal f1 f2 = Equal.physical f1 f2
+  end)
+let fml_count : int Fml_count.t = Fml_count.create 793
+
 let hfml f : fml = 
-  Fml (HC.hashcons fml_table f)
+  let hdata = HC.hashcons fml_table f in
+  Fml_count.incr fml_count hdata;
+  Fml hdata
+
 
 let exp ~ar (prim_exp : prim_exp) =
   { prim_exp; arity = ar; }
 
 let hexp oe : exp =
-  Exp (HC.hashcons exp_table oe)
+  let res = HC.hashcons exp_table oe in
+  Exp res
 
 let hiexp oie : iexp = 
-  Iexp (HC.hashcons iexp_table oie)
+  let res = HC.hashcons iexp_table oie in
+  Iexp res
 
 
 class ['self] map = object (self : 'self)
@@ -615,3 +629,30 @@ let pp out { domain; instance; invariants; goal; _ } =
         **< cut
         **< (Fmtc.list @@ pp_fml 0)) invariants
     (vbox @@ pp_goal) goal
+
+
+let pp_fml_stats __out inf  =
+  let stats = Fml_count.to_list fml_count in
+  let stats = List.filter (fun (_, count) -> count > inf) stats in
+  let pr s (length, nbval, sum_bl, smallest_bl, median_bl, biggest_bl) = 
+    Fmt.pr "Stats for table of %s:@\n@[<v2>\
+            Length: %d@\n\
+            Number of entries: %d@\n\
+            Sum of bucket lengths: %d@\n\
+            Smallest bucket length: %d@\n\
+            Median bucket length: %d@\n\
+            Biggest bucket length: %d@\n\
+            @]@\n" 
+      s length nbval sum_bl smallest_bl median_bl biggest_bl
+  in
+  pr "formulas" @@ HC.stats fml_table;
+  pr "expressions" @@ HC.stats exp_table;
+  pr "integer expressions" @@ HC.stats iexp_table;
+  Format.(printf "%a@." 
+          (vbox @@ list 
+           @@ hbox 
+           @@ pair ~sep:(const string "-->") 
+                (fun out data -> (pp_fml 100) out (Fml data)) 
+                int))
+    stats;
+    HC.iter (fun data -> Fmt.pr "%a@\n" (pp_fml 100) (Fml data)) fml_table 

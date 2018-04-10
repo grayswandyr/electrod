@@ -14,19 +14,6 @@
 
 open Containers
 
-(* 
-   Static_prop: a proposition that does not include any variable relation
-   nor any temporal operator.
-   Primed_prop: a propostion that may include variabale and constant
-   relations, without any temporal operator except un-nested X (next) or
-   prime.
-   Invar: proposition of the form always (phi) where phi does not include
-   any temporal operator (the color pf phi is Init or Static_prop).
-   Init: proposition without any temporal operator.
-   Trans: proposition of the form always (phi) where the color of phi is
-   Primed_prop.
-   Temporal: any other proposition.
-*)
 type goal_color = Static_prop | Primed_prop | Invar | Init | Trans | Temporal
 
 let to_string (gc : goal_color) =
@@ -60,7 +47,6 @@ let max_color_wiwt c1 c2 =
       -> Primed_prop 
     | _ , _ -> Temporal
 
-(* removes the top level always operator in an invariant elo formula *)
 let rec remove_always_from_invar (Elo.Fml { node; _} as fml) =
   let open Elo in
   match node with
@@ -71,8 +57,6 @@ let rec remove_always_from_invar (Elo.Fml { node; _} as fml) =
         lbinary fml1' and_ fml2'
     | _ -> fml
 
-(* adds an always operator to an (invariant) elo formula if the
-   outermost operator is not an always *)
 let add_always_to_invar (Elo.Fml { node; _} as fml)  =
   let open Elo in
   match node with

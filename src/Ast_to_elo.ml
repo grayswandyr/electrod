@@ -172,7 +172,7 @@ let convert (ast : Ast.t) =
   E.make 
     ast.file ast.domain ast.instance ast.sym invariants goal 
     ast.atom_renaming ast.name_renaming
-
+(* 
 module Test = struct
 
   open Gen_goal
@@ -298,4 +298,7 @@ module Test = struct
           {(all v/3 : (v/1.iden)
              {(some v/4 : univ {({ v/5, v/6 : univ {(v/5 = v/4)} } in iden)})})
           }) |}]
-end
+
+
+
+end *)
