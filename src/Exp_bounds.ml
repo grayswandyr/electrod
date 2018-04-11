@@ -59,6 +59,116 @@ let nproduct
   (* possibly remove such lists that contain several instance of the same tuple *)
   |> if disj then List.filter alldiff else Fun.id 
 
+
+(* The must of a compr set is empty. Indeed, it would be wrong
+   to compute the must from the sim_bindings only, because the
+   formula could be in contradiction with this must. Taking the
+   formula into account is not possible, so we consider an empty
+   must. *)
+let sup_sim_binding fbounds_exp
+      (subst : Tuple.t list) (disj, nbvars, range)
+  : Tuple.t list list = 
+  (* compute the bound for the range of *this* sim binding. NOTE: [range]
+     is given as a [Tuple.t list] instead of a [TS.t] for technical purposes
+     only. As a consequence, the returned value for the whole function is a
+     set of sets of tuples represented by a list of lists... *)
+  let { sup; _ } = fbounds_exp (range, subst) in
+  let sup_as_list = TS.to_list sup in 
+  (* compute the exponent for this bindings (NOTE: tuples are not concatenated, 
+     just put in the same list representing a combination of tuples). 
+
+     E.g.: suppose `range = [(1, 2); (3, 4)]`. 
+     Then we obtain, for `nbvars = 3`:
+
+     [
+     [(3, 4); (3, 4); (3, 4)]; 
+     [(3, 4); (3, 4); (1, 2)]; 
+     [(3, 4); (1, 2); (3, 4)];
+     [(3, 4); (1, 2); (1, 2)]; 
+     [(1, 2); (3, 4); (3, 4)]; 
+     [(1, 2); (3, 4); (1, 2)];
+     [(1, 2); (1, 2); (3, 4)]; 
+     [(1, 2); (1, 2); (1, 2)]
+     ] *)
+  nproduct nbvars disj sup_as_list  
+
+(* Computes the bounds for sim_bindings, in the case of a set defined by
+   comprehension.
+
+   The whole idea of this function (and the following auxiliary ones) is to
+   apply the following scheme.  Say we want to compute: 
+
+   sup({x : s, y : x.r | ...})
+
+   The result must be:
+
+   sup(s) -> { UNION_(tuple in sup(s)) sup( x.r [tuple/x] ) }
+
+   as every pair in the comprehension is s.t. the range 
+   for y depends on the value for x.
+
+   E.g.: Taking sup(s) = { a b }, sup(r) = { (a b) (b c) (a c) (a d) }:
+
+   x : s, y : x.r
+
+   should yield:
+
+   (a x a.r) union (b x b.r) = {(a b) (a c) (a d) (b c)}
+
+   So what we do is the following: Walk left-to-right along some sim_bindings
+   and compute the corresponding bound, while accumulating already computed
+   bounds. Finally everything is composed.  
+
+   [subst] is a substitution from already-visited sim_bindings. [fbound] is the
+   function returning the bound.  *)
+let rec sup_sim_bindings fbounds_exp
+          (subst : Tuple.t list) sim_bindings 
+  : Tuple.t list = 
+  Msg.debug (fun m -> 
+        m "IN sup_sim_bindings %a %a"
+          pp_subst subst
+          G.(pp_sim_bindings (List.length subst)) sim_bindings);
+  (match sim_bindings with 
+    | [] -> assert false
+    | [sim_binding] -> 
+        (* compute the product of bounds for the head sim_binding *)
+        sup_sim_binding fbounds_exp subst sim_binding
+        (* base case => convert back into a list of tuples *)
+        |> List.map Tuple.concat 
+    | hd::tl -> 
+        let hd_sup = sup_sim_binding fbounds_exp subst hd in  
+        (* as explained above in the example: for every possible combination
+           of tuples in [hd_sup], we have to substitute *this* combination in
+           the tail, then compute the resulting product and add it to the
+           whole possibilities *)
+        List.fold_left
+          (fun acc line -> 
+             acc @ product_for_one_hd_combination fbounds_exp subst tl line)
+          []
+          hd_sup
+  )
+  |> Fun.tap (fun res -> Msg.debug (fun m -> 
+        m "OUT sup_sim_bindings %a %a = %a"
+          pp_subst subst
+          G.(pp_sim_bindings (List.length subst)) sim_bindings
+          Fmtc.(braces @@ list ~sep:sp @@ Tuple.pp) res
+      ))
+
+(* given the list of tuples corresponding to the bound for the head sim
+   binding (so it's a list of tuples, as there are multiple variables bound
+   to a given range), compute all the products with all the results obtained
+   by substituting in the tail according to the substitutions induced by the
+   said head tuples. [fbounds_exp] is the function computing the bound (it is cached below in the file) *)
+and product_for_one_hd_combination 
+      fbounds_exp subst (tl : (bool * int * G.exp) list) 
+      (hd_combination : Tuple.t list) =
+  let tl_sup = 
+    sup_sim_bindings fbounds_exp (List.rev hd_combination @ subst) tl 
+  in 
+  List.product Tuple.(@@@) [Tuple.concat hd_combination] tl_sup
+
+
+
 (* In all the following functions, [subst] is a *stack* ot tuples, meaning 
    tuples (corresponding to DB indices) appear reversed wrt their order of binding. Then index 0 refers to the last (nearest) binding. *)
 let make_bounds_exp =
@@ -68,7 +178,7 @@ let make_bounds_exp =
              m
                "%s.bounds@ %a@ with@\nsubst= %a@\n@\nmust(%a)=@ \
                 %a@\nsup(%a)=@ %a@."
-               __FILE__
+               __MODULE__
                (G.pp_exp @@ List.length subst) exp
                pp_subst subst
                (G.pp_exp @@ List.length subst) exp
@@ -107,7 +217,7 @@ let make_bounds_exp =
                 begin match List.get_at_idx v subst with
                   | None ->
                       Fmt.kstrf failwith 
-                        "%s.bounds_prim_exp: no variable %d in substitution %a" __FILE__ 
+                        "%s.bounds_prim_exp: no variable %d in substitution %a" __MODULE__ 
                         v
                         pp_subst subst
                   | Some tuple ->
@@ -201,212 +311,9 @@ let make_bounds_exp =
             | Prime e ->
                 fbounds_exp (e, subst)
             | Compr (sim_bindings, _) ->
-                (* The must of a compr set is empty. Indeed, it would be wrong
-                   to compute the must from the sim_bindings only, because the
-                   formula could be in contradiction with this must. Taking the
-                   formula into account is not possible, so we consider an empty
-                   must. *)
-                let sup_sim_binding
-                      (subst : Tuple.t list) (disj, nbvars, range)
-                  : Tuple.t list list = 
-                  Msg.debug (fun m -> 
-                        m "IN sup_sim_binding %a (%B, %d, %a)"
-                          pp_subst subst 
-                          disj nbvars
-                          (pp_exp (List.length subst)) range);
-                  let { sup; _ } = fbounds_exp (range, subst) in
-                  let sup_as_list = TS.to_list sup in 
-                  (* compute the exponent for this bindings *)
-                  nproduct nbvars disj sup_as_list  
-                  |> Fun.tap (fun res -> Msg.debug (fun m -> 
-                        m "OUT sup_sim_binding %a (%B, %d, %a) = %a"
-                          pp_subst subst 
-                          disj nbvars
-                          (pp_exp (List.length subst)) range 
-                          Fmtc.(braces @@ vbox @@ list ~sep:sp @@ hvbox2 @@ parens @@ list ~sep:comma @@ Tuple.pp) res
-                      ))
-                in 
-                let rec sup_sim_bindings 
-                          (subst : Tuple.t list) sim_bindings 
-                  : Tuple.t list = 
-                  Msg.debug (fun m -> 
-                        m "IN sup_sim_bindings %a %a"
-                          pp_subst subst
-                          G.(pp_sim_bindings (List.length subst)) sim_bindings);
-                  (match sim_bindings with 
-                    | [] -> assert false
-                    | [sim_binding] -> 
-                        (* compute the product of bounds for the head sim_binding *)
-                        sup_sim_binding subst sim_binding
-                        (* base case => convert back into a list of tuples *)
-                        |> List.map Tuple.concat 
-                    | hd::tl -> 
-                        let hd_sup = sup_sim_binding subst hd in 
-                        (* as tail bindings may depend on the head, update the substitution *)   
-                        List.fold_left
-                          (fun acc line -> 
-                             acc @ product_for_one_hd_combination subst tl line)
-                          []
-                          hd_sup
-                  )
-                  |> Fun.tap (fun res -> Msg.debug (fun m -> 
-                        m "OUT sup_sim_bindings %a %a = %a"
-                          pp_subst subst
-                          G.(pp_sim_bindings (List.length subst)) sim_bindings
-                          Fmtc.(braces @@ list ~sep:sp @@ Tuple.pp) res
-                      ))
 
-                and product_for_one_hd_combination subst tl hd_combination =
-                  let tl_sup = 
-                    sup_sim_bindings (List.rev hd_combination @ subst) tl 
-                  in 
-                  List.product Tuple.(@@@) [Tuple.concat hd_combination] tl_sup
-
-                in 
-                let sup_list = sup_sim_bindings subst sim_bindings in 
+                let sup_list = sup_sim_bindings fbounds_exp subst sim_bindings in 
                 return_bounds args TS.empty (TS.of_tuples sup_list)
 
 
       end
-
-(* Computes the bounds for a sim_binding, in the case of a set defined by
-   comprehension.
-
-   The whole idea of this function (and the following auxiliary ones) is to
-   apply the following scheme.  Say we want to compute: 
-
-   must({x : s, y : x.r | ...})
-
-   The result must be:
-
-   must(s) -> { UNION_(tuple in must(s)) must( x.r [tuple/x] ) }
-
-   as every pair in the comprehension is s.t. the range 
-   for y depends on the value for x.
-
-   E.g.: Taking must(s) = { a b }, must(r) = { (a b) (b c) (a c) (a d) }:
-
-   x : s, y : x.r
-
-   should yield:
-
-   (a x a.r) union (b x b.r) = {(a b) (a c) (a d) (b c)}
-
-   So what we do is the following: Walk left-to-right along some sim_bindings
-   and compute the corresponding bound, while accumulating already computed
-   bounds. Finally everything is composed.  
-
-   [subst] is a substitution from already-visited sim_bindings. [fbound] is the
-   function returning the bound (say the must or the sup).  *)
-
-(* and bounds_sim_bindings
-   fbound
-   domain
-   (subst : Tuple.t list)
-   (sbs : (G.var, G.ident) G.sim_binding list)
-   : Tuple.t list =  
-   let open! List in
-   match sbs with
-   | [] -> assert false      (* nonempty list *)
-   | [(disj, vs, r)] -> 
-   (* compute the product of bounds for the head sim_binding, it yields a
-   list of combinations (= lists) of tuples *)
-   bounds_sim_binding fbound domain subst disj vs r
-   (* as we're done, we concat tuples in every combination *)
-   >|= Tuple.concat
-   | (disj, vs, r)::tl ->
-   (* compute the product of bounds for the head sim_binding, it yields a
-   list of combinations (= lists) of tuples *)
-   let hd_bnd =
-   bounds_sim_binding fbound domain subst disj vs r
-   in
-   (* cast to create a substitution below *)
-   let vars = map (fun (G.BVar v) -> v) vs in
-   (* as explained above in the example: for every possible combination
-   of tuples in [hd_bnd], we have to substitute *this* combination in
-   the tail, then compute the resulting product and add it to the
-   whole possibilities *)
-   fold_left
-   (fun acc combination ->
-   acc
-   @ (* we use @ instead of union because it should be faster and
-   the end result will be converted back into a set anyway *)
-   product_for_one_hd_combination
-   fbound domain subst vars tl combination)
-   []                  (* empty accumulator *)
-   hd_bnd
-
-   (* given the list of tuples corresponding to the bound for the head sim
-   binding (so it's a list of tuples, as there are multiple variables bound
-   to a given range), compute all the products with all the results obtained
-   by substituting in the tail according to the substitutions induced by the
-   said head tuples *)
-   and product_for_one_hd_combination fbound domain subst vars
-   (tail : (G.var, G.ident) G.sim_binding list)
-   (hd_combination : Tuple.t list)
-   : Tuple.t list =
-   let open! List in
-   (* compute the corresponding substitution for this instance of the head bound *)
-   let subst2 = combine vars hd_combination @ subst in
-   (* compute all the tuples for the tail with *this* subtitution *)
-   let tl_bnd =
-   bounds_sim_bindings fbound domain subst2 tail
-   in
-   (* create all combinations with this instance of the head bound and the
-   tuples computed for the tail *)
-   product Tuple.(@@@) [Tuple.concat hd_combination] tl_bnd *)
-
-(* for one sim_binding *)
-(* and __bounds_sim_binding 
-   fbound
-   domain
-   (subst : Tuple.t list) 
-   disj
-   vars
-   (dom : G.exp)
-   : Tuple.t list list
-   =
-   let open List in
-   (* compute the bound for the range of *this* sim binding. NOTE: [range_bnd]
-   is given as a [Tuple.t list] instead of a [TS.t] for technical purposes
-   only. As a consequence, the returned value for the whole function is a
-   set of sets of tuples represented by a list of lists... *)
-   let range_bnd =
-   TS.to_list @@ fbound @@ bounds_exp subst domain dom
-   in
-   (* compute the bound for the whole head sim binding  *)
-   let lg = length vars in
-   let prod =
-   (* create as many copies as necessary (= nb of variables) of the domain *)
-   init lg (fun _ -> range_bnd)
-   (* & compute product (NOTE: tuples are not concatenated, just put in the
-   same list representing a combination of tuples).  
-
-   E.g.: suppose `range_bnd = [(1, 2); (3, 4)]`. 
-   Then we obtain, for `lg = 3`:
-
-   [
-   [(3, 4); (3, 4); (3, 4)]; 
-   [(3, 4); (3, 4); (1, 2)]; 
-   [(3, 4); (1, 2); (3, 4)];
-   [(3, 4); (1, 2); (1, 2)]; 
-   [(1, 2); (3, 4); (3, 4)]; 
-   [(1, 2); (3, 4); (1, 2)];
-   [(1, 2); (1, 2); (3, 4)]; 
-   [(1, 2); (1, 2); (1, 2)]
-   ] *)
-   |> cartesian_product 
-   in
-   (* Remove lines where there are tuples in common if [disj = true].
-   [all_different] is defined below. *)
-   (if disj then filter __all_different prod else prod)
-   (* |> Fun.tap *)
-   (* @@ fun res -> *)
-   (* Msg.debug *)
-   (*   (fun m -> *)
-   (*      m "bounds_sim_binding %B %a %a --> @[<hov>%a@]" *)
-   (*        disj *)
-   (*        Fmtc.(list ~sep:(const string ", ")@@ G.pp_var) vars *)
-   (*        Fmtc.(list ~sep:sp @@ Tuple.pp) range_bnd *)
-   (*        Fmtc.(brackets @@ list ~sep:sp @@ brackets @@ list ~sep:sp @@ Tuple.pp) res) *)
-*)

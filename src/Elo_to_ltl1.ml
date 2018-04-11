@@ -27,6 +27,13 @@ let pp_subst out subst =
   Fmtc.(brackets @@ list @@ parens @@ pair int Tuple.pp) out
     (List.mapi (fun i tuple -> (i, tuple)) subst)
 
+let all_different ~eq xs =
+  let rec walk acc = function
+    | [] -> true
+    | [hd] -> not @@ List.mem ~eq hd acc
+    | hd::tl -> not @@ List.mem ~eq hd acc && walk (hd::acc) tl
+  in walk [] xs
+
 module Make (Ltl : Solver.LTL) = struct
   open Ltl
   open Ltl.Infix
@@ -224,22 +231,95 @@ module Make (Ltl : Solver.LTL) = struct
       self#build_Compr env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
 
     method private allocate_sbs_to_tuples
-                     (vars : (Var.t * G.exp) list)
-                     (l : Atom.t list) : Tuple.t list =
-      match vars with
+                     (ranges : G.exp list)
+                     (tuple : Tuple.t) : Tuple.t list =
+      let rec walk ranges atoms = match ranges with
         | [] -> []
-        | (_, r)::tl ->
-            let xs, ys = List.take_drop (G.arity r) l in (* FIXME: get_exn may return None *)
-            Tuple.of_list1 xs :: self#allocate_sbs_to_tuples tl ys
+        | hd::tl ->
+            let xs, ys = List.take_drop (G.arity hd) atoms in 
+            Tuple.of_list1 xs :: walk tl ys
+      in 
+      walk ranges @@ Tuple.to_list tuple
 
-    (* shape: [{ sb1, sb2,... | b }]. Each [sb] is of shape [disj x1, x2 : e] .
+    (* check if the disj's in the comprehension sim_bindings are respected *)
+    method private check_compr_disj 
+                     (sbs : (bool * int * G.exp) list) (split_tuples : Tuple.t list) : bool =
+      let rec walk sbs tuples = match sbs with
+        | [] -> true
+        | (true, nbvars, _)::tl -> 
+            let xs, ys = List.take_drop nbvars tuples in 
+            let alldiff = all_different ~eq:Tuple.equal xs in
+            Msg.info (fun m -> 
+                  m "check_compr_disj (true, %d, _) tuples = %a alldiff = %B"
+                    nbvars
+                    Fmtc.(brackets @@ list ~sep:sp @@ Tuple.pp) tuples
+                    alldiff
+                );            
+            alldiff &&  walk tl ys
+        | (false, nbvars, _)::tl ->
+            let ys = List.drop nbvars tuples in 
+            walk tl ys
+      in walk sbs split_tuples
+
+
+    (* shape: [{ sb1, sb2,... | b }]. Each [sb] is of shape [disj nbvar: e] .
 
        The first item implies that we have to fold over the [sb]'s to substitute
        previously-bound variables. In the following function, we perform these
        substitutions and then compute separately the semantics of every binding,
        before computing the whole resulting formula.
     *)
-    method build_Compr (_ : stack) = failwith (__FILE__ ^".build_Compr: TODO")
+    method build_Compr
+             (subst : stack) 
+             (sbs : (bool * int * G.exp) list) (body : G.fml list) 
+             __sbs' __body' tuple = 
+      let compr_ar = 
+        List.fold_left (fun acc (_, n, r) -> acc + n * G.arity r) 0 sbs in 
+      let depth = List.length subst in 
+      (if Tuple.arity tuple <> compr_ar then
+         Msg.err (fun m -> 
+               m "%s.build_Compr [[{%a@ |@ %a}]]_%a(%a): \
+                  tuple arity (%d) incompatible with expression arity (%d)"
+                 __MODULE__
+                 (G.pp_sim_bindings depth) sbs
+                 (G.pp_block depth) body
+                 pp_subst subst 
+                 Tuple.pp tuple
+                 (Tuple.arity tuple)
+                 compr_ar
+             ));
+      (* the tuple is (in principle) of arity equal to the sum of arities of ranges of bound variables. To build the corresponding substitutions, we must first split this tuple into as many tuples as variables, each one with the adequate arity *)
+      let ranges = 
+        List.flat_map (fun (_, nbvars, range) -> List.repeat nbvars [range]) sbs
+      in 
+      let split_tuples = self#allocate_sbs_to_tuples ranges tuple 
+      in 
+      if self#check_compr_disj sbs split_tuples then
+        (* semantics of [b] is [[ b [tuples / variables] ]] *)
+        let b' = self#visit_fml (List.rev split_tuples @ subst) @@ G.block body
+        in 
+        (* every single sim_binding contains possibly many variables and they may depend over previous bindings of the same comprehension. Because of the many variables, we use [fold_flat_map] which is like a fold returning a pair of an accumulator and a list, the latter undergoing flattening *)
+        let (_, ranges') = 
+          List.fold_flat_map
+            (fun (acc_split_tuples, acc_subst) (_, nbvars, r) ->
+               let boundvars, remaining = 
+                 List.take_drop nbvars acc_split_tuples 
+               in
+               let r' = self#visit_exp acc_subst r (Tuple.concat boundvars) in 
+               (* copy range nbvars times *)
+               let rs' = List.repeat nbvars [r'] in 
+               let new_subst = List.rev boundvars @ acc_subst in
+               ((remaining, new_subst), rs')
+            )
+            (split_tuples, subst)
+            sbs 
+        in 
+        conj (b' :: ranges')
+        |> Fun.tap (fun res -> 
+              Msg.debug (fun m -> m "build_Compr --> %a" pp res))
+      else 
+        (Msg.debug (fun m -> m "build_Compr --> false (disj case)"); 
+         false_)
 
     method build_Diff (_ : stack) (_ : G.exp) (_ : G.exp) e' f' = 
       fun (tuple : Tuple.t) ->
@@ -409,6 +489,7 @@ module Make (Ltl : Solver.LTL) = struct
              ))
       in
       (smallop mustpart maypart)
+
     method build_R (_ : stack) (a : ltl) (b : ltl) : ltl = releases a b
     method build_RBin (_ : stack) (a : G.exp) (_ : G.rbinop) (b : G.exp) a' op' b' tuple = op' a b a' b' tuple
     method build_RComp (_ : stack) f1 __op f2 f1' op' f2' =
@@ -441,7 +522,7 @@ module Make (Ltl : Solver.LTL) = struct
     method build_TClos subst r __r' =
       Msg.debug
         (fun m -> m "%s.build_TClos <-- %a"
-                    __FILE__  
+                    __MODULE__  
                     G.(pp_exp (arity r)) r);
       let { sup ; _ } = env#must_may_sup subst r in
       let k = compute_tc_length sup in
@@ -463,7 +544,7 @@ module Make (Ltl : Solver.LTL) = struct
     method build_Var (subst : stack) idx _ tuple = 
       match List.get_at_idx idx subst with
         | None -> 
-            Fmtc.kstrf failwith "%s.build_Var: variable %d not found in %a" __FILE__ 
+            Fmtc.kstrf failwith "%s.build_Var: variable %d not found in %a" __MODULE__ 
               idx
               pp_subst subst
         | Some value ->

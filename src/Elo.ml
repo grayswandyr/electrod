@@ -646,8 +646,8 @@ let pp out { domain; instance; invariants; goal; _ } =
 
 
 let pp_fml_stats __out inf  =
-  let stats = Fml_count.to_list fml_count in
-  let stats = List.filter (fun (_, count) -> count > inf) stats in
+  let __stats = Fml_count.to_list fml_count in
+  let __stats = List.filter (fun (_, count) -> count > inf) __stats in
   let pr s (length, nbval, sum_bl, smallest_bl, median_bl, biggest_bl) = 
     Fmt.pr "Stats for table of %s:@\n@[<v2>\
             Length: %d@\n\
@@ -662,11 +662,4 @@ let pp_fml_stats __out inf  =
   pr "formulas" @@ HC.stats fml_table;
   pr "expressions" @@ HC.stats exp_table;
   pr "integer expressions" @@ HC.stats iexp_table;
-  Format.(printf "%a@." 
-            (vbox @@ list 
-             @@ hbox 
-             @@ pair ~sep:(const string "-->") 
-                  (fun out data -> (pp_fml 0) out (Fml data)) 
-                  int))
-    stats;
   HC.iter (fun data -> Fmt.pr "%a@\n" (pp_fml 0) (Fml data)) fml_table 

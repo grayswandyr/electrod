@@ -29,13 +29,13 @@ let convert_arity = function
 let get_var x stack = match List.find_idx (fun v -> Var.equal x v) stack with
   | None -> 
       Format.kasprintf failwith "%s.get_var: variable %a not found in %a"
-        __FILE__  
+        __MODULE__  
         Var.pp x
         Fmtc.(brackets @@ list ~sep:(sp **> comma) @@ Var.pp) stack
   | Some (i, _) -> i
 
 let new_env vars stack = 
-  Msg.info (fun m -> 
+  Msg.debug (fun m -> 
         m "Ast_to_elo.new_env: stacking %a onto %a"
           Fmt.(brackets @@ list ~sep:comma Ast.pp_var) (List.rev vars)
           Fmt.(brackets @@ list ~sep:comma Var.pp) stack
@@ -136,7 +136,7 @@ and convert_exp stack
         let vars = List.flat_map (fun (_, vars, _) -> vars) decls in
         let block' = convert_block (new_env vars stack) block in
         E.compr ~ar decls' block'
-        |> Fun.tap (fun e -> Msg.info (fun m -> m "Ast_to_elo.convert_Compr@ @[<hov2>%a@]@ --> @[<hov2>%a@]" Ast.pp_prim_exp prim_exp (E.pp_exp 0) e))
+        |> Fun.tap (fun e -> Msg.debug (fun m -> m "Ast_to_elo.convert_Compr@ @[<hov2>%a@]@ --> @[<hov2>%a@]" Ast.pp_prim_exp prim_exp (E.pp_exp 0) e))
 
 and convert_sim_bindings 
       stack (decls : (Ast.var, Ast.ident) Gen_goal.sim_binding list) = 
