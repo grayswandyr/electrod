@@ -14,14 +14,13 @@ depends: [
   "jbuilder" {build & >="1.0+beta19"}
   "ppxfind" {build} 
   "cmdliner" { >= "1.0.2"  }
-  "containers" { >= "2.0+alpha1" }
+  "containers" { >= "2.0" }
   "fmt" 
   "gen" 
   "hashcons" 
   "logs" 
   "menhir" 
   "mtime" 
-  "ppx_deriving" 
   "printbox"
   "sequence" 
   "visitors" 

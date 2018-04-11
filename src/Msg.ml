@@ -280,7 +280,7 @@ module Fatal = struct
       
   let arity_error args = err @@ fun m -> args @@
     fun infile exp msg ->
-    let loc = exp.GenGoal.exp_loc in
+    let loc = exp.Gen_goal.exp_loc in
     m ~header:(code 13)
       "%a%a: %s%a"
       (option @@ colon **> string) infile

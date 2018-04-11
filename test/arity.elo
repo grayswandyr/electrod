@@ -1,8 +1,7 @@
--- ~15s with 20
-univ : { M$1 .. M$3 W$1 .. W$3 }
+univ : { M$1 .. M$2 W$1 .. W$2 }
 
-const Man :{} { M$1 .. M$3 }
-const Woman : {} { W$1 .. W$3  }
+const Man :{} { M$1 .. M$2 }
+const Woman : {} { W$1 .. W$2  }
 
 var wife : {} Man->Woman
 var husband : {} Woman->Man
@@ -20,7 +19,7 @@ all m : Man | lone m.wife
 
 husband = ~wife
 
-some { disj x, y : wife, m : Man, w : m.wife | m->w in Man->Woman}
+some { disj x, y : wife, s : Man, t : s.wife | s->t in Man->Woman} 
 
 run
 no husband;

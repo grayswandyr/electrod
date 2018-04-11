@@ -12,11 +12,15 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-(** Given an implementation for atoms, provides a LTL implementation with a
-    pretty printing function for Solver formulas.  *)
-module Make_SMV_LTL :
-  functor (At : Solver.ATOMIC_PROPOSITION) -> Solver.LTL with module Atomic = At
+(** A symmetry specifies an order over instantiated relations. *)
 
-(** TODO: implement abstract file format functions  *)
-module Make_SMV_file_format : functor (Ltl : Solver.LTL)
-  -> Solver.MODEL with type ltl = Ltl.t and type atomic = Ltl.Atomic.t
+type t
+
+val make : (Name.t * Tuple.t) list -> (Name.t * Tuple.t) list -> t
+val fold :
+  (Name.t * Tuple.t -> Name.t * Tuple.t -> 'a -> 'a) -> t -> 'a -> 'a
+val rename :
+  (Atom.t, Atom.t) CCList.Assoc.t ->
+  (Name.t * Name.t) list ->
+  t ->
+  t

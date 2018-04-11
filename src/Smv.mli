@@ -12,22 +12,16 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-(** Abstract type for a converter from Elo models to (abstract) LTL formulas.  *)
+(** Represents SMV files and how to produce them *)
 
-open Containers
+val nuXmv_default_script : string
+val nuSMV_default_script : string
 
-module type S = sig
-  type atomic                     (* LTL propositional atoms *)
-  type ltl                      (* ltl formula *)
+(** Given an implementation for atoms, provides a LTL implementation with a
+    pretty printing function for Solver formulas.  *)
+module Make_SMV_LTL :
+  functor (At : Solver.ATOMIC_PROPOSITION) -> Solver.LTL with module Atomic = At
 
-  val color :
-    Elo.t ->
-    (Elo.var, Elo.ident) GenGoal.fml ->
-    Invar_computation.goal_color
-
-  val convert :
-    Elo.t ->
-    (Elo.var, Elo.ident) GenGoal.fml ->
-    string * ltl
-
-end
+(** TODO: implement abstract file format functions  *)
+module Make_SMV_file_format : functor (Ltl : Solver.LTL)
+  -> Solver.MODEL with type ltl = Ltl.t and type atomic = Ltl.Atomic.t

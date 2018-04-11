@@ -17,9 +17,9 @@
 (** EXPECTED TO BE BE DONE AFTER CHECKING ARITIES. *)
 
 open Containers
-open GenGoal
+open Gen_goal
 
-module TS = TupleSet
+module TS = Tuple_set
 
 module L = Location
 
@@ -31,17 +31,17 @@ let fresh_var base exp =
    and the formula x1!=x1' or x2!=x2' or ...  *)
 let create_new_vars_and_assoc_list_and_comp_fml vs ar =
   List.fold_right
-    (fun (Elo.BVar var) (new_vars, assoc, prim_fml) ->
+    (fun (Ast.BVar var) (new_vars, assoc, prim_fml) ->
        let new_var = Var.fresh_copy var in
-       let new_var_as_ident = ident (Elo.var_ident new_var) in
-       (Elo.bound_var new_var :: new_vars,
+       let new_var_as_ident = ident (Ast.var_ident new_var) in
+       (Ast.bound_var new_var :: new_vars,
         CCList.Assoc.set ~eq:Var.equal var new_var_as_ident assoc,
         lbinary
           (fml L.dummy
            @@ rcomp
                 (exp ar L.dummy
-                 @@ ident @@ Elo.var_ident var)
-                REq
+                 @@ ident @@ Ast.var_ident var)
+                req
                 (exp ar L.dummy new_var_as_ident)
           )
           and_
@@ -51,7 +51,7 @@ let create_new_vars_and_assoc_list_and_comp_fml vs ar =
     ([], [], true_)
 
 
-(* simplify Elo goals *)
+(* simplify Ast goals *)
 class simplify = object (self : 'self)
   inherit [_] map as super
 
@@ -77,7 +77,7 @@ class simplify = object (self : 'self)
     in
 
     (* subst_blk = phi [x1'\x1, x2'\x2, ...] *)
-    let subst_blk = Elo.substitute#visit_block assoc_new_vars blk in
+    let subst_blk = Ast.substitute#visit_block assoc_new_vars blk in
 
     (* conversion of the block in a formula *)
     let fml_subst_blk =
@@ -112,7 +112,7 @@ class simplify = object (self : 'self)
   (* split multiple simultaneous All/Some/No bindings into many quantifications *)
   method! visit_Quant env q sim_bindings blk = 
     Msg.debug (fun m -> m "Simplify1.visit_Quant <-- %a"
-                          Elo.pp_prim_fml
+                          Ast.pp_prim_fml
                 @@ quant q sim_bindings blk);
     match q with
       | One -> self#visit_Quant_One env q sim_bindings blk
@@ -128,7 +128,7 @@ class simplify = object (self : 'self)
                   [fml e.exp_loc @@ self#visit_Quant env q bs blk]
           in
           Msg.debug (fun m -> m "Simplify1.visit_Quant --> %a"
-                                Elo.pp_prim_fml
+                                Ast.pp_prim_fml
                                 res);
           res
 
@@ -138,29 +138,29 @@ class simplify = object (self : 'self)
     (* substitute from right to left as a binding on the left may apply in the
        range of a binding on the right *)
     (* Msg.debug (fun m -> m "Simplify1.visit_Let <-- %a" *)
-    (*                       Elo.pp_prim_fml *)
+    (*                       Ast.pp_prim_fml *)
     (*             @@ let_ bindings fmls); *)
     List.fold_right
-      (function (Elo.BVar v, e) ->
-         Elo.substitute#visit_prim_fml [(v, e.prim_exp)])
+      (function (Ast.BVar v, e) ->
+         Ast.substitute#visit_prim_fml [(v, e.prim_exp)])
       bindings
       (block fmls)
     |> self#visit_prim_fml env
   (* |> Fun.tap *)
   (* @@ fun res -> *)
   (* Msg.debug (fun m -> m "Simplify1.visit_Let --> %a" *)
-  (*                       Elo.pp_prim_fml res) *)
+  (*                       Ast.pp_prim_fml res) *)
 
   (* change relation qualifiers into formulas *)
   method! visit_Qual env q expr =
     (* Msg.debug (fun m -> m "Simplify1.visit_Qual <-- %a" *)
-    (*                       Elo.pp_prim_fml *)
+    (*                       Ast.pp_prim_fml *)
     (*             @@ qual q expr); *)
     let prim_fml = match q with
       | ROne ->
           quant one
             [(false,
-              [Elo.bound_var @@ fresh_var "one" expr],
+              [Ast.bound_var @@ fresh_var "one" expr],
               expr)]
             [fml expr.exp_loc true_]
       | RLone ->
@@ -169,7 +169,7 @@ class simplify = object (self : 'self)
       | RSome ->
           quant some
             [(false,
-              [Elo.bound_var @@ fresh_var "some" expr],
+              [Ast.bound_var @@ fresh_var "some" expr],
               expr)]
             [fml expr.exp_loc true_]
       | RNo ->
@@ -180,13 +180,13 @@ class simplify = object (self : 'self)
   (* |> Fun.tap *)
   (* @@ fun res -> *)
   (* Msg.debug (fun m -> m "Simplify1.visit_Qual --> %a" *)
-  (*                       Elo.pp_prim_fml res) *)
+  (*                       Ast.pp_prim_fml res) *)
 
   (* change box join in join *)
   method! visit_BoxJoin env call args =
     (* Msg.debug (fun m -> m "Simplify1.visit_BoxJoin <-- %a[%a]" *)
-    (*                       Elo.pp_exp call *)
-    (*                       (Fmtc.list Elo.pp_exp) args); *)
+    (*                       Ast.pp_exp call *)
+    (*                       (Fmtc.list Ast.pp_exp) args); *)
     let res =
       List.fold_right
         (fun arg r ->
@@ -200,7 +200,7 @@ class simplify = object (self : 'self)
     (* |> Fun.tap *)
     (* @@ fun res -> *)
     (* Msg.debug (fun m -> m "Simplify1.visit_BoxJoin --> %a" *)
-    (*                       Elo.pp_prim_exp *)
+    (*                       Ast.pp_prim_exp *)
     (*                       res) *)
 
 
@@ -227,7 +227,7 @@ end
 
 
 let run elo =
-  let open Elo in
+  let open Ast in
   (* Msg.debug (fun m -> m "Entering Simplify1.simplify_fml"); *)
   let simpl = new simplify in
   { elo with goal = simpl#visit_t () elo.goal;

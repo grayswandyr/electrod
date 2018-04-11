@@ -16,6 +16,7 @@
 
 open Containers
 open Cmdliner
+open Libelectrod
  
 let infile =
   let doc = "File to process." in
@@ -43,9 +44,8 @@ let script =
 
 let keep_files =
   let doc =
-    {|If present, keep the generated model and script files in the same 
-      directory as ELECTROD_FILE (otherwise, files are generated in an 
-      OS-specific directory for temporary files). |}
+    {|If present, keep the generated model and script files (in the same 
+      directory as ELECTROD_FILE). |}
   in
   Arg.(value & flag & info ["kg"; "keep-generated"] ~doc)
 
@@ -108,11 +108,11 @@ let main_info =
     `S Manpage.s_files;
     `P {|Default SCRIPT_FILE for nuXmv:|};
     `Noblank;
-    `Pre Scripts.nuXmv_default_script;
+    `Pre Smv.nuXmv_default_script;
     `Noblank;
     `P {|Default SCRIPT_FILE for NuSMV:|};
     `Noblank;
-    `Pre Scripts.nuSMV_default_script;
+    `Pre Smv.nuSMV_default_script;
     `S Manpage.s_authors;
     `P {|Julien BRUNEL (ONERA), David CHEMOUIL (ONERA).|};
     `S "COPYRIGHT";

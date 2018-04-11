@@ -40,11 +40,11 @@ val dummy : t
 type 'a located = {
   data : 'a;
   loc : t;
-}[@@deriving make]
+}
+
+val make_located : 'a -> t -> 'a located
 
 val pp_located : (Format.formatter -> 'a -> unit) ->
   Format.formatter -> 'a located -> unit
-
-
 
 include Intf.Print.S with type t := t

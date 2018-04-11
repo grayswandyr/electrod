@@ -12,8 +12,17 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-(** Tranforms raw ASTs into "massaged" ones (conforming to Elo). *)
+(** Abstract type for a converter from Elo models to (abstract) LTL formulas.  *)
 
-(** Determines the whole domain of the problem. *)
-val transfo : (Raw.raw_problem, Elo.t) Transfo.t
+open Containers
 
+module type S = sig
+  type atomic                     (* LTL propositional atoms *)
+  type ltl                      (* ltl formula *)
+
+  val convert :
+    Elo.t ->
+    Elo.fml ->
+    string * ltl
+
+end

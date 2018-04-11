@@ -35,6 +35,8 @@ val arity : t -> int
 
 val name : t -> Name.t
 
+val equal : t -> t -> bool
+
 (** Tells whether the relation is a set or a relation of arity > 1. *)
 val is_set : t -> bool
   
@@ -47,9 +49,9 @@ val is_var : t -> bool
 (** Returns the scope of a relation (for variable relations: not [fby]!)  *)
 val scope : t -> Scope.t
 
-val must : t -> TupleSet.t
-val may : t -> TupleSet.t
-val sup : t -> TupleSet.t
+val must : t -> Tuple_set.t
+val may : t -> Tuple_set.t
+val sup : t -> Tuple_set.t
 
 val rename
   :  (Atom.t, Atom.t) List.Assoc.t

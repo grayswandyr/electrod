@@ -1,4 +1,4 @@
-.PHONY: all clean
+.PHONY: all clean utop test doc show-deps install uninstall
 
 TARGET = electrod
 
@@ -15,8 +15,11 @@ watch:
 		make ; \
 	done
 
+test:
+	jbuilder runtest src
+
 utop:
-	jbuilder utop src/
+	jbuilder utop src
 
 doc:
 	BROWSER=x-www-browser topkg doc -r

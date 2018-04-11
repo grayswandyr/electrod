@@ -47,7 +47,7 @@ val union : t -> t -> t
 val inter : t -> t -> t
 
 (** [product b1 b2] computes the {b flat} product of [b1] and [b2].
-    Recall the product is {i not} empty if any of [b1] or [b2] is. *)
+    Recall the product is empty if any of [b1] or [b2] is. *)
 val product : t -> t -> t
 
 (** [subset b1 b2] returns [true] if [b1] is included in [b2].  *)

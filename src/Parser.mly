@@ -17,7 +17,7 @@
   
 module R = Raw
 
-module G = GenGoal
+module G = Gen_goal
 
 let exp_no_arity = G.exp (Some 0)
 

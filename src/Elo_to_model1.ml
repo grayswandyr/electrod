@@ -21,7 +21,7 @@ module S = Sequence
 
 module Make
     (Ltl : Solver.LTL)
-    (ConvertFormulas : Elo_to_LTL_intf.S
+    (ConvertFormulas : Elo_to_ltl_intf.S
      with type ltl = Ltl.t and type atomic = Ltl.Atomic.t)
     (Model : Solver.MODEL
      with type ltl = ConvertFormulas.ltl
@@ -72,12 +72,12 @@ struct
     let (invf, tmp_restf) =
       List.partition_map
         (fun fml ->
-           let color = ConvertFormulas.color elo fml in
-           Msg.debug (fun m ->
-                 m "Color of formula %a : %a\n"
-                   Elo.pp_fml fml Invar_computation.pp color);
+           let color = Invar_computation.color elo fml in
+           (* Msg.debug (fun m ->
+              m "Color of formula %a : %a\n"
+              Elo.pp_fml fml Invar_computation.pp color); *)
            match color with
-             | Invar | Static_prop -> `Left (remove_always_to_invar fml)
+             | Invar | Static_prop -> `Left (remove_always_from_invar fml)
              | Init | Primed_prop | Trans | Temporal -> `Right (fml)
         )
         blk
@@ -85,37 +85,37 @@ struct
     let (transf, tmp_restf2) =
       List.partition_map
         (fun fml ->
-           let color = ConvertFormulas.color elo fml in
-           Msg.debug (fun m ->
-                 m "Color of formula %a : %a\n"
-                   Elo.pp_fml fml Invar_computation.pp color);
+           let color = Invar_computation.color elo fml in
+           (* Msg.debug (fun m ->
+              m "Color of formula %a : %a\n"
+              Elo.pp_fml fml Invar_computation.pp color); *)
            match color with
-           | Trans -> `Left (remove_always_to_invar fml)
-           | _ -> `Right(fml)
+             | Trans -> `Left (remove_always_from_invar fml)
+             | _ -> `Right(fml)
         )
         tmp_restf
     in
     let (initf, restf) =
       List.partition_map
         (fun fml ->
-           let color = ConvertFormulas.color elo fml in
-           Msg.debug (fun m ->
-                 m "Color of formula %a : %a\n"
-                   Elo.pp_fml fml Invar_computation.pp color);
+           let color = Invar_computation.color elo fml in
+           (* Msg.debug (fun m ->
+              m "Color of formula %a : %a\n"
+              Elo.pp_fml fml Invar_computation.pp color); *)
            match color with
-           | Init -> `Left (fml)
-           | _ -> `Right(fml)
+             | Init -> `Left (fml)
+             | _ -> `Right(fml)
         )
         tmp_restf2
     in
     match (restf, List.rev invf, List.rev transf, List.rev initf) with
       | _::_ , _ , _ , _ -> (initf, invf, transf, restf)
       | [] , _ , hd::tl , _ ->
-         (initf, invf, List.rev tl, [add_always_to_invar hd])
+          (initf, invf, List.rev tl, [add_always_to_invar hd])
       | [], hd::tl , _ , _ ->
-         (initf, List.rev tl, transf, [add_always_to_invar hd])
+          (initf, List.rev tl, transf, [add_always_to_invar hd])
       | [] , _ , _ , hd::tl ->
-         (List.rev tl, invf, transf, [hd])
+          (List.rev tl, invf, transf, [hd])
       | _ -> assert false (*the goal cannot be empty*)
 
 
@@ -123,23 +123,21 @@ struct
      function computes the elo formula "(f1 and ... and fn-1) implies not
      fn" *)
   let dualise_fmls fmls =
-    let open GenGoal in
+    let open Elo in
     match List.rev fmls with
       | [] -> assert false
-      | hd::tl ->
+      | (Fml { node; _ } as hd)::tl ->
           let premise = 
             List.fold_left
-              (fun x y -> fml (Location.span (x.fml_loc, y.fml_loc))
-                @@ lbinary x and_ y)
-              (fml Location.dummy true_) tl
+              (fun x y -> lbinary x and_ y)
+              true_ tl
           in
           let rhs_fml =
-            match hd.prim_fml with
+            match node with
               | LUn (Not, subfml) -> subfml
-              | _ -> fml hd.fml_loc @@ lunary Not hd
+              | _ -> lunary not_ hd
           in
-          fml premise.fml_loc @@
-          lbinary premise Imp rhs_fml
+          lbinary premise impl rhs_fml
 
   let run elo =
     let open Elo in
@@ -155,16 +153,16 @@ struct
        refactoring won't be too painful. *)
     let elo =
       Elo.{ elo with
-              domain = Domain.update_domain_with_instance elo.domain
-                         elo.instance;
-              instance = Instance.empty } in
+               domain = Domain.update_domain_with_instance elo.domain
+                          elo.instance;
+               instance = Instance.empty } in
 
     Msg.debug (fun m ->
           m "Elo_to_model1.run: after instance update:@ %a"
             Elo.pp elo);
 
     (* walk through formulas, convert them to LTL and accumulate rigid
-       and flexible variables. TODO: replace sequences by sets. *)
+       and flexible variables. *)
     (* let exception Early_stop in *)
     let translate_formulas fmls =
       (* try *)
@@ -177,8 +175,8 @@ struct
            (
              S.cons (fml_str, ltl) acc_fml))
         S.empty fmls
-        (* with *)
-        (*   Early_stop -> S.(empty, empty, Ltl.false_) *)
+      (* with *)
+      (*   Early_stop -> S.(empty, empty, Ltl.false_) *)
       |> S.rev
     in
 
@@ -187,24 +185,24 @@ struct
 
 
     (* handling the goal *)
-    let goal_blk = match elo.goal with GenGoal.Run g -> g in
+    let goal_blk = match elo.goal with Elo.Run g -> g in
 
 
     (* Partition the goal fmls into invars and non invars *)
     let detected_inits, detected_invars, detected_trans, general_fmls =
       split_invar_noninvar_fmls elo goal_blk
     in
-    Msg.debug (fun m ->
-        m "Detected init : %a" Elo.pp_block detected_inits);
+    (* Msg.debug (fun m ->
+       m "Detected init : %a" Elo.pp_block detected_inits); *)
 
-    Msg.debug (fun m ->
-          m "Detected invariants : %a" Elo.pp_block detected_invars);
+    (* Msg.debug (fun m ->
+       m "Detected invariants : %a" Elo.pp_block detected_invars); *)
 
-    Msg.debug (fun m ->
-        m "Detected trans : %a" Elo.pp_block detected_trans);
+    (* Msg.debug (fun m ->
+       m "Detected trans : %a" Elo.pp_block detected_trans); *)
 
     let spec_fml = dualise_fmls general_fmls in
-    Msg.debug (fun m -> m "Elo property : %a" Elo.pp_fml spec_fml);
+    (* Msg.debug (fun m -> m "Elo property : %a" Elo.pp_fml spec_fml); *)
 
     let spec_fml_str, prop_ltl =
       ConvertFormulas.convert elo spec_fml
@@ -218,7 +216,7 @@ struct
     let trans = translate_formulas detected_trans in    
 
     Model.make ~elo ~init:inits ~invariant:S.(append invars syms_fmls)
-               ~trans:trans ~property:(spec_fml_str, prop_ltl)
+      ~trans:trans ~property:(spec_fml_str, prop_ltl)
 
 end
 
