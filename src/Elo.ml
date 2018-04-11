@@ -620,6 +620,12 @@ and pp_prim_exp stacked out pe =
 and pp_exp stacked out (Exp { node = e; _ }) =
   pp_prim_exp stacked out e.prim_exp 
 
+and pp_sim_binding stacked out sb =
+  pp_osim_binding stacked pp_exp out sb
+
+and pp_sim_bindings stacked out sb =
+  pp_osim_bindings stacked pp_exp out sb
+
 let pp_goal out (Run fmls) =
   let open Fmtc in
   (kwd_styled pf) out "run@ ";

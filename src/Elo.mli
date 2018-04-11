@@ -160,10 +160,12 @@ val pp_rbinop : Format.formatter -> rbinop -> unit
 val pp_iunop : Format.formatter -> iunop -> unit
 val pp_ibinop : Format.formatter -> ibinop -> unit
 val pp_var : Format.formatter -> int -> unit
-val pp_osim_binding :
+val pp_sim_binding :
   int ->
-  (int -> Format.formatter -> 'a -> unit) ->
-  Format.formatter -> bool * int * 'a -> unit
+  Format.formatter -> bool * int * exp -> unit
+val pp_sim_bindings :
+  int ->
+  Format.formatter -> (bool * int * exp) list -> unit
 val pp_oblock :
   'a -> ('a -> 'b Fmtc.t) -> Format.formatter -> 'b list -> unit
 val pp_ofml :

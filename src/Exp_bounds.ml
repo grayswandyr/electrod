@@ -24,7 +24,7 @@ type bounds = {
 }
 
 let pp_subst out subst =
-  Fmtc.(brackets @@ list @@ parens @@ pair int Tuple.pp) out
+  Fmtc.(brackets @@ list @@ parens @@ pair ~sep:comma int Tuple.pp) out
     (List.mapi (fun i tuple -> (i, tuple)) subst)
 
 
@@ -209,15 +209,31 @@ let make_bounds_exp =
                 let sup_sim_binding
                       (subst : Tuple.t list) (disj, nbvars, range)
                   : Tuple.t list list = 
+                  Msg.debug (fun m -> 
+                        m "IN sup_sim_binding %a (%B, %d, %a)"
+                          pp_subst subst 
+                          disj nbvars
+                          (pp_exp (List.length subst)) range);
                   let { sup; _ } = fbounds_exp (range, subst) in
                   let sup_as_list = TS.to_list sup in 
                   (* compute the exponent for this bindings *)
                   nproduct nbvars disj sup_as_list  
+                  |> Fun.tap (fun res -> Msg.debug (fun m -> 
+                        m "OUT sup_sim_binding %a (%B, %d, %a) = %a"
+                          pp_subst subst 
+                          disj nbvars
+                          (pp_exp (List.length subst)) range 
+                          Fmtc.(braces @@ vbox @@ list ~sep:sp @@ hvbox2 @@ parens @@ list ~sep:comma @@ Tuple.pp) res
+                      ))
                 in 
                 let rec sup_sim_bindings 
                           (subst : Tuple.t list) sim_bindings 
                   : Tuple.t list = 
-                  match sim_bindings with 
+                  Msg.debug (fun m -> 
+                        m "IN sup_sim_bindings %a %a"
+                          pp_subst subst
+                          G.(pp_sim_bindings (List.length subst)) sim_bindings);
+                  (match sim_bindings with 
                     | [] -> assert false
                     | [sim_binding] -> 
                         (* compute the product of bounds for the head sim_binding *)
@@ -227,24 +243,29 @@ let make_bounds_exp =
                     | hd::tl -> 
                         let hd_sup = sup_sim_binding subst hd in 
                         (* as tail bindings may depend on the head, update the substitution *)   
-
-                        List.fold_left 
+                        List.fold_left
                           (fun acc line -> 
-                             acc @ sup_sim_bindings (line @ subst) tl)
+                             acc @ product_for_one_hd_combination subst tl line)
                           []
                           hd_sup
-                in
+                  )
+                  |> Fun.tap (fun res -> Msg.debug (fun m -> 
+                        m "OUT sup_sim_bindings %a %a = %a"
+                          pp_subst subst
+                          G.(pp_sim_bindings (List.length subst)) sim_bindings
+                          Fmtc.(braces @@ list ~sep:sp @@ Tuple.pp) res
+                      ))
 
+                and product_for_one_hd_combination subst tl hd_combination =
+                  let tl_sup = 
+                    sup_sim_bindings (List.rev hd_combination @ subst) tl 
+                  in 
+                  List.product Tuple.(@@@) [Tuple.concat hd_combination] tl_sup
+
+                in 
                 let sup_list = sup_sim_bindings subst sim_bindings in 
                 return_bounds args TS.empty (TS.of_tuples sup_list)
 
-                |> Fun.tap (fun { sup; _} -> 
-                      Msg.info (fun m -> 
-                            m "bounds Compr %a %a = %a@."
-                              (Elo.pp_prim_exp 0) pe 
-                              pp_subst subst 
-                              TS.pp sup
-                          ))
 
       end
 
