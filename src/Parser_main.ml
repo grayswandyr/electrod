@@ -13,7 +13,7 @@
  ******************************************************************************)
 
 open Containers
-    
+
 module P = Parser
 
 (* To allow paragraphs to appear in any order, or even, for some, not to appear,

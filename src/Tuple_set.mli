@@ -12,6 +12,8 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
+open Containers
+
 (** Type for sets of tuples. *)
 
 
@@ -45,7 +47,7 @@ val union : t -> t -> t
 val inter : t -> t -> t
 
 (** [product b1 b2] computes the {b flat} product of [b1] and [b2].
-    Recall the product is {i not} empty if any of [b1] or [b2] is. *)
+    Recall the product is empty if any of [b1] or [b2] is. *)
 val product : t -> t -> t
 
 (** [subset b1 b2] returns [true] if [b1] is included in [b2].  *)
@@ -94,6 +96,11 @@ val transitive_closure_is : t -> t
 val filter : (Tuple.t -> bool) -> t -> t
 
 val map : (Tuple.t -> Tuple.t) -> t -> t
+
+val rename
+  :  (Atom.t, Atom.t) List.Assoc.t
+  -> t
+  -> t
 
 val to_seq : t -> Tuple.t CCSet.sequence
 val to_list : t -> Tuple.t list

@@ -13,11 +13,11 @@
  ******************************************************************************/
 
 %parameter <D : sig
-  val base : (Name.t, TupleSet.t) CCList.Assoc.t 
+  val base : (Name.t, Tuple_set.t) CCList.Assoc.t 
 end>
 
 %{
-  open SMV_trace_tokens
+  open Smv_trace_tokens
   open Containers
 
   module LA = List.Assoc
@@ -26,8 +26,8 @@ end>
      set of tuples), i.e. gathers (in [acc]) all tuples corresponding to a given
      name in a same set. The list is nonempty. *)
   let upd tuple = function
-    | None -> Some (TupleSet.singleton tuple)
-    | Some ts -> Some (TupleSet.add tuple ts)
+    | None -> Some (Tuple_set.singleton tuple)
+    | Some ts -> Some (Tuple_set.add tuple ts)
     
   let convert_name_tuple_l ntl =
     let rec walk acc = function

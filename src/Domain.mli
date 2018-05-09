@@ -38,23 +38,34 @@ val get_exn : Name.t -> t -> Relation.t
 (** May rather return None. *)
 val get : Name.t -> t -> Relation.t option
 
-(** Returns the set of atoms in univ, represented as a {!type:TupleSet.t} *)
-val univ_atoms : t -> TupleSet.t
+(** Returns the set of atoms in univ, represented as a {!type:Tuple_set.t} *)
+val univ_atoms : t -> Tuple_set.t
 
 (** Returns the map as an association list *)
 val to_list : t -> (Name.t * Relation.t) list
 
+val of_list : (Name.t * Relation.t) list -> t
+
+val equal : t -> t -> bool
+
 (** Returns the "may" and "must" tuple sets associated to a relation name.  *)
-val must : Name.t -> t -> TupleSet.t
-val may : Name.t -> t -> TupleSet.t
-val sup : Name.t -> t -> TupleSet.t
+val must : Name.t -> t -> Tuple_set.t
+val may : Name.t -> t -> Tuple_set.t
+val sup : Name.t -> t -> Tuple_set.t
 
 (** Returns the association list between relation names and their "must" set.  *)
-val musts : ?with_univ_and_ident:bool -> t -> (Name.t, TupleSet.t) List.Assoc.t 
+val musts : ?with_univ_and_ident:bool -> t -> (Name.t, Tuple_set.t) List.Assoc.t 
 
 
 (** Returns the association list between relation names and their arity.  *)
-val arities : t -> (Name.t, int) List.Assoc.t 
+val arities : t -> (Name.t, int) List.Assoc.t
+
+(** Returns a new domain where atoms and relations have been renamed.  *)
+val rename
+  :  (Atom.t, Atom.t) List.Assoc.t
+  -> (Name.t, Name.t) List.Assoc.t
+  -> t
+  -> t
 
 (** For every entry in [inst], [update_domain_with_instance dom inst] replaces
     the corresponding relation in [dom] with the exact scope given by [inst]. *)

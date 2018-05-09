@@ -14,9 +14,9 @@
 
 (** Type for "raw" ASTs yielded by the Electrod parser. *)
 
-type raw_goal = (Raw_ident.t, Raw_ident.t) GenGoal.t
+type raw_goal = (Raw_ident.t, Raw_ident.t) Gen_goal.t
 
-type raw_block = (Raw_ident.t, Raw_ident.t) GenGoal.block
+type raw_block = (Raw_ident.t, Raw_ident.t) Gen_goal.block
 
 type raw_problem = {
   file : string option;
@@ -68,7 +68,7 @@ and raw_symmetry = ((Raw_ident.t * raw_tuple) list) *
 
 (** This definition is here just to be used in the parser ((to avoid cyclic
     dependencies). The puprose of paragraphs is to deal easily and efficiently
-    with {i permutation} of these (see {!Parser_main} for more
+    with {i permutation} of these (see {!Parse_main} for more
     information).)  *)
 type raw_paragraph =
   | ParGoal of raw_goal

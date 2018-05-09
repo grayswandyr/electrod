@@ -31,7 +31,7 @@ and state = state_type * valuation
 
 (** A valuation maps set/relation names to the tuples they
     contain. Notice: the valuation is {b sorted} over names. *)
-and valuation = (Name.t, TupleSet.t) List.Assoc.t
+and valuation = (Name.t, Tuple_set.t) List.Assoc.t
 
 
 let valuation valu =
@@ -56,17 +56,20 @@ let no_trace nbvars conversion_time analysis_time =
   }
 
 
-let sort_states =
+let sort_states (atom_renaming, name_renaming) states =
   let sort = List.sort (fun (n1, _) (n2, _) -> Name.compare n1 n2) in
-  List.map (fun (typ, v) -> (typ, sort v))
+  let rename (name, ts) =
+    (List.assoc ~eq:Name.equal name name_renaming,
+     Tuple_set.rename atom_renaming ts)
+  in
+  List.map (fun (typ, v) -> (typ, sort (List.map rename v))) states
 
-let trace nbvars conversion_time analysis_time states =
+let trace back_renamings nbvars conversion_time analysis_time states =
   assert ((not @@ List.is_empty states)
           && List.exists
-               (function (Loop, _) -> true | (Plain, _) -> false) states)
-  ;
+               (function (Loop, _) -> true | (Plain, _) -> false) states);
   {
-    trace = Some (sort_states states);
+    trace = Some (sort_states back_renamings states);
     analysis_time;
     nbvars;
     conversion_time
@@ -82,7 +85,7 @@ module PPPlain = struct
   let pp_valuation out valu =
     pf out "%a"
       (hvbox @@ list ~sep:sp
-       @@ pair ~sep:equal Name.pp TupleSet.pp)
+       @@ pair ~sep:equal Name.pp Tuple_set.pp)
     @@ List.sort (fun (n1, _) (n2, _) -> Name.compare n1 n2) valu
 
   let pp_state out = function
@@ -109,10 +112,10 @@ module PPChrono = struct
 
   let state_as_array ((typ, v) : state) =
     let ts_strings =
-      List.map (fun (_, ts) -> to_string_width 40 TupleSet.pp ts) v in
+      List.map (fun (_, ts) -> to_string_width 40 Tuple_set.pp ts) v in
     (match typ with
       | Loop -> 
-          ts_strings @ [ "LOOP"]
+          ts_strings @ [ "LOOP" ]
       | _ ->
           ts_strings @ [ " " ])
     |> Array.of_list 
@@ -164,7 +167,7 @@ module PPXML = struct
   let pp_one_valuation out (name, ts) =
     let tag = "rel" in
     let attribute = "name" in
-    if TupleSet.is_empty ts then
+    if Tuple_set.is_empty ts then
       pf out "@[<h><%a %a=\"%a\"/>@]"
         kwd tag
         attr attribute
@@ -174,7 +177,7 @@ module PPXML = struct
         kwd tag
         attr attribute
         Name.pp name
-        (Tuple.Set.pp ~sep:"" pp_tuple) (TupleSet.tuples ts)
+        (Tuple.Set.pp ~sep:"" pp_tuple) (Tuple_set.tuples ts)
         kwd tag
 
   let pp_valuation out valu =

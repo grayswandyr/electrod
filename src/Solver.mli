@@ -23,6 +23,7 @@ module type ATOMIC_PROPOSITION =
     val make : Domain.t -> Name.t -> Tuple.t -> t
       
     val compare : t -> t -> int
+
     (** compare atoms as strings  *)
     val compare_string : t -> t -> int
     val equal : t -> t -> bool
@@ -46,7 +47,7 @@ module type ATOMIC_PROPOSITION =
     val pp : t Fmtc.t
   end
 
-(** Abstract type of LTL (contains past connectives as well as basic counting
+(** Abstract type of LTL (contains pElo connectives as well as basic counting
     capabilities).  *)
 module type LTL = sig
   module Atomic : ATOMIC_PROPOSITION

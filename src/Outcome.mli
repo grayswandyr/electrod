@@ -43,9 +43,11 @@ val no_trace : int -> Mtime.span -> Mtime.span -> t
 val some_trace : t -> bool
 
 (** The list must be nonempty and must contain at least one lasso target. *)
-val trace : int -> Mtime.span -> Mtime.span -> state list -> t
+val trace
+  :  (Atom.t, Atom.t) CCList.Assoc.t * (Name.t * Name.t) list
+  -> int -> Mtime.span -> Mtime.span -> state list -> t
 
-val valuation : (Name.t, TupleSet.t) List.Assoc.t -> valuation
+val valuation : (Name.t, Tuple_set.t) List.Assoc.t -> valuation
 
 val plain_state : valuation -> state
   

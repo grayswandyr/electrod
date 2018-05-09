@@ -12,17 +12,16 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-(** Computation of bounds for Elo expressions. *)
+(** Computation of bounds for Ast expressions. *)
 
 type bounds = {
-  must : TupleSet.t;
-  sup : TupleSet.t;
-  may : TupleSet.t;
+  must : Tuple_set.t;
+  sup : Tuple_set.t;
+  may : Tuple_set.t;
 }
 
+
 (** Computes the must/may/sup bounds of an expression [exp], given the [domain]
-    and a substitution [subst] (substituting a tuple for a variable) *)
-val bounds : 
-  (Var.t, Tuple.t) CCList.Assoc.t ->
-  Domain.t ->
-  (Elo.var, Elo.ident) GenGoal.exp -> bounds
+    and a substitution [subst] (substituting a tuple for a DB index) *)
+val make_bounds_exp : Domain.t -> (Elo.exp * Tuple.t list) -> bounds
+

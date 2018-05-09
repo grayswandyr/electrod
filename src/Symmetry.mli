@@ -12,22 +12,15 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-(** Abstract type for a converter from Elo models to (abstract) LTL formulas.  *)
+(** A symmetry specifies an order over instantiated relations. *)
 
-open Containers
+type t
 
-module type S = sig
-  type atomic                     (* LTL propositional atoms *)
-  type ltl                      (* ltl formula *)
-
-  val color :
-    Elo.t ->
-    (Elo.var, Elo.ident) GenGoal.fml ->
-    Invar_computation.goal_color
-
-  val convert :
-    Elo.t ->
-    (Elo.var, Elo.ident) GenGoal.fml ->
-    string * ltl
-
-end
+val make : (Name.t * Tuple.t) list -> (Name.t * Tuple.t) list -> t
+val fold :
+  (Name.t * Tuple.t -> Name.t * Tuple.t -> 'a -> 'a) -> t -> 'a -> 'a
+val rename :
+  (Atom.t, Atom.t) CCList.Assoc.t ->
+  (Name.t * Name.t) list ->
+  t ->
+  t

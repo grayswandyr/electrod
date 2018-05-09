@@ -51,7 +51,9 @@ let dummy = { begp = Lexing.dummy_pos; endp = Lexing.dummy_pos }
 type 'a located = {
   data : 'a;
   loc : t;
-}[@@deriving make]
+}
+
+let make_located data loc = { data; loc }
 
 let pp_located pp out { data; _  } = pp out data
 

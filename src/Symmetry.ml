@@ -23,3 +23,10 @@ let fold f (sym : t ) acc =
   let (l1, l2) = sym in
   List.fold_right2 f l1 l2 acc 
                  
+let rename atom_renaming relation_renaming (left, right) =
+  let rename_list l =
+    List.map (fun (name, tuple) ->
+          (List.assoc ~eq:Name.equal name relation_renaming,
+           Tuple.rename atom_renaming tuple)) l
+  in
+  (rename_list left, rename_list right)

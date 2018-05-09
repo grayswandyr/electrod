@@ -1,4 +1,4 @@
-.PHONY: all clean
+.PHONY: all clean utop test doc show-deps install uninstall
 
 TARGET = electrod
 
@@ -15,8 +15,17 @@ watch:
 		make ; \
 	done
 
+test:
+	jbuilder runtest src
+
+utop:
+	jbuilder utop src
+
 doc:
 	BROWSER=x-www-browser topkg doc -r
+
+show-deps:
+	jbuilder external-lib-deps --missing --dev @install
 
 install: build
 	@jbuilder install
@@ -28,3 +37,5 @@ clean:
 	@jbuilder clean
 	@git clean -dfXq
 	@rm -f ./$(TARGET)
+
+include $(shell ocamlfind query visitors)/Makefile.preprocess

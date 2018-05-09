@@ -12,21 +12,8 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-type t = {
-  ident : string;
-  loc : Location.t
-}
+(** Tranforms raw ASTs into "massaged" ones (conforming to Elo). *)
 
-let ident ident begp endp =
-  let loc = Location.from_positions begp endp in
-  { ident; loc }
+(** Determines the whole domain of the problem. *)
+val transfo : (Raw.raw_problem, Ast.t) Transfo.t
 
-let basename { ident; _ } = ident
-
-let location { loc; _ } = loc
-
-let eq_name i1 i2 = i1.ident = i2.ident
-
-let pp out { ident; _ } =
-  Fmtc.string out ident
- 

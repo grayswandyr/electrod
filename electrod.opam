@@ -11,18 +11,18 @@ build: [
 ]
 depends: [
   "ocamlfind" {build}
-  "jbuilder" {build & >="1.0+beta9"}
+  "jbuilder" {build & >="1.0+beta20"}
   "ppxfind" {build} 
   "cmdliner" { >= "1.0.2"  }
-  "containers" { >= "2.0+alpha1" }
+  "containers" { >= "2.0" }
   "fmt" 
   "gen" 
   "hashcons" 
   "logs" 
   "menhir" 
   "mtime" 
-  "ppx_blob"
-  "ppx_deriving" 
+  "ppx_expect"
+  "ppx_inline_test"
   "printbox"
   "sequence" 
   "visitors" 

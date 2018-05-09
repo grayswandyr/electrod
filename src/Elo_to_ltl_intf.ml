@@ -12,21 +12,17 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-type t = {
-  ident : string;
-  loc : Location.t
-}
+(** Abstract type for a converter from Elo models to (abstract) LTL formulas.  *)
 
-let ident ident begp endp =
-  let loc = Location.from_positions begp endp in
-  { ident; loc }
+open Containers
 
-let basename { ident; _ } = ident
+module type S = sig
+  type atomic                     (* LTL propositional atoms *)
+  type ltl                      (* ltl formula *)
 
-let location { loc; _ } = loc
+  val convert :
+    Elo.t ->
+    Elo.fml ->
+    string * ltl
 
-let eq_name i1 i2 = i1.ident = i2.ident
-
-let pp out { ident; _ } =
-  Fmtc.string out ident
- 
+end

@@ -16,6 +16,7 @@
 
 open Containers
 open Cmdliner
+open Libelectrod
  
 let infile =
   let doc = "File to process." in
@@ -43,9 +44,8 @@ let script =
 
 let keep_files =
   let doc =
-    {|If present, keep the generated model and script files in the same 
-      directory as ELECTROD_FILE (otherwise, files are generated in an 
-      OS-specific directory for temporary files). |}
+    {|If present, keep the generated model and script files (in the same 
+      directory as ELECTROD_FILE). |}
   in
   Arg.(value & flag & info ["kg"; "keep-generated"] ~doc)
 
@@ -60,6 +60,13 @@ let print_generated =
     {|If present, print the generated file on the standard output.|}
   in
   Arg.(value & flag & info ["pg"; "print-generated"] ~doc)
+
+
+let long_names = 
+  let doc =
+    {|If present, use long relation and atom names in the generated file.|}
+  in
+  Arg.(value & flag & info ["ln"; "long-names"] ~doc)
 
 
 let outcome_format = 
@@ -91,7 +98,8 @@ let main_term =
         $ keep_files
         $ no_analysis
         $ print_generated
-        $ outcome_format)
+        $ outcome_format
+        $ long_names)
 
   
 let main_info =
@@ -100,11 +108,11 @@ let main_info =
     `S Manpage.s_files;
     `P {|Default SCRIPT_FILE for nuXmv:|};
     `Noblank;
-    `Pre SMV.nuXmv_default_script;
+    `Pre Smv.nuXmv_default_script;
     `Noblank;
     `P {|Default SCRIPT_FILE for NuSMV:|};
     `Noblank;
-    `Pre SMV.nuSMV_default_script;
+    `Pre Smv.nuSMV_default_script;
     `S Manpage.s_authors;
     `P {|Julien BRUNEL (ONERA), David CHEMOUIL (ONERA).|};
     `S "COPYRIGHT";

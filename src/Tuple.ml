@@ -182,7 +182,8 @@ let to_ntuples n t =
   |> List.sublists_of_len n
   |> List.map of_list1
 
-
+let rename atom_renaming t =
+  Array.map (fun at -> List.assoc ~eq:Atom.equal at atom_renaming) t
 
 
 module Set = CCSet.Make(struct

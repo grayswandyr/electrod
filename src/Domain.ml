@@ -19,6 +19,8 @@ module Map = Name.Map
 
 type t = Relation.t Map.t
 
+let equal dom1 dom2 = Map.equal Relation.equal dom1 dom2
+
 let empty =
   Map.empty
 
@@ -34,6 +36,8 @@ let get_exn = Map.find
 let get = Map.get
 
 let to_list = Map.to_list
+
+let of_list = Map.of_list
 
 let univ_atoms domain =
   let open Relation in
@@ -92,14 +96,19 @@ let update_domain_with_instance domain instance =
         Some (relation_of_instance_item inst_entry dom_entry)
     | `Left dom_entry -> Some dom_entry
     | `Right _ ->
-        (* cannot happen: Raw_to_elo checked that every 
+        (* cannot happen: Raw_to_ast checked that every 
            instance is in the domain *)
         assert false
   in
   Map.merge_safe ~f:keep_instance domain (Instance.to_map instance)
   
-
-
+let rename atom_renaming name_renaming domain =
+  to_list domain 
+  |> List.map (fun (name, rel) ->
+        (List.assoc ~eq:Name.equal name name_renaming,
+         Relation.rename atom_renaming name_renaming rel))
+  |> of_list
+  
 module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
 include P 
  

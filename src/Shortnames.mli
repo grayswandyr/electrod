@@ -12,8 +12,8 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-(** Tranforms raw ASTs into "massaged" ones (conforming to Elo). *)
+(** Rename set/relations and atoms to short names (to reduce the size of
+    generated files). *)
 
-(** Determines the whole domain of the problem. *)
-val transfo : (Raw.raw_problem, Elo.t) Transfo.t
-
+(** [true] ==> rename, otherwise, keep original names  *)
+val rename_elo : bool -> Ast.t -> Ast.t
