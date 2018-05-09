@@ -43,7 +43,7 @@ let ident = plain_id (dollar number)?
 
 let loop_msg = "-- Loop starts here"
 
-let state = "->" whitespace+ "State:" whitespace+ digit '.' digit whitespace+ "<-"
+let state = "->" whitespace+ "State:" whitespace+ digit+ '.' digit+ whitespace+ "<-"
 
 let rel_sep = '-'
 
