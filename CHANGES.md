@@ -1,3 +1,6 @@
+### 0.1.6 (2018-05-09)
+- fix opam problems... (sigh!)
+
 ### 0.1.5 (2018-05-09)
 - fix lexical error on SMV trace parsing (GH#2)
 - use short names when generating SMV files (#805)
