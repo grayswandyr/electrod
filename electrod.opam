@@ -24,6 +24,6 @@ depends: [
   "ppx_inline_test"
   "printbox"
   "sequence" 
-  "visitors" 
+  "visitors"  { >= "20180513" }
 ]
 available: [ocaml-version >= "4.04"]
