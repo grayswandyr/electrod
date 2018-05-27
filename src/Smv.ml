@@ -308,14 +308,14 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
                 else may_strings
               in
               S.iter (fun tuple_str ->
-                    Fmtc.(
-                      pf out "DEFINE %s-%s := __%s = %s;@\n"
-                        name_str
-                        tuple_str
-                        name_str
-                        tuple_str
-                    )
-                  )
+                       Fmtc.(
+                         pf out "DEFINE %s-%s := __%s = %s;@\n"
+                           name_str
+                           tuple_str
+                           name_str
+                           tuple_str
+                       )
+                     )
                 may_strings;
               Fmtc.(
                 pf out "%s __%s : %a;@\n"
@@ -383,7 +383,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     atoms
     |> S.sort_uniq      (* keep only atoms with different relation names *)
          ~cmp:(fun at1 at2 ->
-               Name.compare (fst @@ atom_name at1) (fst @@ atom_name at2))
+                Name.compare (fst @@ atom_name at1) (fst @@ atom_name at2))
     |> S.iter (fun at -> Fmtc.hardline out (); pp_one_decl at)
 
   let pp_count_variables ?(margin = 80) out { elo; init; invariant; trans; property } =
@@ -539,20 +539,20 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     let smv, nbvars = make_model_file dir file model in
     let after_generation = Mtime_clock.now () in
     Msg.info (fun m ->
-          let size, unit_ =
-            let s = float_of_int @@ Unix.((stat smv).st_size) in
-            if Float.(s < 1_024.) then
-              (s, "B")
-            else if Float.(s < 1_048_576.) then
-              (s /. 1_024., "KB")
-            else if Float.(s < 1_073_741_824.) then
-              (s /. 1_048_576., "MB")
-            else
-              (s /. 1_073_741_824., "GB")
-          in
-          m "SMV file (size: %.0f%s) generated in %a"
-            (Float.round size) unit_
-            Mtime.Span.pp (Mtime.span before_generation after_generation));
+               let size, unit_ =
+                 let s = float_of_int @@ Unix.((stat smv).st_size) in
+                 if Float.(s < 1_024.) then
+                   (s, "B")
+                 else if Float.(s < 1_048_576.) then
+                   (s /. 1_024., "KB")
+                 else if Float.(s < 1_073_741_824.) then
+                   (s /. 1_048_576., "MB")
+                 else
+                   (s /. 1_073_741_824., "GB")
+               in
+               m "SMV file (size: %.0f%s) generated in %a"
+                 (Float.round size) unit_
+                 Mtime.Span.pp (Mtime.span before_generation after_generation));
     if no_analysis then begin
       keep_or_remove_files scr smv;
       Outcome.no_trace nbvars conversion_time Mtime.Span.zero
@@ -577,11 +577,21 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
         |> Gen.drop_while
              (fun line ->
                 not @@ String.suffix ~suf:"is false" line
-                && not @@ String.suffix ~suf:"is true" line)
+                && not @@ String.suffix ~suf:"is true" line
+                && not @@ String.equal_caseless "-- no counterexample found with bound 10" line)
       in
       keep_or_remove_files scr smv;
 
-      if String.suffix ~suf:"is true" @@ Gen.get_exn spec then
+      let spec_s = match Gen.get spec with
+        | None -> failwith ("Incorrectly handled SMV string:" ^ (Fmt.to_to_string (Gen.pp String.pp) spec))
+        | Some s -> s
+      in
+
+      if String.suffix ~suf:"is true" spec_s
+      || String.equal_caseless 
+           "-- no counterexample found with bound 10" 
+           spec_s
+      then
         Outcome.no_trace nbvars conversion_time analysis_time
       else
         (* nuXmv says there is a counterexample so we parse it on the standard
@@ -614,7 +624,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
         in
         if not @@ Outcome.loop_is_present trace then
           Msg.Fatal.solver_bug (fun args ->
-                args cmd "trace is missing a loop state.")
+                                 args cmd "trace is missing a loop state.")
         else
           let atom_back_renaming = List.map (fun (x, y) -> (y, x)) elo.atom_renaming in
           let name_back_renaming = List.map (fun (x, y) -> (y, x)) elo.name_renaming in
