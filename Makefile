@@ -1,11 +1,13 @@
 .PHONY: all clean utop test doc show-deps install uninstall
 
+DUNE = jbuilder
+
 TARGET = electrod
 
 all: build
 
 build:
-	jbuilder build @install --dev \
+	$(DUNE) build @install --dev \
 	&& ln -sf _build/install/default/bin/$(TARGET) ./$(TARGET)
 
 watch:
@@ -16,25 +18,25 @@ watch:
 	done
 
 test:
-	jbuilder runtest src
+	$(DUNE) runtest src
 
 utop:
-	jbuilder utop src
+	$(DUNE) utop src
 
 doc:
-	BROWSER=x-www-browser topkg doc -r
+	$(DUNE) build @doc && x-www-browser _build/default/_doc/_html/index.html
 
 show-deps:
-	jbuilder external-lib-deps --missing --dev @install
+	$(DUNE) external-lib-deps --missing --dev @install
 
 install: build
-	@jbuilder install
+	@$(DUNE) install
 
 uninstall:
-	@jbuilder uninstall
+	@$(DUNE) uninstall
 
 clean:
-	@jbuilder clean
+	@$(DUNE) clean
 	@git clean -dfXq
 	@rm -f ./$(TARGET)
 

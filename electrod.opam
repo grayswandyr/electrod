@@ -10,15 +10,14 @@ build: [
   ["jbuilder" "build" "-p" name "-j" jobs]
 ]
 depends: [
-  "jbuilder" {build & >="1.0+beta20"}
-  "ppxfind" {build} 
+  "jbuilder" { build & >="1.0+beta20" }
   "cmdliner" { >= "1.0.2"  }
   "containers" { >= "2.0" }
   "fmt" 
   "gen" 
   "hashcons" 
   "logs" 
-  "menhir" 
+  "menhir" { >= "20180523" }
   "mtime" 
   "ppx_expect"
   "ppx_inline_test"
