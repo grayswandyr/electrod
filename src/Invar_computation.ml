@@ -50,7 +50,7 @@ let max_color_wiwt c1 c2 =
 let rec remove_always_from_invar (Elo.Fml { node; _} as fml) =
   let open Elo in
   match node with
-    | LUn (G, subfml) -> subfml
+    | LUn (G, subfml) -> remove_always_from_invar subfml
     | LBin (fml1, And, fml2) ->
         let fml1' = remove_always_from_invar fml1 in
         let fml2' = remove_always_from_invar fml2 in
