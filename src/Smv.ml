@@ -308,14 +308,14 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
                 else may_strings
               in
               S.iter (fun tuple_str ->
-                       Fmtc.(
-                         pf out "DEFINE %s-%s := __%s = %s;@\n"
-                           name_str
-                           tuple_str
-                           name_str
-                           tuple_str
-                       )
-                     )
+                    Fmtc.(
+                      pf out "DEFINE %s-%s := __%s = %s;@\n"
+                        name_str
+                        tuple_str
+                        name_str
+                        tuple_str
+                    )
+                  )
                 may_strings;
               Fmtc.(
                 pf out "%s __%s : %a;@\n"
@@ -383,7 +383,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     atoms
     |> S.sort_uniq      (* keep only atoms with different relation names *)
          ~cmp:(fun at1 at2 ->
-                Name.compare (fst @@ atom_name at1) (fst @@ atom_name at2))
+               Name.compare (fst @@ atom_name at1) (fst @@ atom_name at2))
     |> S.iter (fun at -> Fmtc.hardline out (); pp_one_decl at)
 
   let pp_count_variables ?(margin = 80) out { elo; init; invariant; trans; property } =
@@ -498,19 +498,8 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
         IO.with_out tgt (fun out -> IO.write_line out default);
         tgt
 
-  (* Taken from nunchaku-inria/logitest/src/Misc.ml (BSD licence).
-     Make sure that we are a session leader; that is, our children die if we die *)
-  let ensure_session_leader : unit -> unit =
-    let thunk = lazy (
-      if not Sys.win32 && not Sys.cygwin
-      then ignore (Unix.setsid ())
-    ) in
-    fun () -> Lazy.force thunk
-
-
   let analyze ~conversion_time ~cmd ~script ~keep_files
         ~no_analysis ~elo ~file model : Outcome.t =
-    ensure_session_leader ();
 
     let keep_or_remove_files scr smv =
       if keep_files then
@@ -526,6 +515,9 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
                  m "@[<hv2>Keeping the script and SMV files@]")
         end
       else begin
+        Logs.app
+          (fun m ->
+             m "@[<hv2>Removing files:@ %s@\n%s@]" scr smv);
         (match script with
           | Solver.Default _ -> IO.File.remove_noerr scr
           | Solver.File _ -> ());
@@ -539,25 +531,36 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
     let smv, nbvars = make_model_file dir file model in
     let after_generation = Mtime_clock.now () in
     Msg.info (fun m ->
-               let size, unit_ =
-                 let s = float_of_int @@ Unix.((stat smv).st_size) in
-                 if Float.(s < 1_024.) then
-                   (s, "B")
-                 else if Float.(s < 1_048_576.) then
-                   (s /. 1_024., "KB")
-                 else if Float.(s < 1_073_741_824.) then
-                   (s /. 1_048_576., "MB")
-                 else
-                   (s /. 1_073_741_824., "GB")
-               in
-               m "SMV file (size: %.0f%s) generated in %a"
-                 (Float.round size) unit_
-                 Mtime.Span.pp (Mtime.span before_generation after_generation));
+          let size, unit_ =
+            let s = float_of_int @@ Unix.((stat smv).st_size) in
+            if Float.(s < 1_024.) then
+              (s, "B")
+            else if Float.(s < 1_048_576.) then
+              (s /. 1_024., "KB")
+            else if Float.(s < 1_073_741_824.) then
+              (s /. 1_048_576., "MB")
+            else
+              (s /. 1_073_741_824., "GB")
+          in
+          m "SMV file (size: %.0f%s) generated in %a"
+            (Float.round size) unit_
+            Mtime.Span.pp (Mtime.span before_generation after_generation));
     if no_analysis then begin
       keep_or_remove_files scr smv;
       Outcome.no_trace nbvars conversion_time Mtime.Span.zero
     end
     else
+      (* Inspired by nunchaku-inria/logitest/src/Misc.ml (BSD licence). *)
+      let sigterm_handler = 
+        Sys.Signal_handle
+          (fun _ ->
+             print_endline "Received termination signal!"; 
+             keep_or_remove_files scr smv;
+             print_endline "Exiting"; 
+             Unix.kill 0 Sys.sigterm; (* kill children *)
+             exit 1)
+      in
+      let previous_handler = Sys.signal Sys.sigterm sigterm_handler in
       (* TODO make things s.t. it's possible to set a time-out *)
       let to_call = Fmt.strf "%s -source %s %s" cmd scr smv in
       Logs.app (fun m -> m "Starting analysis:@[<h2>@ %s@]" to_call);
@@ -566,6 +569,8 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
         CCUnix.call "%s" to_call
       in
       let after_run = Mtime_clock.now () in
+      (* go back to default behavior *)
+      Sys.set_signal Sys.sigterm previous_handler;
       let analysis_time = Mtime.span before_run after_run in
       if errcode <> 0 then
         Msg.Fatal.solver_failed (fun args -> args cmd scr smv errcode errout)
@@ -624,7 +629,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
         in
         if not @@ Outcome.loop_is_present trace then
           Msg.Fatal.solver_bug (fun args ->
-                                 args cmd "trace is missing a loop state.")
+                args cmd "trace is missing a loop state.")
         else
           let atom_back_renaming = List.map (fun (x, y) -> (y, x)) elo.atom_renaming in
           let name_back_renaming = List.map (fun (x, y) -> (y, x)) elo.name_renaming in

@@ -64,8 +64,19 @@ type tool =
   | NuSMV
 
 
+(* Taken from nunchaku-inria/logitest/src/Misc.ml (BSD licence).
+   Make sure that we are a session leader; that is, our children die if we die *)
+let ensure_session_leader : unit -> unit =
+  let thunk = lazy (
+    if not Sys.win32 && not Sys.cygwin
+    then ignore (Unix.setsid ())
+  ) in
+  fun () -> Lazy.force thunk
+
 let main style_renderer verbosity tool file scriptfile keep_files no_analysis
       print_generated outcome_format long_names =
+
+  ensure_session_leader ();
 
   let long_names =              (* Debug ==> long names *)
     match verbosity with
@@ -162,9 +173,9 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
       end);
 
     (* Msg.debug (fun m -> 
-          m "Count references to hashconsed formulas:@\n@[<v2>%a@]"
-            Elo.pp_fml_stats 10
-        ); *)
+       m "Count references to hashconsed formulas:@\n@[<v2>%a@]"
+       Elo.pp_fml_stats 10
+       ); *)
 
     let memory = Gc.allocated_bytes () in
     Msg.info (fun m -> m "Total allocated memory: %.3fGB"
