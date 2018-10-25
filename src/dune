@@ -1,6 +1,5 @@
 
 (executable
- (name electrod)
   (public_name electrod)
   (package electrod)
   (modules ("Main" electrod))
@@ -17,7 +16,7 @@
     hashcons logs.fmt mtime.clock.os printbox sequence)
   (flags
    (:standard
-    (-w "-33-58" ; -33 unused open -58 missing cmx file
+    ( ; -33 unused open -58 missing cmx file
         -g -safe-string -strict-formats -strict-sequence -short-paths)))
   (inline_tests)
   (preprocess (pps ppx_inline_test ppx_expect ppx_deriving visitors.ppx))

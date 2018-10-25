@@ -12,8 +12,6 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-open Containers
-
 type t = {
   sym : Symbol.t;
   loc : Location.t option

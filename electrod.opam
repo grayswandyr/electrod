@@ -1,10 +1,11 @@
 opam-version: "2.0"
 maintainer: "David Chemouil <david.chemouil+git@onera.fr>"
 authors: ["David Chemouil" "Julien Brunel"]
-homepage: "https://github.com/grayswandyr/electrod/"
+homepage: "https://grayswandyr.github.io/electrod"
 bug-reports: "https://github.com/grayswandyr/electrod/issues"
 license: "MPL-2.0"
 dev-repo: "git+https://github.com/grayswandyr/electrod.git"
+doc: "https://grayswandyr.github.io/electrod/api"
 build: [
   ["dune" "subst"] {pinned}
   ["dune" "build" "-p" name "-j" jobs]
