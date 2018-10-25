@@ -53,8 +53,7 @@ let script =
   let doc = {|Script to pass to the analysis tool (default: see section FILES). 
               A script file for nuXmv 
               or NuSMV $(b,MUST) set both options `default_trace_plugin' and 
-              `on_failure_script_quits' to '1' (NOTICE: no verification 
-              of the script file is made whatsoever). |}
+              `on_failure_script_quits' to '1'. If the '--bmc' option is used, the BMC bound will be prepended to the script file; and the script file is expected to call a BMC algorithm.  (NOTICE: no well-formedness verification of the script file is made whatsoever).|}
   in
   Arg.(value & opt (some non_dir_file) None
        & info ["s"; "script"] ~docv:"SCRIPT_FILE" ~doc)
