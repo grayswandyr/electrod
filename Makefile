@@ -1,33 +1,29 @@
 .PHONY: all clean utop test doc show-deps install uninstall
 
-DUNE = jbuilder
+DUNE = dune
 
 TARGET = electrod
 
 all: build
 
 build:
-	$(DUNE) build @install --dev \
+	$(DUNE) build @install \
 	&& ln -sf _build/install/default/bin/$(TARGET) ./$(TARGET)
 
 watch:
-	while find src/ -print0 | \
-		xargs -0 inotifywait -e delete_self -e modify ;\
-	do \
-		make ; \
-	done
+	$(DUNE) build --watch @install
 
 test:
-	$(DUNE) runtest src
+	$(DUNE) runtest 
 
 utop:
-	$(DUNE) utop src
+	$(DUNE) utop 
 
 doc:
 	$(DUNE) build @doc && x-www-browser _build/default/_doc/_html/index.html
 
 show-deps:
-	$(DUNE) external-lib-deps --missing --dev @install
+	$(DUNE) external-lib-deps --missing @install
 
 install: build
 	@$(DUNE) install
