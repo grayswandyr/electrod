@@ -399,7 +399,9 @@ module type MODEL = sig
     -> keep_files:bool
     -> no_analysis:bool
     -> elo:Elo.t
-    -> file:string -> t -> Outcome.t
+    -> file:string 
+    -> bmc:int option
+    -> t -> Outcome.t
 
   val pp : ?margin:int -> Format.formatter -> t -> unit
 end

@@ -74,7 +74,7 @@ let ensure_session_leader : unit -> unit =
   fun () -> Lazy.force thunk
 
 let main style_renderer verbosity tool file scriptfile keep_files no_analysis
-      print_generated outcome_format long_names =
+      print_generated outcome_format long_names bmc =
 
   ensure_session_leader ();
 
@@ -154,7 +154,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
 
     let res = 
       Elo_to_smv1.analyze ~conversion_time ~cmd ~keep_files ~no_analysis
-        ~elo:elo ~script ~file model 
+        ~elo:elo ~script ~file ~bmc model 
     in
     (if not no_analysis then begin
         (* store the trace *)

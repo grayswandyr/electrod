@@ -205,6 +205,7 @@ module type MODEL = sig
     -> keep_files:bool
     -> no_analysis:bool
     -> elo:Elo.t
+    -> bmc:int option (** BMC mode with bound on steps *)
     -> file:string -> t -> Outcome.t
 
   val pp : ?margin:int -> Format.formatter -> t -> unit

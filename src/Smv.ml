@@ -499,7 +499,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
         tgt
 
   let analyze ~conversion_time ~cmd ~script ~keep_files
-        ~no_analysis ~elo ~file model : Outcome.t =
+        ~no_analysis ~elo ~file ~bmc model : Outcome.t =
 
     let keep_or_remove_files scr smv =
       if keep_files then
@@ -577,25 +577,29 @@ module Make_SMV_file_format (Ltl : Solver.LTL)
       else (* running nuXmv goes well: parse its output *)
         Msg.info (fun m -> m "Analysis done in %a" Mtime.Span.pp
                              analysis_time );
+
+      (* string for the "UNSAT" problems when relying on BMC  *)
+      let valid_bmc_string = "-- no counterexample found with bound 3" in
+
       let spec =
         String.lines_gen okout
         |> Gen.drop_while
              (fun line ->
                 not @@ String.suffix ~suf:"is false" line
                 && not @@ String.suffix ~suf:"is true" line
-                && not @@ String.equal_caseless "-- no counterexample found with bound 10" line)
+                && not @@ String.equal valid_bmc_string line)
       in
       keep_or_remove_files scr smv;
 
       let spec_s = match Gen.get spec with
-        | None -> failwith ("Incorrectly handled SMV string:" ^ (Fmt.to_to_string (Gen.pp String.pp) spec))
+        | None -> 
+            failwith ("Incorrectly handled SMV string:" 
+                      ^ (Fmt.to_to_string (Gen.pp String.pp) spec))
         | Some s -> s
       in
 
       if String.suffix ~suf:"is true" spec_s
-      || String.equal_caseless 
-           "-- no counterexample found with bound 10" 
-           spec_s
+      || String.equal valid_bmc_string spec_s
       then
         Outcome.no_trace nbvars conversion_time analysis_time
       else
