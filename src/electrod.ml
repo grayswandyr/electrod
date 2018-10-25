@@ -17,7 +17,17 @@
 open Containers
 open Cmdliner
 open Libelectrod
- 
+
+let natural_arg =
+  let parse s =
+    let errmsg = Error (`Msg "not a natural number") in
+    match int_of_string_opt s with 
+      | None -> errmsg
+      | Some n when n < 0 -> errmsg
+      | Some n -> Ok n
+  in
+  Arg.conv (parse, Fmt.int)
+
 let infile =
   let doc = "File to process." in
   Arg.(required & pos 0 (some ~none:"missing FILE" non_dir_file) None
@@ -32,12 +42,18 @@ let tool =
        & opt (enum [ ("nuXmv", Main.NuXmv); ("NuSMV", Main.NuSMV)]) Main.NuXmv
        & info ["t"; "tool"] ~docv:"TOOL" ~doc)
 
+let bmc_length =
+  let doc = {|Sets the bound on trace steps. $(docv) must be non-negative.|}
+  in
+  Arg.(value
+       & opt (some natural_arg) None
+       & info ["bmc"] ~docv:"BOUND" ~doc)
+
 let script =
   let doc = {|Script to pass to the analysis tool (default: see section FILES). 
               A script file for nuXmv 
               or NuSMV $(b,MUST) set both options `default_trace_plugin' and 
-              `on_failure_script_quits' to '1' (NOTICE: no verification 
-              of the script file is made whatsoever). |}
+              `on_failure_script_quits' to '1'. If the '--bmc' option is used, the BMC bound will be prepended to the script file; and the script file is expected to call a BMC algorithm.  (NOTICE: no well-formedness verification of the script file is made whatsoever).|}
   in
   Arg.(value & opt (some non_dir_file) None
        & info ["s"; "script"] ~docv:"SCRIPT_FILE" ~doc)
@@ -82,7 +98,7 @@ let outcome_format =
 (* verbosity options (already def'd in Logs_cli, thx!) *)
 let verb_term = 
   Logs_cli.level ()
-    
+
 (* same for colors *)
 let color_term =
   Fmt_cli.style_renderer ()
@@ -99,9 +115,10 @@ let main_term =
         $ no_analysis
         $ print_generated
         $ outcome_format
-        $ long_names)
+        $ long_names
+        $ bmc_length)
 
-  
+
 let main_info =
   let doc = "formal analysis of Electrod models" in
   let man = [

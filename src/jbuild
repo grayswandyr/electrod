@@ -36,6 +36,12 @@
       (echo "let nuSMV_default_script = {|\n")
       (cat "res/nusmv-default-script.scr")
       (echo "|}\n")
+      (echo "let nuXmv_default_bmc_script = {|\n")
+      (cat "res/nuxmv-default-bmc-script.scr")
+      (echo "|}\n")
+      (echo "let nuSMV_default_bmc_script = {|\n")
+      (cat "res/nusmv-default-bmc-script.scr")
+      (echo "|}\n")
     ))))))
 
 

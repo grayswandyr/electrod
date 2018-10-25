@@ -16,6 +16,8 @@
 
 val nuXmv_default_script : string
 val nuSMV_default_script : string
+val nuXmv_default_bmc_script : string
+val nuSMV_default_bmc_script : string
 
 (** Given an implementation for atoms, provides a LTL implementation with a
     pretty printing function for Solver formulas.  *)
