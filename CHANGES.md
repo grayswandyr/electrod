@@ -1,3 +1,10 @@
+### 0.2.0 (2018-10-25)
+- migration to OPAM 2.0
+- migration to Dune 1.4 (for better handling of Menhir)
+- handle SIGTERM properly
+- feature #993: add BMC mode
+- bug #978: handle nested "always" in INVAR field
+
 ### 0.1.7 (2018-05-23)
 - remove ocamlfind from dependencies
 - handle child termination
