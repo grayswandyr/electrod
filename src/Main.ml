@@ -64,8 +64,19 @@ type tool =
   | NuSMV
 
 
+(* Taken from nunchaku-inria/logitest/src/Misc.ml (BSD licence).
+   Make sure that we are a session leader; that is, our children die if we die *)
+let ensure_session_leader : unit -> unit =
+  let thunk = lazy (
+    if not Sys.win32 && not Sys.cygwin
+    then ignore (Unix.setsid ())
+  ) in
+  fun () -> Lazy.force thunk
+
 let main style_renderer verbosity tool file scriptfile keep_files no_analysis
-      print_generated outcome_format long_names =
+      print_generated outcome_format long_names bmc =
+
+  ensure_session_leader ();
 
   let long_names =              (* Debug ==> long names *)
     match verbosity with
@@ -126,11 +137,15 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
           m "Conversion done in %a"
             Mtime.Span.pp conversion_time);
 
-    let cmd, script = match tool, scriptfile with
-      | NuXmv, None -> ("nuXmv", Solver.Default Smv.nuXmv_default_script)
-      | NuXmv, Some s -> ("nuXmv", Solver.File s)
-      | NuSMV, None -> ("NuSMV", Solver.Default Smv.nuSMV_default_script)
-      | NuSMV, Some s -> ("NuSMV", Solver.File s)
+    let cmd, script = match tool, scriptfile, bmc with
+      | NuXmv, None, None -> ("nuXmv", Solver.Default Smv.nuXmv_default_script)
+      | NuSMV, None, None -> ("NuSMV", Solver.Default Smv.nuSMV_default_script)
+      | NuXmv, None, Some _ -> 
+          ("nuXmv", Solver.Default Smv.nuXmv_default_bmc_script)
+      | NuSMV, None, Some _ -> 
+          ("NuSMV", Solver.Default Smv.nuSMV_default_bmc_script)
+      | NuXmv, Some s, _ -> ("nuXmv", Solver.File s)
+      | NuSMV, Some s, _ -> ("NuSMV", Solver.File s)
     in
 
     if print_generated then
@@ -143,7 +158,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
 
     let res = 
       Elo_to_smv1.analyze ~conversion_time ~cmd ~keep_files ~no_analysis
-        ~elo:elo ~script ~file model 
+        ~elo:elo ~script ~file ~bmc model 
     in
     (if not no_analysis then begin
         (* store the trace *)
@@ -162,9 +177,9 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
       end);
 
     (* Msg.debug (fun m -> 
-          m "Count references to hashconsed formulas:@\n@[<v2>%a@]"
-            Elo.pp_fml_stats 10
-        ); *)
+       m "Count references to hashconsed formulas:@\n@[<v2>%a@]"
+       Elo.pp_fml_stats 10
+       ); *)
 
     let memory = Gc.allocated_bytes () in
     Msg.info (fun m -> m "Total allocated memory: %.3fGB"

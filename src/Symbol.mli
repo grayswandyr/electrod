@@ -12,8 +12,6 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-open Containers
-
 (** Symbols are hash-consed strings *)
 
 type t

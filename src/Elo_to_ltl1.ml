@@ -129,7 +129,6 @@ module Make (Ltl : Solver.LTL) = struct
      squares (t+t.t)+(t+t.t)(t+t.t) + ... *)
 
   let rec iter_squares (acc_term : G.exp) k =
-    let open Location in
     match k with
       | 0 -> G.none
       | 1 -> acc_term
@@ -145,7 +144,6 @@ module Make (Ltl : Solver.LTL) = struct
      (alternative to iter_squares) t + t.t + t.t.t + ... *)
 
   let iter_tc (t : G.exp) k =
-    let open Location in
     if k = 0 then G.none
     else
       let ar = G.arity t in

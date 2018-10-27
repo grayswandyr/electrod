@@ -17,7 +17,6 @@
 end>
 
 %{
-  open Smv_trace_tokens
   open Containers
 
   module LA = List.Assoc
