@@ -7,32 +7,39 @@ TARGET = electrod
 all: build
 
 build:
-	$(DUNE) build @install \
+	dune build @install \
 	&& ln -sf _build/install/default/bin/$(TARGET) ./$(TARGET)
 
 watch:
-	$(DUNE) build --watch @install
+	dune build --watch @install
+	
+test-release:
+	dune build -p electrod --workspace dune-workspace.release @runtest @install 
+
+release: 
+	dune subst 
+	dune build -p electrod @install
 
 test:
-	$(DUNE) runtest 
+	dune runtest 
 
 utop:
-	$(DUNE) utop 
+	dune utop 
 
 doc:
-	$(DUNE) build @doc && x-www-browser _build/default/_doc/_html/index.html
+	dune build @doc && x-www-browser _build/default/_doc/_html/index.html
 
 show-deps:
-	$(DUNE) external-lib-deps --missing @install
+	dune external-lib-deps --missing @install
 
 install: build
-	@$(DUNE) install
+	@dune install
 
 uninstall:
-	@$(DUNE) uninstall
+	@dune uninstall
 
 clean:
-	@$(DUNE) clean
+	@dune clean
 	@git clean -dfXq
 	@rm -f ./$(TARGET)
 

@@ -1,4 +1,9 @@
-
+(env
+ (dev
+  (flags (:standard -g -strict-formats -strict-sequence -short-paths)))
+ (release
+  (ocamlopt_flags (:standard -O3))))
+  
 (executable
   (public_name electrod)
   (package electrod)
@@ -14,9 +19,6 @@
   (libraries
    containers containers.data containers.unix fmt fmt.tty gen
     hashcons logs.fmt mtime.clock.os printbox sequence stdcompat)
-  (flags
-   (:standard
-    (-g -strict-formats -strict-sequence -short-paths)))
   (inline_tests)
   (preprocess (pps ppx_inline_test ppx_expect ppx_deriving visitors.ppx))
   )
