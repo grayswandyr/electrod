@@ -13,11 +13,10 @@
   (modules (:standard \ ("Main" electrod)))
   (libraries
    containers containers.data containers.unix fmt fmt.tty gen
-    hashcons logs.fmt mtime.clock.os printbox sequence)
+    hashcons logs.fmt mtime.clock.os printbox sequence stdcompat)
   (flags
    (:standard
-    ( ; -33 unused open -58 missing cmx file
-        -g -safe-string -strict-formats -strict-sequence -short-paths)))
+    (-g -strict-formats -strict-sequence -short-paths)))
   (inline_tests)
   (preprocess (pps ppx_inline_test ppx_expect ppx_deriving visitors.ppx))
   )
@@ -48,7 +47,7 @@
 
 ;;; Electrod parser
 
-(menhir (modules Parser))
+(menhir (infer false)(modules Parser))
 
 ;;; SMV trace parser
 
@@ -56,7 +55,7 @@
  (flags (--only-tokens))
   (modules Smv_trace_tokens))
 
-(menhir 
+(menhir (infer false) 
  (merge_into Smv_trace_parser)
   (flags (--external-tokens Smv_trace_tokens))
   (modules Smv_trace_parser Smv_trace_tokens))

@@ -141,7 +141,7 @@ let iexp_table : (fml, exp, iexp) oiexp HC.t =
 
 module Fml_count = CCHashtbl.Make(struct 
     type t = (fml, exp, iexp) ofml HC.hash_consed 
-    let hash HC.{ hkey; _ } = hkey
+    let hash x = x.HC.hkey
     let equal f1 f2 = Equal.physical f1 f2
   end)
 let fml_count : int Fml_count.t = Fml_count.create 793

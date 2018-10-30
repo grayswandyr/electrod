@@ -14,6 +14,7 @@
 
 (** {b Entrypoint for the 'electrod' program.} Performs CLI management.*)
 
+open Stdcompat
 open Containers
 open Cmdliner
 open Libelectrod
