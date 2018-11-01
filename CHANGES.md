@@ -1,3 +1,8 @@
+### 0.2.1 (2018-11-01)
+- fix bug between Dune, Menhir and 4.07.1
+- make compilable until 4.04
+- add compilation testing for various versions of the compiler
+
 ### 0.2.0 (2018-10-25)
 - migration to OPAM 2.0
 - migration to Dune 1.4 (for better handling of Menhir)
