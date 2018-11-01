@@ -124,13 +124,19 @@ let main_info =
   let doc = "formal analysis of Electrod models" in
   let man = [
     `S Manpage.s_files;
-    `P {|Default SCRIPT_FILE for nuXmv:|};
+    `P {|Default SCRIPT_FILE for unbounded model-checking with nuXmv:|};
     `Noblank;
     `Pre Smv.nuXmv_default_script;
     `Noblank;
-    `P {|Default SCRIPT_FILE for NuSMV:|};
+    `P {|Default SCRIPT_FILE for unbounded model-checking with NuSMV:|};
     `Noblank;
     `Pre Smv.nuSMV_default_script;
+    `P {|Default SCRIPT_FILE for bounded model-checking with NuSMV:|};
+    `Noblank;
+    `Pre Smv.nuSMV_default_bmc_script;
+    `P {|Default SCRIPT_FILE for bounded model-checking with nuXmv:|};
+    `Noblank;
+    `Pre Smv.nuXmv_default_bmc_script;
     `S Manpage.s_authors;
     `P {|Julien BRUNEL (ONERA), David CHEMOUIL (ONERA).|};
     `S "COPYRIGHT";
