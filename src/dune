@@ -20,7 +20,7 @@
    containers containers.data containers.unix fmt fmt.tty gen
     hashcons logs.fmt mtime.clock.os printbox sequence stdcompat)
   (inline_tests)
-  (preprocess (pps ppx_inline_test ppx_expect ppx_deriving visitors.ppx))
+  (preprocess (pps ppx_inline_test ppx_deriving visitors.ppx))
   )
 
 ; Generate Scripts.ml file
@@ -49,7 +49,9 @@
 
 ;;; Electrod parser
 
-(menhir (infer false)(modules Parser))
+(menhir 
+  (infer false) ; apparent bug see https://github.com/ocaml/dune/issues/1504
+  (modules Parser))
 
 ;;; SMV trace parser
 
@@ -57,7 +59,8 @@
  (flags (--only-tokens))
   (modules Smv_trace_tokens))
 
-(menhir (infer false) 
- (merge_into Smv_trace_parser)
+(menhir 
+  (infer false) ; apparent bug see https://github.com/ocaml/dune/issues/1504
+  (merge_into Smv_trace_parser)
   (flags (--external-tokens Smv_trace_tokens))
   (modules Smv_trace_parser Smv_trace_tokens))
