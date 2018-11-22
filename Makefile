@@ -16,6 +16,9 @@ watch:
 test-release:
 	dune build -p electrod --workspace dune-workspace.release @runtest @install 
 
+format:
+	dune build @fmt
+
 release: 
 	dune subst 
 	dune build -p electrod @install
