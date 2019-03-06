@@ -4,6 +4,11 @@ DUNE = dune
 
 TARGET = electrod
 
+os := $(shell opam var os)
+arch := $(shell opam var arch)
+
+RELEASE = ./$(TARGET).${os}.${arch}
+
 all: build
 
 build:
@@ -12,16 +17,18 @@ build:
 
 watch:
 	dune build --watch @install
-	
+
 test-release:
 	dune build -p electrod --workspace dune-workspace.release @runtest @install 
-
-format:
-	dune build @fmt
 
 release: 
 	dune subst 
 	dune build -p electrod @install
+	cp _build/install/default/bin/$(TARGET) $(RELEASE)
+	strip $(RELEASE)
+
+fmt:
+	dune build @fmt
 
 test:
 	dune runtest 

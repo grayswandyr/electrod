@@ -19,7 +19,24 @@ end>
 %{
   open Containers
 
-  module LA = List.Assoc
+  (* vendored from Containers (BSD license allows this): 
+    its prototype changd in 2.4, so copy a version to
+    compile with many versions of Containers.  *)
+  let rec search_set eq acc l x ~f = match l with
+    | [] -> f x None acc
+    | (x',y')::l' ->
+      if eq x x'
+      then f x (Some y') (List.rev_append acc l')
+      else search_set eq ((x',y')::acc) l' x ~f
+
+  let update ~eq f x l =
+    search_set eq [] l x
+      ~f:(fun x opt_y rest ->
+        match f opt_y with
+          | None -> rest (* drop *)
+          | Some y' -> (x,y') :: rest)
+  (* END vendoring *)
+
   
   (* converts a list containing pairs (name, tuple) in a list of pairs (name,
      set of tuples), i.e. gathers (in [acc]) all tuples corresponding to a given
@@ -36,7 +53,7 @@ end>
       | Some (name, tuple)::tl ->
          begin
            (* Msg.debug (fun m -> m "conv (%a, %a)" Name.pp name Tuple.pp tuple); *)
-           let acc2 = LA.update ~eq:Name.equal ~f:(upd tuple) name acc in
+           let acc2 = update ~eq:Name.equal (upd tuple) name acc in
            walk acc2 tl
          end
     in walk D.base ntl

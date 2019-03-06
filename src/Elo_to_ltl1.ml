@@ -163,7 +163,7 @@ module Make (Ltl : Solver.LTL) = struct
     let r_sup_list = TS.to_list r_sup in
     let s_sup_list = TS.to_list s_sup in
     fold_left (fun pairs x_r ->
-          filter_map
+          filter_map (*TODO for a given x_r, there can be at most one x_s!, should return early *)
             (fun x_s ->
                if Tuple.is_in_join tuple x_r x_s then
                  Some (x_r, x_s)
