@@ -34,7 +34,7 @@ test:
 	dune runtest 
 
 utop:
-	dune utop 
+	dune utop --profile release
 
 doc:
 	dune build @doc && x-www-browser _build/default/_doc/_html/index.html

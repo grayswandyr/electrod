@@ -143,35 +143,54 @@ module Make (Ltl : Solver.LTL) = struct
   (* computes the transitive closure of the term t by k joins
      (alternative to iter_squares) t + t.t + t.t.t + ... *)
 
-  let iter_tc (t : G.exp) k =
-    if k = 0 then G.none
-    else
-      let ar = G.arity t in
-      let t_to_the_k = ref t in
-      let tc = ref t in
-      for _ = 2 to k do
-        t_to_the_k := G.(rbinary ~ar !t_to_the_k join t);
-        tc := G.(rbinary ~ar !tc union !t_to_the_k);
-      done;
-      !tc
+  (* let iter_tc (t : G.exp) k =
+     if k = 0 then G.none
+     else
+     let ar = G.arity t in
+     let t_to_the_k = ref t in
+     let tc = ref t in
+     for _ = 2 to k do
+     t_to_the_k := G.(rbinary ~ar !t_to_the_k join t);
+     tc := G.(rbinary ~ar !tc union !t_to_the_k);
+     done;
+     !tc *)
+
+  (* computes the transitive closure of the term t by t.(iden + t).(iden.t^2).(iden+(t^2)^2)... *)
+
+  (* let ioannidis_tc (t : G.exp) k =
+     let ar = G.arity t in
+     let prev_t = ref t in
+     let term = ref G.(rbinary ~ar t join (rbinary ~ar iden union t)) in
+     let i = ref 1 in (* 0 for (iden + t) *)
+     let max_pow = ref 2 in (* 1 for t^1 + 1 for first 't.'*)
+     while !max_pow <= k do
+     prev_t := G.(rbinary ~ar !prev_t join !prev_t);
+     term := G.(rbinary ~ar !term join (rbinary ~ar iden union !prev_t));
+     i := 2 * !i;
+     max_pow := !max_pow + !i
+     done;
+     !term  *)
 
 
   (* utility function for build_Join *)
   let eligible_pairs (tuple, r_sup, s_sup : Tuple.t * TS.t * TS.t)
     : (Tuple.t * Tuple.t) Sequence.t =
-    let open List in
-    let r_sup_list = TS.to_list r_sup in
-    let s_sup_list = TS.to_list s_sup in
-    fold_left (fun pairs x_r ->
-          filter_map (*TODO for a given x_r, there can be at most one x_s!, should return early *)
+    let open Sequence in
+    let r_sup_seq = TS.to_seq r_sup in (* filtering candidates (sharing a prefix or suffix with tuple) may be good *)
+    let s_sup_seq = TS.to_seq s_sup in
+    fold (fun pairs x_r ->
+          find (* find the *at most one* (for fixed tuple and x_r) x_s s.t. tuple = x_r . x_s *)
             (fun x_s ->
                if Tuple.is_in_join tuple x_r x_s then
                  Some (x_r, x_s)
                else
-                 None) s_sup_list
-          |> rev_append pairs) empty r_sup_list
-    |> to_seq
-
+                 None) 
+            s_sup_seq
+          |> function 
+          | Some pair -> cons pair pairs
+          | None -> pairs) 
+      empty 
+      r_sup_seq
 
 
 
@@ -321,7 +340,7 @@ module Make (Ltl : Solver.LTL) = struct
 
     method build_Diff (_ : stack) (_ : G.exp) (_ : G.exp) e' f' = 
       fun (tuple : Tuple.t) ->
-        e' tuple +&& lazy (not_ (f' tuple))
+      e' tuple +&& lazy (not_ (f' tuple))
     method build_F (_ : stack) (a : ltl) : ltl = eventually a
     method build_FIte (_ : stack) _ _ _ (c : ltl) (t : ltl) (e : ltl) : ltl  = 
       ifthenelse c t e
@@ -517,21 +536,26 @@ module Make (Ltl : Solver.LTL) = struct
     method build_S (_ : stack) (a : ltl) (b : ltl) : ltl = since a b
     method build_Some_ (_ : stack) = G.some
     method build_Sub (_ : stack) (a : term) (b : term) : term = minus a b
-    method build_TClos subst r __r' =
+    method build_TClos subst r __r' = fun tuple ->
       Msg.debug
         (fun m -> m "%s.build_TClos <-- %a"
                     __MODULE__  
                     G.(pp_exp (arity r)) r);
       let { sup ; _ } = env#must_may_sup subst r in
       let k = compute_tc_length sup in
-      (* let tc_naif = iter_tc r k in *)
+      Msg.debug (fun m -> m "TC bound: %d" k);
+      (* let tc_naif = iter_tc r k in
+         let fml_tc_naif = self#visit_exp subst tc_naif tuple in *)
       let tc_square = iter_squares r k in
+      let fml_tc_square = self#visit_exp subst tc_square tuple in
+      (* let tc_ioannidis = ioannidis_tc r k in
+         let fml_tc_ioannidis = self#visit_exp subst tc_ioannidis tuple in *)
+      let term, fml = tc_square, fml_tc_square in
       Msg.debug (fun m ->
-            m "TC bound: %d" k);
-      Msg.debug (fun m ->
-            m "TC term using iterative squares: %a" 
-              G.(pp_exp (arity tc_square)) (tc_square));
-      self#visit_exp subst tc_square
+            m "TC term: %a" 
+              G.(pp_exp (arity term)) term);
+      Msg.debug (fun m -> m "TC formula: @[<h2> %a@]" (Fmtc.hbox2 Ltl.pp) fml);
+      fml
     method build_Transpose (_ : stack) _ r' tuple =
       r' @@ Tuple.transpose tuple
     method build_True (_ : stack) = true_
