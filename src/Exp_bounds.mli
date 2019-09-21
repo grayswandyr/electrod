@@ -1,7 +1,7 @@
 (*******************************************************************************
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2018 ONERA
+ * Copyright (C) 2016-2019 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -14,14 +14,12 @@
 
 (** Computation of bounds for Ast expressions. *)
 
-type bounds = {
-  must : Tuple_set.t;
-  sup : Tuple_set.t;
-  may : Tuple_set.t;
-}
+type bounds =
+  { must : Tuple_set.t
+  ; sup : Tuple_set.t
+  ; may : Tuple_set.t
+  }
 
-
+val make_bounds_exp : Domain.t -> Elo.exp * Tuple.t list -> bounds
 (** Computes the must/may/sup bounds of an expression [exp], given the [domain]
     and a substitution [subst] (substituting a tuple for a DB index) *)
-val make_bounds_exp : Domain.t -> (Elo.exp * Tuple.t list) -> bounds
-

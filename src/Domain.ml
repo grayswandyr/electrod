@@ -1,7 +1,7 @@
 (*******************************************************************************
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2018 ONERA
+ * Copyright (C) 2016-2019 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -13,23 +13,20 @@
  ******************************************************************************)
 
 open Containers
-
 module Map = Name.Map
-
 
 type t = Relation.t Map.t
 
 let equal dom1 dom2 = Map.equal Relation.equal dom1 dom2
 
-let empty =
-  Map.empty
-
+let empty = Map.empty
 
 let mem = Map.mem
 
 let add name rel domain =
-  assert (not @@ Map.mem name domain);
+  assert (not @@ Map.mem name domain) ;
   Map.add name rel domain
+
 
 let get_exn = Map.find
 
@@ -43,72 +40,85 @@ let univ_atoms domain =
   let open Relation in
   let open Scope in
   match get_exn Name.univ domain with
-    | Const { scope; _ } ->
-        (match scope with
-          | Exact b -> b
-          | Inexact _ -> assert false)
-    | Var _ -> assert false
-    | exception Not_found -> assert false
+  | Const { scope; _ } ->
+    (match scope with Exact b -> b | Inexact _ -> assert false)
+  | Var _ ->
+      assert false
+  | exception Not_found ->
+      assert false
+
 
 let pp out rels =
-  Fmtc.(vbox @@
-        Map.pp ~sep:" " ~arrow:" : " ~start:"" ~stop:""
-          (styled `Cyan Name.pp) (Relation.pp ~print_name:false))
-    out rels
+  Fmtc.(
+    vbox
+    @@ Map.pp
+         ~sep:" "
+         ~arrow:" : "
+         ~start:""
+         ~stop:""
+         (styled `Cyan Name.pp)
+         (Relation.pp ~print_name:false))
+    out
+    rels
+
 
 let must name domain =
-  assert (mem name domain);
-  get_exn name domain
-  |> Relation.scope
-  |> Scope.must
+  assert (mem name domain) ;
+  get_exn name domain |> Relation.scope |> Scope.must
+
 
 let may name domain =
-  assert (mem name domain);
-  get_exn name domain
-  |> Relation.scope
-  |> Scope.may
+  assert (mem name domain) ;
+  get_exn name domain |> Relation.scope |> Scope.may
+
 
 let sup name domain =
-  assert (mem name domain);
-  get_exn name domain
-  |> Relation.scope
-  |> Scope.sup
+  assert (mem name domain) ;
+  get_exn name domain |> Relation.scope |> Scope.sup
 
 
 let musts ?(with_univ_and_ident = true) domain =
-  (if with_univ_and_ident then domain
-   else (domain |> Map.remove Name.univ |> Map.remove Name.iden))
-  |>  Map.map Relation.must 
+  ( if with_univ_and_ident
+  then domain
+  else domain |> Map.remove Name.univ |> Map.remove Name.iden )
+  |> Map.map Relation.must
   |> to_list
 
-let arities =
-  Fun.(Map.map Relation.arity %> to_list)
+
+let arities = Fun.(Map.map Relation.arity %> to_list)
 
 let update_domain_with_instance domain instance =
   let module R = Relation in
   let module I = Instance in
   let relation_of_instance_item inst_item rel =
-    assert (R.is_const rel);
+    assert (R.is_const rel) ;
     R.const (R.name rel) (R.arity rel) (Scope.exact inst_item)
   in
   let keep_instance __name = function
     | `Both (dom_entry, inst_entry) ->
         Some (relation_of_instance_item inst_entry dom_entry)
-    | `Left dom_entry -> Some dom_entry
+    | `Left dom_entry ->
+        Some dom_entry
     | `Right _ ->
         (* cannot happen: Raw_to_ast checked that every 
            instance is in the domain *)
         assert false
   in
   Map.merge_safe ~f:keep_instance domain (Instance.to_map instance)
-  
+
+
 let rename atom_renaming name_renaming domain =
-  to_list domain 
+  to_list domain
   |> List.map (fun (name, rel) ->
-        (List.assoc ~eq:Name.equal name name_renaming,
-         Relation.rename atom_renaming name_renaming rel))
+         ( List.assoc ~eq:Name.equal name name_renaming
+         , Relation.rename atom_renaming name_renaming rel ))
   |> of_list
-  
-module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
-include P 
- 
+
+
+module P = Intf.Print.Mixin (struct
+  type nonrec t = t
+
+  let pp = pp
+end)
+
+include P

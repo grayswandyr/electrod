@@ -1,7 +1,7 @@
 (*******************************************************************************
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2018 ONERA
+ * Copyright (C) 2016-2019 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -14,30 +14,30 @@
 
 (** Specification of transformations. *)
 
-(** A transformation conforms to the following signature.  *)
 type ('src, 'dst) t
+(** A transformation conforms to the following signature.  *)
 
+val make : string -> ('src -> 'dst) -> ('src, 'dst) t
 (** Constructor. The first parameter is the name: it must be unique in the whole
     program.*)
-val make : string -> ('src -> 'dst) -> ('src, 'dst) t
 
-(** Retrieves the name... *)
 val name : ('src, 'dst) t -> string
+(** Retrieves the name... *)
 
-(** Runs a transformation *)
 val run : ('src, 'dst) t -> 'src -> 'dst
+(** Runs a transformation *)
 
-(** Returns the composition (left-to-right) of two transformations. *)
 val fby : ('a, 'b) t -> ('b, 'c) t -> ('a, 'c) t
+(** Returns the composition (left-to-right) of two transformations. *)
 
+val identity : ('a, 'a) t
 (** Identity transformation *)
-val identity : ('a, 'a) t 
 
-(** A list of transformations with given source and target type. *)
 type ('src, 'dst) tlist
+(** A list of transformations with given source and target type. *)
 
-(** Creates a list of transformations with a default one .*)
 val tlist : ('src, 'dst) t list -> ('src, 'dst) tlist
+(** Creates a list of transformations with a default one .*)
 
-(** Retrieves a transformation. May raise Not_found. *)
 val get_exn : ('src, 'dst) tlist -> string -> ('src, 'dst) t
+(** Retrieves a transformation. May raise Not_found. *)

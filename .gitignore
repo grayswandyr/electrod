@@ -1,4 +1,5 @@
 electrod
+_opam/
 *.install
 */.merlin
 _build/

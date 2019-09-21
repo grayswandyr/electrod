@@ -1,7 +1,7 @@
 (*******************************************************************************
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2018 ONERA
+ * Copyright (C) 2016-2019 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -13,8 +13,6 @@
  ******************************************************************************)
 
 (** Helpers for sorting formulas into invariants, and other types of formulas *)
-
-
 
 (** 
    Static_prop: a proposition that does not include any variable relation
@@ -30,22 +28,23 @@
    Temporal: any other proposition.
 *)
 type goal_color = private
-    Static_prop
+  | Static_prop
   | Primed_prop
   | Invar
   | Init
   | Trans
   | Temporal
+
 val to_string : goal_color -> string
 
 val pp : Format.formatter -> goal_color -> unit
 
-(** removes the top level always operator in an invariant elo formula *)
 val remove_always_from_invar : Elo.fml -> Elo.fml
+(** removes the top level always operator in an invariant elo formula *)
 
+val add_always_to_invar : Elo.fml -> Elo.fml
 (** adds an always operator to an (invariant) elo formula if the
    outermost operator is not an always *)
-val add_always_to_invar : Elo.fml -> Elo.fml
 
-(** Computes the color of a formula *)
 val color : Elo.t -> Elo.fml -> goal_color
+(** Computes the color of a formula *)

@@ -1,3 +1,4 @@
+version: "0.2.1-4-gcf30fb8-dirty"
 opam-version: "2.0"
 maintainer: "David Chemouil <david.chemouil+git@onera.fr>"
 authors: ["David Chemouil" "Julien Brunel"]
@@ -23,9 +24,10 @@ depends: [
   "mtime"
   "ppx_inline_test"
   "printbox"
-  "sequence"
+  "iter"
   "stdcompat"
-  "visitors" {>= "20180513"}
+  "stdlib-shims"
+  "visitors" {>= "20190513"}
 ]
 synopsis: "Formal analysis for the Electrod formal pivot language"
 description: """

@@ -1,7 +1,7 @@
 (*******************************************************************************
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2018 ONERA
+ * Copyright (C) 2016-2019 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -13,9 +13,7 @@
  ******************************************************************************)
 
 open Containers
-
 module Map = Name.Map
-
 
 type t = Tuple_set.t Map.t
 
@@ -24,8 +22,9 @@ let empty = Map.empty
 let mem = Map.mem
 
 let add name rel ts =
-  assert (not @@ Map.mem name ts);
+  assert (not @@ Map.mem name ts) ;
   Map.add name rel ts
+
 
 let get_exn = Map.find
 
@@ -37,26 +36,35 @@ let of_list = Map.of_list
 
 let to_map x = x
 
-
 let pp out rels =
   let open Fmtc in
-  begin
-    (styled `Bold pf) out "inst@ ";
-    pf out "  %a"
-      (vbox @@ Map.pp ~sep:" " ~arrow:" = " ~start:"" ~stop:""
-                 (styled `Cyan Name.pp) Tuple_set.pp) rels
-  end
+  (styled `Bold pf) out "inst@ " ;
+  pf
+    out
+    "  %a"
+    ( vbox
+    @@ Map.pp
+         ~sep:" "
+         ~arrow:" = "
+         ~start:""
+         ~stop:""
+         (styled `Cyan Name.pp)
+         Tuple_set.pp )
+    rels
 
 
 let rename atom_renaming name_renaming inst =
   to_list inst
   |> List.map (fun (name, ts) ->
-        (List.assoc ~eq:Name.equal name name_renaming,
-         Tuple_set.rename atom_renaming ts))
+         ( List.assoc ~eq:Name.equal name name_renaming
+         , Tuple_set.rename atom_renaming ts ))
   |> of_list
-    
 
 
-module P = Intf.Print.Mixin(struct type nonrec t = t let pp = pp end)
-include P 
- 
+module P = Intf.Print.Mixin (struct
+  type nonrec t = t
+
+  let pp = pp
+end)
+
+include P

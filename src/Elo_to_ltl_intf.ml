@@ -1,7 +1,7 @@
 (*******************************************************************************
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2018 ONERA
+ * Copyright (C) 2016-2019 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -15,12 +15,13 @@
 (** Abstract type for a converter from Elo models to (abstract) LTL formulas.  *)
 
 module type S = sig
-  type atomic                     (* LTL propositional atoms *)
-  type ltl                      (* ltl formula *)
+  type atomic
 
-  val convert :
-    Elo.t ->
-    Elo.fml ->
-    string * ltl
+  (* LTL propositional atoms *)
 
+  type ltl
+
+  (* ltl formula *)
+
+  val convert : Elo.t -> Elo.fml -> string * ltl
 end

@@ -1,7 +1,7 @@
 (*******************************************************************************
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2018 ONERA
+ * Copyright (C) 2016-2019 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -23,15 +23,16 @@ module Print = struct
     val to_string : t -> string
   end
 
-  module Mixin(M : sig type t val pp : t Fmtc.t end) : S with type t := M.t =
-  struct
+  module Mixin (M : sig
+    type t
+
+    val pp : t Fmtc.t
+  end) : S with type t := M.t = struct
     include M
-    
+
     let to_string = Fmtc.to_to_string pp
   end
 end
-
-    
 
 module type COMPARE = sig
   type t

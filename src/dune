@@ -9,7 +9,7 @@
   (package electrod)
   (modules ("Main" electrod))
   (libraries
-   electrod.libelectrod cmdliner fmt fmt.cli fmt.tty logs.cli logs.fmt)
+   electrod.libelectrod cmdliner fmt fmt.cli fmt.tty logs.cli logs.fmt stdlib-shims)
   )
 
 (library
@@ -18,7 +18,7 @@
   (modules (:standard \ ("Main" electrod)))
   (libraries
    containers containers.data containers.unix fmt fmt.tty gen
-    hashcons logs.fmt mtime.clock.os printbox sequence stdcompat)
+    hashcons logs.fmt mtime.clock.os printbox iter stdcompat stdlib-shims)
   (inline_tests)
   (preprocess (pps ppx_inline_test ppx_deriving visitors.ppx))
   )

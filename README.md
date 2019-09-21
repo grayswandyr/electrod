@@ -1,6 +1,6 @@
 # electrod - Formal analysis for the Electrod formal specification language
 
-%%VERSION%%
+0.2.1-4-gcf30fb8-dirty
 
 Electrod is a model finder inspired by Kodkod. It takes as input a
 model expressed in a mixture of relational first-order logic (RFOL)
@@ -34,7 +34,7 @@ Type `electrod --help` to get some help on options.
 
 ## Copyright and license
 
-(C) 2016-2018 ONERA
+(C) 2016-2019 ONERA
 
 electrod is distributed under the terms of the Mozilla Public License v2.0.
 

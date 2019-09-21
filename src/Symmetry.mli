@@ -1,7 +1,7 @@
 (*******************************************************************************
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2018 ONERA
+ * Copyright (C) 2016-2019 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -17,10 +17,8 @@
 type t
 
 val make : (Name.t * Tuple.t) list -> (Name.t * Tuple.t) list -> t
-val fold :
-  (Name.t * Tuple.t -> Name.t * Tuple.t -> 'a -> 'a) -> t -> 'a -> 'a
+
+val fold : (Name.t * Tuple.t -> Name.t * Tuple.t -> 'a -> 'a) -> t -> 'a -> 'a
+
 val rename :
-  (Atom.t, Atom.t) CCList.Assoc.t ->
-  (Name.t * Name.t) list ->
-  t ->
-  t
+  (Atom.t, Atom.t) CCList.Assoc.t -> (Name.t * Name.t) list -> t -> t

@@ -1,7 +1,7 @@
 (*******************************************************************************
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2018 ONERA
+ * Copyright (C) 2016-2019 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -14,21 +14,20 @@
 
 (** Atoms (= urelements). *)
 
+type t
 (** Type of atoms. *)
-type t 
 
-(** [atom ~loc:loc s] creates an atom with name [s] and optional location [loc]. *)
 val atom : ?loc:Location.t -> string -> t
+(** [atom ~loc:loc s] creates an atom with name [s] and optional location [loc]. *)
 
-(** creates an atom out of a raw_ident. *)
 val of_raw_ident : Raw_ident.t -> t
+(** creates an atom out of a raw_ident. *)
 
-(** Prints a list of atoms as a bound. *)
 val pp_list : t list CCFormat.printer
+(** Prints a list of atoms as a bound. *)
 
 val hash : t -> int
-  
 
 include Intf.Print.S with type t := t
-  
+
 include Intf.COMPARE with type t := t

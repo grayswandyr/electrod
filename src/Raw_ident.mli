@@ -1,7 +1,7 @@
 (*******************************************************************************
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2018 ONERA
+ * Copyright (C) 2016-2019 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -14,24 +14,23 @@
 
 (** Identifiers in "raw" ASTs. *)
 
+type t =
+  { ident : string
+  ; loc : Location.t
+  }
 (** Any form of identifier for constants (atoms, relations) in the source
     code. *)
-type t = {
-  ident : string;
-  loc : Location.t
-}
 
 (** {1 Constructor}  *)
 
 val ident : string -> Lexing.position -> Lexing.position -> t
 
 (** {1 Accessors} *)
-  
+
 val basename : t -> string
 
 val location : t -> Location.t
 
 val eq_name : t -> t -> bool
-
 
 val pp : Format.formatter -> t -> unit

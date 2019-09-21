@@ -1,7 +1,7 @@
 (*******************************************************************************
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2018 ONERA
+ * Copyright (C) 2016-2019 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -14,37 +14,39 @@
 
 (** Locations in a file (issued from the parsing phase). *)
 
+type t
 (** A location in a file represents an interval from a start position to an end one. *)
-type t 
 
+val from_positions : Lexing.position -> Lexing.position -> t
 (** [from_positions begp endp] takes {!Lexing.position}s [begp] and [endp]
     position returns a location out of them. Requires: [begp] < [endp]. *)
-val from_positions : Lexing.position -> Lexing.position -> t
 
 (** Accessors: *)
 
 val begl : t -> int
+
 val begc : t -> int
+
 val endl : t -> int
+
 val endc : t -> int
 
 val to_ints : t -> (int * int) * (int * int)
 
-
-(** Merge two positions *)
 val span : t * t -> t
+(** Merge two positions *)
 
-(** Dummy position *)
 val dummy : t
+(** Dummy position *)
 
-type 'a located = {
-  data : 'a;
-  loc : t;
-}
+type 'a located =
+  { data : 'a
+  ; loc : t
+  }
 
 val make_located : 'a -> t -> 'a located
 
-val pp_located : (Format.formatter -> 'a -> unit) ->
-  Format.formatter -> 'a located -> unit
+val pp_located :
+  (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a located -> unit
 
 include Intf.Print.S with type t := t
