@@ -1,7 +1,5 @@
 # electrod - Formal analysis for the Electrod formal specification language
 
-0.2.1-4-gcf30fb8-dirty
-
 Electrod is a model finder inspired by Kodkod. It takes as input a
 model expressed in a mixture of relational first-order logic (RFOL)
 over bounded domains and linear temporal logic (LTL) over an unbounded

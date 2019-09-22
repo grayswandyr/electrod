@@ -1,5 +1,4 @@
 (lang dune 1.1)
 (name electrod)
-(version 0.2.1-4-gcf30fb8-dirty)
 (using menhir 2.0)
 (using fmt 1.2)

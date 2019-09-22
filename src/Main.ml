@@ -101,7 +101,7 @@ let main
       m
         "%a"
         Fmtc.(styled `Bold string)
-        "electrod (C) 2016-2019 ONERA (0.2.1-4-gcf30fb8-dirty)") ;
+        "electrod (C) 2016-2019 ONERA (@@VERSION@@)") ;
 
   Msg.debug (fun m -> m "CWD = %s" (Sys.getcwd ())) ;
   Msg.debug (fun m -> m "PATH = %s" (Sys.getenv "PATH")) ;
