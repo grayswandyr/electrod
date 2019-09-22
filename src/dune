@@ -9,7 +9,7 @@
   (package electrod)
   (modules ("Main" electrod))
   (libraries
-   electrod.libelectrod cmdliner fmt fmt.cli fmt.tty logs.cli logs.fmt stdlib-shims)
+   electrod.libelectrod dune-build-info cmdliner fmt fmt.cli fmt.tty logs.cli logs.fmt stdlib-shims)
   )
 
 (library

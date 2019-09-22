@@ -22,15 +22,15 @@ let keyword =
   let open! Logs in
   function
   | App ->
-      ""
+    ""
   | Error ->
-      "ERROR"
+    "ERROR"
   | Warning ->
-      "WARNING"
+    "WARNING"
   | Info ->
-      "INFO"
+    "INFO"
   | Debug ->
-      "DEBUG"
+    "DEBUG"
 
 
 let short =
@@ -46,13 +46,13 @@ let pp_header ppf (l, h) =
   match l with
   | App ->
     ( match h with
-    | None ->
+      | None ->
         ()
-    | Some h ->
+      | Some h ->
         Fmtc.pf ppf "[%a] " Fmtc.(styled app_style string) h )
   | Error | Warning | Info | Debug ->
-      pp_h ppf (Msg.style l)
-      @@ CCOpt.map_or ~default:(keyword l) (fun s -> short l ^ s) h
+    pp_h ppf (Msg.style l)
+    @@ CCOpt.map_or ~default:(keyword l) (fun s -> short l ^ s) h
 
 
 type tool =
@@ -86,9 +86,9 @@ let main
     (* Debug ==> long names *)
     match verbosity with
     | Some Logs.Debug ->
-        true
+      true
     | None | Some _ ->
-        long_names
+      long_names
   in
   Printexc.record_backtrace true ;
 
@@ -97,11 +97,15 @@ let main
   Logs.set_reporter (Logs_fmt.reporter ~pp_header ()) ;
   Logs.set_level ~all:true verbosity ;
 
+  let version = match Build_info.V1.version () with
+    | None -> "(development version)"
+    | Some v -> Build_info.V1.Version.to_string v
+  in
   Logs.app (fun m ->
       m
         "%a"
         Fmtc.(styled `Bold string)
-        "electrod (C) 2016-2019 ONERA (@@VERSION@@)") ;
+        ("electrod (C) 2016-2019 ONERA " ^ version)) ;
 
   Msg.debug (fun m -> m "CWD = %s" (Sys.getcwd ())) ;
   Msg.debug (fun m -> m "PATH = %s" (Sys.getenv "PATH")) ;
@@ -121,11 +125,11 @@ let main
       |> Transfo.(get_exn raw_to_ast_t "raw_to_elo" |> run)
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Static analysis done"))
       |> Fun.tap (fun elo ->
-             Msg.debug (fun m -> m "After raw_to_elo =@\n%a@." Ast.pp elo))
+          Msg.debug (fun m -> m "After raw_to_elo =@\n%a@." Ast.pp elo))
       |> Shortnames.rename_elo long_names
       |> Transfo.(get_exn ast_to_ast_t "simplify1" |> run)
       |> Fun.tap (fun elo ->
-             Msg.debug (fun m -> m "After simplify1 =@\n%a@." Ast.pp elo))
+          Msg.debug (fun m -> m "After simplify1 =@\n%a@." Ast.pp elo))
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Simplification done"))
     in
     let elo = Ast_to_elo.convert ast in
@@ -137,17 +141,17 @@ let main
     let cmd, script =
       match (tool, scriptfile, bmc) with
       | NuXmv, None, None ->
-          ("nuXmv", Solver.Default Smv.nuXmv_default_script)
+        ("nuXmv", Solver.Default Smv.nuXmv_default_script)
       | NuSMV, None, None ->
-          ("NuSMV", Solver.Default Smv.nuSMV_default_script)
+        ("NuSMV", Solver.Default Smv.nuSMV_default_script)
       | NuXmv, None, Some _ ->
-          ("nuXmv", Solver.Default Smv.nuXmv_default_bmc_script)
+        ("nuXmv", Solver.Default Smv.nuXmv_default_bmc_script)
       | NuSMV, None, Some _ ->
-          ("NuSMV", Solver.Default Smv.nuSMV_default_bmc_script)
+        ("NuSMV", Solver.Default Smv.nuSMV_default_bmc_script)
       | NuXmv, Some s, _ ->
-          ("nuXmv", Solver.File s)
+        ("nuXmv", Solver.File s)
       | NuSMV, Some s, _ ->
-          ("NuSMV", Solver.File s)
+        ("NuSMV", Solver.File s)
     in
     if print_generated
     then
@@ -201,8 +205,8 @@ let main
           (Mtime_clock.elapsed ()))
   with
   | Exit ->
-      Logs.app (fun m ->
-          m "Aborting (%a)." Mtime.Span.pp (Mtime_clock.elapsed ())) ;
-      exit 1
+    Logs.app (fun m ->
+        m "Aborting (%a)." Mtime.Span.pp (Mtime_clock.elapsed ())) ;
+    exit 1
   | e ->
-      raise e
+    raise e
