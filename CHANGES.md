@@ -1,3 +1,7 @@
+### 0.2.3 (2019-09-22)
+- fix compilation problems (depend on ocaml >= 4.05.0)
+- use dune-build-info
+
 ### 0.2.2 (2019-09-21)
 - switch to Iter and Stdlib
 - reformat code
