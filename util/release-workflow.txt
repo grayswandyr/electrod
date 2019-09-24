@@ -20,4 +20,4 @@ dune-release tag
 
 git push --tags 
 
-dune-release bistro
+dune-release bistro -l path/to/opam-repository
