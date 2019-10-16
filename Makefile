@@ -28,7 +28,7 @@ release:
 	strip $(RELEASE)
 
 fmt:
-	dune build @fmt
+	dune build @fmt --auto-promote
 
 test:
 	dune runtest 
@@ -51,6 +51,6 @@ uninstall:
 clean:
 	@dune clean
 	@git clean -dfXq
-	@rm -f ./$(TARGET)
+	@rm -f ./$(TARGET) electrod.opam electrod.install
 
 include $(shell ocamlfind query visitors)/Makefile.preprocess

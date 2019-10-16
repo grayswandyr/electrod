@@ -23,7 +23,7 @@
   dune-build-info
   cmdliner 
   (containers (>= 2.0)) 
-  fmt
+  (fmt (>= 0.8.7))
   gen
   hashcons
   logs
