@@ -8,7 +8,7 @@ time horizon.
 Then Electrod compiles the model to a problem for a solver (currently
 the NuSMV and nuXmv tools) to produce example or counter-example traces.
 
-Electrod is mainly meant to be used as a backend for the Electrum Analyzer.
+Electrod is mainly meant to be used as a backend for the [Electrum Analyzer](http://haslab.github.io/Electrum).
 
 See the file [INSTALL.md](INSTALL.md) for building and installation instructions.
 
@@ -16,17 +16,15 @@ See the file [INSTALL.md](INSTALL.md) for building and installation instructions
 
 ## External dependencies
 
-As of now, Electrod relies on NuSMV or nuXmv (default), so you must at least
-install one of them.
+As of now, Electrod relies on NuSMV (2.6+) or nuXmv (2.0+),
+so you must at least install one of them. 
 
 ## Running
 
 Electrod is primarily aimed at being called by external, more abstract
-tools, such as the [Electrum Analyzer](https://github.com/haslab/Electrum).
+tools, such as the Electrum Analyzer. 
 
-However, it can also be run as a standalone tool by calling the
-`electrod` program.
-
+However, it can also be run as a standalone tool by calling the `electrod` program.  
 Type `electrod --help` to get some help on options.
 
 
@@ -36,4 +34,4 @@ Type `electrod --help` to get some help on options.
 
 electrod is distributed under the terms of the Mozilla Public License v2.0.
 
-See [LICENSES.md](LICENSES.md) for more information.
+See [LICENSE.md](LICENSE.md) for more information.

@@ -1,3 +1,6 @@
+### 0.3.0 (2019-10-16)
+- use nuXmv's check_ltlspec_ic3 algorithm (released in nuXmv 2.0 on 2019/10/14). nuXmv before 2.0 is not supported at all, please update to 2.0.
+
 ### 0.2.3 (2019-09-22)
 - fix compilation problems (depend on ocaml >= 4.05.0)
 - use dune-build-info
