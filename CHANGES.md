@@ -1,3 +1,6 @@
+### 0.3.2 (2019-10-16)
+- fix issue when creating 0.3.1 which led to opam file being still absent
+
 ### 0.3.1 (2019-10-16)
 - fix missing opam file
 
