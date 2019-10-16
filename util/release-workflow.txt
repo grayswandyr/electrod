@@ -9,6 +9,9 @@ echo "Now update CHANGES.md out of this (and then test \
 # if needed, change, clean & update headers
 bash util/headache/headache.sh
 
+# generate opam with dune
+dune build electrod.opam
+
 git commit -am "release v$(git rev-parse --abbrev-ref HEAD | cut -f 2- -d '/')"
 
 git flow finish
@@ -16,7 +19,8 @@ git flow finish
 git push origin
 
 # dune-release needs at least 4.06 so opam switch accordingly
-dune-release tag
+#not necessary with git flow:
+#dune-release tag
 
 git push --tags 
 
