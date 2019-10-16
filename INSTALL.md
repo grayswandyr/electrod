@@ -8,6 +8,11 @@ not work on MS Windows.
 The easiest way to install Electrod is to rely on the OPAM OCaml package
 manager.
 
-Just type `opam install electrod` in a shell.
+Just type the following in a shell:
+```
+opam update
+opam upgrade 
+opam install electrod
+```
 
 After installation, you will see a program called "electrod" in your PATH.

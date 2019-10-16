@@ -1,3 +1,8 @@
+Electrod is released under the Mozilla Public License Version 2.0 (see below).
+Electrod uses third-party libraries released under various free/open-source licenses
+compatible with that of Electrod.
+
+================================================================================
 Mozilla Public License Version 2.0
 ==================================
 
