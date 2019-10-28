@@ -51,6 +51,6 @@ uninstall:
 clean:
 	@dune clean
 	@git clean -dfXq
-	@rm -f ./$(TARGET) electrod.opam electrod.install
+	@rm -f ./$(TARGET) electrod.install
 
 include $(shell ocamlfind query visitors)/Makefile.preprocess
