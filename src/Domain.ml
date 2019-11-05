@@ -40,13 +40,24 @@ let univ_atoms domain =
   let open Relation in
   let open Scope in
   match get_exn Name.univ domain with
-  | Const { scope; _ } ->
-    (match scope with Exact b -> b | Inexact _ -> assert false)
-  | Var _ ->
-      assert false
-  | exception Not_found ->
-      assert false
+    | Const { scope; _ } ->
+        (match scope with Exact b -> b | Inexact _ -> assert false)
+    | Var _ ->
+        assert false
+    | exception Not_found ->
+        assert false
 
+let get_set_names = 
+  let is_set (name, rel) =
+    if not @@ Name.equal name Name.univ && Relation.arity rel = 1 then
+      Some name
+    else 
+      None
+  in 
+  fun (domain : t) ->
+    domain 
+    |> Map.to_list
+    |> List.filter_map is_set
 
 let pp out rels =
   Fmtc.(
@@ -79,8 +90,8 @@ let sup name domain =
 
 let musts ?(with_univ_and_ident = true) domain =
   ( if with_univ_and_ident
-  then domain
-  else domain |> Map.remove Name.univ |> Map.remove Name.iden )
+    then domain
+    else domain |> Map.remove Name.univ |> Map.remove Name.iden )
   |> Map.map Relation.must
   |> to_list
 
@@ -110,15 +121,15 @@ let update_domain_with_instance domain instance =
 let rename atom_renaming name_renaming domain =
   to_list domain
   |> List.map (fun (name, rel) ->
-         ( List.assoc ~eq:Name.equal name name_renaming
-         , Relation.rename atom_renaming name_renaming rel ))
+        ( List.assoc ~eq:Name.equal name name_renaming
+        , Relation.rename atom_renaming name_renaming rel ))
   |> of_list
 
 
 module P = Intf.Print.Mixin (struct
-  type nonrec t = t
+    type nonrec t = t
 
-  let pp = pp
-end)
+    let pp = pp
+  end)
 
 include P
