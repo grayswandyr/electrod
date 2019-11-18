@@ -47,9 +47,9 @@ struct
             let at_fml1 = atomic at1 in
             let at2 = Ltl.Atomic.make elo.domain name2 tuple2 in
             let at_fml2 = atomic at2 in
-            or_
+            and_
               (implies at_fml1 (lazy at_fml2))
-              (lazy (and_ (iff at_fml1 at_fml2) (lazy fml_acc))))
+              (lazy (implies (iff at_fml1 at_fml2) (lazy fml_acc))))
         sym
         true_
     in
@@ -204,8 +204,8 @@ struct
     let trans = translate_formulas detected_trans in
     Model.make
       ~elo
-      ~init:inits
-      ~invariant:S.(append invars syms_fmls)
+      ~init:S.(append inits syms_fmls)
+      ~invariant:invars
       ~trans
       ~property:(spec_fml_str, prop_ltl)
 end
