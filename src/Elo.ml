@@ -124,7 +124,7 @@ and ibinop =
       ; ancestors = [ "VisitorsRuntime.map" ]
       }]
 
-type goal = Run of fml list [@@unboxed]
+type goal = Run of (fml list * bool option) [@@unboxed]
 
 and fml = Fml of (fml, exp, iexp) ofml HC.hash_consed [@@unboxed]
 
@@ -237,7 +237,7 @@ let make file domain instance sym invariants goal atom_renaming name_renaming =
 
 let arity (Exp { node = { arity; _ }; _ }) = arity
 
-let run fs = Run fs
+let run fs expec = Run (fs, expec)
 
 let true_ = hfml @@ True
 
@@ -724,7 +724,7 @@ and pp_sim_binding stacked out sb = pp_osim_binding stacked pp_exp out sb
 
 and pp_sim_bindings stacked out sb = pp_osim_bindings stacked pp_exp out sb
 
-let pp_goal out (Run fmls) =
+let pp_goal out (Run (fmls, _)) =
   let open Fmtc in
   (kwd_styled pf) out "run@ " ;
   pf out "  %a" (box @@ list @@ pp_fml 0) fmls

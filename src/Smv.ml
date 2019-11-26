@@ -603,7 +603,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
         IO.with_out tgt (fun out ->
             IO.write_line out first_line ;
             IO.with_in filename (fun inp ->
-                let chunks = IO.read_chunks inp in
+                let chunks = IO.read_chunks_gen inp in
                 IO.write_gen out chunks))
     | Solver.Default default ->
         IO.with_out tgt (fun out -> IO.write_line out (first_line ^ default))

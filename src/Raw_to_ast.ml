@@ -545,8 +545,8 @@ let refine_identifiers raw_pb =
       ]
   in
   let walk_goal = function
-    | Run fml ->
-        run @@ List.map Fun.(snd % walk_fml init_ctx) fml
+    | Run (fml, expect) ->
+        run (List.map Fun.(snd % walk_fml init_ctx) fml) expect
   in
   let walk_invariants invs = snd @@ walk_block init_ctx invs in
   (walk_invariants raw_pb.raw_invar, walk_goal raw_pb.raw_goal)
@@ -861,8 +861,8 @@ let compute_arities elo =
     end
   in
   let walk_goal ctx = function
-    | Run fmls ->
-        run @@ List.map (walk_fml ctx) fmls
+    | Run (fmls, expec)  ->
+        run  (List.map (walk_fml ctx) fmls) expec
   in
   Ast.
     { elo with

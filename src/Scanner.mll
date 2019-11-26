@@ -66,6 +66,12 @@ rule main infile = parse
     }   
 | "run"
     { RUN }
+| "expect"
+    { EXPECT }
+| "sat"
+    { SAT }
+| "unsat"
+    { UNSAT }
 | "invariant"
     { INVARIANT }
 (*| "int"

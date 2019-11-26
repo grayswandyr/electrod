@@ -180,7 +180,7 @@ struct
     (* handling symmetries *)
     let syms_fmls = syms_to_ltl elo in
     (* handling the goal *)
-    let goal_blk = match elo.goal with Elo.Run g -> g in
+    let goal_blk = match elo.goal with Elo.Run (g, _) -> g in
     (* Partition the goal fmls into invars and non invars *)
     let detected_inits, detected_invars, detected_trans, general_fmls =
       split_invar_noninvar_fmls elo goal_blk

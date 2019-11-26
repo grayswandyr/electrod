@@ -287,7 +287,7 @@ val substitute :
       -> (var, ident) Gen_goal.prim_exp
   ; visit_Run :
          (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t
-      -> (var, ident) Libelectrod__Gen_goal.block
+      -> (var, ident) Libelectrod__Gen_goal.block * bool option
       -> (var, ident) Gen_goal.t
   ; visit_S :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.lbinop
@@ -545,7 +545,7 @@ val rename :
       -> (var, ident) Gen_goal.prim_exp
   ; visit_Run :
          (Name.t, Name.t) CCList.Assoc.t
-      -> (var, ident) Libelectrod__Gen_goal.block
+      -> (var, ident) Libelectrod__Gen_goal.block * bool option
       -> (var, ident) Gen_goal.t
   ; visit_S : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.lbinop
   ; visit_Some_ : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.quant

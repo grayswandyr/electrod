@@ -78,7 +78,7 @@ module Extract = struct
         IO.(
           with_in f
           @@ fun ic ->
-          IO.read_lines ic
+          IO.read_lines_gen ic
           |> Gen.drop (Int.max 0 Location.(begl loc - 1))
           |> Gen.take (Int.max 1 Location.(1 + endl loc - begl loc))
           |> Gen.to_list)
