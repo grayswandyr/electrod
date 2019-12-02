@@ -17,6 +17,11 @@
 end>
 
 %{
+
+(* fixes issue between Menhir and dune *)
+(* https://github.com/ocaml/dune/issues/2450 *)
+module Libelectrod = struct end  
+
   open Containers
 
   (* vendored from Containers (BSD license allows this): 

@@ -414,7 +414,7 @@ module Make (Ltl : Solver.LTL) = struct
 
       method build_IUn (_ : stack) _ _ op' i' = op' i'
 
-      method build_Iden (_ : stack) tuple =
+      method build_Iden (_ : stack) tuple = (* FIXME *)
         assert (Tuple.arity tuple = 2) ;
         if Atom.equal (Tuple.ith 0 tuple) (Tuple.ith 1 tuple)
         then true_
@@ -631,7 +631,7 @@ module Make (Ltl : Solver.LTL) = struct
         let lg = Tuple.arity tuple in
         (s' @@ Tuple.of_list1 [ Tuple.ith (lg - 1) tuple ]) +&& lazy (r' tuple)
 
-      method build_RTClos subst r _ tuple =
+      method build_RTClos subst r _ tuple = (* FIXME *)
         assert (Tuple.arity tuple = 2) ;
         (* as of now, iden is defined as the identity on a constant univ. A variable iden in Electrum is translated correctly through Pardinus. But a variable iden is hidden in rt-closure too. So we handle this here: we check if both coordinates are equal *and* if one of them belongs to the union of all declared sets. *)
         let tuple0 = Tuple.ith 0 tuple in
@@ -683,7 +683,7 @@ module Make (Ltl : Solver.LTL) = struct
 
       method build_Union (_ : stack) _ _ e1 e2 x = e1 x +|| lazy (e2 x)
 
-      method build_Univ (_ : stack) __tuple = true_
+      method build_Univ (_ : stack) __tuple = true_ (* FIXME *)
 
       method build_Var (subst : stack) idx _ tuple =
         match List.get_at_idx idx subst with

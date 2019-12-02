@@ -37,21 +37,21 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
         let cur = !r in
         incr r ;
         match cur with
-        | 0 ->
-            `Magenta
-        | 1 ->
-            `Yellow
-        | 2 ->
-            `Cyan
-        | 3 ->
-            `Green
-        | 4 ->
-            `Red
-        | 5 ->
-            r := 0 ;
-            `Blue
-        | _ ->
-            assert false
+          | 0 ->
+              `Magenta
+          | 1 ->
+              `Yellow
+          | 2 ->
+              `Cyan
+          | 3 ->
+              `Green
+          | 4 ->
+              `Red
+          | 5 ->
+              r := 0 ;
+              `Blue
+          | _ ->
+              assert false
 
 
     (* [upper] is the precedence of the context we're in, [this] is the priority
@@ -83,20 +83,20 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
         styled color string out ")" ;
         Format.pp_close_box out () )
       else (* no paremtheses *)
-           (* so keep [this] precedence *)
+        (* so keep [this] precedence *)
         pr this
 
 
     let infixl
-        ?(paren = false)
-        ?(align_par = true)
-        upper
-        this
-        middle
-        left
-        right
-        out
-        (m, l, r) =
+          ?(paren = false)
+          ?(align_par = true)
+          upper
+          this
+          middle
+          left
+          right
+          out
+          (m, l, r) =
       rainbow_paren ~paren ~align_par upper this out
       @@ fun new_this ->
       (* new_this is this or 0 if parentheses were added *)
@@ -110,15 +110,15 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
     (* left associativity => increment the precedence *)
 
     let infixr
-        ?(paren = false)
-        ?(align_par = true)
-        upper
-        this
-        middle
-        left
-        right
-        out
-        (m, l, r) =
+          ?(paren = false)
+          ?(align_par = true)
+          upper
+          this
+          middle
+          left
+          right
+          out
+          (m, l, r) =
       rainbow_paren ~paren ~align_par upper this out
       @@ fun new_this ->
       left (new_this + 1) out l ;
@@ -129,15 +129,15 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
 
 
     let infixn
-        ?(paren = false)
-        ?(align_par = true)
-        upper
-        this
-        middle
-        left
-        right
-        out
-        (m, l, r) =
+          ?(paren = false)
+          ?(align_par = true)
+          upper
+          this
+          middle
+          left
+          right
+          out
+          (m, l, r) =
       rainbow_paren ~paren ~align_par upper this out
       @@ fun new_this ->
       left (new_this + 1) out l ;
@@ -148,14 +148,14 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
 
 
     let prefix
-        ?(paren = false)
-        ?(align_par = true)
-        upper
-        this
-        pprefix
-        pbody
-        out
-        (prefix, body) =
+          ?(paren = false)
+          ?(align_par = true)
+          upper
+          this
+          pprefix
+          pbody
+          out
+          (prefix, body) =
       rainbow_paren ~paren ~align_par upper this out
       @@ fun new_this ->
       styled `Bold pprefix out prefix ;
@@ -210,75 +210,75 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
       let rec pp upper out f =
         assert (upper >= 0) ;
         match f with
-        | True ->
-            pf out "TRUE"
-        | False ->
-            pf out "FALSE"
-        | Atomic at ->
-            variables := Iter.cons at !variables ;
-            pf out "%a" pp_atomic at
-        (* tweaks, here, to force parenthese around immediate subformulas of Imp
+          | True ->
+              pf out "TRUE"
+          | False ->
+              pf out "FALSE"
+          | Atomic at ->
+              variables := Iter.cons at !variables ;
+              pf out "%a" pp_atomic at
+          (* tweaks, here, to force parenthese around immediate subformulas of Imp
              and Iff as their precedence may not be easily remembered*)
-        | Imp (p, q) ->
-            infixr ~paren:true upper 1 string pp pp out ("->", p, q)
-        | Iff (p, q) ->
-            infixl ~paren:true upper 2 string pp pp out ("<->", p, q)
-        | Ite (c, t, e) ->
-            (* SMV's ...?...:... or case...esac expression cannot be
+          | Imp (p, q) ->
+              infixr ~paren:true upper 1 string pp pp out ("->", p, q)
+          | Iff (p, q) ->
+              infixl ~paren:true upper 2 string pp pp out ("<->", p, q)
+          | Ite (c, t, e) ->
+              (* SMV's ...?...:... or case...esac expression cannot be
                  used as nuXmv does not accept these when subexpressions
                  are temporal (seen invarious tests). So we rewrite the formula into more basic terms. *)
-            pp upper out
-            @@ I.Infix.((c @=> lazy t) +&& lazy (I.not_ c @=> lazy e))
-        | Or (p, q) ->
-            infixl ~paren:true upper 4 string pp pp out ("|", p, q)
-        (* force parenthses as we're not used to see the Xor connective and so its precedence may be unclear *)
-        | Xor (p, q) ->
-            infixl ~paren:true upper 4 string pp pp out ("xor", p, q)
-        | And (p, q) ->
-            infixl ~paren:true upper 5 string pp pp out ("&", p, q)
-        | Comp (op, t1, t2) ->
-            infixn upper 6 pp_tcomp pp_term pp_term out (op, t1, t2)
-        | Not p ->
-            prefix upper 9 string pp out ("!", p)
-        (* no known precedence for temporal operators so we force parentheses and
+              pp upper out
+              @@ I.Infix.((c @=> lazy t) +&& lazy (I.not_ c @=> lazy e))
+          | Or (p, q) ->
+              infixl ~paren:true upper 4 string pp pp out ("|", p, q)
+          (* force parenthses as we're not used to see the Xor connective and so its precedence may be unclear *)
+          | Xor (p, q) ->
+              infixl ~paren:true upper 4 string pp pp out ("xor", p, q)
+          | And (p, q) ->
+              infixl ~paren:true upper 5 string pp pp out ("&", p, q)
+          | Comp (op, t1, t2) ->
+              infixn upper 6 pp_tcomp pp_term pp_term out (op, t1, t2)
+          | Not p ->
+              prefix upper 9 string pp out ("!", p)
+          (* no known precedence for temporal operators so we force parentheses and
              use as the "this" precedence that of the upper context*)
-        | U (p, q) ->
-            infixl ~paren:true upper upper string pp pp out ("U", p, q)
-        | R (p, q) ->
-            infixl ~paren:true upper upper string pp pp out ("V", p, q)
-        | S (p, q) ->
-            infixl ~paren:true upper upper string pp pp out ("S", p, q)
-        | T (p, q) ->
-            infixl ~paren:true upper upper string pp pp out ("T", p, q)
-        | X p when next_is_X ->
-            prefix ~paren:true upper upper string pp out ("X ", p)
-        | X p ->
-            (* next_is _X= false *)
-            styled `Bold string out "next" ;
-            pf out "@[(%a@])" (pp 0) p
-        | F p ->
-            prefix ~paren:true upper upper string pp out ("F ", p)
-        | G p ->
-            prefix ~paren:true upper upper string pp out ("G ", p)
-        | Y p ->
-            prefix ~paren:true upper upper string pp out ("Y ", p)
-        | O p ->
-            prefix ~paren:true upper upper string pp out ("O ", p)
-        | H p ->
-            prefix ~paren:true upper upper string pp out ("H ", p)
+          | U (p, q) ->
+              infixl ~paren:true upper upper string pp pp out ("U", p, q)
+          | R (p, q) ->
+              infixl ~paren:true upper upper string pp pp out ("V", p, q)
+          | S (p, q) ->
+              infixl ~paren:true upper upper string pp pp out ("S", p, q)
+          | T (p, q) ->
+              infixl ~paren:true upper upper string pp pp out ("T", p, q)
+          | X p when next_is_X ->
+              prefix ~paren:true upper upper string pp out ("X ", p)
+          | X p ->
+              (* next_is _X= false *)
+              styled `Bold string out "next" ;
+              pf out "@[(%a@])" (pp 0) p
+          | F p ->
+              prefix ~paren:true upper upper string pp out ("F ", p)
+          | G p ->
+              prefix ~paren:true upper upper string pp out ("G ", p)
+          | Y p ->
+              prefix ~paren:true upper upper string pp out ("Y ", p)
+          | O p ->
+              prefix ~paren:true upper upper string pp out ("O ", p)
+          | H p ->
+              prefix ~paren:true upper upper string pp out ("H ", p)
       and pp_term upper out (t : term) =
         match t with
-        | Num n ->
-            pf out "%d" n
-        | Plus (t1, t2) ->
-            infixl ~paren:true upper 7 string pp_term pp_term out ("+", t1, t2)
-        | Minus (t1, t2) ->
-            infixl ~paren:true upper 7 string pp_term pp_term out ("-", t1, t2)
-        | Neg t ->
-            prefix upper 8 string pp_term out ("- ", t)
-        | Count ts ->
-            styled `Bold string out "count" ;
-            pf out "@[(%a@])" (list ~sep:(const string ", ") (pp 0)) ts
+          | Num n ->
+              pf out "%d" n
+          | Plus (t1, t2) ->
+              infixl ~paren:true upper 7 string pp_term pp_term out ("+", t1, t2)
+          | Minus (t1, t2) ->
+              infixl ~paren:true upper 7 string pp_term pp_term out ("-", t1, t2)
+          | Neg t ->
+              prefix upper 8 string pp_term out ("- ", t)
+          | Count ts ->
+              styled `Bold string out "count" ;
+              pf out "@[(%a@])" (list ~sep:(const string ", ") (pp 0)) ts
       in
       pp upper out f
   end
@@ -358,106 +358,106 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
       (* where to split tuples (if necessary)? *)
       let dom_ar = Ltl.Atomic.domain_arity atom in
       match dom_ar with
-      | None ->
-          assert false
-      | Some n when n < 0 ->
-          assert false
-      | Some 0 ->
-          (* an enumerated set *)
-          let may_strings = S.map tuple_to_string may in
-          (* add a value for none? *)
-          let may_strings_with_empty =
-            if Ltl.Atomic.is_partial atom
-            then
-              (* add __NONE__ at the end (better for SMV boolean encoding) *)
-              S.snoc may_strings "__NONE__"
-            else may_strings
-          in
-          S.iter
-            (fun tuple_str ->
-              Fmtc.(
-                pf
-                  out
-                  "DEFINE %s-%s := __%s = %s;@\n"
-                  name_str
-                  tuple_str
-                  name_str
-                  tuple_str))
-            may_strings ;
-          Fmtc.(
-            pf
-              out
-              "%s __%s : %a;@\n"
-              vartype
-              name_str
-              (braces_ @@ S.pp_seq string)
-              may_strings_with_empty)
-      | Some n ->
-          (* a partial or total function with domain arity n > 0 *)
-          (* first we split all tuples depending on the arity, and regroup
-                 them in lists of pairs (dom, range) with the same dom *)
-          let domains_ranges =
-            may
-            |> S.map (fun tuple ->
-                   Pair.map_same tuple_to_string @@ Tuple.split tuple n)
-            |> S.group_by
-                 ~hash:(fun (dom, _) -> Hash.string dom)
-                 ~eq:(fun (dom1, _) (dom2, _) -> String.equal dom1 dom2)
-          in
-          (* Msg.debug (fun m ->
-           *       m "domains_Ranges = @[<v>%a@]"
-           *         Fmtc.(brackets_ @@ S.pp_seq
-           *               @@ brackets @@ list ~sep:comma
-           *               @@ pair string string) domains_ranges
-           *     ); *)
-          (* print the DEFINEs *)
-          S.iter
-            (fun pairs ->
-              List.iter
-                (fun (dom_str, range_str) ->
-                  Fmtc.(
-                    pf
-                      out
-                      "DEFINE %s-%s-%s := __%s-%s = %s;@\n"
-                      name_str
-                      dom_str
-                      range_str
-                      name_str
-                      dom_str
-                      range_str))
-                pairs)
-            domains_ranges ;
+        | None ->
+            assert false
+        | Some n when n < 0 ->
+            assert false
+        | Some 0 ->
+            (* an enumerated set *)
+            let may_strings = S.map tuple_to_string may in
+            (* add a value for none? *)
+            let may_strings_with_empty =
+              if Ltl.Atomic.is_partial atom
+              then
+                (* add __NONE__ at the end (better for SMV boolean encoding) *)
+                S.snoc may_strings "__NONE__"
+              else may_strings
+            in
+            S.iter
+              (fun tuple_str ->
+                 Fmtc.(
+                   pf
+                     out
+                     "DEFINE %s-%s := __%s = %s;@\n"
+                     name_str
+                     tuple_str
+                     name_str
+                     tuple_str))
+              may_strings ;
+            Fmtc.(
+              pf
+                out
+                "%s __%s : %a;@\n"
+                vartype
+                name_str
+                (braces_ @@ S.pp_seq string)
+                may_strings_with_empty)
+        | Some n ->
+            (* a partial or total function with domain arity n > 0 *)
+            (* first we split all tuples depending on the arity, and regroup
+               them in lists of pairs (dom, range) with the same dom *)
+            let domains_ranges =
+              may
+              |> S.map (fun tuple ->
+                    Pair.map_same tuple_to_string @@ Tuple.split tuple n)
+              |> S.group_by
+                   ~hash:(fun (dom, _) -> Hash.string dom)
+                   ~eq:(fun (dom1, _) (dom2, _) -> String.equal dom1 dom2)
+            in
+            (* Msg.debug (fun m ->
+             *       m "domains_Ranges = @[<v>%a@]"
+             *         Fmtc.(brackets_ @@ S.pp_seq
+             *               @@ brackets @@ list ~sep:comma
+             *               @@ pair string string) domains_ranges
+             *     ); *)
+            (* print the DEFINEs *)
+            S.iter
+              (fun pairs ->
+                 List.iter
+                   (fun (dom_str, range_str) ->
+                      Fmtc.(
+                        pf
+                          out
+                          "DEFINE %s-%s-%s := __%s-%s = %s;@\n"
+                          name_str
+                          dom_str
+                          range_str
+                          name_str
+                          dom_str
+                          range_str))
+                   pairs)
+              domains_ranges ;
 
-          (* now print the vars: we walk along the lists of pairs (dom,
-                 range) (where every dom is the same) and we use the range to create
-                 `VAR x_dom : { ... range ...}`  *)
-          S.iter
-            (fun pairs ->
-              let dom_str = fst @@ List.hd pairs in
-              Fmtc.(
-                pf
-                  out
-                  "%s __%s-%s : %a;@\n"
-                  vartype
-                  name_str
-                  dom_str
-                  (braces_ @@ box @@ list ~sep:(sp **> comma) string)
-                  ( if Ltl.Atomic.is_partial atom
-                  then List.rev ("__NONE__" :: List.rev_map snd pairs)
-                  else List.map snd pairs )))
-            domains_ranges
+            (* now print the vars: we walk along the lists of pairs (dom,
+               range) (where every dom is the same) and we use the range to create
+               `VAR x_dom : { ... range ...}`  *)
+            S.iter
+              (fun pairs ->
+                 let dom_str = fst @@ List.hd pairs in
+                 Fmtc.(
+                   pf
+                     out
+                     "%s __%s-%s : %a;@\n"
+                     vartype
+                     name_str
+                     dom_str
+                     (braces_ @@ box @@ list ~sep:(sp **> comma) string)
+                     ( if Ltl.Atomic.is_partial atom
+                       then List.rev ("__NONE__" :: List.rev_map snd pairs)
+                       else List.map snd pairs )))
+              domains_ranges
     in
     atoms
     |> S.sort_uniq (* keep only atoms with different relation names *)
          ~cmp:(fun at1 at2 ->
-           Name.compare (fst @@ atom_name at1) (fst @@ atom_name at2))
+               Name.compare (fst @@ atom_name at1) (fst @@ atom_name at2))
     |> S.iter (fun at ->
-           Fmtc.hardline out () ;
-           pp_one_decl at)
+          Fmtc.hardline out () ;
+          pp_one_decl at)
 
 
   let pp_count_variables
-      ?(margin = 80) out { elo; init; invariant; trans; property } =
+        ?(margin = 80) out { elo; init; invariant; trans; property } =
     let open Fmtc in
     let module S = Iter in
     (* to gather the variables along printing in the buffer *)
@@ -475,12 +475,12 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     Format.pp_open_vbox out 0 ;
     S.iter
       (fun (elo_str, fml) ->
-        pf
-          out
-          "%s@\nINIT@\n@[<hv2>%a@];@\n@\n"
-          elo_str
-          (Ltl.pp_gather_variables variables)
-          fml)
+         pf
+           out
+           "%s@\nINIT@\n@[<hv2>%a@];@\n@\n"
+           elo_str
+           (Ltl.pp_gather_variables variables)
+           fml)
       init ;
     Format.pp_close_box out () ;
 
@@ -488,12 +488,12 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     Format.pp_open_vbox out 0 ;
     S.iter
       (fun (elo_str, fml) ->
-        pf
-          out
-          "%s@\nINVAR@\n@[<hv2>%a@];@\n@\n"
-          elo_str
-          (Ltl.pp_gather_variables variables)
-          fml)
+         pf
+           out
+           "%s@\nINVAR@\n@[<hv2>%a@];@\n@\n"
+           elo_str
+           (Ltl.pp_gather_variables variables)
+           fml)
       invariant ;
     Format.pp_close_box out () ;
 
@@ -501,12 +501,12 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     Format.pp_open_vbox out 0 ;
     S.iter
       (fun (elo_str, fml) ->
-        pf
-          out
-          "%s@\nTRANS@\n@[<hv2>%a@];@\n@\n"
-          elo_str
-          (Ltl.pp_gather_variables ~next_is_X:false variables)
-          fml)
+         pf
+           out
+           "%s@\nTRANS@\n@[<hv2>%a@];@\n@\n"
+           elo_str
+           (Ltl.pp_gather_variables ~next_is_X:false variables)
+           fml)
       trans ;
     Format.pp_close_box out () ;
 
@@ -531,20 +531,20 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     let r_plain, r_enum, f_plain, f_enum =
       S.fold
         (fun (acc_rp, acc_re, acc_fp, acc_fe) at ->
-          if Ltl.Atomic.is_const at
-          then
-            (* rigid *)
-            if Option.is_none @@ Ltl.Atomic.domain_arity at
-            then (* plain *)
-              (S.cons at acc_rp, acc_re, acc_fp, acc_fe)
-            else (* enumerable *)
-              (acc_rp, S.cons at acc_re, acc_fp, acc_fe)
-          else if (* flexible *)
-                  Option.is_none @@ Ltl.Atomic.domain_arity at
-          then (* plain *)
-            (acc_rp, acc_re, S.cons at acc_fp, acc_fe)
-          else (* enumerable *)
-            (acc_rp, acc_re, acc_fp, S.cons at acc_fe))
+           if Ltl.Atomic.is_const at
+           then
+             (* rigid *)
+             if Option.is_none @@ Ltl.Atomic.domain_arity at
+             then (* plain *)
+               (S.cons at acc_rp, acc_re, acc_fp, acc_fe)
+             else (* enumerable *)
+               (acc_rp, S.cons at acc_re, acc_fp, acc_fe)
+           else if (* flexible *)
+             Option.is_none @@ Ltl.Atomic.domain_arity at
+           then (* plain *)
+             (acc_rp, acc_re, S.cons at acc_fp, acc_fe)
+           else (* enumerable *)
+             (acc_rp, acc_re, acc_fp, S.cons at acc_fe))
         (S.empty, S.empty, S.empty, S.empty)
         !variables
       |> fun (res_rp, res_re, res_fp, res_fe) ->
@@ -582,8 +582,8 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     let tgt = Filename.temp_file ~temp_dir:dir (src_file ^ "-") ".smv" in
     let nbvars = ref 0 in
     IO.with_out tgt (fun out ->
-        nbvars :=
-          pp_count_variables (Format.formatter_of_out_channel out) model) ;
+          nbvars :=
+            pp_count_variables (Format.formatter_of_out_channel out) model) ;
     (tgt, !nbvars)
 
 
@@ -591,54 +591,54 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     let tgt = Filename.temp_file ~temp_dir:dir "electrod-" ".scr" in
     let first_line =
       match bmc with
-      | None ->
-          ""
-      | Some length ->
-          "set bmc_length " ^ string_of_int length ^ "; "
+        | None ->
+            ""
+        | Some length ->
+            "set bmc_length " ^ string_of_int length ^ "; "
     in
     ( match script with
-    | Solver.File filename ->
-        (* script given on the command line *)
-        (* prepend first line then append given script *)
-        IO.with_out tgt (fun out ->
-            IO.write_line out first_line ;
-            IO.with_in filename (fun inp ->
-                let chunks = IO.read_chunks inp in
-                IO.write_gen out chunks))
-    | Solver.Default default ->
-        IO.with_out tgt (fun out -> IO.write_line out (first_line ^ default))
+      | Solver.File filename ->
+          (* script given on the command line *)
+          (* prepend first line then append given script *)
+          IO.with_out tgt (fun out ->
+                IO.write_line out first_line ;
+                IO.with_in filename (fun inp ->
+                      let chunks = IO.read_chunks_gen inp in
+                      IO.write_gen out chunks))
+      | Solver.Default default ->
+          IO.with_out tgt (fun out -> IO.write_line out (first_line ^ default))
     ) ;
     tgt
 
 
   let analyze
-      ~conversion_time
-      ~cmd
-      ~script
-      ~keep_files
-      ~no_analysis
-      ~elo
-      ~file
-      ~bmc
-      model : Outcome.t =
+        ~conversion_time
+        ~cmd
+        ~script
+        ~keep_files
+        ~no_analysis
+        ~elo
+        ~file
+        ~bmc
+        model : Outcome.t =
     let keep_or_remove_files scr smv =
       if keep_files
       then
         if no_analysis
         then
           Logs.app (fun m ->
-              m
-                "@[<hv2>Keeping the script and SMV files at:@ %s@\n%s@]"
-                scr
-                smv)
+                m
+                  "@[<hv2>Keeping the script and SMV files at:@ %s@\n%s@]"
+                  scr
+                  smv)
         else Logs.app (fun m -> m "@[<hv2>Keeping the script and SMV files@]")
       else (
         Logs.app (fun m -> m "@[<hv2>Removing files:@ %s@\n%s@]" scr smv) ;
         ( match script with
-        | Solver.Default _ ->
-            IO.File.remove_noerr scr
-        | Solver.File _ ->
-            () ) ;
+          | Solver.Default _ ->
+              IO.File.remove_noerr scr
+          | Solver.File _ ->
+              () ) ;
         IO.File.remove_noerr smv )
     in
     (* TODO check whether nuXmv is installed first *)
@@ -648,22 +648,22 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     let smv, nbvars = make_model_file dir file model in
     let after_generation = Mtime_clock.now () in
     Msg.info (fun m ->
-        let size, unit_ =
-          let s = float_of_int @@ Unix.((stat smv).st_size) in
-          if Float.(s < 1_024.)
-          then (s, "B")
-          else if Float.(s < 1_048_576.)
-          then (s /. 1_024., "KB")
-          else if Float.(s < 1_073_741_824.)
-          then (s /. 1_048_576., "MB")
-          else (s /. 1_073_741_824., "GB")
-        in
-        m
-          "SMV file (size: %.0f%s) generated in %a"
-          (Float.round size)
-          unit_
-          Mtime.Span.pp
-          (Mtime.span before_generation after_generation)) ;
+          let size, unit_ =
+            let s = float_of_int @@ Unix.((stat smv).st_size) in
+            if Float.(s < 1_024.)
+            then (s, "B")
+            else if Float.(s < 1_048_576.)
+            then (s /. 1_024., "KB")
+            else if Float.(s < 1_073_741_824.)
+            then (s /. 1_048_576., "MB")
+            else (s /. 1_073_741_824., "GB")
+          in
+          m
+            "SMV file (size: %.0f%s) generated in %a"
+            (Float.round size)
+            unit_
+            Mtime.Span.pp
+            (Mtime.span before_generation after_generation)) ;
     if no_analysis
     then (
       keep_or_remove_files scr smv ;
@@ -673,13 +673,13 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
       let sigterm_handler =
         Sys.Signal_handle
           (fun _ ->
-            print_endline "Received termination signal!" ;
-            keep_or_remove_files scr smv ;
-            print_endline "Exiting" ;
-            Unix.kill 0 Sys.sigterm ;
+             print_endline "Received termination signal!" ;
+             keep_or_remove_files scr smv ;
+             print_endline "Exiting" ;
+             Unix.kill 0 Sys.sigterm ;
 
-            (* kill children *)
-            exit 1)
+             (* kill children *)
+             exit 1)
       in
       let previous_handler = Sys.signal Sys.sigterm sigterm_handler in
       (* TODO make things s.t. it's possible to set a time-out *)
@@ -701,30 +701,30 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
       (* check for the "UNSAT" problems when relying on UMC or BMC  *)
       let validity_check line =
         match bmc with
-        | None ->
-            String.suffix ~suf:"is true" line
-        | Some length ->
-            let valid_bmc_string =
-              "-- no counterexample found with bound " ^ string_of_int length
-            in
-            String.equal valid_bmc_string line
+          | None ->
+              String.suffix ~suf:"is true" line
+          | Some length ->
+              let valid_bmc_string =
+                "-- no counterexample found with bound " ^ string_of_int length
+              in
+              String.equal valid_bmc_string line
       in
       let spec =
         String.lines_gen okout
         |> Gen.drop_while (fun line ->
-               (not @@ String.suffix ~suf:"is false" line)
-               && (not @@ validity_check line))
+              (not @@ String.suffix ~suf:"is false" line)
+              && (not @@ validity_check line))
       in
       keep_or_remove_files scr smv ;
 
       let spec_s =
         match Gen.get spec with
-        | None ->
-            failwith
-              ( "Incorrectly handled SMV string:"
-              ^ Fmt.to_to_string (Gen.pp String.pp) spec )
-        | Some s ->
-            s
+          | None ->
+              failwith
+                ( "Incorrectly handled SMV string:"
+                  ^ Fmt.to_to_string (Gen.pp String.pp) spec )
+          | Some s ->
+              s
       in
       if validity_check spec_s
       then Outcome.no_trace nbvars conversion_time analysis_time
@@ -750,7 +750,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
           (* With this trace output, nuXmv shows a few uninteresting lines first,
              that we have to gloss over *)
           |> Gen.drop_while (fun line ->
-                 not @@ String.prefix ~pre:"Trace" line)
+                not @@ String.prefix ~pre:"Trace" line)
           |> Gen.drop_while (String.prefix ~pre:"Trace")
           |> String.unlines_gen
           (* |> Fun.tap print_endline *)
@@ -761,7 +761,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
         if not @@ Outcome.loop_is_present trace
         then
           Msg.Fatal.solver_bug (fun args ->
-              args cmd "trace is missing a loop state.")
+                args cmd "trace is missing a loop state.")
         else
           let atom_back_renaming =
             List.map (fun (x, y) -> (y, x)) elo.atom_renaming
