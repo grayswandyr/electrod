@@ -1,6 +1,0 @@
-(alias
-  (name expect)
-  (deps (:test test.md) (package electrod) (file case-studies/hotel-badsafety-3.elo))
-  (action (progn
-           (run ocaml-mdx test %{test})
-           (diff? %{test} %{test}.corrected))))

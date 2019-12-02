@@ -14,7 +14,7 @@
 
 (** Implements the type for concrete ([Raw]) and abstract ([Ast]) syntax trees, before inference of De Bruijn indices and simplification into [Elo] trees. *)
 
-type ('v, 'i) t = private Run of ('v, 'i) block
+type ('v, 'i) t = private Run of (('v, 'i) block * bool option) [@@unboxed]
 
 and ('v, 'i) fml =
   { prim_fml : ('v, 'i) prim_fml
@@ -238,7 +238,7 @@ class virtual ['c] map :
          ; visit_RSome : 'd -> rqualify
          ; visit_RTClos : 'd -> runop
          ; visit_RUn : 'd -> runop -> ('i, 'g) exp -> ('j, 'h) prim_exp
-         ; visit_Run : 'd -> ('i, 'g) block -> ('j, 'h) t
+         ; visit_Run : 'd -> ('i, 'g) block * bool option -> ('j, 'h) t
          ; visit_S : 'd -> lbinop
          ; visit_Some_ : 'd -> quant
          ; visit_Sub : 'd -> ibinop
@@ -416,7 +416,7 @@ class virtual ['c] map :
 
     method visit_RUn : 'd -> runop -> ('i, 'g) exp -> ('j, 'h) prim_exp
 
-    method visit_Run : 'd -> ('i, 'g) block -> ('j, 'h) t
+    method visit_Run : 'd -> ('i, 'g) block * bool option -> ('j, 'h) t
 
     method visit_S : 'd -> lbinop
 
@@ -587,7 +587,7 @@ class virtual ['c] fold :
          ; build_RSome : 'd -> 'w
          ; build_RTClos : 'd -> 'x
          ; build_RUn : 'd -> 'x -> 'l -> 'm
-         ; build_Run : 'd -> 'j list -> 'y
+         ; build_Run : 'd -> 'j list * bool option -> 'y
          ; build_S : 'd -> 'i
          ; build_Some_ : 'd -> 'h
          ; build_Sub : 'd -> 'g
@@ -670,7 +670,7 @@ class virtual ['c] fold :
          ; visit_RSome : 'd -> 'w
          ; visit_RTClos : 'd -> 'x
          ; visit_RUn : 'd -> runop -> ('a1, 'z) exp -> 'm
-         ; visit_Run : 'd -> ('a1, 'z) block -> 'y
+         ; visit_Run : 'd -> ('a1, 'z) block * bool option -> 'y
          ; visit_S : 'd -> 'i
          ; visit_Some_ : 'd -> 'h
          ; visit_Sub : 'd -> 'g
@@ -831,7 +831,7 @@ class virtual ['c] fold :
 
     method virtual build_RUn : 'd -> 'x -> 'l -> 'm
 
-    method virtual build_Run : 'd -> 'j list -> 'y
+    method virtual build_Run : 'd -> 'j list * bool option -> 'y
 
     method virtual build_S : 'd -> 'i
 
@@ -992,7 +992,7 @@ class virtual ['c] fold :
 
     method visit_RUn : 'd -> runop -> ('a1, 'z) exp -> 'm
 
-    method visit_Run : 'd -> ('a1, 'z) block -> 'y
+    method visit_Run : 'd -> ('a1, 'z) block * bool option -> 'y
 
     method visit_S : 'd -> 'i
 
@@ -1248,7 +1248,9 @@ val exp : int option -> Location.t -> ('a, 'b) prim_exp -> ('a, 'b) exp
 
 val iexp : Location.t -> ('a, 'b) prim_iexp -> ('a, 'b) iexp
 
-val run : ('a, 'b) block -> ('a, 'b) t
+val run : ('a, 'b) block -> bool option -> ('a, 'b) t
+
+val get_expected : ('v, 'i) t -> bool option
 
 val kwd_styled : 'a Fmtc.t -> 'a Fmtc.t
 

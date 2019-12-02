@@ -597,16 +597,16 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
             "set bmc_length " ^ string_of_int length ^ "; "
     in
     ( match script with
-      | Solver.File filename ->
-          (* script given on the command line *)
-          (* prepend first line then append given script *)
-          IO.with_out tgt (fun out ->
-                IO.write_line out first_line ;
-                IO.with_in filename (fun inp ->
-                      let chunks = IO.read_chunks_gen inp in
-                      IO.write_gen out chunks))
-      | Solver.Default default ->
-          IO.with_out tgt (fun out -> IO.write_line out (first_line ^ default))
+    | Solver.File filename ->
+        (* script given on the command line *)
+        (* prepend first line then append given script *)
+        IO.with_out tgt (fun out ->
+            IO.write_line out first_line ;
+            IO.with_in filename (fun inp ->
+                let chunks = IO.read_chunks_gen inp in
+                IO.write_gen out chunks))
+    | Solver.Default default ->
+        IO.with_out tgt (fun out -> IO.write_line out (first_line ^ default))
     ) ;
     tgt
 
@@ -633,7 +633,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
                   smv)
         else Logs.app (fun m -> m "@[<hv2>Keeping the script and SMV files@]")
       else (
-        Logs.app (fun m -> m "@[<hv2>Removing files:@ %s@\n%s@]" scr smv) ;
+        Logs.info (fun m -> m "@[<hv2>Removing files:@ %s@\n%s@]" scr smv) ;
         ( match script with
           | Solver.Default _ ->
               IO.File.remove_noerr scr
@@ -684,7 +684,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
       let previous_handler = Sys.signal Sys.sigterm sigterm_handler in
       (* TODO make things s.t. it's possible to set a time-out *)
       let to_call = Fmt.strf "%s -source %s %s" cmd scr smv in
-      Logs.app (fun m -> m "Starting analysis:@[<h2>@ %s@]" to_call) ;
+      Logs.info (fun m -> m "Starting analysis:@[<h2>@ %s@]" to_call) ;
       let before_run = Mtime_clock.now () in
       let okout, errout, errcode = CCUnix.call "%s" to_call in
       let after_run = Mtime_clock.now () in

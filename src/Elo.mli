@@ -104,7 +104,7 @@ and ibinop = private
   | Add
   | Sub
 
-type goal = private Run of fml list [@@unboxed]
+type goal = private Run of (fml list * bool option) [@@unboxed]
 
 and fml = private Fml of (fml, exp, iexp) ofml Hashcons.hash_consed
 [@@unboxed]
@@ -141,7 +141,7 @@ val make :
 
 val arity : exp -> int
 
-val run : fml list -> goal
+val run : fml list -> bool option -> goal
 
 val true_ : fml
 

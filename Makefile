@@ -1,4 +1,4 @@
-.PHONY: all clean utop test doc show-deps install uninstall
+.PHONY: all clean utop test doc show-deps install uninstall regression
 
 DUNE = dune
 
@@ -31,6 +31,9 @@ fmt:
 
 test:
 	dune runtest 
+
+regression:
+	dune build @regression
 
 utop:
 	dune utop --profile release

@@ -113,7 +113,7 @@ let main
   Msg.debug (fun m -> m "CWD = %s" (Sys.getcwd ())) ;
   Msg.debug (fun m -> m "PATH = %s" (Sys.getenv "PATH")) ;
 
-  Logs.app (fun m -> m "Processing file: %s" file) ;
+  Logs.info (fun m -> m "Processing file: %s" file) ;
 
   (* begin work *)
   try
@@ -135,6 +135,7 @@ let main
              Msg.debug (fun m -> m "After simplify1 =@\n%a@." Ast.pp elo))
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Simplification done"))
     in
+    let expect = Gen_goal.get_expected ast.goal in 
     let elo = Ast_to_elo.convert ast in
     let before_conversion = Mtime_clock.now () in
     let model = Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) elo in
@@ -187,8 +188,21 @@ let main
 
       Logs.app (fun m ->
           if Outcome.some_trace res
-          then m "Specification is: SAT"
-          else m "Specification is: UNSAT") ;
+          then 
+            begin
+              match expect with 
+              | Some true -> m "Specification is: SAT as expected"
+              | Some false -> m "Specification is: SAT contrary to expectation"
+              | None -> m "Specification is: SAT"
+            end
+          else
+            begin
+              match expect with  
+              | Some true -> m "Specification is: UNSAT contrary to expectation"
+              | Some false -> m "Specification is: UNSAT as expected"
+              | None -> m "Specification is: UNSAT"
+            end
+          ) ;
 
       Msg.info (fun m ->
           m "Outcome:@.%a" (Outcome.pp ~format:outcome_format) res) ) ;
@@ -201,7 +215,7 @@ let main
     Msg.info (fun m ->
         m "Total allocated memory: %.3fGB" (memory /. 1_000_000_000.)) ;
 
-    Logs.app (fun m ->
+    Logs.info (fun m ->
         m
           "Elapsed (wall-clock) time: %a"
           Mtime.Span.pp

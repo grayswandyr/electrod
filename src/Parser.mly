@@ -25,6 +25,7 @@ module G = Gen_goal
 
 let exp_no_arity = G.exp (Some 0)
 
+
 %}
   
 %start <Raw.raw_urelements list
@@ -38,7 +39,7 @@ let exp_no_arity = G.exp (Some 0)
 %token GT GTE LT LTE TRUE FALSE SOMETIME EVENTUALLY ALWAYS NOT
 %token TILDE HAT STAR IDEN ELSE CONST INVARIANT
 %token INTER OVERRIDE LPROJ RPROJ MINUS DOT PRIME
-%token THEN NOT_IN RUN 
+%token THEN NOT_IN RUN EXPECT SAT UNSAT
 // for integer expressions
 %token NEG ADD SUB HASH //INT
 
@@ -239,8 +240,16 @@ specification:
   ////////////////////////////////////////////////////////////////////////
  
 %inline goal:
-	RUN fs = formula_semi+
-{G.run fs  }
+	RUN fs = formula_semi+ exp = ioption(expect_field)
+{G.run fs exp }
+
+expect_field:
+	EXPECT exp_val = expected_value
+	{ exp_val }
+
+expected_value: 
+	SAT { true } 
+	| UNSAT { false }
 
 formula_semi:
   f = formula ioption(SEMI)
