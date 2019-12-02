@@ -14,7 +14,11 @@
 
 %{
     [@warning "-4"]
-  
+
+(* fixes issue between Menhir and dune *)
+(* https://github.com/ocaml/dune/issues/2450 *)
+module Libelectrod = struct end  
+
 module R = Raw
 
 module G = Gen_goal

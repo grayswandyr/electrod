@@ -1,4 +1,4 @@
-.PHONY: all clean utop test doc show-deps install uninstall
+.PHONY: all clean utop test doc show-deps install uninstall regression
 
 DUNE = dune
 
@@ -12,19 +12,18 @@ RELEASE = ./$(TARGET).${os}.${arch}
 all: build
 
 build:
-	dune build @install \
-	&& ln -sf _build/install/default/bin/$(TARGET) ./$(TARGET)
+	dune build src/$(TARGET).exe && ln -sf _build/default/src/$(TARGET).exe ./$(TARGET)
 
 watch:
-	dune build --watch @install
+	dune build --watch @check
 
 test-release:
-	dune build -p electrod --workspace dune-workspace.release @runtest @install 
+	dune build --workspace dune-workspace.release @runtest
 
 release: 
 	dune subst 
 	dune build -p electrod @install
-	cp _build/install/default/bin/$(TARGET) $(RELEASE)
+	cp _build/install/default/bin/$(TARGET).exe $(RELEASE)
 	strip $(RELEASE)
 
 fmt:
@@ -32,6 +31,9 @@ fmt:
 
 test:
 	dune runtest 
+
+regression:
+	dune build @regression
 
 utop:
 	dune utop --profile release

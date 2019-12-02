@@ -113,7 +113,7 @@ let main
   Msg.debug (fun m -> m "CWD = %s" (Sys.getcwd ())) ;
   Msg.debug (fun m -> m "PATH = %s" (Sys.getenv "PATH")) ;
 
-  Logs.app (fun m -> m "Processing file: %s" file) ;
+  Logs.info (fun m -> m "Processing file: %s" file) ;
 
   (* begin work *)
   try
@@ -215,7 +215,7 @@ let main
     Msg.info (fun m ->
         m "Total allocated memory: %.3fGB" (memory /. 1_000_000_000.)) ;
 
-    Logs.app (fun m ->
+    Logs.info (fun m ->
         m
           "Elapsed (wall-clock) time: %a"
           Mtime.Span.pp

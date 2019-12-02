@@ -1,7 +1,8 @@
 (env
  (dev
   (flags
-   (:standard -g -strict-formats -strict-sequence -short-paths)))
+   (:standard -g -strict-formats -strict-sequence -short-paths 
+    -w "-63"))) ; -63 to handle Menhir/dune problems
  (release
   (ocamlopt_flags
    (:standard -O3))))
@@ -55,7 +56,6 @@
 ;;; Electrod parser
 
 (menhir
- (infer false) ; apparent bug see https://github.com/ocaml/dune/issues/1504
  (modules Parser))
 
 ;;; SMV trace parser
@@ -65,7 +65,6 @@
  (modules Smv_trace_tokens))
 
 (menhir
- (infer false) ; apparent bug see https://github.com/ocaml/dune/issues/1504
  (merge_into Smv_trace_parser)
  (flags
   (--external-tokens Smv_trace_tokens))
