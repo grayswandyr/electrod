@@ -153,8 +153,8 @@ let prefix ?(indent = 0) ?(par = true) pprefix pbody out (prefix, body) =
 
 let tuple2 = pair
 
-let tuple3
-    ?sep1:(pp_sep1 = sp) ?sep2:(pp_sep2 = sp) pp1 pp2 pp3 ppf (x1, x2, x3) =
+let tuple3 ?sep1:(pp_sep1 = sp) ?sep2:(pp_sep2 = sp) pp1 pp2 pp3 ppf (x1, x2, x3)
+    =
   pp1 ppf x1 ;
   pp_sep1 ppf () ;
   pp2 ppf x2 ;

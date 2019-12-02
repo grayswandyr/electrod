@@ -242,8 +242,7 @@ module PPXML = struct
     | None ->
         pf
           out
-          "@[<h><%a nbvars='%d' conversion-time='%.0f' \
-           analysis-time='%.0f'/>@]@\n"
+          "@[<h><%a nbvars='%d' conversion-time='%.0f' analysis-time='%.0f'/>@]@\n"
           kwd
           "notrace"
           nbvars

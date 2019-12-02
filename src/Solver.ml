@@ -180,8 +180,8 @@ module type LTL = sig
     ?next_is_X:bool -> Atomic.t Iter.t ref -> Format.formatter -> t -> unit
 end
 
-module LTL_from_Atomic (At : ATOMIC_PROPOSITION) :
-  LTL with module Atomic = At = struct
+module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
+struct
   module Atomic = At
 
   type tcomp =

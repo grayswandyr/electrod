@@ -16,10 +16,12 @@
 
 open Containers (*$}*)
 
-(*$ ;;
-    inject
+(*$
+  ;;
+  inject
 
-    open Test *)
+  open Test
+*)
 
 type t = Atom.t Array.t
 

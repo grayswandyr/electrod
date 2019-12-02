@@ -17,7 +17,7 @@
    optional Boolean  is the optional expected value : false = "unsat", true = 
    "sat"
    *)
-type ('v, 'i) t = Run of (('v, 'i) block * (bool option [@opaque]))[@@unboxed]
+type ('v, 'i) t = Run of (('v, 'i) block * (bool option[@opaque])) [@@unboxed]
 
 (** Formulas and expressions *)
 
@@ -336,8 +336,9 @@ let iexp iexp_loc prim_iexp = { prim_iexp; iexp_loc }
 
 let run fs exp = Run (fs, exp)
 
-let get_expected (goal: ('v, 'i) t) = 
+let get_expected (goal : ('v, 'i) t) =
   match goal with Run (_, expect) -> expect
+
 
 (******************************************************************************
  *  Pretty-printing
@@ -445,15 +446,7 @@ and pp_block pp_v pp_i out fmls =
 and pp_rqualify out x =
   Fmtc.(kwd_styled pf) out
   @@
-  match x with
-  | ROne ->
-      "one"
-  | RLone ->
-      "lone"
-  | RSome ->
-      "some"
-  | RNo ->
-      "no"
+  match x with ROne -> "one" | RLone -> "lone" | RSome -> "some" | RNo -> "no"
 
 
 and pp_comp_op out =

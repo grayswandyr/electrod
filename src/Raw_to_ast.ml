@@ -107,9 +107,7 @@ let compute_tuples infile domain = function
   (* a single n-ary tuple *)
   | ETuple ids ->
       (* Msg.debug (fun m -> m "Raw_to_ast.compute_tuples:ETuple"); *)
-      let atoms =
-        List.map (fun id -> Raw_ident.basename id |> Atom.atom) ids
-      in
+      let atoms = List.map (fun id -> Raw_ident.basename id |> Atom.atom) ids in
       (* to check if all atoms in the tuple are in univ, we do as if every atom
          was a 1-tuple and then check whether this 1-tuple is indeed in univ *)
       let absent =
@@ -128,8 +126,7 @@ let compute_tuples infile domain = function
         args
           infile
           ( Location.span
-          @@ Pair.map_same Raw_ident.location List.(hd ids, hd @@ last 1 ids)
-          )
+          @@ Pair.map_same Raw_ident.location List.(hd ids, hd @@ last 1 ids) )
           absent ) ;
       [ Tuple.of_list1 atoms ]
 
@@ -323,9 +320,7 @@ let compute_domain (pb : Raw.raw_problem) =
   let univ = compute_univ pb.file pb.raw_univ in
   let univ_ts = Relation.must univ in
   (* corresponding tuple set *)
-  let iden =
-    Relation.const Name.iden 2 @@ Scope.exact @@ TS.diagonal univ_ts
-  in
+  let iden = Relation.const Name.iden 2 @@ Scope.exact @@ TS.diagonal univ_ts in
   let init =
     Domain.add Name.univ univ Domain.empty |> Domain.add Name.iden iden
   in
@@ -849,8 +844,7 @@ let compute_arities elo =
         (* Msg.debug (fun m -> *)
         (*       m "compute_arities.update %a" *)
         (*         Fmtc.(list ~sep:sp @@ pair Var.pp (option int)) pairs); *)
-        {< arities = List.map (fun (v, ar) -> (var_ident v, ar)) pairs @ arities
-        >}
+        {<arities = List.map (fun (v, ar) -> (var_ident v, ar)) pairs @ arities>}
 
       method arity ident = List.Assoc.get_exn ~eq:Ast.equal_ident ident arities
       (* |> Fun.tap (fun ar -> *)
@@ -861,8 +855,8 @@ let compute_arities elo =
     end
   in
   let walk_goal ctx = function
-    | Run (fmls, expec)  ->
-        run  (List.map (walk_fml ctx) fmls) expec
+    | Run (fmls, expec) ->
+        run (List.map (walk_fml ctx) fmls) expec
   in
   Ast.
     { elo with

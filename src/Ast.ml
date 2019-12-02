@@ -47,7 +47,7 @@ let equal_ident id1 id2 =
       false
 
 
-type goal = (var, ident) G.t 
+type goal = (var, ident) G.t
 
 (* type of (well-formed) Electrod models *)
 type t =
@@ -105,7 +105,7 @@ let pp_sim_binding = G.pp_sim_binding pp_var pp_ident
 
 let pp out { domain; instance; invariants; goal; _ } =
   let open Fmtc in
-    pf
+  pf
     out
     "%a@\n%a@\n%a@\n%a"
     Domain.pp
@@ -128,6 +128,7 @@ let substitute =
     method visit_'v _ = Fun.id
 
     method visit_'i _ = Fun.id
+
     method! visit_Ident
         (env : (Var.t, (var, ident) G.prim_exp) CCList.Assoc.t) (id : ident) =
       (* Msg.debug *)
@@ -142,7 +143,6 @@ let substitute =
           List.Assoc.get_exn ~eq:Var.equal var env
       | Var _ | Name _ ->
           G.ident id
-     
     (* method visit_exp env exp =  *)
     (*   Msg.debug *)
     (*     (fun m -> m "Ast.substitute.visit_exp: %a [%a]" *)

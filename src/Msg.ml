@@ -55,16 +55,16 @@ let style =
   let open! Logs in
   let open Logs_fmt in
   function
-    | App ->
-        app_style
-    | Error ->
-        err_style
-    | Warning ->
-        warn_style
-    | Info ->
-        info_style
-    | Debug ->
-        debug_style
+  | App ->
+      app_style
+  | Error ->
+      err_style
+  | Warning ->
+      warn_style
+  | Info ->
+      info_style
+  | Debug ->
+      debug_style
 
 
 (** {1 Module to get source code fragments and show them (in error messages for
@@ -72,16 +72,16 @@ let style =
 module Extract = struct
   let lines file loc =
     match file with
-      | None ->
-          []
-      | Some f ->
-          IO.(
-            with_in f
-            @@ fun ic ->
-            IO.read_lines_gen ic
-            |> Gen.drop (Int.max 0 Location.(begl loc - 1))
-            |> Gen.take (Int.max 1 Location.(1 + endl loc - begl loc))
-            |> Gen.to_list)
+    | None ->
+        []
+    | Some f ->
+        IO.(
+          with_in f
+          @@ fun ic ->
+          IO.read_lines_gen ic
+          |> Gen.drop (Int.max 0 Location.(begl loc - 1))
+          |> Gen.take (Int.max 1 Location.(1 + endl loc - begl loc))
+          |> Gen.to_list)
 
 
   (* splits the string into 2 parts, the first containing [nb] characters *)
@@ -104,8 +104,8 @@ module Extract = struct
     @@ pair
          ~sep:nop
          ( styled `Bold
-           @@ styled `Magenta
-           @@ list ~sep:Format.pp_force_newline string )
+         @@ styled `Magenta
+         @@ list ~sep:Format.pp_force_newline string )
          string
 
 
@@ -114,30 +114,30 @@ module Extract = struct
     let innocent_first_last_idx = Int.max 0 (Location.begc loc) in
     let suspect_last_last_idx = Int.max 0 (Location.endc loc) in
     match lines with
-      | [] ->
-          ("", ([], ""))
-      | [ line ] ->
-          (* trick : cut first the last part *)
-          let first_part, innocent_last =
-            split_string line suspect_last_last_idx
-          in
-          let innocent_first, suspect =
-            split_string first_part innocent_first_last_idx
-          in
-          (innocent_first, ([ suspect ], innocent_last))
-      | first :: others ->
-          let innocent_first, suspect_first =
-            split_string first innocent_first_last_idx
-          in
-          let suspect_middle, last =
-            List.take_drop (Int.max 0 Location.(endl loc - begl loc - 1)) others
-          in
-          let last = List.hd last in
-          let suspect_last, innocent_last =
-            split_string last suspect_last_last_idx
-          in
-          let suspect = (suspect_first :: suspect_middle) @ [ suspect_last ] in
-          (innocent_first, (suspect, innocent_last))
+    | [] ->
+        ("", ([], ""))
+    | [ line ] ->
+        (* trick : cut first the last part *)
+        let first_part, innocent_last =
+          split_string line suspect_last_last_idx
+        in
+        let innocent_first, suspect =
+          split_string first_part innocent_first_last_idx
+        in
+        (innocent_first, ([ suspect ], innocent_last))
+    | first :: others ->
+        let innocent_first, suspect_first =
+          split_string first innocent_first_last_idx
+        in
+        let suspect_middle, last =
+          List.take_drop (Int.max 0 Location.(endl loc - begl loc - 1)) others
+        in
+        let last = List.hd last in
+        let suspect_last, innocent_last =
+          split_string last suspect_last_last_idx
+        in
+        let suspect = (suspect_first :: suspect_middle) @ [ suspect_last ] in
+        (innocent_first, (suspect, innocent_last))
 
   (* pair of pairs! *)
 end
@@ -480,8 +480,8 @@ module Fatal = struct
     let loc = Raw_ident.location id in
     m
       ~header:(code 17)
-      "%a%a: %S refers to a variable relation, its value cannot be fixed in \
-       an instance%a"
+      "%a%a: %S refers to a variable relation, its value cannot be fixed in an \
+       instance%a"
       (option @@ (colon **> string))
       infile
       Location.pp
@@ -575,7 +575,9 @@ module Fatal = struct
   let solver_bug args =
     err
     @@ fun m ->
-    args @@ fun solver msg -> m ~header:(code 23) "unexpected situation in %s: %s" solver msg
+    args
+    @@ fun solver msg ->
+    m ~header:(code 23) "unexpected situation in %s: %s" solver msg
 
 
   let no_multiplicity_allowed_here args =

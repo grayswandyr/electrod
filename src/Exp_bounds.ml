@@ -77,6 +77,7 @@ let sup_sim_binding fbounds_exp (subst : Tuple.t list) (disj, nbvars, range) :
      set of sets of tuples represented by a list of lists... *)
   let { sup; _ } = fbounds_exp (range, subst) in
   let sup_as_list = TS.to_list sup in
+
   (* compute the exponent for this bindings (NOTE: tuples are not concatenated, 
      just put in the same list representing a combination of tuples). 
 
@@ -351,10 +352,7 @@ let make_bounds_exp =
         | RBin (e1, Join, e2) ->
             let b1 = fbounds_exp (e1, subst) in
             let b2 = fbounds_exp (e2, subst) in
-            return_bounds
-              args
-              (TS.join b1.must b2.must)
-              (TS.join b1.sup b2.sup)
+            return_bounds args (TS.join b1.must b2.must) (TS.join b1.sup b2.sup)
         | RIte (_, e1, e2) ->
             let b1 = fbounds_exp (e1, subst) in
             let b2 = fbounds_exp (e2, subst) in

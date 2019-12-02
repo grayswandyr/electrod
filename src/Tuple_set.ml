@@ -14,10 +14,12 @@
 
 open Containers
 
-(*$ ;;
-    inject
+(*$
+  ;;
+  inject
 
-    open Test *)
+  open Test
+*)
 
 module TS = Tuple.Set
 

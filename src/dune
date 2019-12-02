@@ -1,8 +1,8 @@
 (env
  (dev
   (flags
-   (:standard -g -strict-formats -strict-sequence -short-paths 
-    -w "-63"))) ; -63 to handle Menhir/dune problems
+   (:standard -g -strict-formats -strict-sequence -short-paths -w "-63")))
+ ; -63 to handle Menhir/dune problems
  (release
   (ocamlopt_flags
    (:standard -O3))))

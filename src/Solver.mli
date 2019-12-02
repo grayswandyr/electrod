@@ -185,9 +185,9 @@ module type LTL = sig
     ?next_is_X:bool -> Atomic.t Iter.t ref -> Format.formatter -> t -> unit
 end
 
-module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At
 (** Builds an LTL implementation out of an implementation of atomicic
     propositions. *)
+module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At
 
 type script_type =
   | Default of string

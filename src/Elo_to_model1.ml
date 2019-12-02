@@ -185,6 +185,7 @@ struct
     let detected_inits, detected_invars, detected_trans, general_fmls =
       split_invar_noninvar_fmls elo goal_blk
     in
+
     (* Msg.debug (fun m ->
        m "Detected init : %a" Elo.pp_block detected_inits); *)
 

@@ -265,8 +265,7 @@ and convert_rbinop (op : Gen_goal.rbinop) =
       E.join
 
 
-and convert_iexp stack ({ prim_iexp; _ } : (Ast.var, Ast.ident) Gen_goal.iexp)
-    =
+and convert_iexp stack ({ prim_iexp; _ } : (Ast.var, Ast.ident) Gen_goal.iexp) =
   match prim_iexp with
   | Num n ->
       E.num n
@@ -285,7 +284,9 @@ and convert_ibinop (op : Gen_goal.ibinop) =
   match op with Add -> E.add | Sub -> E.sub
 
 
-let convert_goal (Gen_goal.Run (fmls, expec) ) = E.run (convert_block [] fmls) expec
+let convert_goal (Gen_goal.Run (fmls, expec)) =
+  E.run (convert_block [] fmls) expec
+
 
 let convert (ast : Ast.t) =
   let invariants = convert_block [] ast.invariants in

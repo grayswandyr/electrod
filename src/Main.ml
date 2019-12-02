@@ -84,11 +84,7 @@ let main
 
   let long_names =
     (* Debug ==> long names *)
-    match verbosity with
-    | Some Logs.Debug ->
-        true
-    | None | Some _ ->
-        long_names
+    match verbosity with Some Logs.Debug -> true | None | Some _ -> long_names
   in
   Printexc.record_backtrace true ;
 
@@ -118,9 +114,7 @@ let main
   (* begin work *)
   try
     let raw_to_ast_t = Transfo.tlist [ Raw_to_ast.transfo ] in
-    let ast_to_ast_t =
-      Transfo.tlist [ Simplify1.transfo; Simplify2.transfo ]
-    in
+    let ast_to_ast_t = Transfo.tlist [ Simplify1.transfo; Simplify2.transfo ] in
     let elo_to_smv_t = Transfo.tlist [ Elo_to_smv1.transfo ] in
     let ast =
       Parser_main.parse_file file
@@ -135,7 +129,7 @@ let main
              Msg.debug (fun m -> m "After simplify1 =@\n%a@." Ast.pp elo))
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Simplification done"))
     in
-    let expect = Gen_goal.get_expected ast.goal in 
+    let expect = Gen_goal.get_expected ast.goal in
     let elo = Ast_to_elo.convert ast in
     let before_conversion = Mtime_clock.now () in
     let model = Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) elo in
@@ -188,21 +182,22 @@ let main
 
       Logs.app (fun m ->
           if Outcome.some_trace res
-          then 
-            begin
-              match expect with 
-              | Some true -> m "Specification is: SAT as expected"
-              | Some false -> m "Specification is: SAT contrary to expectation"
-              | None -> m "Specification is: SAT"
-            end
+          then
+            match expect with
+            | Some true ->
+                m "Specification is: SAT as expected"
+            | Some false ->
+                m "Specification is: SAT contrary to expectation"
+            | None ->
+                m "Specification is: SAT"
           else
-            begin
-              match expect with  
-              | Some true -> m "Specification is: UNSAT contrary to expectation"
-              | Some false -> m "Specification is: UNSAT as expected"
-              | None -> m "Specification is: UNSAT"
-            end
-          ) ;
+            match expect with
+            | Some true ->
+                m "Specification is: UNSAT contrary to expectation"
+            | Some false ->
+                m "Specification is: UNSAT as expected"
+            | None ->
+                m "Specification is: UNSAT") ;
 
       Msg.info (fun m ->
           m "Outcome:@.%a" (Outcome.pp ~format:outcome_format) res) ) ;
@@ -216,10 +211,7 @@ let main
         m "Total allocated memory: %.3fGB" (memory /. 1_000_000_000.)) ;
 
     Logs.info (fun m ->
-        m
-          "Elapsed (wall-clock) time: %a"
-          Mtime.Span.pp
-          (Mtime_clock.elapsed ()))
+        m "Elapsed (wall-clock) time: %a" Mtime.Span.pp (Mtime_clock.elapsed ()))
   with
   | Exit ->
       Logs.app (fun m ->
