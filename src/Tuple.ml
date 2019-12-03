@@ -14,7 +14,9 @@
 
 (*${*)
 
-open Containers (*$}*)
+open Containers
+
+(*$}*)
 
 (*$
   ;;
@@ -32,7 +34,7 @@ let of_list1 xs =
   Array.of_list xs
 
 
-let tuple1 at = of_list1 [ at ]
+let tuple1 at = of_list1 [at]
 
 (* accessor *)
 let arity tuple =
@@ -113,7 +115,6 @@ let join tuple1 tuple2 =
   let lg1 = Array.length t1 in
   let lg2 = Array.length t2 in
   assert (Atom.equal (ith (arity tuple1 - 1) tuple1) (ith 0 tuple2)) ;
-
   (* imperative but safe: first we create a fresh array and fill it
      imperatively; and only then do we make a [t] out of it *)
   let res = Array.make (lg1 + lg2 - 2) t1.(0) in
@@ -180,7 +181,7 @@ let all_different t =
 
 let to_1tuples t =
   assert (Array.length t > 0) ;
-  Array.fold_right (fun at acc -> of_list1 [ at ] :: acc) t []
+  Array.fold_right (fun at acc -> of_list1 [at] :: acc) t []
 
 
 let to_ntuples n t =

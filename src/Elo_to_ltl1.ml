@@ -92,7 +92,6 @@ module Make (Ltl : Solver.LTL) = struct
   let compute_tc_length ts =
     let tsarity = TS.inferred_arity ts in
     Msg.debug (fun m -> m "compute_tc_length: arity of relation : %d\n" tsarity) ;
-
     assert (tsarity = 2 || tsarity = 0) ;
     if tsarity = 0
     then 0
@@ -117,7 +116,6 @@ module Make (Ltl : Solver.LTL) = struct
       in
       Msg.debug (fun m ->
           m "compute_tc_length: first_elt_in_core = %B\n" first_elt_in_core) ;
-
       (* is it possible that xn is not in the core (intersection of the
          domain and the codomain) ? *)
       let last_elt_in_core =
@@ -125,7 +123,6 @@ module Make (Ltl : Solver.LTL) = struct
       in
       Msg.debug (fun m ->
           m "compute_tc_length: last_elt_in_core = %B\n" last_elt_in_core) ;
-
       ( match (first_elt_in_core, last_elt_in_core) with
       | true, true ->
           core_length
@@ -342,7 +339,6 @@ module Make (Ltl : Solver.LTL) = struct
                 tuple
                 (Tuple.arity tuple)
                 compr_ar) ;
-
         (* the tuple is (in principle) of arity equal to the sum of arities of ranges of bound variables. To build the corresponding substitutions, we must first split this tuple into as many tuples as variables, each one with the adequate arity *)
         let ranges =
           List.flat_map
@@ -553,7 +549,8 @@ module Make (Ltl : Solver.LTL) = struct
         let sem_of_substituted_blk tuples =
           lazy
             ( pos_or_neg
-            @@ (self#visit_fml @@ List.rev tuples @ subst) (* [[...]] *)
+            @@ (self#visit_fml @@ List.rev tuples @ subst)
+            (* [[...]] *)
             @@ G.block blk )
         in
         let { must; may; _ } = env#must_may_sup subst s in
@@ -644,7 +641,6 @@ module Make (Ltl : Solver.LTL) = struct
         let { sup; _ } = env#must_may_sup subst r in
         let k = compute_tc_length sup in
         Msg.debug (fun m -> m "TC bound: %d" k) ;
-
         (* let tc_naif = iter_tc r k in
            let fml_tc_naif = self#visit_exp subst tc_naif tuple in *)
         let tc_square = iter_squares r k in

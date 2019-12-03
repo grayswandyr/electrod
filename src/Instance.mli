@@ -16,8 +16,8 @@ open Containers
 
 (** An instance is a set of relations whose value is a fixed tuple set. *)
 
-type t
 (** Virtually: a map between relation names and sets of tuples. *)
+type t
 
 val empty : t
 (** Constructor. *)

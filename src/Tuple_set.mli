@@ -16,8 +16,8 @@ open Containers
 
 (** Type for sets of tuples. *)
 
-type t
 (** Set of tuples. Invariant: all tuples in the tuple set have the same arity *)
+type t
 
 val empty : t
 (** The empty tuple set. *)

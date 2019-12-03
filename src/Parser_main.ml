@@ -34,10 +34,10 @@ let check_paragraphs file pars =
     if length candidates = 1
     then
       (* there must be one goal *)
-      match candidates with [ Raw.ParGoal g ] -> g | _ -> assert false
+      match candidates with [Raw.ParGoal g] -> g | _ -> assert false
     else
       Msg.Fatal.syntax_error_paragraphs (fun args ->
-          args file "one goal must be declared exactly")
+          args file "one goal must be declared exactly" )
   in
   let invar =
     let candidates =
@@ -55,13 +55,13 @@ let check_paragraphs file pars =
       match candidates with
       | [] ->
           []
-      | [ Raw.ParInv g ] ->
+      | [Raw.ParInv g] ->
           g
       | _ ->
           assert false
     else
       Msg.Fatal.syntax_error_paragraphs (fun args ->
-          args file "at most one invariant section may be declared")
+          args file "at most one invariant section may be declared" )
   in
   let inst =
     let candidates =
@@ -79,13 +79,13 @@ let check_paragraphs file pars =
       match candidates with
       | [] ->
           []
-      | [ Raw.ParInst g ] ->
+      | [Raw.ParInst g] ->
           g
       | _ ->
           assert false
     else
       Msg.Fatal.syntax_error_paragraphs (fun args ->
-          args file "at most one (partial) instance may be declared")
+          args file "at most one (partial) instance may be declared" )
   in
   let sym =
     let candidates =
@@ -103,13 +103,13 @@ let check_paragraphs file pars =
       match candidates with
       | [] ->
           []
-      | [ Raw.ParSym g ] ->
+      | [Raw.ParSym g] ->
           g
       | _ ->
           assert false
     else
       Msg.Fatal.syntax_error_paragraphs (fun args ->
-          args file "at most one list of symmetries may be declared")
+          args file "at most one list of symmetries may be declared" )
   in
   (goal, invar, inst, sym)
 
@@ -133,9 +133,7 @@ let parse_file file =
       raw_fact
       raw_inst
       raw_syms
-  with
-  | P.Error ->
-      Msg.Fatal.syntax @@ fun args -> args file lexbuf
+  with P.Error -> Msg.Fatal.syntax @@ fun args -> args file lexbuf
 
 
 let parse_string s =
