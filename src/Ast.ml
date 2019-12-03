@@ -18,7 +18,7 @@ open Containers
 module G = Gen_goal
 
 (* variables introduced by a binder *)
-type var = BVar of Var.t
+type var = BVar of  (Var.t)
 
 let bound_var v = BVar v
 
