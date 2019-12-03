@@ -17,14 +17,14 @@
    optional Boolean  is the optional expected value : false = "unsat", true = 
    "sat"
    *)
-type ('v, 'i) t = Run of (('v, 'i) block * (bool option[@opaque]))
-[@@unboxed]
+type ('v, 'i) t = Run of (('v, 'i) block * (bool option[@opaque])) [@@unboxed]
 
 (** Formulas and expressions *)
 
 and ('v, 'i) fml =
   { prim_fml : ('v, 'i) prim_fml
-  ; fml_loc : (Location.t[@opaque]) }
+  ; fml_loc : (Location.t[@opaque])
+  }
 
 and ('v, 'i) prim_fml =
   | True
@@ -49,8 +49,8 @@ and ('v, 'i) sim_binding = disj * 'v list * ('v, 'i) exp
 (* nonempty *)
 and disj = (bool[@opaque])
 
-(** nonempty *)
 and ('v, 'i) block = ('v, 'i) fml list
+(** nonempty *)
 
 and quant =
   | All
@@ -98,8 +98,8 @@ and icomp_op =
 and ('v, 'i) exp =
   { prim_exp : ('v, 'i) prim_exp
   ; exp_loc : (Location.t[@opaque])
-  ; arity : (int option[@opaque])
-  (* None for none or Some n where n > 0 *) }
+  ; arity : (int option[@opaque]) (* None for none or Some n where n > 0 *)
+  }
 
 and ('v, 'i) prim_exp =
   | None_
@@ -136,7 +136,8 @@ and rbinop =
 
 and ('v, 'i) iexp =
   { prim_iexp : ('v, 'i) prim_iexp
-  ; iexp_loc : (Location.t[@opaque]) }
+  ; iexp_loc : (Location.t[@opaque])
+  }
 
 and ('v, 'i) prim_iexp =
   | Num of (int[@opaque])
@@ -150,8 +151,8 @@ and ibinop =
   | Add
   | Sub
 [@@deriving
-  visitors {variety = "map"}
-  , visitors {variety = "fold"; ancestors = ["VisitorsRuntime.map"]}]
+  visitors { variety = "map" }
+  , visitors { variety = "fold"; ancestors = [ "VisitorsRuntime.map" ] }]
 
 let true_ = True
 
@@ -166,33 +167,33 @@ let icomp exp1 rcomp exp2 = IComp (exp1, rcomp, exp2)
 let lbinary fml1 binop fml2 =
   match (fml1.prim_fml, binop, fml2.prim_fml) with
   (* And *)
-  | (False | Block [{prim_fml = False; _}]), And, _
-  | _, And, (False | Block [{prim_fml = False; _}]) ->
+  | (False | Block [ { prim_fml = False; _ } ]), And, _
+  | _, And, (False | Block [ { prim_fml = False; _ } ]) ->
       false_
-  | (True | Block [{prim_fml = True; _}]), And, _ ->
+  | (True | Block [ { prim_fml = True; _ } ]), And, _ ->
       fml2.prim_fml
-  | _, And, (True | Block [{prim_fml = True; _}]) ->
+  | _, And, (True | Block [ { prim_fml = True; _ } ]) ->
       fml1.prim_fml
   (* Or *)
-  | (False | Block [{prim_fml = False; _}]), Or, _ ->
+  | (False | Block [ { prim_fml = False; _ } ]), Or, _ ->
       fml2.prim_fml
-  | _, Or, (False | Block [{prim_fml = False; _}]) ->
+  | _, Or, (False | Block [ { prim_fml = False; _ } ]) ->
       fml1.prim_fml
-  | (True | Block [{prim_fml = True; _}]), Or, _
-  | _, Or, (True | Block [{prim_fml = True; _}]) ->
+  | (True | Block [ { prim_fml = True; _ } ]), Or, _
+  | _, Or, (True | Block [ { prim_fml = True; _ } ]) ->
       True
   (* Implies *)
-  | (False | Block [{prim_fml = False; _}]), Imp, _
-  | _, Imp, (True | Block [{prim_fml = True; _}]) ->
+  | (False | Block [ { prim_fml = False; _ } ]), Imp, _
+  | _, Imp, (True | Block [ { prim_fml = True; _ } ]) ->
       true_
-  | (True | Block [{prim_fml = True; _}]), Imp, _ ->
+  | (True | Block [ { prim_fml = True; _ } ]), Imp, _ ->
       fml2.prim_fml
   | _ ->
       LBin (fml1, binop, fml2)
 
 
 let quant quant decls block =
-  assert (decls <> [] && block <> []) ;
+  assert (decls <> [] && block <> []);
   Quant (quant, decls, block)
 
 
@@ -261,7 +262,7 @@ let rite cdt then_ else_ = RIte (cdt, then_, else_)
 let boxjoin caller callee = BoxJoin (caller, callee)
 
 let compr decls block =
-  assert (decls <> [] && block <> []) ;
+  assert (decls <> [] && block <> []);
   Compr (decls, block)
 
 
@@ -329,11 +330,11 @@ let add = Add
 
 let sub = Sub
 
-let fml fml_loc prim_fml = {prim_fml; fml_loc}
+let fml fml_loc prim_fml = { prim_fml; fml_loc }
 
-let exp arity exp_loc prim_exp = {prim_exp; exp_loc; arity}
+let exp arity exp_loc prim_exp = { prim_exp; exp_loc; arity }
 
-let iexp iexp_loc prim_iexp = {prim_iexp; iexp_loc}
+let iexp iexp_loc prim_iexp = { prim_iexp; iexp_loc }
 
 let run fs exp = Run (fs, exp)
 
@@ -349,7 +350,7 @@ let kwd_styled pf = Fmtc.(styled `Bold) pf
 
 let rec pp pp_v pp_i out (Run (fml, _)) =
   let open Fmtc in
-  (kwd_styled pf) out "run@ " ;
+  (kwd_styled pf) out "run@ ";
   pf out "  %a" (box @@ list @@ pp_fml pp_v pp_i) fml
 
 
@@ -447,15 +448,7 @@ and pp_block pp_v pp_i out fmls =
 and pp_rqualify out x =
   Fmtc.(kwd_styled pf) out
   @@
-  match x with
-  | ROne ->
-      "one"
-  | RLone ->
-      "lone"
-  | RSome ->
-      "some"
-  | RNo ->
-      "no"
+  match x with ROne -> "one" | RLone -> "lone" | RSome -> "some" | RNo -> "no"
 
 
 and pp_comp_op out =
@@ -563,7 +556,7 @@ and pp_sim_binding pp_v pp_i out (disj, vars, exp) =
 
 
 and pp_exp ?(show_arity = false) pp_v pp_i out exp =
-  pp_prim_exp pp_v pp_i out exp.prim_exp ;
+  pp_prim_exp pp_v pp_i out exp.prim_exp;
   if show_arity then Fmtc.(pf out "«%a»" (option int) exp.arity)
 
 

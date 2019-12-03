@@ -25,17 +25,18 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
     ; partial : bool
     ; (* is 'lone'? *)
       dom_arity : int option
-    (* arity of the domain (>=0) if functional, else None *) }
+          (* arity of the domain (>=0) if functional, else None *)
+    }
 
-  let compare {sym = sym1; _} {sym = sym2; _} = Symbol.compare sym1 sym2
+  let compare { sym = sym1; _ } { sym = sym2; _ } = Symbol.compare sym1 sym2
 
-  let compare_string {sym = sym1; _} {sym = sym2; _} =
+  let compare_string { sym = sym1; _ } { sym = sym2; _ } =
     Symbol.compare_string sym1 sym2
 
 
   let pp fmt at = Symbol.pp fmt at.sym
 
-  let equal {sym = sym1; _} {sym = sym2; _} = Symbol.equal sym1 sym2
+  let equal { sym = sym1; _ } { sym = sym2; _ } = Symbol.equal sym1 sym2
 
   let hash at = Symbol.hash at.sym
 
@@ -91,8 +92,8 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
     in
     let sym = Symbol.make full_str in
     (* keep track of creations to allow to get original pairs back *)
-    HT.add names_and_tuples sym (name, tuple) ;
-    {sym; dom_arity; const; partial}
+    HT.add names_and_tuples sym (name, tuple);
+    { sym; dom_arity; const; partial }
 
 
   let split at = HT.get names_and_tuples at.sym

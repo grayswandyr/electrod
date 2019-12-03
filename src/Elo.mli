@@ -62,7 +62,8 @@ and icomp_op = private
 
 and ('fml, 'exp, 'iexp) oexp =
   { prim_exp : ('fml, 'exp, 'iexp) prim_oexp
-  ; arity : int }
+  ; arity : int
+  }
 
 and ('fml, 'exp, 'iexp) prim_oexp = private
   | None_
@@ -124,7 +125,8 @@ type t =
   ; invariants : fml list
   ; goal : goal
   ; atom_renaming : (Atom.t, Atom.t) CCList.Assoc.t
-  ; name_renaming : (Name.t, Name.t) CCList.Assoc.t }
+  ; name_renaming : (Name.t, Name.t) CCList.Assoc.t
+  }
 
 val make :
      string option
@@ -295,8 +297,7 @@ val pp_var : Format.formatter -> int -> unit
 
 val pp_sim_binding : int -> Format.formatter -> bool * int * exp -> unit
 
-val pp_sim_bindings :
-  int -> Format.formatter -> (bool * int * exp) list -> unit
+val pp_sim_bindings : int -> Format.formatter -> (bool * int * exp) list -> unit
 
 val pp_oblock : 'a -> ('a -> 'b Fmtc.t) -> Format.formatter -> 'b list -> unit
 
@@ -367,8 +368,7 @@ class ['c] map :
          ; visit_Gt : 'env -> icomp_op
          ; visit_Gte : 'env -> icomp_op
          ; visit_H : 'env -> lunop
-         ; visit_IBin :
-             'env -> iexp -> ibinop -> iexp -> (fml, exp, iexp) oiexp
+         ; visit_IBin : 'env -> iexp -> ibinop -> iexp -> (fml, exp, iexp) oiexp
          ; visit_IComp :
              'env -> iexp -> icomp_op -> iexp -> (fml, exp, iexp) ofml
          ; visit_IEq : 'env -> icomp_op
@@ -480,8 +480,7 @@ class ['c] map :
 
     method visit_H : 'env -> lunop
 
-    method visit_IBin :
-      'env -> iexp -> ibinop -> iexp -> (fml, exp, iexp) oiexp
+    method visit_IBin : 'env -> iexp -> ibinop -> iexp -> (fml, exp, iexp) oiexp
 
     method visit_IComp :
       'env -> iexp -> icomp_op -> iexp -> (fml, exp, iexp) ofml
@@ -821,8 +820,7 @@ class virtual ['c] fold :
 
     method virtual build_Card : 'env -> 'k -> 'l
 
-    method virtual build_Compr :
-      'env -> (bool * int * 'k) list -> 'j list -> 'm
+    method virtual build_Compr : 'env -> (bool * int * 'k) list -> 'j list -> 'm
 
     method virtual build_Diff : 'env -> 'n
 

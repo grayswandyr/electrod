@@ -17,8 +17,8 @@
 open Containers
 open Fmtc
 
-(** An abbreviation. *)
 module Location = Location
+(** An abbreviation. *)
 
 (** {1 Setting up the logging machinery} *)
 
@@ -89,7 +89,7 @@ module Extract = struct
     let open String in
     let lg = length s in
     (* debug (fun m -> m "%s (%d) / %d" s lg nb); *)
-    assert (nb >= 0 && nb <= lg) ;
+    assert (nb >= 0 && nb <= lg);
     (* debug (fun m -> m "sub %d %d" 0 nb); *)
     let first = sub s 0 nb in
     (* debug (fun m -> m "sub %d %d" nb (lg-nb)); *)
@@ -115,7 +115,7 @@ module Extract = struct
     match lines with
     | [] ->
         ("", ([], ""))
-    | [line] ->
+    | [ line ] ->
         (* trick : cut first the last part *)
         let first_part, innocent_last =
           split_string line suspect_last_last_idx
@@ -123,7 +123,7 @@ module Extract = struct
         let innocent_first, suspect =
           split_string first_part innocent_first_last_idx
         in
-        (innocent_first, ([suspect], innocent_last))
+        (innocent_first, ([ suspect ], innocent_last))
     | first :: others ->
         let innocent_first, suspect_first =
           split_string first innocent_first_last_idx
@@ -135,7 +135,7 @@ module Extract = struct
         let suspect_last, innocent_last =
           split_string last suspect_last_last_idx
         in
-        let suspect = (suspect_first :: suspect_middle) @ [suspect_last] in
+        let suspect = (suspect_first :: suspect_middle) @ [ suspect_last ] in
         (innocent_first, (suspect, innocent_last))
 
   (* pair of pairs! *)
@@ -479,8 +479,8 @@ module Fatal = struct
     let loc = Raw_ident.location id in
     m
       ~header:(code 17)
-      "%a%a: %S refers to a variable relation, its value cannot be fixed in \
-       an instance%a"
+      "%a%a: %S refers to a variable relation, its value cannot be fixed in an \
+       instance%a"
       (option @@ (colon **> string))
       infile
       Location.pp
@@ -640,8 +640,8 @@ module Warn = struct
     let fmt = Fmtc.box2 @@ Atom.pp_list in
     m
       ~header:(code 1)
-      "univ contains duplicate atoms...:@ %a@;...ignoring them and continuing \
-       with:@ %a"
+      "univ contains duplicate atoms...:@ %a@;\
+       ...ignoring them and continuing with:@ %a"
       fmt
       written
       fmt
@@ -672,7 +672,7 @@ module Warn = struct
     args
     @@ fun infile id bound_kind pp_bound bound ->
     let loc = Raw_ident.location id in
-    let pp_inf_sup (which : [`Inf | `Sup | `Exact]) =
+    let pp_inf_sup (which : [ `Inf | `Sup | `Exact ]) =
       match which with `Exact -> "" | `Inf -> " lower" | `Sup -> " upper"
     in
     m

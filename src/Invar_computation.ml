@@ -70,7 +70,7 @@ let max_color_wiwt c1 c2 =
       Temporal
 
 
-let rec remove_always_from_invar (Elo.Fml {node; _} as fml) =
+let rec remove_always_from_invar (Elo.Fml { node; _ } as fml) =
   let open Elo in
   match node with
   | LUn (G, subfml) ->
@@ -83,13 +83,13 @@ let rec remove_always_from_invar (Elo.Fml {node; _} as fml) =
       fml
 
 
-let add_always_to_invar (Elo.Fml {node; _} as fml) =
+let add_always_to_invar (Elo.Fml { node; _ } as fml) =
   let open Elo in
   match node with LUn (G, _) -> fml | _ -> lunary always fml
 
 
 let is_const (elo : Elo.t) (name : Name.t) =
-  assert (Domain.mem name elo.Elo.domain) ;
+  assert (Domain.mem name elo.Elo.domain);
   Domain.get_exn name elo.Elo.domain |> Relation.is_const
 
 
@@ -126,7 +126,7 @@ class ['self] computer (elo : Elo.t) =
     method build_Let () __bs' __block' = assert false
 
     (* SIMPLIFIED *)
-    
+
     (* quant *)
     method build_Quant () quant' (_, _, range_color) blk_colors =
       let blk_color = List.fold_left max_color_wiwt Static_prop blk_colors in

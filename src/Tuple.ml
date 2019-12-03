@@ -30,16 +30,16 @@ type t = Atom.t Array.t
 (* Constructors *)
 
 let of_list1 xs =
-  assert (not @@ List.is_empty xs) ;
+  assert (not @@ List.is_empty xs);
   Array.of_list xs
 
 
-let tuple1 at = of_list1 [at]
+let tuple1 at = of_list1 [ at ]
 
 (* accessor *)
 let arity tuple =
   let ar = Array.length tuple in
-  assert (ar > 0) ;
+  assert (ar > 0);
   ar
 
 
@@ -75,12 +75,12 @@ let equal t1 t2 = Array.equal Atom.equal t1 t2
   transpose (transpose tuple) = tuple)
 *)
 let transpose tuple =
-  assert (arity tuple = 2) ;
+  assert (arity tuple = 2);
   Array.rev tuple
 
 
 let ith i tuple =
-  assert (i >= 0 && i < arity tuple) ;
+  assert (i >= 0 && i < arity tuple);
   tuple.(i)
 
 
@@ -114,19 +114,19 @@ let join tuple1 tuple2 =
   let t2 = tuple2 in
   let lg1 = Array.length t1 in
   let lg2 = Array.length t2 in
-  assert (Atom.equal (ith (arity tuple1 - 1) tuple1) (ith 0 tuple2)) ;
+  assert (Atom.equal (ith (arity tuple1 - 1) tuple1) (ith 0 tuple2));
   (* imperative but safe: first we create a fresh array and fill it
      imperatively; and only then do we make a [t] out of it *)
   let res = Array.make (lg1 + lg2 - 2) t1.(0) in
-  Array.blit t1 0 res 0 (lg1 - 1) ;
-  Array.blit t2 1 res (lg1 - 1) (lg2 - 1) ;
+  Array.blit t1 0 res 0 (lg1 - 1);
+  Array.blit t2 1 res (lg1 - 1) (lg2 - 1);
   res
 
 
 let is_in_join tup t1 t2 =
   let lg1 = Array.length t1 in
-  assert (lg1 > 0) ;
-  assert (Array.length t2 > 0) ;
+  assert (lg1 > 0);
+  assert (Array.length t2 > 0);
   Atom.equal t1.(lg1 - 1) t2.(0) && (equal tup @@ join t1 t2)
 
 
@@ -157,7 +157,7 @@ let split tuple len =
   (* Msg.debug (fun m -> m "split <-- %a %d" pp tuple len); *)
   let t = tuple in
   let full_len = Array.length t in
-  assert (len > 0 && len < full_len) ;
+  assert (len > 0 && len < full_len);
   let t1 = Array_slice.(make t 0 ~len |> copy) in
   let t2 = Array_slice.(make t len ~len:(full_len - len) |> copy) in
   (* mind the tilde! *)
@@ -170,27 +170,27 @@ let split tuple len =
 let all_different t =
   let sorted = Array.sorted Atom.compare t in
   let lg = Array.length t in
-  assert (lg > 0) ;
+  assert (lg > 0);
   let i = ref 1 in
   let yes = ref true in
   while !yes && !i < lg do
     yes := Atom.compare sorted.(!i - 1) sorted.(!i) <> 0
-  done ;
+  done;
   !yes
 
 
 let to_1tuples t =
-  assert (Array.length t > 0) ;
-  Array.fold_right (fun at acc -> of_list1 [at] :: acc) t []
+  assert (Array.length t > 0);
+  Array.fold_right (fun at acc -> of_list1 [ at ] :: acc) t []
 
 
 let to_ntuples n t =
   let lg = Array.length t in
-  assert (lg > 0) ;
+  assert (lg > 0);
   if lg mod n <> 0
   then
     invalid_arg
-    @@ Fmt.strf "Tuple.to_ntuples %d %a: length not a multiple of %d" n pp t n ;
+    @@ Fmt.strf "Tuple.to_ntuples %d %a: length not a multiple of %d" n pp t n;
   Array.to_list t |> List.sublists_of_len n |> List.map of_list1
 
 

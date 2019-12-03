@@ -182,8 +182,9 @@ class virtual ['self] recursor =
       self#build_Run env _visitors_c0 _visitors_c1 _visitors_r0
 
     method visit_t env _visitors_this =
-      match _visitors_this with Run (_visitors_c0, _visitors_c1) ->
-        self#visit_Run env _visitors_c0 _visitors_c1
+      match _visitors_this with
+      | Run (_visitors_c0, _visitors_c1) ->
+          self#visit_Run env _visitors_c0 _visitors_c1
 
     method visit_fml env _visitors_this =
       let _visitors_r0 = self#visit_prim_fml env _visitors_this.prim_fml in
@@ -507,12 +508,7 @@ class virtual ['self] recursor =
     method visit_BoxJoin env _visitors_c0 _visitors_c1 =
       let _visitors_r0 = self#visit_exp env _visitors_c0 in
       let _visitors_r1 = self#visit_list self#visit_exp env _visitors_c1 in
-      self#build_BoxJoin
-        env
-        _visitors_c0
-        _visitors_c1
-        _visitors_r0
-        _visitors_r1
+      self#build_BoxJoin env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
 
     method visit_Compr env _visitors_c0 _visitors_c1 =
       let _visitors_r0 =

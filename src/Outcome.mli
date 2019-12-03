@@ -16,25 +16,26 @@ open Containers
 
 (** Represents a result trace (or the absence thereof).  *)
 
-(** A valuation maps set/relation names to the tuples they contain. *)
 type valuation
+(** A valuation maps set/relation names to the tuples they contain. *)
 
+type state
 (** A state is either a plain state, or the target of a lasso from the last
     state of the trace. *)
-type state
 
-(** Nonempty, ordered sequence of states.  *)
 type states = state list
+(** Nonempty, ordered sequence of states.  *)
 
-(** An outcome represents the result of an analysis. It is either [None],
-    meaning there is no resulting trace, or it is [Some _] in wihch case it
-    carries a nonempty, ordered sequence of states, with at least one being the
-    target of a loop ("lasso" step). *)
 type t = private
   { trace : states option
   ; nbvars : int  (** number of Booleans used  *)
   ; conversion_time : Mtime.span
-  ; analysis_time : Mtime.span }
+  ; analysis_time : Mtime.span
+  }
+(** An outcome represents the result of an analysis. It is either [None],
+    meaning there is no resulting trace, or it is [Some _] in wihch case it
+    carries a nonempty, ordered sequence of states, with at least one being the
+    target of a loop ("lasso" step). *)
 
 val no_trace : int -> Mtime.span -> Mtime.span -> t
 (** Represents the absence of trace (so usually: UNSAT). *)
@@ -62,4 +63,4 @@ val loop_is_present : states -> bool
 val to_loop : state -> state
 (** Converts any state to a loop state *)
 
-val pp : format:[`XML | `Plain | `Chrono] -> Format.formatter -> t -> unit
+val pp : format:[ `XML | `Plain | `Chrono ] -> Format.formatter -> t -> unit

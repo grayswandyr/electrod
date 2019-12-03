@@ -16,8 +16,8 @@
 
 (** Licence: ISC *)
 
-(** Straight extension of Fmt to avoid having to open Fmt and Fmtc *)
 include Fmt
+(** Straight extension of Fmt to avoid having to open Fmt and Fmtc *)
 
 let nbsp = const string " "
 
@@ -109,17 +109,17 @@ let ( **- ) p1 p2 = pair ~sep:sp p1 p2
 
 (* creates a box and surrounds it by delimiters bef and aft *)
 let surround bef aft pp_v out v =
-  bef out () ;
-  pp_v out v ;
+  bef out ();
+  pp_v out v;
   aft out ()
 
 
 (* like surround, with a non-breakable-space right after bef (resp. right before aft) *)
 let surround_ bef aft pp_v out v =
-  bef out () ;
-  pf out " " ;
-  pp_v out v ;
-  pf out " " ;
+  bef out ();
+  pf out " ";
+  pp_v out v;
+  pf out " ";
   aft out ()
 
 
@@ -134,7 +134,7 @@ let angles_ ppv_v out v = surround_ langle rangle ppv_v out v
 let unless test ppf out v = if test v then pf out "" else ppf out v
 
 let repeat n pp =
-  assert (n >= 0) ;
+  assert (n >= 0);
   let rec walk n pp = if n = 0 then nop else pp **< walk (n - 1) pp in
   walk n pp
 
@@ -153,19 +153,19 @@ let prefix ?(indent = 0) ?(par = true) pprefix pbody out (prefix, body) =
 
 let tuple2 = pair
 
-let tuple3
-    ?sep1:(pp_sep1 = sp) ?sep2:(pp_sep2 = sp) pp1 pp2 pp3 ppf (x1, x2, x3) =
-  pp1 ppf x1 ;
-  pp_sep1 ppf () ;
-  pp2 ppf x2 ;
-  pp_sep2 ppf () ;
+let tuple3 ?sep1:(pp_sep1 = sp) ?sep2:(pp_sep2 = sp) pp1 pp2 pp3 ppf (x1, x2, x3)
+    =
+  pp1 ppf x1;
+  pp_sep1 ppf ();
+  pp2 ppf x2;
+  pp_sep2 ppf ();
   pp3 ppf x3
 
 
 let triple = tuple3
 
 let bbox ?(indent = 0) pp ppf =
-  Format.pp_open_box ppf indent ;
+  Format.pp_open_box ppf indent;
   pf ppf "%a@]" pp
 
 

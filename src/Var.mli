@@ -14,8 +14,8 @@
 
 (** Provides fresh identifiers for variables (in formulas) at every stage. *)
 
-(** type of an identifier: essentially a base string and a globally unique number *)
 type t
+(** type of an identifier: essentially a base string and a globally unique number *)
 
 val fresh : ?sep:string -> ?loc:Location.t -> string -> t
 (** Creates a fresh identifier ([loc] is the location of the originating

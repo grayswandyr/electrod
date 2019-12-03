@@ -77,8 +77,8 @@ and icomp_op =
 
 and ('fml, 'exp, 'iexp) oexp =
   { prim_exp : ('fml, 'exp, 'iexp) prim_oexp
-  ; arity : (int[@opaque])
-  (* 0 = "polymorphic" arity (that of none) *) }
+  ; arity : (int[@opaque]) (* 0 = "polymorphic" arity (that of none) *)
+  }
 
 and ('fml, 'exp, 'iexp) prim_oexp =
   | None_
@@ -119,9 +119,12 @@ and ibinop =
   | Add
   | Sub
 [@@deriving
-  visitors {variety = "map"; name = "omap"}
+  visitors { variety = "map"; name = "omap" }
   , visitors
-      {variety = "fold"; name = "ofold"; ancestors = ["VisitorsRuntime.map"]}]
+      { variety = "fold"
+      ; name = "ofold"
+      ; ancestors = [ "VisitorsRuntime.map" ]
+      }]
 
 type goal = Run of (fml list * bool option) [@@unboxed]
 
@@ -153,11 +156,11 @@ let fml_count : int Fml_count.t = Fml_count.create 793
 
 let hfml f : fml =
   let hdata = HC.hashcons fml_table f in
-  Fml_count.incr fml_count hdata ;
+  Fml_count.incr fml_count hdata;
   Fml hdata
 
 
-let exp ~ar (prim_exp : prim_exp) = {prim_exp; arity = ar}
+let exp ~ar (prim_exp : prim_exp) = { prim_exp; arity = ar }
 
 let hexp oe : exp =
   let res = HC.hashcons exp_table oe in
@@ -175,11 +178,12 @@ class ['self] map =
 
     (* TODO is it correct to map the arity to itself?
      BTW the arity is specified as opaque *)
-    method visit_'exp env (Exp {node; _}) = hexp (self#visit_oexp env node)
+    method visit_'exp env (Exp { node; _ }) = hexp (self#visit_oexp env node)
 
-    method visit_'fml env (Fml {node; _}) = hfml (self#visit_ofml env node)
+    method visit_'fml env (Fml { node; _ }) = hfml (self#visit_ofml env node)
 
-    method visit_'iexp env (Iexp {node; _}) = hiexp (self#visit_oiexp env node)
+    method visit_'iexp env (Iexp { node; _ }) =
+      hiexp (self#visit_oiexp env node)
 
     method visit_exp env exp = self#visit_'exp env exp
 
@@ -194,11 +198,11 @@ class virtual ['self] fold =
 
     (* TODO is it correct to map the arity to itself?
      BTW the arity is specified as opaque *)
-    method visit_'exp env (Exp {node; _}) = self#visit_oexp env node
+    method visit_'exp env (Exp { node; _ }) = self#visit_oexp env node
 
-    method visit_'fml env (Fml {node; _}) = self#visit_ofml env node
+    method visit_'fml env (Fml { node; _ }) = self#visit_ofml env node
 
-    method visit_'iexp env (Iexp {node; _}) = self#visit_oiexp env node
+    method visit_'iexp env (Iexp { node; _ }) = self#visit_oiexp env node
 
     method visit_exp env exp = self#visit_'exp env exp
 
@@ -218,13 +222,22 @@ type t =
   ; invariants : fml list
   ; goal : goal
   ; atom_renaming : (Atom.t, Atom.t) List.Assoc.t
-  ; name_renaming : (Name.t, Name.t) List.Assoc.t }
+  ; name_renaming : (Name.t, Name.t) List.Assoc.t
+  }
 
 let make file domain instance sym invariants goal atom_renaming name_renaming =
-  {file; domain; instance; sym; invariants; goal; atom_renaming; name_renaming}
+  { file
+  ; domain
+  ; instance
+  ; sym
+  ; invariants
+  ; goal
+  ; atom_renaming
+  ; name_renaming
+  }
 
 
-let arity (Exp {node = {arity; _}; _}) = arity
+let arity (Exp { node = { arity; _ }; _ }) = arity
 
 let run fs expec = Run (fs, expec)
 
@@ -239,13 +252,13 @@ let icomp exp1 rcomp exp2 = hfml @@ IComp (exp1, rcomp, exp2)
 let lbinary fml1 binop fml2 = hfml @@ LBin (fml1, binop, fml2)
 
 let sim_binding disj nbvars (range : exp) =
-  assert (nbvars > 0) ;
-  assert ((not disj) || nbvars > 1) ;
+  assert (nbvars > 0);
+  assert ((not disj) || nbvars > 1);
   (disj, nbvars, range)
 
 
 let quant quant decl (block : fml list) =
-  assert (not List.(is_empty block)) ;
+  assert (not List.(is_empty block));
   hfml @@ Quant (quant, decl, block)
 
 
@@ -298,7 +311,7 @@ let univ = hexp @@ exp ~ar:1 @@ Univ
 let iden = hexp @@ exp ~ar:2 @@ Iden
 
 let var ~ar n =
-  assert (n >= 0) ;
+  assert (n >= 0);
   hexp @@ exp ~ar @@ Var n
 
 
@@ -311,8 +324,8 @@ let rbinary ~ar exp1 rbinop exp2 = hexp @@ exp ~ar @@ RBin (exp1, rbinop, exp2)
 let rite ~ar cdt then_ else_ = hexp @@ exp ~ar @@ RIte (cdt, then_, else_)
 
 let compr ~ar decls block =
-  assert (not (List.is_empty decls)) ;
-  assert (not (List.is_empty block)) ;
+  assert (not (List.is_empty decls));
+  assert (not (List.is_empty block));
   hexp @@ exp ~ar @@ Compr (decls, block)
 
 
@@ -533,8 +546,8 @@ let rec pp_osim_bindings stacked pp_exp out sim_bindings =
   | [] ->
       ()
   | ((_, vars, _) as hd) :: tl ->
-      pp_osim_binding stacked pp_exp out hd ;
-      (sp **> comma) out () ;
+      pp_osim_binding stacked pp_exp out hd;
+      (sp **> comma) out ();
       pp_osim_bindings (stacked + vars) pp_exp out tl
 
 
@@ -626,7 +639,7 @@ let pp_prim_oexp stacked pp_fml pp_exp out =
   | Name id ->
       pf out "%a" Name.pp id
   | Var v ->
-      assert (v <= stacked) ;
+      assert (v <= stacked);
       pp_var out (stacked - v)
   | RUn (op, e) ->
       pf out "@[<2>(%a%a)@]" pp_runop op (pp_exp stacked) e
@@ -693,19 +706,21 @@ let pp_oiexp stacked pp_exp pp_iexp out =
         e2
 
 
-let rec pp_fml stacked out (Fml {node; _}) =
+let rec pp_fml stacked out (Fml { node; _ }) =
   pp_ofml stacked pp_fml pp_exp pp_iexp out node
 
 
 and pp_block stacked out fmls = pp_oblock stacked pp_fml out fmls
 
-and pp_iexp stacked out (Iexp {node; _}) =
+and pp_iexp stacked out (Iexp { node; _ }) =
   pp_oiexp stacked pp_exp pp_iexp out node
 
 
 and pp_prim_exp stacked out pe = pp_prim_oexp stacked pp_fml pp_exp out pe
 
-and pp_exp stacked out (Exp {node = e; _}) = pp_prim_exp stacked out e.prim_exp
+and pp_exp stacked out (Exp { node = e; _ }) =
+  pp_prim_exp stacked out e.prim_exp
+
 
 and pp_sim_binding stacked out sb = pp_osim_binding stacked pp_exp out sb
 
@@ -713,11 +728,11 @@ and pp_sim_bindings stacked out sb = pp_osim_bindings stacked pp_exp out sb
 
 let pp_goal out (Run (fmls, _)) =
   let open Fmtc in
-  (kwd_styled pf) out "run@ " ;
+  (kwd_styled pf) out "run@ ";
   pf out "  %a" (box @@ list @@ pp_fml 0) fmls
 
 
-let pp out {domain; instance; invariants; goal; _} =
+let pp out { domain; instance; invariants; goal; _ } =
   let open Fmtc in
   pf
     out
@@ -755,7 +770,7 @@ let pp_fml_stats __out inf =
       median_bl
       biggest_bl
   in
-  pr "formulas" @@ HC.stats fml_table ;
-  pr "expressions" @@ HC.stats exp_table ;
-  pr "integer expressions" @@ HC.stats iexp_table ;
+  pr "formulas" @@ HC.stats fml_table;
+  pr "expressions" @@ HC.stats exp_table;
+  pr "integer expressions" @@ HC.stats iexp_table;
   HC.iter (fun data -> Fmt.pr "%a@\n" (pp_fml 0) (Fml data)) fml_table

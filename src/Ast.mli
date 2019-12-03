@@ -40,7 +40,8 @@ type t =
   ; invariants : (var, ident) Gen_goal.fml list
   ; goal : goal
   ; atom_renaming : (Atom.t, Atom.t) CCList.Assoc.t
-  ; name_renaming : (Name.t, Name.t) CCList.Assoc.t }
+  ; name_renaming : (Name.t, Name.t) CCList.Assoc.t
+  }
 
 val make :
      string option
@@ -162,8 +163,7 @@ val substitute :
   ; visit_Imp :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.lbinop
   ; visit_In :
-         (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t
-      -> Gen_goal.comp_op
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.comp_op
   ; visit_Inter :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.rbinop
   ; visit_Join :
@@ -204,8 +204,7 @@ val substitute :
   ; visit_Not :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.lunop
   ; visit_NotIn :
-         (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t
-      -> Gen_goal.comp_op
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.comp_op
   ; visit_Num :
          (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t
       -> int
@@ -252,8 +251,7 @@ val substitute :
       -> (var, ident) Gen_goal.exp
       -> (var, ident) Gen_goal.prim_fml
   ; visit_REq :
-         (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t
-      -> Gen_goal.comp_op
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.comp_op
   ; visit_RIte :
          (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t
       -> (var, ident) Gen_goal.fml
@@ -264,8 +262,7 @@ val substitute :
          (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t
       -> Gen_goal.rqualify
   ; visit_RNEq :
-         (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t
-      -> Gen_goal.comp_op
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.comp_op
   ; visit_RNo :
          (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t
       -> Gen_goal.rqualify
@@ -453,9 +450,7 @@ val rename :
   ; visit_Iden :
       (Name.t, Name.t) CCList.Assoc.t -> (var, ident) Gen_goal.prim_exp
   ; visit_Ident :
-         (Name.t, Name.t) CCList.Assoc.t
-      -> ident
-      -> (var, ident) Gen_goal.prim_exp
+      (Name.t, Name.t) CCList.Assoc.t -> ident -> (var, ident) Gen_goal.prim_exp
   ; visit_Iff : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.lbinop
   ; visit_Imp : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.lbinop
   ; visit_In : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.comp_op
