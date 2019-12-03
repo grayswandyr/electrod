@@ -626,21 +626,8 @@ module Make (Ltl : Solver.LTL) = struct
       method build_RTClos subst r _ tuple =
         (* FIXME *)
         assert (Tuple.arity tuple = 2) ;
-        (* as of now, iden is defined as the identity on a constant univ. A variable iden in Electrum is translated correctly through Pardinus. But a variable iden is hidden in rt-closure too. So we handle this here: we check if both coordinates are equal *and* if one of them belongs to the union of all declared sets. *)
-        let tuple0 = Tuple.ith 0 tuple in
-        let tuple_in_var_iden =
-          if Atom.equal tuple0 (Tuple.ith 1 tuple)
-          then
-            env#get_set_names
-            |> List.map (fun name ->
-                   self#visit_exp
-                     subst
-                     (G.name ~ar:1 name)
-                     (Tuple.tuple1 tuple0))
-            |> disj
-          else false_
-        in
-        tuple_in_var_iden +|| lazy (self#visit_RUn subst G.tclos r tuple)
+        self#visit_Iden subst tuple
+        +|| lazy (self#visit_RUn subst G.tclos r tuple)
 
       method build_RUn (_ : stack) (_ : G.runop) (e : G.exp) op' e' = op' e e'
 

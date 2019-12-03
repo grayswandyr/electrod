@@ -134,84 +134,92 @@ let main
     let before_conversion = Mtime_clock.now () in
     let model = Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) elo in
     let conversion_time = Mtime.span before_conversion @@ Mtime_clock.now () in
-    Msg.info (fun m -> m "Conversion done in %a" Mtime.Span.pp conversion_time) ;
+    match verbosity with
+    | Some _ ->
+        Msg.info (fun m ->
+            m "Conversion done in %a" Mtime.Span.pp conversion_time)
+    | None ->
+        Logs.app (fun m -> m "Conversion done") ;
+        let cmd, script =
+          match (tool, scriptfile, bmc) with
+          | NuXmv, None, None ->
+              ("nuXmv", Solver.Default Smv.nuXmv_default_script)
+          | NuSMV, None, None ->
+              ("NuSMV", Solver.Default Smv.nuSMV_default_script)
+          | NuXmv, None, Some _ ->
+              ("nuXmv", Solver.Default Smv.nuXmv_default_bmc_script)
+          | NuSMV, None, Some _ ->
+              ("NuSMV", Solver.Default Smv.nuSMV_default_bmc_script)
+          | NuXmv, Some s, _ ->
+              ("nuXmv", Solver.File s)
+          | NuSMV, Some s, _ ->
+              ("NuSMV", Solver.File s)
+        in
+        if print_generated
+        then
+          Logs.app (fun m ->
+              m
+                "Generated \
+                 file:@.--------------------------------------------------------------------------------@\n\
+                 %a--------------------------------------------------------------------------------"
+                (Elo_to_smv1.pp ~margin:80)
+                model) ;
 
-    let cmd, script =
-      match (tool, scriptfile, bmc) with
-      | NuXmv, None, None ->
-          ("nuXmv", Solver.Default Smv.nuXmv_default_script)
-      | NuSMV, None, None ->
-          ("NuSMV", Solver.Default Smv.nuSMV_default_script)
-      | NuXmv, None, Some _ ->
-          ("nuXmv", Solver.Default Smv.nuXmv_default_bmc_script)
-      | NuSMV, None, Some _ ->
-          ("NuSMV", Solver.Default Smv.nuSMV_default_bmc_script)
-      | NuXmv, Some s, _ ->
-          ("nuXmv", Solver.File s)
-      | NuSMV, Some s, _ ->
-          ("NuSMV", Solver.File s)
-    in
-    if print_generated
-    then
-      Logs.app (fun m ->
-          m
-            "Generated \
-             file:@.--------------------------------------------------------------------------------@\n\
-             %a--------------------------------------------------------------------------------"
-            (Elo_to_smv1.pp ~margin:80)
-            model) ;
+        let res =
+          Elo_to_smv1.analyze
+            ~conversion_time
+            ~cmd
+            ~keep_files
+            ~no_analysis
+            ~elo
+            ~script
+            ~file
+            ~bmc
+            model
+        in
+        if not no_analysis
+        then (
+          (* store the trace *)
+          IO.with_out
+            (Filename.chop_extension file ^ ".xml")
+            (fun chan ->
+              Format.with_out_chan chan (Outcome.pp ~format:`XML) res) ;
 
-    let res =
-      Elo_to_smv1.analyze
-        ~conversion_time
-        ~cmd
-        ~keep_files
-        ~no_analysis
-        ~elo
-        ~script
-        ~file
-        ~bmc
-        model
-    in
-    if not no_analysis
-    then (
-      (* store the trace *)
-      IO.with_out
-        (Filename.chop_extension file ^ ".xml")
-        (fun chan -> Format.with_out_chan chan (Outcome.pp ~format:`XML) res) ;
+          Logs.app (fun m ->
+              if Outcome.some_trace res
+              then
+                match expect with
+                | Some true ->
+                    m "Specification is: SAT as expected"
+                | Some false ->
+                    m "Specification is: SAT contrary to expectation"
+                | None ->
+                    m "Specification is: SAT"
+              else
+                match expect with
+                | Some true ->
+                    m "Specification is: UNSAT contrary to expectation"
+                | Some false ->
+                    m "Specification is: UNSAT as expected"
+                | None ->
+                    m "Specification is: UNSAT") ;
 
-      Logs.app (fun m ->
-          if Outcome.some_trace res
-          then
-            match expect with
-            | Some true ->
-                m "Specification is: SAT as expected"
-            | Some false ->
-                m "Specification is: SAT contrary to expectation"
-            | None ->
-                m "Specification is: SAT"
-          else
-            match expect with
-            | Some true ->
-                m "Specification is: UNSAT contrary to expectation"
-            | Some false ->
-                m "Specification is: UNSAT as expected"
-            | None ->
-                m "Specification is: UNSAT") ;
+          Msg.info (fun m ->
+              m "Outcome:@.%a" (Outcome.pp ~format:outcome_format) res) ) ;
 
-      Msg.info (fun m ->
-          m "Outcome:@.%a" (Outcome.pp ~format:outcome_format) res) ) ;
-
-    (* Msg.debug (fun m -> 
+        (* Msg.debug (fun m -> 
        m "Count references to hashconsed formulas:@\n@[<v2>%a@]"
        Elo.pp_fml_stats 10
        ); *)
-    let memory = Gc.allocated_bytes () in
-    Msg.info (fun m ->
-        m "Total allocated memory: %.3fGB" (memory /. 1_000_000_000.)) ;
+        let memory = Gc.allocated_bytes () in
+        Msg.info (fun m ->
+            m "Total allocated memory: %.3fGB" (memory /. 1_000_000_000.)) ;
 
-    Logs.info (fun m ->
-        m "Elapsed (wall-clock) time: %a" Mtime.Span.pp (Mtime_clock.elapsed ()))
+        Logs.info (fun m ->
+            m
+              "Elapsed (wall-clock) time: %a"
+              Mtime.Span.pp
+              (Mtime_clock.elapsed ()))
   with
   | Exit ->
       Logs.app (fun m ->

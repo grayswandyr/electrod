@@ -12,46 +12,40 @@ RELEASE = ./$(TARGET).${os}.${arch}
 all: build
 
 build:
-	dune build src/$(TARGET).exe && ln -sf _build/default/src/$(TARGET).exe ./$(TARGET)
+	$(DUNE) build src/$(TARGET).exe && ln -sf _build/default/src/$(TARGET).exe ./$(TARGET)
 
 watch:
-	dune build --watch @check
+	$(DUNE) build --watch @check @fmt --auto-promote --diff-command=-
 
 test-release:
-	dune build --workspace dune-workspace.release @runtest
+	$(DUNE) build --workspace dune-workspace.release @runtest
 
 release: 
-	dune subst 
-	dune build -p electrod @install
+	$(DUNE) subst 
+	$(DUNE) build -p electrod @install
 	cp _build/install/default/bin/$(TARGET).exe $(RELEASE)
 	strip $(RELEASE)
 
 fmt:
-	dune build @fmt --auto-promote
+	@$(DUNE) build @fmt --auto-promote --diff-command=- || true
 
 test:
-	dune runtest 
+	$(DUNE) runtest 
 
 regression:
-	dune build @regression
+	$(DUNE) build @regression
 
 utop:
-	dune utop --profile release
+	$(DUNE) utop --profile release
 
 doc:
-	dune build @doc && x-www-browser _build/default/_doc/_html/index.html
+	$(DUNE) build @doc && x-www-browser _build/default/_doc/_html/index.html
 
 show-deps:
-	dune external-lib-deps --missing @install
-
-install: build
-	@dune install
-
-uninstall:
-	@dune uninstall
+	$(DUNE) external-lib-deps --missing @install
 
 clean:
-	@dune clean
+	@$(DUNE) clean
 	@git clean -dfXq
 	@rm -f ./$(TARGET) electrod.install
 
