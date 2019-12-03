@@ -118,14 +118,15 @@ let override r s =
     filter
       (fun tr ->
         not
-        @@ TS.exists (fun ts1 -> Tuple.(Atom.equal (ith 0 tr) (ith 0 ts1))) s)
+        @@ TS.exists (fun ts1 -> Tuple.(Atom.equal (ith 0 tr) (ith 0 ts1))) s
+        )
       r
   in
   TS.union s in_r_but_not_in_s1
 
 
 (* [s <: r] *)
-let lproj s r = filter (fun tr -> TS.mem Tuple.([ ith 0 tr ] |> of_list1) s) r
+let lproj s r = filter (fun tr -> TS.mem Tuple.([ith 0 tr] |> of_list1) s) r
 
 let rproj r s = lproj s @@ transpose r
 
@@ -149,7 +150,7 @@ let join b1 b2 =
   |> S.filter_map (fun (t1, t2) ->
          if Atom.equal (Tuple.ith (ar1 - 1) t1) (Tuple.ith 0 t2)
          then Some (Tuple.join t1 t2)
-         else None)
+         else None )
   |> of_seq
 
 

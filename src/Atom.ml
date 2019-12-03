@@ -14,8 +14,7 @@
 
 type t =
   { sym : Symbol.t
-  ; loc : Location.t option
-  }
+  ; loc : Location.t option }
 
 let compare a1 a2 = Symbol.compare a1.sym a2.sym
 
@@ -28,7 +27,7 @@ let equal a1 a2 = Symbol.equal a1.sym a2.sym
 (*            Symbol.pp a2.sym *)
 (*            res)) *)
 
-let atom ?loc s = { sym = Symbol.make s; loc }
+let atom ?loc s = {sym = Symbol.make s; loc}
 
 let of_raw_ident id = atom ~loc:(Raw_ident.location id) (Raw_ident.basename id)
 
@@ -36,7 +35,7 @@ let hash atom = Symbol.hash atom.sym
 
 (** Generic interface implementations *)
 
-let pp out { sym; _ } = Symbol.pp out sym
+let pp out {sym; _} = Symbol.pp out sym
 
 module P = Intf.Print.Mixin (struct
   type nonrec t = t

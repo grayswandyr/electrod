@@ -17,7 +17,7 @@ module G = Q.Gen
 
 (* GENERATORS *)
 
-let atom_chars = G.oneofl [ "a"; "b"; "c"; "d"; "e"; "f"; "g" ]
+let atom_chars = G.oneofl ["a"; "b"; "c"; "d"; "e"; "f"; "g"]
 
 let gen_atom = G.(map (Atom.atom ~loc:Location.dummy) atom_chars)
 
