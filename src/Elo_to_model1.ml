@@ -157,8 +157,7 @@ struct
         }
     in
     Msg.debug (fun m ->
-        m "Elo_to_model1.run: after instance update:@ %a" Elo.pp elo) ;
-
+        m "Elo_to_model1.run: after instance update:@ %a" Elo.pp elo);
     (* walk through formulas, convert them to LTL and accumulate rigid
        and flexible variables. *)
     (* let exception Early_stop in *)
@@ -180,11 +179,12 @@ struct
     (* handling symmetries *)
     let syms_fmls = syms_to_ltl elo in
     (* handling the goal *)
-    let goal_blk = match elo.goal with Elo.Run g -> g in
+    let goal_blk = match elo.goal with Elo.Run (g, _) -> g in
     (* Partition the goal fmls into invars and non invars *)
     let detected_inits, detected_invars, detected_trans, general_fmls =
       split_invar_noninvar_fmls elo goal_blk
     in
+
     (* Msg.debug (fun m ->
        m "Detected init : %a" Elo.pp_block detected_inits); *)
 

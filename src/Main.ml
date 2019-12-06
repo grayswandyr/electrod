@@ -80,23 +80,15 @@ let main
     outcome_format
     long_names
     bmc =
-  ensure_session_leader () ;
-
+  ensure_session_leader ();
   let long_names =
     (* Debug ==> long names *)
-    match verbosity with
-    | Some Logs.Debug ->
-        true
-    | None | Some _ ->
-        long_names
+    match verbosity with Some Logs.Debug -> true | None | Some _ -> long_names
   in
-  Printexc.record_backtrace true ;
-
-  Fmt_tty.setup_std_outputs ?style_renderer () ;
-
-  Logs.set_reporter (Logs_fmt.reporter ~pp_header ()) ;
-  Logs.set_level ~all:true verbosity ;
-
+  Printexc.record_backtrace true;
+  Fmt_tty.setup_std_outputs ?style_renderer ();
+  Logs.set_reporter (Logs_fmt.reporter ~pp_header ());
+  Logs.set_level ~all:true verbosity;
   let version =
     match Build_info.V1.version () with
     | None ->
@@ -108,19 +100,14 @@ let main
       m
         "%a"
         Fmtc.(styled `Bold string)
-        ("electrod (C) 2016-2019 ONERA " ^ version)) ;
-
-  Msg.debug (fun m -> m "CWD = %s" (Sys.getcwd ())) ;
-  Msg.debug (fun m -> m "PATH = %s" (Sys.getenv "PATH")) ;
-
-  Logs.app (fun m -> m "Processing file: %s" file) ;
-
+        ("electrod (C) 2016-2019 ONERA " ^ version));
+  Msg.debug (fun m -> m "CWD = %s" (Sys.getcwd ()));
+  Msg.debug (fun m -> m "PATH = %s" (Sys.getenv "PATH"));
+  Logs.info (fun m -> m "Processing file: %s" file);
   (* begin work *)
   try
     let raw_to_ast_t = Transfo.tlist [ Raw_to_ast.transfo ] in
-    let ast_to_ast_t =
-      Transfo.tlist [ Simplify1.transfo; Simplify2.transfo ]
-    in
+    let ast_to_ast_t = Transfo.tlist [ Simplify1.transfo; Simplify2.transfo ] in
     let elo_to_smv_t = Transfo.tlist [ Elo_to_smv1.transfo ] in
     let ast =
       Parser_main.parse_file file
@@ -135,12 +122,17 @@ let main
              Msg.debug (fun m -> m "After simplify1 =@\n%a@." Ast.pp elo))
       |> Fun.tap (fun _ -> Msg.info (fun m -> m "Simplification done"))
     in
+    let expect = Gen_goal.get_expected ast.goal in
     let elo = Ast_to_elo.convert ast in
     let before_conversion = Mtime_clock.now () in
     let model = Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) elo in
     let conversion_time = Mtime.span before_conversion @@ Mtime_clock.now () in
-    Msg.info (fun m -> m "Conversion done in %a" Mtime.Span.pp conversion_time) ;
-
+    ( match verbosity with
+    | Some _ ->
+        Msg.info (fun m ->
+            m "Conversion done in %a" Mtime.Span.pp conversion_time)
+    | None ->
+        Logs.app (fun m -> m "Conversion done") );
     let cmd, script =
       match (tool, scriptfile, bmc) with
       | NuXmv, None, None ->
@@ -164,8 +156,7 @@ let main
              file:@.--------------------------------------------------------------------------------@\n\
              %a--------------------------------------------------------------------------------"
             (Elo_to_smv1.pp ~margin:80)
-            model) ;
-
+            model);
     let res =
       Elo_to_smv1.analyze
         ~conversion_time
@@ -183,33 +174,40 @@ let main
       (* store the trace *)
       IO.with_out
         (Filename.chop_extension file ^ ".xml")
-        (fun chan -> Format.with_out_chan chan (Outcome.pp ~format:`XML) res) ;
-
+        (fun chan -> Format.with_out_chan chan (Outcome.pp ~format:`XML) res);
       Logs.app (fun m ->
           if Outcome.some_trace res
-          then m "Specification is: SAT"
-          else m "Specification is: UNSAT") ;
-
+          then
+            match expect with
+            | Some true ->
+                m "Specification is: SAT as expected"
+            | Some false ->
+                m "Specification is: SAT contrary to expectation"
+            | None ->
+                m "Specification is: SAT"
+          else
+            match expect with
+            | Some true ->
+                m "Specification is: UNSAT contrary to expectation"
+            | Some false ->
+                m "Specification is: UNSAT as expected"
+            | None ->
+                m "Specification is: UNSAT");
       Msg.info (fun m ->
-          m "Outcome:@.%a" (Outcome.pp ~format:outcome_format) res) ) ;
-
+          m "Outcome:@.%a" (Outcome.pp ~format:outcome_format) res) );
     (* Msg.debug (fun m -> 
        m "Count references to hashconsed formulas:@\n@[<v2>%a@]"
        Elo.pp_fml_stats 10
        ); *)
     let memory = Gc.allocated_bytes () in
     Msg.info (fun m ->
-        m "Total allocated memory: %.3fGB" (memory /. 1_000_000_000.)) ;
-
-    Logs.app (fun m ->
-        m
-          "Elapsed (wall-clock) time: %a"
-          Mtime.Span.pp
-          (Mtime_clock.elapsed ()))
+        m "Total allocated memory: %.3fGB" (memory /. 1_000_000_000.));
+    Logs.info (fun m ->
+        m "Elapsed (wall-clock) time: %a" Mtime.Span.pp (Mtime_clock.elapsed ()))
   with
   | Exit ->
       Logs.app (fun m ->
-          m "Aborting (%a)." Mtime.Span.pp (Mtime_clock.elapsed ())) ;
+          m "Aborting (%a)." Mtime.Span.pp (Mtime_clock.elapsed ()));
       exit 1
   | e ->
       raise e

@@ -104,7 +104,7 @@ and ibinop = private
   | Add
   | Sub
 
-type goal = private Run of fml list [@@unboxed]
+type goal = private Run of (fml list * bool option) [@@unboxed]
 
 and fml = private Fml of (fml, exp, iexp) ofml Hashcons.hash_consed
 [@@unboxed]
@@ -141,7 +141,7 @@ val make :
 
 val arity : exp -> int
 
-val run : fml list -> goal
+val run : fml list -> bool option -> goal
 
 val true_ : fml
 
@@ -297,8 +297,7 @@ val pp_var : Format.formatter -> int -> unit
 
 val pp_sim_binding : int -> Format.formatter -> bool * int * exp -> unit
 
-val pp_sim_bindings :
-  int -> Format.formatter -> (bool * int * exp) list -> unit
+val pp_sim_bindings : int -> Format.formatter -> (bool * int * exp) list -> unit
 
 val pp_oblock : 'a -> ('a -> 'b Fmtc.t) -> Format.formatter -> 'b list -> unit
 
@@ -369,8 +368,7 @@ class ['c] map :
          ; visit_Gt : 'env -> icomp_op
          ; visit_Gte : 'env -> icomp_op
          ; visit_H : 'env -> lunop
-         ; visit_IBin :
-             'env -> iexp -> ibinop -> iexp -> (fml, exp, iexp) oiexp
+         ; visit_IBin : 'env -> iexp -> ibinop -> iexp -> (fml, exp, iexp) oiexp
          ; visit_IComp :
              'env -> iexp -> icomp_op -> iexp -> (fml, exp, iexp) ofml
          ; visit_IEq : 'env -> icomp_op
@@ -482,8 +480,7 @@ class ['c] map :
 
     method visit_H : 'env -> lunop
 
-    method visit_IBin :
-      'env -> iexp -> ibinop -> iexp -> (fml, exp, iexp) oiexp
+    method visit_IBin : 'env -> iexp -> ibinop -> iexp -> (fml, exp, iexp) oiexp
 
     method visit_IComp :
       'env -> iexp -> icomp_op -> iexp -> (fml, exp, iexp) ofml
@@ -823,8 +820,7 @@ class virtual ['c] fold :
 
     method virtual build_Card : 'env -> 'k -> 'l
 
-    method virtual build_Compr :
-      'env -> (bool * int * 'k) list -> 'j list -> 'm
+    method virtual build_Compr : 'env -> (bool * int * 'k) list -> 'j list -> 'm
 
     method virtual build_Diff : 'env -> 'n
 

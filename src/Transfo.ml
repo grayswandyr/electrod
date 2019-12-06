@@ -22,7 +22,7 @@ type ('src, 'dst) t =
   }
 
 let make name run =
-  assert (not @@ String.is_empty name) ;
+  assert (not @@ String.is_empty name);
   { name; run }
 
 
@@ -40,10 +40,10 @@ let identity = { name = "$$id"; run = (fun x -> x) }
 type ('src, 'dst) tlist = (string * ('src, 'dst) t) list
 
 let tlist ts =
-  assert (not @@ List.is_empty ts) ;
+  assert (not @@ List.is_empty ts);
   let open List in
   let add transfos t =
-    assert (not @@ Assoc.mem ~eq:String.equal t.name transfos) ;
+    assert (not @@ Assoc.mem ~eq:String.equal t.name transfos);
     Assoc.set ~eq:String.equal t.name t transfos
   in
   fold_left add [] ts

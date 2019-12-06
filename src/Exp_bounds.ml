@@ -77,6 +77,7 @@ let sup_sim_binding fbounds_exp (subst : Tuple.t list) (disj, nbvars, range) :
      set of sets of tuples represented by a list of lists... *)
   let { sup; _ } = fbounds_exp (range, subst) in
   let sup_as_list = TS.to_list sup in
+
   (* compute the exponent for this bindings (NOTE: tuples are not concatenated, 
      just put in the same list representing a combination of tuples). 
 
@@ -133,7 +134,7 @@ let rec sup_sim_bindings fbounds_exp (subst : Tuple.t list) sim_bindings :
         pp_subst
         subst
         G.(pp_sim_bindings (List.length subst))
-        sim_bindings) ;
+        sim_bindings);
   ( match sim_bindings with
   | [] ->
       assert false
@@ -206,7 +207,7 @@ let make_bounds_exp =
             (G.pp_exp @@ List.length subst)
             exp
             TS.pp
-            sup) ;
+            sup);
     { must; sup; may = TS.diff sup must }
   in
   let eq x1 x2 = CCEqual.(pair physical (list Tuple.equal)) x1 x2 in
@@ -347,14 +348,11 @@ let make_bounds_exp =
               TS.filter (fun tup -> not (TS.mem tup b2.sup)) b1.must
             in
             return_bounds args must_diff (TS.diff b1.sup b2.must)
-            (* b2.MUST! *)
+        (* b2.MUST! *)
         | RBin (e1, Join, e2) ->
             let b1 = fbounds_exp (e1, subst) in
             let b2 = fbounds_exp (e2, subst) in
-            return_bounds
-              args
-              (TS.join b1.must b2.must)
-              (TS.join b1.sup b2.sup)
+            return_bounds args (TS.join b1.must b2.must) (TS.join b1.sup b2.sup)
         | RIte (_, e1, e2) ->
             let b1 = fbounds_exp (e1, subst) in
             let b2 = fbounds_exp (e2, subst) in

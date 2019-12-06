@@ -78,7 +78,7 @@ module Extract = struct
         IO.(
           with_in f
           @@ fun ic ->
-          IO.read_lines ic
+          IO.read_lines_gen ic
           |> Gen.drop (Int.max 0 Location.(begl loc - 1))
           |> Gen.take (Int.max 1 Location.(1 + endl loc - begl loc))
           |> Gen.to_list)
@@ -89,8 +89,7 @@ module Extract = struct
     let open String in
     let lg = length s in
     (* debug (fun m -> m "%s (%d) / %d" s lg nb); *)
-    assert (nb >= 0 && nb <= lg) ;
-
+    assert (nb >= 0 && nb <= lg);
     (* debug (fun m -> m "sub %d %d" 0 nb); *)
     let first = sub s 0 nb in
     (* debug (fun m -> m "sub %d %d" nb (lg-nb)); *)
@@ -480,8 +479,8 @@ module Fatal = struct
     let loc = Raw_ident.location id in
     m
       ~header:(code 17)
-      "%a%a: %S refers to a variable relation, its value cannot be fixed in \
-       an instance%a"
+      "%a%a: %S refers to a variable relation, its value cannot be fixed in an \
+       instance%a"
       (option @@ (colon **> string))
       infile
       Location.pp
@@ -575,7 +574,9 @@ module Fatal = struct
   let solver_bug args =
     err
     @@ fun m ->
-    args @@ fun solver msg -> m ~header:(code 23) "bug in %s: %s" solver msg
+    args
+    @@ fun solver msg ->
+    m ~header:(code 23) "unexpected situation in %s: %s" solver msg
 
 
   let no_multiplicity_allowed_here args =

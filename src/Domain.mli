@@ -41,9 +41,6 @@ val get : Name.t -> t -> Relation.t option
 val univ_atoms : t -> Tuple_set.t
 (** Returns the set of atoms in univ, represented as a {!type:Tuple_set.t} *)
 
-val get_set_names : t -> Name.t list
-(** Returns the list of declared set names *)
-
 val to_list : t -> (Name.t * Relation.t) list
 (** Returns the map as an association list *)
 
@@ -58,8 +55,7 @@ val may : Name.t -> t -> Tuple_set.t
 
 val sup : Name.t -> t -> Tuple_set.t
 
-val musts :
-  ?with_univ_and_ident:bool -> t -> (Name.t, Tuple_set.t) List.Assoc.t
+val musts : ?with_univ_and_ident:bool -> t -> (Name.t, Tuple_set.t) List.Assoc.t
 (** Returns the association list between relation names and their "must" set.  *)
 
 val arities : t -> (Name.t, int) List.Assoc.t

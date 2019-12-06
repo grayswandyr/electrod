@@ -113,7 +113,7 @@ class simplify =
     method! visit_Quant env q sim_bindings blk =
       Msg.debug (fun m ->
           m "Simplify1.visit_Quant <-- %a" Ast.pp_prim_fml
-          @@ quant q sim_bindings blk) ;
+          @@ quant q sim_bindings blk);
       match q with
       | One ->
           self#visit_Quant_One env q sim_bindings blk
@@ -134,7 +134,7 @@ class simplify =
                   [ fml e.exp_loc @@ self#visit_Quant env q bs blk ]
           in
           Msg.debug (fun m ->
-              m "Simplify1.visit_Quant --> %a" Ast.pp_prim_fml res) ;
+              m "Simplify1.visit_Quant --> %a" Ast.pp_prim_fml res);
           res
 
     (* substitute let bindings *)

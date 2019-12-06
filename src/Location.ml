@@ -21,7 +21,7 @@ type t =
   }
 
 let from_positions begp endp =
-  assert (begp.pos_cnum <= endp.pos_cnum) ;
+  assert (begp.pos_cnum <= endp.pos_cnum);
   { begp; endp }
 
 

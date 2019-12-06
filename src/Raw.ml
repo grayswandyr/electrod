@@ -72,7 +72,7 @@ type raw_paragraph =
 let interval id1 id2 = (id1, id2)
 
 let etuple ats =
-  assert (not @@ List.is_empty ats) ;
+  assert (not @@ List.is_empty ats);
   ETuple ats
 
 

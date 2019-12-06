@@ -16,7 +16,9 @@ open Containers
 
 [@@@warning "-4"]
 
-[@@@warning "-32"] (* fragile patterns, lots of them as we short-circuit *)
+[@@@warning "-32"]
+
+(* fragile patterns, lots of them as we short-circuit *)
 
 module type ATOMIC_PROPOSITION = sig
   type t
@@ -180,8 +182,8 @@ module type LTL = sig
     ?next_is_X:bool -> Atomic.t Iter.t ref -> Format.formatter -> t -> unit
 end
 
-module LTL_from_Atomic (At : ATOMIC_PROPOSITION) :
-  LTL with module Atomic = At = struct
+module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
+struct
   module Atomic = At
 
   type tcomp =

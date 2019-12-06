@@ -63,25 +63,23 @@ let scope = function Const { scope; _ } | Var { scope; _ } -> scope
 let pp ?(print_name = true) out rel =
   let open! Fmtc in
   (* shadows const *)
-  let pp_name =
-    if print_name then sp **> colon **> nbsp **> Name.pp else nop
-  in
+  let pp_name = if print_name then sp **> colon **> nbsp **> Name.pp else nop in
   let pp_def const_or_var name scope fby arity =
-    pp_name out name ;
-    (styled `Bold @@ string) out const_or_var ;
-    Format.pp_open_hbox out () ;
-    string out "«" ;
-    int out arity ;
-    (sp **> string) out "»" ;
-    Format.pp_open_box out 2 ;
-    (box2 @@ Scope.pp) out scope ;
+    pp_name out name;
+    (styled `Bold @@ string) out const_or_var;
+    Format.pp_open_hbox out ();
+    string out "«";
+    int out arity;
+    (sp **> string) out "»";
+    Format.pp_open_box out 2;
+    (box2 @@ Scope.pp) out scope;
     option
       ( (styled `Bold @@ (sp **< const string "then"))
       **< sp
       **< (box2 @@ Scope.pp) )
       out
-      fby ;
-    Format.pp_close_box out () ;
+      fby;
+    Format.pp_close_box out ();
     Format.pp_close_box out ()
   in
   match rel with

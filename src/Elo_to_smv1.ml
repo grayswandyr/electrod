@@ -50,7 +50,9 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
      hahsconsing to make this more efficient *)
   module HT = CCHashtbl.Make (Symbol)
 
-  let names_and_tuples = HT.create 179 (* usually less than that many VARs *)
+  let names_and_tuples = HT.create 179
+
+  (* usually less than that many VARs *)
 
   let rel_sep = "-"
 
@@ -90,7 +92,7 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
     in
     let sym = Symbol.make full_str in
     (* keep track of creations to allow to get original pairs back *)
-    HT.add names_and_tuples sym (name, tuple) ;
+    HT.add names_and_tuples sym (name, tuple);
     { sym; dom_arity; const; partial }
 
 

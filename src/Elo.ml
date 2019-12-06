@@ -45,7 +45,8 @@ and lbinop =
   | Imp
   | Iff
   | U
-  | R (* releases *)
+  | R
+  (* releases *)
   | S
 
 (* since *)
@@ -53,7 +54,8 @@ and lunop =
   | F
   | G
   | Not
-  | O (* once *)
+  | O
+  (* once *)
   | X
   | H
   | P
@@ -124,7 +126,7 @@ and ibinop =
       ; ancestors = [ "VisitorsRuntime.map" ]
       }]
 
-type goal = Run of fml list [@@unboxed]
+type goal = Run of (fml list * bool option) [@@unboxed]
 
 and fml = Fml of (fml, exp, iexp) ofml HC.hash_consed [@@unboxed]
 
@@ -154,7 +156,7 @@ let fml_count : int Fml_count.t = Fml_count.create 793
 
 let hfml f : fml =
   let hdata = HC.hashcons fml_table f in
-  Fml_count.incr fml_count hdata ;
+  Fml_count.incr fml_count hdata;
   Fml hdata
 
 
@@ -237,7 +239,7 @@ let make file domain instance sym invariants goal atom_renaming name_renaming =
 
 let arity (Exp { node = { arity; _ }; _ }) = arity
 
-let run fs = Run fs
+let run fs expec = Run (fs, expec)
 
 let true_ = hfml @@ True
 
@@ -250,13 +252,13 @@ let icomp exp1 rcomp exp2 = hfml @@ IComp (exp1, rcomp, exp2)
 let lbinary fml1 binop fml2 = hfml @@ LBin (fml1, binop, fml2)
 
 let sim_binding disj nbvars (range : exp) =
-  assert (nbvars > 0) ;
-  assert ((not disj) || nbvars > 1) ;
+  assert (nbvars > 0);
+  assert ((not disj) || nbvars > 1);
   (disj, nbvars, range)
 
 
 let quant quant decl (block : fml list) =
-  assert (not List.(is_empty block)) ;
+  assert (not List.(is_empty block));
   hfml @@ Quant (quant, decl, block)
 
 
@@ -309,7 +311,7 @@ let univ = hexp @@ exp ~ar:1 @@ Univ
 let iden = hexp @@ exp ~ar:2 @@ Iden
 
 let var ~ar n =
-  assert (n >= 0) ;
+  assert (n >= 0);
   hexp @@ exp ~ar @@ Var n
 
 
@@ -322,8 +324,8 @@ let rbinary ~ar exp1 rbinop exp2 = hexp @@ exp ~ar @@ RBin (exp1, rbinop, exp2)
 let rite ~ar cdt then_ else_ = hexp @@ exp ~ar @@ RIte (cdt, then_, else_)
 
 let compr ~ar decls block =
-  assert (not (List.is_empty decls)) ;
-  assert (not (List.is_empty block)) ;
+  assert (not (List.is_empty decls));
+  assert (not (List.is_empty block));
   hexp @@ exp ~ar @@ Compr (decls, block)
 
 
@@ -544,8 +546,8 @@ let rec pp_osim_bindings stacked pp_exp out sim_bindings =
   | [] ->
       ()
   | ((_, vars, _) as hd) :: tl ->
-      pp_osim_binding stacked pp_exp out hd ;
-      (sp **> comma) out () ;
+      pp_osim_binding stacked pp_exp out hd;
+      (sp **> comma) out ();
       pp_osim_bindings (stacked + vars) pp_exp out tl
 
 
@@ -637,7 +639,7 @@ let pp_prim_oexp stacked pp_fml pp_exp out =
   | Name id ->
       pf out "%a" Name.pp id
   | Var v ->
-      assert (v <= stacked) ;
+      assert (v <= stacked);
       pp_var out (stacked - v)
   | RUn (op, e) ->
       pf out "@[<2>(%a%a)@]" pp_runop op (pp_exp stacked) e
@@ -724,9 +726,9 @@ and pp_sim_binding stacked out sb = pp_osim_binding stacked pp_exp out sb
 
 and pp_sim_bindings stacked out sb = pp_osim_bindings stacked pp_exp out sb
 
-let pp_goal out (Run fmls) =
+let pp_goal out (Run (fmls, _)) =
   let open Fmtc in
-  (kwd_styled pf) out "run@ " ;
+  (kwd_styled pf) out "run@ ";
   pf out "  %a" (box @@ list @@ pp_fml 0) fmls
 
 
@@ -768,7 +770,7 @@ let pp_fml_stats __out inf =
       median_bl
       biggest_bl
   in
-  pr "formulas" @@ HC.stats fml_table ;
-  pr "expressions" @@ HC.stats exp_table ;
-  pr "integer expressions" @@ HC.stats iexp_table ;
+  pr "formulas" @@ HC.stats fml_table;
+  pr "expressions" @@ HC.stats exp_table;
+  pr "integer expressions" @@ HC.stats iexp_table;
   HC.iter (fun data -> Fmt.pr "%a@\n" (pp_fml 0) (Fml data)) fml_table

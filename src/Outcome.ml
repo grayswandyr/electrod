@@ -68,7 +68,7 @@ let sort_states (atom_renaming, name_renaming) states =
 let trace back_renamings nbvars conversion_time analysis_time states =
   assert (
     (not @@ List.is_empty states)
-    && List.exists (function Loop, _ -> true | Plain, _ -> false) states ) ;
+    && List.exists (function Loop, _ -> true | Plain, _ -> false) states );
   { trace = Some (sort_states back_renamings states)
   ; analysis_time
   ; nbvars
@@ -107,10 +107,10 @@ module PPChrono = struct
   let to_string_width width fmt t =
     let module F = Format in
     let old_margin = F.get_margin () in
-    F.pp_set_margin F.str_formatter width ;
-    F.fprintf F.str_formatter "%a" fmt t ;
+    F.pp_set_margin F.str_formatter width;
+    F.fprintf F.str_formatter "%a" fmt t;
     let s = F.flush_str_formatter () in
-    F.pp_set_margin F.str_formatter old_margin ;
+    F.pp_set_margin F.str_formatter old_margin;
     s
 
 
@@ -151,7 +151,7 @@ module PPChrono = struct
             if String.equal table.(line).(col) table.(line).(col - 1)
             then table.(line).(col) <- "-==-"
           done
-        done ;
+        done;
         PrintBox_text.output Stdlib.stdout
         @@ PB.grid_text ~pad:(PB.hpad 1) table
 end
@@ -237,13 +237,12 @@ module PPXML = struct
       attr
       "version"
       attr
-      "encoding" ;
+      "encoding";
     ( match trace with
     | None ->
         pf
           out
-          "@[<h><%a nbvars='%d' conversion-time='%.0f' \
-           analysis-time='%.0f'/>@]@\n"
+          "@[<h><%a nbvars='%d' conversion-time='%.0f' analysis-time='%.0f'/>@]@\n"
           kwd
           "notrace"
           nbvars
@@ -264,7 +263,7 @@ module PPXML = struct
           (list ~sep:sp pp_state)
           trace
           kwd
-          tag ) ;
+          tag );
     Format.pp_print_flush out ()
 end
 

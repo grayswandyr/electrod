@@ -22,7 +22,7 @@ let empty = Map.empty
 let mem = Map.mem
 
 let add name rel ts =
-  assert (not @@ Map.mem name ts) ;
+  assert (not @@ Map.mem name ts);
   Map.add name rel ts
 
 
@@ -38,7 +38,7 @@ let to_map x = x
 
 let pp out rels =
   let open Fmtc in
-  (styled `Bold pf) out "inst@ " ;
+  (styled `Bold pf) out "inst@ ";
   pf
     out
     "  %a"

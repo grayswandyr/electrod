@@ -27,9 +27,9 @@ type t =
 let fresh =
   let c = ref 0 in
   fun ?(sep = "/") ?loc s ->
-    assert (!c < max_int) ;
+    assert (!c < max_int);
     let res = { id = !c; name = s; sep; loc } in
-    incr c ;
+    incr c;
     res
 
 

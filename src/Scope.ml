@@ -46,20 +46,20 @@ let equal sc1 sc2 =
 let exact bound = Exact bound
 
 let plain_relation inf sup =
-  assert (TS.(inferred_arity inf = inferred_arity sup || TS.is_empty inf)) ;
-  assert (TS.(size sup >= size inf)) ;
+  assert (TS.(inferred_arity inf = inferred_arity sup || TS.is_empty inf));
+  assert (TS.(size sup >= size inf));
   Plain_relation (inf, sup)
 
 
 let partial_function dom_arity sup =
-  assert (dom_arity >= 0) ;
-  assert (dom_arity < TS.inferred_arity sup) ;
+  assert (dom_arity >= 0);
+  assert (dom_arity < TS.inferred_arity sup);
   Partial_function (dom_arity, sup)
 
 
 let total_function dom_arity sup =
-  assert (dom_arity >= 0) ;
-  assert (dom_arity < TS.inferred_arity sup) ;
+  assert (dom_arity >= 0);
+  assert (dom_arity < TS.inferred_arity sup);
   Total_function (dom_arity, sup)
 
 
@@ -106,7 +106,7 @@ let sup = function
 let must = inf
 
 let may_aux sc =
-  assert (TS.subset (inf sc) (sup sc)) ;
+  assert (TS.subset (inf sc) (sup sc));
   match sc with
   | Exact _ ->
       TS.empty

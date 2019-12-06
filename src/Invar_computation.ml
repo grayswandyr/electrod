@@ -89,7 +89,7 @@ let add_always_to_invar (Elo.Fml { node; _ } as fml) =
 
 
 let is_const (elo : Elo.t) (name : Name.t) =
-  assert (Domain.mem name elo.Elo.domain) ;
+  assert (Domain.mem name elo.Elo.domain);
   Domain.get_exn name elo.Elo.domain |> Relation.is_const
 
 

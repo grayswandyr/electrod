@@ -13,8 +13,11 @@
  ******************************************************************************)
 
 (* ['v] is the type of variables introduced in quantifiers, ['i] is the type of
-   any identifier (a variable like in the former case or a relation name) *)
-type ('v, 'i) t = Run of ('v, 'i) block
+   any identifier (a variable like in the former case or a relation name). The 
+   optional Boolean  is the optional expected value : false = "unsat", true = 
+   "sat"
+   *)
+type ('v, 'i) t = Run of (('v, 'i) block * (bool option[@opaque])) [@@unboxed]
 
 (** Formulas and expressions *)
 
@@ -62,7 +65,8 @@ and lbinop =
   | Imp
   | Iff
   | U
-  | R (* releases *)
+  | R
+  (* releases *)
   | S
 
 (* since *)
@@ -70,7 +74,8 @@ and lunop =
   | F
   | G
   | Not
-  | O (* once *)
+  | O
+  (* once *)
   | X
   | H
   | P
@@ -188,7 +193,7 @@ let lbinary fml1 binop fml2 =
 
 
 let quant quant decls block =
-  assert (decls <> [] && block <> []) ;
+  assert (decls <> [] && block <> []);
   Quant (quant, decls, block)
 
 
@@ -257,7 +262,7 @@ let rite cdt then_ else_ = RIte (cdt, then_, else_)
 let boxjoin caller callee = BoxJoin (caller, callee)
 
 let compr decls block =
-  assert (decls <> [] && block <> []) ;
+  assert (decls <> [] && block <> []);
   Compr (decls, block)
 
 
@@ -331,7 +336,11 @@ let exp arity exp_loc prim_exp = { prim_exp; exp_loc; arity }
 
 let iexp iexp_loc prim_iexp = { prim_iexp; iexp_loc }
 
-let run fs = Run fs
+let run fs exp = Run (fs, exp)
+
+let get_expected (goal : ('v, 'i) t) =
+  match goal with Run (_, expect) -> expect
+
 
 (******************************************************************************
  *  Pretty-printing
@@ -339,9 +348,9 @@ let run fs = Run fs
 
 let kwd_styled pf = Fmtc.(styled `Bold) pf
 
-let rec pp pp_v pp_i out (Run fml) =
+let rec pp pp_v pp_i out (Run (fml, _)) =
   let open Fmtc in
-  (kwd_styled pf) out "run@ " ;
+  (kwd_styled pf) out "run@ ";
   pf out "  %a" (box @@ list @@ pp_fml pp_v pp_i) fml
 
 
@@ -439,15 +448,7 @@ and pp_block pp_v pp_i out fmls =
 and pp_rqualify out x =
   Fmtc.(kwd_styled pf) out
   @@
-  match x with
-  | ROne ->
-      "one"
-  | RLone ->
-      "lone"
-  | RSome ->
-      "some"
-  | RNo ->
-      "no"
+  match x with ROne -> "one" | RLone -> "lone" | RSome -> "some" | RNo -> "no"
 
 
 and pp_comp_op out =
@@ -555,7 +556,7 @@ and pp_sim_binding pp_v pp_i out (disj, vars, exp) =
 
 
 and pp_exp ?(show_arity = false) pp_v pp_i out exp =
-  pp_prim_exp pp_v pp_i out exp.prim_exp ;
+  pp_prim_exp pp_v pp_i out exp.prim_exp;
   if show_arity then Fmtc.(pf out "«%a»" (option int) exp.arity)
 
 

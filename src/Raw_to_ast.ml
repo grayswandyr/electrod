@@ -42,7 +42,7 @@ let check_duplicate_atoms infile atoms =
   if List.length atoms > List.length dedup
   then
     Msg.Warn.univ_duplicate_atoms (fun args ->
-        args infile (List.sort Atom.compare atoms) dedup) ;
+        args infile (List.sort Atom.compare atoms) dedup);
   dedup
 
 
@@ -99,17 +99,16 @@ let compute_tuples infile domain = function
         args
           infile
           (Location.span @@ Pair.map_same Raw_ident.location intvl)
-          absent ) ;
+          absent );
       let dedup = check_duplicate_atoms infile atoms in
       List.map Tuple.tuple1 dedup
   | ETuple [] ->
-      assert false (* grammatically impossible *)
+      assert false
+  (* grammatically impossible *)
   (* a single n-ary tuple *)
   | ETuple ids ->
       (* Msg.debug (fun m -> m "Raw_to_ast.compute_tuples:ETuple"); *)
-      let atoms =
-        List.map (fun id -> Raw_ident.basename id |> Atom.atom) ids
-      in
+      let atoms = List.map (fun id -> Raw_ident.basename id |> Atom.atom) ids in
       (* to check if all atoms in the tuple are in univ, we do as if every atom
          was a 1-tuple and then check whether this 1-tuple is indeed in univ *)
       let absent =
@@ -128,9 +127,8 @@ let compute_tuples infile domain = function
         args
           infile
           ( Location.span
-          @@ Pair.map_same Raw_ident.location List.(hd ids, hd @@ last 1 ids)
-          )
-          absent ) ;
+          @@ Pair.map_same Raw_ident.location List.(hd ids, hd @@ last 1 ids) )
+          absent );
       [ Tuple.of_list1 atoms ]
 
 
@@ -141,7 +139,7 @@ let check_tuples_arities_and_duplicates infile id = function
       let ar = Tuple.arity t in
       (* List.iter (fun t -> Msg.debug (fun m -> m "ar(%a) = %d" Tuple.pp t ar)) tuples; *)
       if List.exists (fun t2 -> Tuple.arity t2 <> ar) ts
-      then Msg.Fatal.incompatible_arities (fun args -> args infile id) ;
+      then Msg.Fatal.incompatible_arities (fun args -> args infile id);
       TS.of_tuples tuples
 
 
@@ -162,8 +160,8 @@ let compute_bound infile domain (which : [ `Inf | `Sup | `Exact ]) id raw_bound
         (* Msg.debug (fun m -> m "Raw_to_ast.compute_bound:BUniv"); *)
         Domain.univ_atoms domain
     | BRef ref_id ->
-      (* Msg.debug (fun m -> m "Raw_to_ast.compute_bound:BRef"); *)
-      ( match Domain.get (Name.of_raw_ident ref_id) domain with
+      ( (* Msg.debug (fun m -> m "Raw_to_ast.compute_bound:BRef"); *)
+      match Domain.get (Name.of_raw_ident ref_id) domain with
       | None ->
           Msg.Fatal.undeclared_id (fun args -> args infile ref_id)
       | Some rel ->
@@ -209,7 +207,7 @@ let compute_bound infile domain (which : [ `Inf | `Sup | `Exact ]) id raw_bound
         if TS.size bnd <> List.length tuples
         then
           Msg.Warn.duplicate_elements (fun args ->
-              args infile id which TS.pp bnd) ;
+              args infile id which TS.pp bnd);
         bnd
   in
   walk raw_bound
@@ -261,11 +259,11 @@ let compute_scope infile domain id = function
       let ar_inf = TS.inferred_arity inf in
       let ar_sup = TS.inferred_arity sup in
       if ar_inf <> ar_sup && not (TS.is_empty inf)
-      then Msg.Fatal.incompatible_arities (fun args -> args infile id) ;
+      then Msg.Fatal.incompatible_arities (fun args -> args infile id);
       if not @@ TS.subset inf sup
-      then Msg.Fatal.inf_not_in_sup (fun args -> args infile id TS.pp inf sup) ;
+      then Msg.Fatal.inf_not_in_sup (fun args -> args infile id TS.pp inf sup);
       if TS.is_empty sup
-      then Msg.Warn.empty_scope_declared (fun args -> args infile id) ;
+      then Msg.Warn.empty_scope_declared (fun args -> args infile id);
       if TS.equal inf sup
       then Scope.exact sup
       else Scope.(fun i s -> inexact @@ plain_relation i s) inf sup
@@ -293,7 +291,7 @@ let decide_arity infile id specified_arity computed_arity =
 let compute_decl infile domain = function
   | DConst (id, specified_arity, raw_scope) ->
       (* Msg.debug (fun m -> m "Raw_to_ast.compute_decl:DConst"); *)
-      check_name infile id domain ;
+      check_name infile id domain;
       let scope = compute_scope infile domain id raw_scope in
       (* deal with posisble mismatch btw the computed arity and that declared *)
       let computed_arity = Scope.inferred_arity scope in
@@ -301,7 +299,7 @@ let compute_decl infile domain = function
       Relation.const (Name.of_raw_ident id) arity scope
   | DVar (id, specified_arity, init, fby) ->
       (* Msg.debug (fun m -> m "Raw_to_ast.compute_decl:DVar"); *)
-      check_name infile id domain ;
+      check_name infile id domain;
       let init_scope = compute_scope infile domain id init in
       let fby_scope = CCOpt.map (compute_scope infile domain id) fby in
       let init_arity = Scope.inferred_arity init_scope in
@@ -323,9 +321,7 @@ let compute_domain (pb : Raw.raw_problem) =
   let univ = compute_univ pb.file pb.raw_univ in
   let univ_ts = Relation.must univ in
   (* corresponding tuple set *)
-  let iden =
-    Relation.const Name.iden 2 @@ Scope.exact @@ TS.diagonal univ_ts
-  in
+  let iden = Relation.const Name.iden 2 @@ Scope.exact @@ TS.diagonal univ_ts in
   let init =
     Domain.add Name.univ univ Domain.empty |> Domain.add Name.iden iden
   in
@@ -483,7 +479,7 @@ let refine_identifiers raw_pb =
       if disj && List.length vs = 1
       then (
         Msg.Warn.disj_with_only_one_variable (fun args ->
-            args raw_pb.file (List.hd vs)) ;
+            args raw_pb.file (List.hd vs));
         false )
       else disj
     in
@@ -545,8 +541,8 @@ let refine_identifiers raw_pb =
       ]
   in
   let walk_goal = function
-    | Run fml ->
-        run @@ List.map Fun.(snd % walk_fml init_ctx) fml
+    | Run (fml, expect) ->
+        run (List.map Fun.(snd % walk_fml init_ctx) fml) expect
   in
   let walk_invariants invs = snd @@ walk_block init_ctx invs in
   (walk_invariants raw_pb.raw_invar, walk_goal raw_pb.raw_goal)
@@ -665,7 +661,7 @@ let compute_arities elo =
     | Error msg ->
         Msg.Fatal.arity_error (fun args -> args elo.Ast.file exp msg)
   and return_exp exp ar pe =
-    assert (not @@ Option.equal ( = ) ar (Some 0)) ;
+    assert (not @@ Option.equal ( = ) ar (Some 0));
     Result.return { exp with arity = ar; prim_exp = pe }
   (* this function returns a [result] to factor the error messages out and also
      to enable to display the expression (i.e [exp], not [prim_exp]) concerned
@@ -849,8 +845,7 @@ let compute_arities elo =
         (* Msg.debug (fun m -> *)
         (*       m "compute_arities.update %a" *)
         (*         Fmtc.(list ~sep:sp @@ pair Var.pp (option int)) pairs); *)
-        {< arities = List.map (fun (v, ar) -> (var_ident v, ar)) pairs @ arities
-        >}
+        {<arities = List.map (fun (v, ar) -> (var_ident v, ar)) pairs @ arities>}
 
       method arity ident = List.Assoc.get_exn ~eq:Ast.equal_ident ident arities
       (* |> Fun.tap (fun ar -> *)
@@ -861,8 +856,8 @@ let compute_arities elo =
     end
   in
   let walk_goal ctx = function
-    | Run fmls ->
-        run @@ List.map (walk_fml ctx) fmls
+    | Run (fmls, expec) ->
+        run (List.map (walk_fml ctx) fmls) expec
   in
   Ast.
     { elo with

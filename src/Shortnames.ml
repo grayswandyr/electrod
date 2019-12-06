@@ -17,7 +17,7 @@ open Containers
 (* Converts a natural number into a list of base-26 digits, in reversed order.
    E.g. [convert 27 = [0;1]] *)
 let convert n =
-  assert (n >= 0) ;
+  assert (n >= 0);
   let rec aux n =
     let q = n / 26
     and r = n mod 26 in
@@ -96,7 +96,7 @@ let rename_elo long_names elo =
           @@ list ~sep:semi
           @@ parens
           @@ pair ~sep:comma Atom.pp Atom.pp )
-          atom_renaming) ;
+          atom_renaming);
     Msg.debug (fun m ->
         m
           "Name renaming:@ %a"
@@ -104,7 +104,7 @@ let rename_elo long_names elo =
           @@ list ~sep:semi
           @@ parens
           @@ pair ~sep:comma Name.pp Name.pp )
-          name_renaming) ;
+          name_renaming);
     Ast.
       { elo with
         domain = Domain.rename atom_renaming name_renaming elo.domain

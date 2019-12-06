@@ -14,18 +14,20 @@
 
 open Containers
 
-(*$ ;;
-    inject
+(*$
+  ;;
+  inject
 
-    open Test *)
+  open Test
+*)
 
 module TS = Tuple.Set
 
 type t = TS.t
 
 let pp out b =
-  Fmtc.pf out "@[<hov 2>{" ;
-  TS.pp (* ~start:"" ~stop:"" *) ~sep:" " Tuple.pp out b ;
+  Fmtc.pf out "@[<hov 2>{";
+  TS.pp (* ~start:"" ~stop:"" *) ~sep:" " Tuple.pp out b;
   Fmtc.pf out "}@]"
 
 
@@ -51,7 +53,7 @@ let of_tuples tuples =
       empty
   | t :: ts ->
       let ar = Tuple.arity t in
-      assert (List.for_all (fun t2 -> Tuple.arity t2 = ar) ts) ;
+      assert (List.for_all (fun t2 -> Tuple.arity t2 = ar) ts);
       TS.of_list tuples
 
 
@@ -86,7 +88,7 @@ let product b1 b2 =
     |> Iter.map Fun.(uncurry Tuple.( @@@ ))
     |> TS.of_seq
   in
-  assert (TS.cardinal prod = TS.cardinal b1 * TS.cardinal b2) ;
+  assert (TS.cardinal prod = TS.cardinal b1 * TS.cardinal b2);
   prod
 
 
@@ -106,7 +108,7 @@ let filter = TS.filter
 *)
 let transpose b =
   let ar = inferred_arity b in
-  assert (ar = 2 || ar = 0) ;
+  assert (ar = 2 || ar = 0);
   map Tuple.transpose b
 
 
@@ -140,7 +142,7 @@ let join b1 b2 =
   let module S = Iter in
   let ar1 = inferred_arity b1 in
   let ar2 = inferred_arity b2 in
-  assert (ar1 <> 1 || ar2 <> 1) ;
+  assert (ar1 <> 1 || ar2 <> 1);
   let s1 = to_seq b1 in
   let s2 = to_seq b2 in
   S.product s1 s2
@@ -153,7 +155,7 @@ let join b1 b2 =
 
 let transitive_closure b =
   let ar = inferred_arity b in
-  assert (ar = 2 || ar = 0) ;
+  assert (ar = 2 || ar = 0);
   if ar = 0
   then b
   else
@@ -161,15 +163,15 @@ let transitive_closure b =
     let cur = ref (union b (join b b)) in
     let b_to_the_k = ref (join b b) in
     while not @@ TS.equal !old !cur do
-      old := !cur ;
-      b_to_the_k := join b !b_to_the_k ;
+      old := !cur;
+      b_to_the_k := join b !b_to_the_k;
       cur := union !cur !b_to_the_k
       (* Msg.debug (fun m -> *)
       (*     m "current 2 =  %a " pp !cur); *)
       (* Msg.debug (fun m -> *)
       (*     m "old 2 =  %a " pp !old); *)
       (* Msg.debug (fun m -> m "egalité? %b " (TS.equal !old !cur)) *)
-    done ;
+    done;
     !cur
 
 
@@ -181,21 +183,21 @@ let transitive_closure b =
 (* computes the transitive closure of tue tuple set b using iterative squares *)
 let transitive_closure_is b =
   let ar = inferred_arity b in
-  assert (ar = 2 || ar = 0) ;
+  assert (ar = 2 || ar = 0);
   if ar = 0
   then b
   else
     let old = ref b in
     let cur = ref (union b (join b b)) in
     while not @@ TS.equal !old !cur do
-      old := !cur ;
+      old := !cur;
       cur := union !cur (join !cur !cur)
       (* Msg.debug (fun m -> *)
       (*     m "current 2 =  %a " pp !cur); *)
       (* Msg.debug (fun m -> *)
       (*     m "old 2 =  %a " pp !old); *)
       (* Msg.debug (fun m -> m "egalité? %b " (TS.equal !old !cur)) *)
-    done ;
+    done;
     !cur
 
 
