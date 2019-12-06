@@ -48,15 +48,6 @@ let univ_atoms domain =
       assert false
 
 
-let get_set_names =
-  let is_set (name, rel) =
-    if (not @@ Name.equal name Name.univ) && Relation.arity rel = 1
-    then Some name
-    else None
-  in
-  fun (domain : t) -> domain |> Map.to_list |> List.filter_map is_set
-
-
 let pp out rels =
   Fmtc.(
     vbox

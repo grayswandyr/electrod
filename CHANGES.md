@@ -1,3 +1,7 @@
+### 0.4 (2019-12-06)
+- fix bug in symmetry handling resulting in a too strong symmetry breaking predicate, users should re-assess their models!
+- add optional 'expect sat' or 'expect unsat' sentence after a goal
+
 ### 0.3.2 (2019-10-16)
 - fix issue when creating 0.3.1 which led to opam file being still absent
 

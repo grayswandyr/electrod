@@ -222,8 +222,6 @@ module Make (Ltl : Solver.LTL) = struct
       method is_const (name : Name.t) =
         assert (Domain.mem name elo.Elo.domain);
         Domain.get_exn name elo.Elo.domain |> Relation.is_const
-
-      method get_set_names = Domain.get_set_names elo.Elo.domain
     end
 
   class ['subst] converter (env : environment) =
