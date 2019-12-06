@@ -1,3 +1,6 @@
+### 0.4.1 (2019-12-06)
+- fighting once again with dune-release...
+
 ### 0.4 (2019-12-06)
 - fix bug in symmetry handling resulting in a too strong symmetry breaking predicate, users should re-assess their models!
 - add optional 'expect sat' or 'expect unsat' sentence after a goal
