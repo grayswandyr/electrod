@@ -1,7 +1,9 @@
-git flow release start VERSION
+# DO NOT USE git flow, just plain git
+
+# semantic versioning (VVV herebelow), without 'v'
 
 # IMMEDIATELY prepare changelog
-echo "### $(git rev-parse --abbrev-ref HEAD | cut -f 2- -d '/') ($(date -Idate))" | cat - CHANGES.md > temp && mv temp CHANGES.md && $EDITOR CHANGES.md
+echo "### VVV ($(date -Idate))" | cat - CHANGES.md > temp && mv temp CHANGES.md && $EDITOR CHANGES.md 
 
 # if needed, change, clean & update headers
 bash util/headache/headache.sh
@@ -9,25 +11,19 @@ bash util/headache/headache.sh
 # regenerate opam with dune
 dune build electrod.opam && git add electrod.opam
 
-git commit -am "release v$(git rev-parse --abbrev-ref HEAD | cut -f 2- -d '/')"
-
-# will open several windows, uncomment the tag in the corresponding one
-git flow finish
+git commit -am "release VVV"
 
 git push origin master
 
-# NOW check Travis
+# NOW check https://travis-ci.org/grayswandyr/electrod
 
 # IF OK continue:
 
 # dune-release needs at least 4.06 so opam switch accordingly
 
-#not necessary with git flow:
-#dune-release tag
-# neither
-#git push --tags 
-# because dune-release pushes the tag
+dune-release tag
 
 # (dune-release without argument means bistro)
 # (also: depends on DUNE_RELEASE_LOCAL_REPO)
+
 dune-release 
