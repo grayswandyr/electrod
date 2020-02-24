@@ -34,7 +34,7 @@ let of_list1 xs =
   Array.of_list xs
 
 
-let tuple1 at = of_list1 [ at ]
+let tuple1 at = of_list1 [at]
 
 (* accessor *)
 let arity tuple =
@@ -181,7 +181,7 @@ let all_different t =
 
 let to_1tuples t =
   assert (Array.length t > 0);
-  Array.fold_right (fun at acc -> of_list1 [ at ] :: acc) t []
+  Array.fold_right (fun at acc -> of_list1 [at] :: acc) t []
 
 
 let to_ntuples n t =

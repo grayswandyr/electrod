@@ -77,8 +77,8 @@ and icomp_op =
 
 and ('fml, 'exp, 'iexp) oexp =
   { prim_exp : ('fml, 'exp, 'iexp) prim_oexp
-  ; arity : (int[@opaque]) (* 0 = "polymorphic" arity (that of none) *)
-  }
+  ; arity : (int[@opaque])
+  (* 0 = "polymorphic" arity (that of none) *) }
 
 and ('fml, 'exp, 'iexp) prim_oexp =
   | None_
@@ -119,12 +119,9 @@ and ibinop =
   | Add
   | Sub
 [@@deriving
-  visitors { variety = "map"; name = "omap" }
+  visitors {variety = "map"; name = "omap"}
   , visitors
-      { variety = "fold"
-      ; name = "ofold"
-      ; ancestors = [ "VisitorsRuntime.map" ]
-      }]
+      {variety = "fold"; name = "ofold"; ancestors = ["VisitorsRuntime.map"]}]
 
 type goal = Run of (fml list * bool option) [@@unboxed]
 
@@ -160,7 +157,7 @@ let hfml f : fml =
   Fml hdata
 
 
-let exp ~ar (prim_exp : prim_exp) = { prim_exp; arity = ar }
+let exp ~ar (prim_exp : prim_exp) = {prim_exp; arity = ar}
 
 let hexp oe : exp =
   let res = HC.hashcons exp_table oe in
@@ -178,12 +175,11 @@ class ['self] map =
 
     (* TODO is it correct to map the arity to itself?
      BTW the arity is specified as opaque *)
-    method visit_'exp env (Exp { node; _ }) = hexp (self#visit_oexp env node)
+    method visit_'exp env (Exp {node; _}) = hexp (self#visit_oexp env node)
 
-    method visit_'fml env (Fml { node; _ }) = hfml (self#visit_ofml env node)
+    method visit_'fml env (Fml {node; _}) = hfml (self#visit_ofml env node)
 
-    method visit_'iexp env (Iexp { node; _ }) =
-      hiexp (self#visit_oiexp env node)
+    method visit_'iexp env (Iexp {node; _}) = hiexp (self#visit_oiexp env node)
 
     method visit_exp env exp = self#visit_'exp env exp
 
@@ -198,11 +194,11 @@ class virtual ['self] fold =
 
     (* TODO is it correct to map the arity to itself?
      BTW the arity is specified as opaque *)
-    method visit_'exp env (Exp { node; _ }) = self#visit_oexp env node
+    method visit_'exp env (Exp {node; _}) = self#visit_oexp env node
 
-    method visit_'fml env (Fml { node; _ }) = self#visit_ofml env node
+    method visit_'fml env (Fml {node; _}) = self#visit_ofml env node
 
-    method visit_'iexp env (Iexp { node; _ }) = self#visit_oiexp env node
+    method visit_'iexp env (Iexp {node; _}) = self#visit_oiexp env node
 
     method visit_exp env exp = self#visit_'exp env exp
 
@@ -222,22 +218,13 @@ type t =
   ; invariants : fml list
   ; goal : goal
   ; atom_renaming : (Atom.t, Atom.t) List.Assoc.t
-  ; name_renaming : (Name.t, Name.t) List.Assoc.t
-  }
+  ; name_renaming : (Name.t, Name.t) List.Assoc.t }
 
 let make file domain instance sym invariants goal atom_renaming name_renaming =
-  { file
-  ; domain
-  ; instance
-  ; sym
-  ; invariants
-  ; goal
-  ; atom_renaming
-  ; name_renaming
-  }
+  {file; domain; instance; sym; invariants; goal; atom_renaming; name_renaming}
 
 
-let arity (Exp { node = { arity; _ }; _ }) = arity
+let arity (Exp {node = {arity; _}; _}) = arity
 
 let run fs expec = Run (fs, expec)
 
@@ -706,21 +693,19 @@ let pp_oiexp stacked pp_exp pp_iexp out =
         e2
 
 
-let rec pp_fml stacked out (Fml { node; _ }) =
+let rec pp_fml stacked out (Fml {node; _}) =
   pp_ofml stacked pp_fml pp_exp pp_iexp out node
 
 
 and pp_block stacked out fmls = pp_oblock stacked pp_fml out fmls
 
-and pp_iexp stacked out (Iexp { node; _ }) =
+and pp_iexp stacked out (Iexp {node; _}) =
   pp_oiexp stacked pp_exp pp_iexp out node
 
 
 and pp_prim_exp stacked out pe = pp_prim_oexp stacked pp_fml pp_exp out pe
 
-and pp_exp stacked out (Exp { node = e; _ }) =
-  pp_prim_exp stacked out e.prim_exp
-
+and pp_exp stacked out (Exp {node = e; _}) = pp_prim_exp stacked out e.prim_exp
 
 and pp_sim_binding stacked out sb = pp_osim_binding stacked pp_exp out sb
 
@@ -732,7 +717,7 @@ let pp_goal out (Run (fmls, _)) =
   pf out "  %a" (box @@ list @@ pp_fml 0) fmls
 
 
-let pp out { domain; instance; invariants; goal; _ } =
+let pp out {domain; instance; invariants; goal; _} =
   let open Fmtc in
   pf
     out

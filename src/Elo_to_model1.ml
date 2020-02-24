@@ -21,11 +21,11 @@ module S = Iter
 module Make
     (Ltl : Solver.LTL)
     (ConvertFormulas : Elo_to_ltl_intf.S
-                         with type ltl = Ltl.t
-                          and type atomic = Ltl.Atomic.t)
+                       with type ltl = Ltl.t
+                        and type atomic = Ltl.Atomic.t)
     (Model : Solver.MODEL
-               with type ltl = ConvertFormulas.ltl
-                and type atomic = ConvertFormulas.atomic) =
+             with type ltl = ConvertFormulas.ltl
+              and type atomic = ConvertFormulas.atomic) =
 struct
   type atomic = Ltl.Atomic.t
 
@@ -49,14 +49,14 @@ struct
             let at_fml2 = atomic at2 in
             and_
               (implies at_fml1 (lazy at_fml2))
-              (lazy (implies (iff at_fml1 at_fml2) (lazy fml_acc))))
+              (lazy (implies (iff at_fml1 at_fml2) (lazy fml_acc))) )
         sym
         true_
     in
     List.fold_left
       (fun fmls_acc sym ->
         let cur_fml = sym_to_ltl sym in
-        S.cons ("-- (symmetry)", cur_fml) fmls_acc)
+        S.cons ("-- (symmetry)", cur_fml) fmls_acc )
       S.empty
       syms
 
@@ -79,7 +79,7 @@ struct
           | Invar | Static_prop ->
               `Left (remove_always_from_invar fml)
           | Init | Primed_prop | Trans | Temporal ->
-              `Right fml)
+              `Right fml )
         blk
     in
     let transf, tmp_restf2 =
@@ -93,7 +93,7 @@ struct
           | Trans ->
               `Left (remove_always_from_invar fml)
           | _ ->
-              `Right fml)
+              `Right fml )
         tmp_restf
     in
     let initf, restf =
@@ -103,24 +103,24 @@ struct
           (* Msg.debug (fun m ->
               m "Color of formula %a : %a\n"
               Elo.pp_fml fml Invar_computation.pp color); *)
-          match color with Init -> `Left fml | _ -> `Right fml)
+          match color with Init -> `Left fml | _ -> `Right fml )
         tmp_restf2
     in
     match (restf, List.rev invf, List.rev transf, List.rev initf) with
     | _ :: _, _, _, _ ->
         (initf, invf, transf, restf)
     | [], _, hd :: tl, _ ->
-        (initf, invf, List.rev tl, [ add_always_to_invar hd ])
+        (initf, invf, List.rev tl, [add_always_to_invar hd])
     | [], hd :: tl, _, _ ->
-        (initf, List.rev tl, transf, [ add_always_to_invar hd ])
+        (initf, List.rev tl, transf, [add_always_to_invar hd])
     | [], _, _, hd :: tl ->
-        (List.rev tl, invf, transf, [ hd ])
+        (List.rev tl, invf, transf, [hd])
     | _ ->
         assert false
 
 
   (*the goal cannot be empty*)
-
+  
   (* From a non-empty list f1, f2, ..., fn of elo formulas, this
      function computes the elo formula "(f1 and ... and fn-1) implies not
      fn" *)
@@ -129,7 +129,7 @@ struct
     match List.rev fmls with
     | [] ->
         assert false
-    | (Fml { node; _ } as hd) :: tl ->
+    | (Fml {node; _} as hd) :: tl ->
         let premise = List.fold_left (fun x y -> lbinary x and_ y) true_ tl in
         let rhs_fml =
           match node with LUn (Not, subfml) -> subfml | _ -> lunary not_ hd
@@ -153,11 +153,10 @@ struct
       Elo.
         { elo with
           domain = Domain.update_domain_with_instance elo.domain elo.instance
-        ; instance = Instance.empty
-        }
+        ; instance = Instance.empty }
     in
     Msg.debug (fun m ->
-        m "Elo_to_model1.run: after instance update:@ %a" Elo.pp elo);
+        m "Elo_to_model1.run: after instance update:@ %a" Elo.pp elo );
     (* walk through formulas, convert them to LTL and accumulate rigid
        and flexible variables. *)
     (* let exception Early_stop in *)
@@ -169,7 +168,7 @@ struct
           (* if ltl = Ltl.false_ then *)
           (*   raise Early_stop *)
           (* else *)
-          S.cons (fml_str, ltl) acc_fml)
+          S.cons (fml_str, ltl) acc_fml )
         S.empty
         fmls
       (* with *)
@@ -184,13 +183,12 @@ struct
     let detected_inits, detected_invars, detected_trans, general_fmls =
       split_invar_noninvar_fmls elo goal_blk
     in
-
     (* Msg.debug (fun m ->
        m "Detected init : %a" Elo.pp_block detected_inits); *)
-
+    
     (* Msg.debug (fun m ->
        m "Detected invariants : %a" Elo.pp_block detected_invars); *)
-
+    
     (* Msg.debug (fun m ->
        m "Detected trans : %a" Elo.pp_block detected_trans); *)
     let spec_fml = dualise_fmls general_fmls in

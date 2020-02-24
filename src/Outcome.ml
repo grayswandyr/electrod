@@ -18,23 +18,22 @@ type t =
   { trace : states option
   ; nbvars : int
   ; conversion_time : Mtime.span
-  ; analysis_time : Mtime.span
-  }
+  ; analysis_time : Mtime.span }
 
-and states = state list
 (** nonempty *)
+and states = state list
 
 and state_type =
   | Plain
   | Loop
 
-and state = state_type * valuation
 (** A state is either a plain state, or the target of a lasso from the last
     state of the trace. *)
+and state = state_type * valuation
 
-and valuation = (Name.t, Tuple_set.t) List.Assoc.t
 (** A valuation maps set/relation names to the tuples they
     contain. Notice: the valuation is {b sorted} over names. *)
+and valuation = (Name.t, Tuple_set.t) List.Assoc.t
 
 let valuation valu = valu
 
@@ -53,7 +52,7 @@ let loop_is_present trace =
 
 
 let no_trace nbvars conversion_time analysis_time =
-  { trace = None; analysis_time; nbvars; conversion_time }
+  {trace = None; analysis_time; nbvars; conversion_time}
 
 
 let sort_states (atom_renaming, name_renaming) states =
@@ -72,11 +71,10 @@ let trace back_renamings nbvars conversion_time analysis_time states =
   { trace = Some (sort_states back_renamings states)
   ; analysis_time
   ; nbvars
-  ; conversion_time
-  }
+  ; conversion_time }
 
 
-let some_trace { trace; _ } = Option.is_some trace
+let some_trace {trace; _} = Option.is_some trace
 
 open Fmtc
 
@@ -118,11 +116,7 @@ module PPChrono = struct
     let ts_strings =
       List.map (fun (_, ts) -> to_string_width 40 Tuple_set.pp ts) v
     in
-    ( match typ with
-    | Loop ->
-        ts_strings @ [ "LOOP" ]
-    | _ ->
-        ts_strings @ [ " " ] )
+    (match typ with Loop -> ts_strings @ ["LOOP"] | _ -> ts_strings @ [" "])
     |> Array.of_list
 
 
@@ -138,7 +132,7 @@ module PPChrono = struct
         let preprended =
           ( Array.of_list
           @@ List.map (fun (name, _) -> to_string_width 40 Name.pp name) hd
-          @ [ " " ] )
+          @ [" "] )
           :: trace_strings
           |> Array.of_list
         in
@@ -226,7 +220,7 @@ module PPXML = struct
       tag
 
 
-  let pp out { trace; nbvars; conversion_time; analysis_time } =
+  let pp out {trace; nbvars; conversion_time; analysis_time} =
     let ct = Mtime.Span.to_ms conversion_time in
     let at = Mtime.Span.to_ms analysis_time in
     pf
@@ -242,7 +236,8 @@ module PPXML = struct
     | None ->
         pf
           out
-          "@[<h><%a nbvars='%d' conversion-time='%.0f' analysis-time='%.0f'/>@]@\n"
+          "@[<h><%a nbvars='%d' conversion-time='%.0f' \
+           analysis-time='%.0f'/>@]@\n"
           kwd
           "notrace"
           nbvars
@@ -252,9 +247,8 @@ module PPXML = struct
         let tag = "trace" in
         pf
           out
-          "@[<v><%a nbvars='%d' conversion-time='%.0f' analysis-time='%.0f'>@,\
-          \ @[<v>%a@]@,\
-           </%a>@]"
+          "@[<v><%a nbvars='%d' conversion-time='%.0f' \
+           analysis-time='%.0f'>@, @[<v>%a@]@,</%a>@]"
           kwd
           tag
           nbvars
@@ -267,7 +261,7 @@ module PPXML = struct
     Format.pp_print_flush out ()
 end
 
-let pp ~(format : [ `XML | `Plain | `Chrono ]) out trace =
+let pp ~(format : [`XML | `Plain | `Chrono]) out trace =
   match format with
   | `Plain ->
       PPPlain.pp out trace

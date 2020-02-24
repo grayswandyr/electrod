@@ -19,8 +19,7 @@ module TS = Tuple_set
 type bounds =
   { must : TS.t
   ; sup : TS.t
-  ; may : TS.t
-  }
+  ; may : TS.t }
 
 let pp_subst out subst =
   Fmtc.(brackets @@ list @@ parens @@ pair ~sep:comma int Tuple.pp)
@@ -57,7 +56,7 @@ let rec alldiff (tuples : Tuple.t list) : bool =
 *)
 
 let nproduct (n : int) (disj : bool) (set : Tuple.t list) : Tuple.t list list =
-  List.repeat n [ set ]
+  List.repeat n [set]
   (* returns (a list of) lists of tuples: *)
   |> List.cartesian_product
   (* possibly remove such lists that contain several instance of the same tuple *)
@@ -75,9 +74,8 @@ let sup_sim_binding fbounds_exp (subst : Tuple.t list) (disj, nbvars, range) :
      is given as a [Tuple.t list] instead of a [TS.t] for technical purposes
      only. As a consequence, the returned value for the whole function is a
      set of sets of tuples represented by a list of lists... *)
-  let { sup; _ } = fbounds_exp (range, subst) in
+  let {sup; _} = fbounds_exp (range, subst) in
   let sup_as_list = TS.to_list sup in
-
   (* compute the exponent for this bindings (NOTE: tuples are not concatenated, 
      just put in the same list representing a combination of tuples). 
 
@@ -134,11 +132,11 @@ let rec sup_sim_bindings fbounds_exp (subst : Tuple.t list) sim_bindings :
         pp_subst
         subst
         G.(pp_sim_bindings (List.length subst))
-        sim_bindings);
+        sim_bindings );
   ( match sim_bindings with
   | [] ->
       assert false
-  | [ sim_binding ] ->
+  | [sim_binding] ->
       (* compute the product of bounds for the head sim_binding *)
       sup_sim_binding fbounds_exp subst sim_binding
       (* base case => convert back into a list of tuples *)
@@ -151,7 +149,7 @@ let rec sup_sim_bindings fbounds_exp (subst : Tuple.t list) sim_bindings :
            whole possibilities *)
       List.fold_left
         (fun acc line ->
-          acc @ product_for_one_hd_combination fbounds_exp subst tl line)
+          acc @ product_for_one_hd_combination fbounds_exp subst tl line )
         []
         hd_sup )
   |> Fun.tap (fun res ->
@@ -163,7 +161,7 @@ let rec sup_sim_bindings fbounds_exp (subst : Tuple.t list) sim_bindings :
                G.(pp_sim_bindings (List.length subst))
                sim_bindings
                Fmtc.(braces @@ list ~sep:sp @@ Tuple.pp)
-               res))
+               res ) )
 
 
 (* given the list of tuples corresponding to the bound for the head sim
@@ -179,7 +177,7 @@ and product_for_one_hd_combination
   let tl_sup =
     sup_sim_bindings fbounds_exp (List.rev hd_combination @ subst) tl
   in
-  List.product Tuple.( @@@ ) [ Tuple.concat hd_combination ] tl_sup
+  List.product Tuple.( @@@ ) [Tuple.concat hd_combination] tl_sup
 
 
 (* In all the following functions, [subst] is a *stack* ot tuples, meaning 
@@ -207,12 +205,12 @@ let make_bounds_exp =
             (G.pp_exp @@ List.length subst)
             exp
             TS.pp
-            sup);
-    { must; sup; may = TS.diff sup must }
+            sup );
+    {must; sup; may = TS.diff sup must}
   in
   let eq x1 x2 = CCEqual.(pair physical (list Tuple.equal)) x1 x2 in
   let hash x =
-    Hash.(pair (fun (G.Exp { hkey; _ }) -> hkey) (list Tuple.hash)) x
+    Hash.(pair (fun (G.Exp {hkey; _}) -> hkey) (list Tuple.hash)) x
   in
   (* let cb ~in_cache (e, subst) __value =
      Fmtc.(pr "@[<h>Cache search for %a: %B@]@\n" 
@@ -226,8 +224,8 @@ let make_bounds_exp =
     CCCache.with_cache_rec
       cache
       (fun fbounds_exp
-           ((G.Exp { node = { prim_exp = pe; _ }; _ }, subst) as args)
-           ->
+      ((G.Exp {node = {prim_exp = pe; _}; _}, subst) as args)
+      ->
         let open G in
         match pe with
         | Var v ->
@@ -276,7 +274,7 @@ let make_bounds_exp =
                          (G.pp_prim_exp @@ List.length subst)
                          pe
                          TS.pp
-                         res.may))
+                         res.may ) )
         | RUn (RTClos, e) ->
             let iden = Domain.get_exn Name.iden domain in
             let b = fbounds_exp (e, subst) in
@@ -297,7 +295,7 @@ let make_bounds_exp =
                          (G.pp_prim_exp @@ List.length subst)
                          pe
                          TS.pp
-                         res.may))
+                         res.may ) )
         | RBin (e1, Union, e2) ->
             let b1 = fbounds_exp (e1, subst) in
             let b2 = fbounds_exp (e2, subst) in
@@ -352,7 +350,10 @@ let make_bounds_exp =
         | RBin (e1, Join, e2) ->
             let b1 = fbounds_exp (e1, subst) in
             let b2 = fbounds_exp (e2, subst) in
-            return_bounds args (TS.join b1.must b2.must) (TS.join b1.sup b2.sup)
+            return_bounds
+              args
+              (TS.join b1.must b2.must)
+              (TS.join b1.sup b2.sup)
         | RIte (_, e1, e2) ->
             let b1 = fbounds_exp (e1, subst) in
             let b2 = fbounds_exp (e2, subst) in
@@ -364,4 +365,4 @@ let make_bounds_exp =
             fbounds_exp (e, subst)
         | Compr (sim_bindings, _) ->
             let sup_list = sup_sim_bindings fbounds_exp subst sim_bindings in
-            return_bounds args TS.empty (TS.of_tuples sup_list))
+            return_bounds args TS.empty (TS.of_tuples sup_list) )

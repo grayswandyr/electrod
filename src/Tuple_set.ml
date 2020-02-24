@@ -41,9 +41,9 @@ include P
 
 let to_list = TS.elements
 
-let to_seq = TS.to_seq
+let to_iter = TS.to_iter
 
-let of_seq = TS.of_seq
+let of_iter = TS.of_iter
 
 let empty = TS.empty
 
@@ -84,9 +84,9 @@ let compare b1 b2 = TS.compare b1 b2
 
 let product b1 b2 =
   let prod =
-    Iter.product (TS.to_seq b1) (TS.to_seq b2)
+    Iter.product (TS.to_iter b1) (TS.to_iter b2)
     |> Iter.map Fun.(uncurry Tuple.( @@@ ))
-    |> TS.of_seq
+    |> TS.of_iter
   in
   assert (TS.cardinal prod = TS.cardinal b1 * TS.cardinal b2);
   prod
@@ -96,7 +96,7 @@ let union b1 b2 = TS.union b1 b2
 
 let diff = TS.diff
 
-let map f ts = TS.to_seq ts |> Iter.map f |> TS.of_seq
+let map f ts = TS.to_iter ts |> Iter.map f |> TS.of_iter
 
 let filter = TS.filter
 
@@ -118,14 +118,15 @@ let override r s =
     filter
       (fun tr ->
         not
-        @@ TS.exists (fun ts1 -> Tuple.(Atom.equal (ith 0 tr) (ith 0 ts1))) s)
+        @@ TS.exists (fun ts1 -> Tuple.(Atom.equal (ith 0 tr) (ith 0 ts1))) s
+        )
       r
   in
   TS.union s in_r_but_not_in_s1
 
 
 (* [s <: r] *)
-let lproj s r = filter (fun tr -> TS.mem Tuple.([ ith 0 tr ] |> of_list1) s) r
+let lproj s r = filter (fun tr -> TS.mem Tuple.([ith 0 tr] |> of_list1) s) r
 
 let rproj r s = lproj s @@ transpose r
 
@@ -143,14 +144,14 @@ let join b1 b2 =
   let ar1 = inferred_arity b1 in
   let ar2 = inferred_arity b2 in
   assert (ar1 <> 1 || ar2 <> 1);
-  let s1 = to_seq b1 in
-  let s2 = to_seq b2 in
+  let s1 = to_iter b1 in
+  let s2 = to_iter b2 in
   S.product s1 s2
   |> S.filter_map (fun (t1, t2) ->
          if Atom.equal (Tuple.ith (ar1 - 1) t1) (Tuple.ith 0 t2)
          then Some (Tuple.join t1 t2)
-         else None)
-  |> of_seq
+         else None )
+  |> of_iter
 
 
 let transitive_closure b =

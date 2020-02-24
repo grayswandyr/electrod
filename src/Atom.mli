@@ -14,8 +14,8 @@
 
 (** Atoms (= urelements). *)
 
-type t
 (** Type of atoms. *)
+type t
 
 val atom : ?loc:Location.t -> string -> t
 (** [atom ~loc:loc s] creates an atom with name [s] and optional location [loc]. *)

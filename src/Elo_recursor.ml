@@ -158,11 +158,11 @@ class virtual ['self] recursor =
 
     method visit_fml env fml = self#visit_'fml env fml
 
-    method visit_'exp env (Exp { node; _ }) = self#visit_oexp env node
+    method visit_'exp env (Exp {node; _}) = self#visit_oexp env node
 
-    method visit_'fml env (Fml { node; _ }) = self#visit_ofml env node
+    method visit_'fml env (Fml {node; _}) = self#visit_ofml env node
 
-    method visit_'iexp env (Iexp { node; _ }) = self#visit_oiexp env node
+    method visit_'iexp env (Iexp {node; _}) = self#visit_oiexp env node
 
     method visit_True env = self#build_True env
 
@@ -223,7 +223,7 @@ class virtual ['self] recursor =
             (fun _visitors_this -> _visitors_this) _visitors_c1
           in
           let _visitors_r2 = self#visit_'exp env _visitors_c2 in
-          (_visitors_r0, _visitors_r1, _visitors_r2))
+          (_visitors_r0, _visitors_r1, _visitors_r2) )
           _visitors_c1
       in
       let _visitors_r2 = self#visit_list self#visit_'fml env _visitors_c2 in
@@ -460,7 +460,7 @@ class virtual ['self] recursor =
               (fun _visitors_this -> _visitors_this) _visitors_c1
             in
             let _visitors_r2 = self#visit_'exp env _visitors_c2 in
-            (_visitors_r0, _visitors_r1, _visitors_r2))
+            (_visitors_r0, _visitors_r1, _visitors_r2) )
           env
           _visitors_c0
       in

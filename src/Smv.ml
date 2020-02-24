@@ -67,7 +67,9 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
       then (
         (* add parentheses *)
         let color = rainbow () in
-        if align_par then Format.pp_open_box out 0 else Format.pp_open_box out 2;
+        if align_par
+        then Format.pp_open_box out 0
+        else Format.pp_open_box out 2;
         styled color string out "(";
         if align_par then Format.pp_open_box out 2;
         (* we're adding parentheses so precedence goes back to 0 inside of
@@ -307,7 +309,7 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
   (*     Fmt.epr "and_ (implies_ p @@ lazy q) (implies_ r @@ lazy s) -->@  %a@\n" pp f5; *)
   (*     Fmt.epr "implies p (lazy (and_ (implies q @@ lazy r) (lazy (implies r @@ lazy s)))) -->@  %a@\n" pp f6; *)
   (*     Fmt.epr "implies p (lazy (and_ (implies (and_ q (lazy p)) @@ lazy r) (lazy (implies r @@ lazy s)))) -->@  %a@\n" pp f7; *)
-
+  
   (*     flush_all () *)
   (*   end *)
 end
@@ -323,11 +325,10 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     ; init : (string * ltl) Iter.t
     ; invariant : (string * ltl) Iter.t
     ; trans : (string * ltl) Iter.t
-    ; property : string * ltl
-    }
+    ; property : string * ltl }
 
   let make ~elo ~init ~invariant ~trans ~property =
-    { elo; init; invariant; trans; property }
+    {elo; init; invariant; trans; property}
 
 
   let pp_plain_decl vartype out atomic =
@@ -351,7 +352,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
       let name_str = Name.to_string name in
       (* To avoid changin the generation of LTL formulas, we generate DEFINEs of
          the form `DEFINE x_a1_b1 := x_a1 = b1` (for x of domain arity 1) *)
-      let may = Domain.may name elo.Elo.domain |> Tuple_set.to_seq in
+      let may = Domain.may name elo.Elo.domain |> Tuple_set.to_iter in
       (* where to split tuples (if necessary)? *)
       let dom_ar = Ltl.Atomic.domain_arity atom in
       match dom_ar with
@@ -379,7 +380,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
                   name_str
                   tuple_str
                   name_str
-                  tuple_str))
+                  tuple_str) )
             may_strings;
           Fmtc.(
             pf
@@ -396,7 +397,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
           let domains_ranges =
             may
             |> S.map (fun tuple ->
-                   Pair.map_same tuple_to_string @@ Tuple.split tuple n)
+                   Pair.map_same tuple_to_string @@ Tuple.split tuple n )
             |> S.group_by
                  ~hash:(fun (dom, _) -> Hash.string dom)
                  ~eq:(fun (dom1, _) (dom2, _) -> String.equal dom1 dom2)
@@ -421,8 +422,8 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
                       range_str
                       name_str
                       dom_str
-                      range_str))
-                pairs)
+                      range_str) )
+                pairs )
             domains_ranges;
           (* now print the vars: we walk along the lists of pairs (dom,
                range) (where every dom is the same) and we use the range to create
@@ -440,20 +441,20 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
                   (braces_ @@ box @@ list ~sep:(sp **> comma) string)
                   ( if Ltl.Atomic.is_partial atom
                   then List.rev ("__NONE__" :: List.rev_map snd pairs)
-                  else List.map snd pairs )))
+                  else List.map snd pairs )) )
             domains_ranges
     in
     atoms
     |> S.sort_uniq (* keep only atoms with different relation names *)
          ~cmp:(fun at1 at2 ->
-           Name.compare (fst @@ atom_name at1) (fst @@ atom_name at2))
+           Name.compare (fst @@ atom_name at1) (fst @@ atom_name at2) )
     |> S.iter (fun at ->
            Fmtc.hardline out ();
-           pp_one_decl at)
+           pp_one_decl at )
 
 
   let pp_count_variables
-      ?(margin = 80) out { elo; init; invariant; trans; property } =
+      ?(margin = 80) out {elo; init; invariant; trans; property} =
     let open Fmtc in
     let module S = Iter in
     (* to gather the variables along printing in the buffer *)
@@ -475,7 +476,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
           "%s@\nINIT@\n@[<hv2>%a@];@\n@\n"
           elo_str
           (Ltl.pp_gather_variables variables)
-          fml)
+          fml )
       init;
     Format.pp_close_box out ();
     (* INVAR *)
@@ -487,7 +488,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
           "%s@\nINVAR@\n@[<hv2>%a@];@\n@\n"
           elo_str
           (Ltl.pp_gather_variables variables)
-          fml)
+          fml )
       invariant;
     Format.pp_close_box out ();
     (* TRANS *)
@@ -499,7 +500,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
           "%s@\nTRANS@\n@[<hv2>%a@];@\n@\n"
           elo_str
           (Ltl.pp_gather_variables ~next_is_X:false variables)
-          fml)
+          fml )
       trans;
     Format.pp_close_box out ();
     (* SPEC *)
@@ -534,7 +535,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
           then (* plain *)
             (acc_rp, acc_re, S.cons at acc_fp, acc_fe)
           else (* enumerable *)
-            (acc_rp, acc_re, acc_fp, S.cons at acc_fe))
+            (acc_rp, acc_re, acc_fp, S.cons at acc_fe) )
         (S.empty, S.empty, S.empty, S.empty)
         !variables
       |> fun (res_rp, res_re, res_fp, res_fe) ->
@@ -556,9 +557,9 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     S.length !variables
 
 
-  let pp ?(margin = 80) out { elo; init; invariant; trans; property } =
+  let pp ?(margin = 80) out {elo; init; invariant; trans; property} =
     ignore
-      (pp_count_variables ~margin out { elo; init; invariant; trans; property })
+      (pp_count_variables ~margin out {elo; init; invariant; trans; property})
 
 
   (* write in temp file *)
@@ -567,7 +568,8 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     let tgt = Filename.temp_file ~temp_dir:dir (src_file ^ "-") ".smv" in
     let nbvars = ref 0 in
     IO.with_out tgt (fun out ->
-        nbvars := pp_count_variables (Format.formatter_of_out_channel out) model);
+        nbvars :=
+          pp_count_variables (Format.formatter_of_out_channel out) model );
     (tgt, !nbvars)
 
 
@@ -588,9 +590,10 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
             IO.write_line out first_line;
             IO.with_in filename (fun inp ->
                 let chunks = IO.read_chunks_gen inp in
-                IO.write_gen out chunks))
+                IO.write_gen out chunks ) )
     | Solver.Default default ->
-        IO.with_out tgt (fun out -> IO.write_line out (first_line ^ default)) );
+        IO.with_out tgt (fun out -> IO.write_line out (first_line ^ default))
+    );
     tgt
 
 
@@ -610,7 +613,10 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
         if no_analysis
         then
           Logs.app (fun m ->
-              m "@[<hv2>Keeping the script and SMV files at:@ %s@\n%s@]" scr smv)
+              m
+                "@[<hv2>Keeping the script and SMV files at:@ %s@\n%s@]"
+                scr
+                smv )
         else Logs.app (fun m -> m "@[<hv2>Keeping the script and SMV files@]")
       else (
         Logs.info (fun m -> m "@[<hv2>Removing files:@ %s@\n%s@]" scr smv);
@@ -643,7 +649,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
           (Float.round size)
           unit_
           Mtime.Span.pp
-          (Mtime.span before_generation after_generation));
+          (Mtime.span before_generation after_generation) );
     if no_analysis
     then (
       keep_or_remove_files scr smv;
@@ -658,7 +664,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
             print_endline "Exiting";
             Unix.kill 0 Sys.sigterm;
             (* kill children *)
-            exit 1)
+            exit 1 )
       in
       let previous_handler = Sys.signal Sys.sigterm sigterm_handler in
       (* TODO make things s.t. it's possible to set a time-out *)
@@ -690,7 +696,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
         String.lines_gen okout
         |> Gen.drop_while (fun line ->
                (not @@ String.suffix ~suf:"is false" line)
-               && (not @@ validity_check line))
+               && (not @@ validity_check line) )
       in
       keep_or_remove_files scr smv;
       let spec_s =
@@ -716,11 +722,9 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
            using the "trace plugin" number 1 (classical output (i.e. no XML, no
            table) with information on all variables, not just the ones that have
            changed w.r.t. the previous state.). *)
-        let module P =
-          Smv_trace_parser.Make (struct
-            let base = Domain.musts ~with_univ_and_ident:false elo.Elo.domain
-          end)
-        in
+        let module P = Smv_trace_parser.Make (struct
+          let base = Domain.musts ~with_univ_and_ident:false elo.Elo.domain
+        end) in
         let trace =
           spec
           (* With this trace output, nuXmv shows a few uninteresting lines first,
@@ -736,7 +740,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
         if not @@ Outcome.loop_is_present trace
         then
           Msg.Fatal.solver_bug (fun args ->
-              args cmd "trace is missing a loop state.")
+              args cmd "trace is missing a loop state." )
         else
           let atom_back_renaming =
             List.map (fun (x, y) -> (y, x)) elo.atom_renaming

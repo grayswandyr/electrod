@@ -16,8 +16,8 @@ open Containers
 
 (** Type for sets of tuples. *)
 
-type t
 (** Set of tuples. Invariant: all tuples in the tuple set have the same arity *)
+type t
 
 val empty : t
 (** The empty tuple set. *)
@@ -99,7 +99,7 @@ val map : (Tuple.t -> Tuple.t) -> t -> t
 
 val rename : (Atom.t, Atom.t) List.Assoc.t -> t -> t
 
-val to_seq : t -> Tuple.t CCSet.sequence
+val to_iter : t -> Tuple.t CCSet.sequence
 
 val to_list : t -> Tuple.t list
 
