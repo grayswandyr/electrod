@@ -12,7 +12,7 @@ RELEASE = ./$(TARGET).${os}.${arch}
 all: build
 
 build:
-	$(DUNE) build src/$(TARGET).exe && ln -sf _build/default/src/$(TARGET).exe ./$(TARGET)
+	$(DUNE) build  src/$(TARGET).exe && ln -sf _build/default/src/$(TARGET).exe ./$(TARGET)
 
 watch:
 	$(DUNE) build --watch @check @fmt --auto-promote --diff-command=-

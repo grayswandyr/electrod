@@ -29,33 +29,64 @@ module Make
 struct
   type atomic = Ltl.Atomic.t
 
-  (* Compute an LTL formula and the list of atomic propositions from a
-     list of symmetries *)
-  let syms_to_ltl elo =
+  (* Computes the LTL (actually propostional) formula encoding the symmetry 
+  in the initial state only *)
+  let initial_state_sym_to_ltl elo (sym : Symmetry.t) =
     let open Elo in
     let open Ltl in
-    let syms = elo.sym in
-    let sym_to_ltl (sym : Symmetry.t) =
-      Symmetry.fold
-        (fun (name1, tuple1) (name2, tuple2) (fml_acc : Ltl.t) ->
-          (*We assume that a symmetry is well-formed: each pair of
+    Symmetry.fold
+      (fun (name1, tuple1) (name2, tuple2) (fml_acc : Ltl.t) ->
+        (*We assume that a symmetry is well-formed: each pair of
               name and tuple (name, tuple) share the same name *)
-          if not (Name.equal name1 name2)
-          then assert false
-          else
-            let at1 = Ltl.Atomic.make elo.domain name1 tuple1 in
-            let at_fml1 = atomic at1 in
-            let at2 = Ltl.Atomic.make elo.domain name2 tuple2 in
-            let at_fml2 = atomic at2 in
-            and_
-              (implies at_fml1 (lazy at_fml2))
-              (lazy (implies (iff at_fml1 at_fml2) (lazy fml_acc))) )
-        sym
-        true_
-    in
+        if not (Name.equal name1 name2)
+        then assert false
+        else
+          let at1 = Ltl.Atomic.make elo.domain name1 tuple1 in
+          let at_fml1 = atomic at1 in
+          let at2 = Ltl.Atomic.make elo.domain name2 tuple2 in
+          let at_fml2 = atomic at2 in
+          and_
+            (implies at_fml1 (lazy at_fml2))
+            (lazy (implies (iff at_fml1 at_fml2) (lazy fml_acc))) )
+      sym
+      true_
+
+
+  (* Computes the full LTL formula encoding the symmetry in a temporal context *)
+  let temporal_sym_to_ltl elo (sym : Symmetry.t) =
+    let open Elo in
+    let open Ltl in
+    Symmetry.fold
+      (fun (name1, tuple1) (name2, tuple2) (fml_acc : Ltl.t) ->
+        (*We assume that a symmetry is well-formed: each pair of
+              name and tuple (name, tuple) share the same name *)
+        if not (Name.equal name1 name2)
+        then assert false
+        else
+          let at1 = Ltl.Atomic.make elo.domain name1 tuple1 in
+          let at_fml1 = atomic at1 in
+          let at2 = Ltl.Atomic.make elo.domain name2 tuple2 in
+          let at_fml2 = atomic at2 in
+          or_
+            (implies at_fml1 (lazy at_fml2))
+            (lazy (implies (iff at_fml1 at_fml2) (lazy fml_acc))) )
+      sym
+      true_
+
+
+  (* Computes an LTL formula for the whole list of symmetries. 
+    According to the value of the argument temporal_symmetry, the LTL formula
+    either deals with the initial state or with the whole temporal trace. *)
+  let syms_to_ltl temporal_symmetry elo =
+    let open Elo in
+    let syms = elo.sym in
     List.fold_left
       (fun fmls_acc sym ->
-        let cur_fml = sym_to_ltl sym in
+        let cur_fml =
+          if temporal_symmetry
+          then initial_state_sym_to_ltl elo sym
+          else temporal_sym_to_ltl elo sym
+        in
         S.cons ("-- (symmetry)", cur_fml) fmls_acc )
       S.empty
       syms
@@ -137,7 +168,7 @@ struct
         lbinary premise impl rhs_fml
 
 
-  let run elo =
+  let run (elo, temporal_symmetry) =
     let open Elo in
     (* #781 Handle instance:
 
@@ -176,7 +207,7 @@ struct
       |> S.rev
     in
     (* handling symmetries *)
-    let syms_fmls = syms_to_ltl elo in
+    let syms_fmls = syms_to_ltl temporal_symmetry elo in
     (* handling the goal *)
     let goal_blk = match elo.goal with Elo.Run (g, _) -> g in
     (* Partition the goal fmls into invars and non invars *)

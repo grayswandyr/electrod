@@ -110,6 +110,11 @@ let outcome_format =
     & info ["of"; "outcome-format"] ~docv:"FORMAT" ~doc)
 
 
+let temporal_symmetry =
+  let doc = {|If present, generate the full temporal symmetry predicate.|} in
+  Arg.(value & flag & info ["ts"; "temporal-symmetry"] ~doc)
+
+
 (* verbosity options (already def'd in Logs_cli, thx!) *)
 let verb_term = Logs_cli.level ()
 
@@ -129,7 +134,8 @@ let main_term =
     $ print_generated
     $ outcome_format
     $ long_names
-    $ bmc_length)
+    $ bmc_length
+    $ temporal_symmetry)
 
 
 let main_info =
