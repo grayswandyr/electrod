@@ -111,6 +111,6 @@ let pp = SMV_file_format.pp
 let analyze = SMV_file_format.analyze
 
 (* temporary *)
-let run elo = Elo_to_SMV_model.run elo
+let run (elo, temporal_symmetry) = Elo_to_SMV_model.run (elo, temporal_symmetry)
 
 let transfo = Transfo.make "to_smv1" run

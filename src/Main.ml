@@ -79,7 +79,8 @@ let main
     print_generated
     outcome_format
     long_names
-    bmc =
+    bmc
+    temporal_symmetry =
   ensure_session_leader ();
   let long_names =
     (* Debug ==> long names *)
@@ -129,7 +130,9 @@ let main
     let expect = Gen_goal.get_expected ast.goal in
     let elo = Ast_to_elo.convert ast in
     let before_conversion = Mtime_clock.now () in
-    let model = Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) elo in
+    let model =
+      Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) (elo, temporal_symmetry)
+    in
     let conversion_time = Mtime.span before_conversion @@ Mtime_clock.now () in
     ( match verbosity with
     | Some _ ->
