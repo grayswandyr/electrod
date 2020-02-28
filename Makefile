@@ -12,25 +12,20 @@ RELEASE = ./$(TARGET).${os}.${arch}
 all: build
 
 build:
-	$(DUNE) build  src/$(TARGET).exe && ln -sf _build/default/src/$(TARGET).exe ./$(TARGET)
+	$(DUNE) build src/$(TARGET).exe
 
 watch:
 	$(DUNE) build --watch @check @fmt --auto-promote --diff-command=-
 
-test-release:
-	$(DUNE) build --workspace dune-workspace.release @runtest
+build-release:
+	$(DUNE) build --workspace dune-workspace.release @all
 
-release: 
-	$(DUNE) subst 
-	$(DUNE) build -p electrod @install
-	cp _build/install/default/bin/$(TARGET).exe $(RELEASE)
-	strip $(RELEASE)
+# generate opam file (in particular)
+opam:
+	$(DUNE) build @check
 
 fmt:
 	@$(DUNE) build @fmt --auto-promote --diff-command=- || true
-
-test:
-	$(DUNE) runtest 
 
 regression:
 	$(DUNE) build @regression

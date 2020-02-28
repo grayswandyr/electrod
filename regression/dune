@@ -1,5 +1,5 @@
-(alias
- (name regression)
+(rule
+ (alias regression)
  (deps
   (package electrod)
   (glob_files *.elo)

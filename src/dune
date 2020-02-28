@@ -10,6 +10,9 @@
 (executable
  (public_name electrod)
  (package electrod)
+ (promote
+  (until-clean)
+  (into ..))
  (modules
   ("Main" electrod))
  (libraries electrod.libelectrod dune-build-info cmdliner fmt fmt.cli fmt.tty
@@ -24,9 +27,8 @@
    ("Main" electrod)))
  (libraries containers containers.data containers.unix fmt fmt.tty gen
    hashcons logs.fmt mtime.clock.os printbox iter stdcompat stdlib-shims)
- (inline_tests)
  (preprocess
-  (pps ppx_inline_test ppx_deriving visitors.ppx)))
+  (pps ppx_deriving visitors.ppx)))
 
 ; Generate Scripts.ml file
 

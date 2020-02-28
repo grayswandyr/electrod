@@ -1,9 +1,8 @@
-(lang dune 1.10)
+(lang dune 2.0)
 
 (name electrod)
 
 (using menhir 2.0)
-(using fmt 1.2)
 
 (allow_approximate_merlin)
 
@@ -19,17 +18,18 @@
  (name electrod)
  (depends
   (ocaml (>= 4.05.0))
-  (dune (>= 1.10))
+  (dune (>= 2.0))
   dune-build-info
   cmdliner 
-  (containers (>= 2.0)) 
+  (containers (>= 2.8)) 
   (fmt (>= 0.8.7))
   gen
   hashcons
   logs
+  (mdx :with-test)
   menhir
   mtime
-  ppx_inline_test
+  ppx_deriving
   printbox
   iter
   stdcompat
