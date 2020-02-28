@@ -1,3 +1,7 @@
+### 0.5 (2020-02-28)
+- add option --temporal-symmetry/--ts to generate a full temporal symmetry formula
+- adapt to changes in the API of the Containers package
+
 ### 0.4.1 (2019-12-06)
 - fighting once again with dune-release...
 
