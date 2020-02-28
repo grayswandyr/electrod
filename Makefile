@@ -22,7 +22,7 @@ build-release:
 
 # generate opam file (in particular)
 opam:
-	$(DUNE) build @check
+	$(DUNE) build $(TARGET).opam
 
 fmt:
 	@$(DUNE) build @fmt --auto-promote --diff-command=- || true
