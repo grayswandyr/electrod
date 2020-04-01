@@ -111,8 +111,20 @@ let outcome_format =
 
 
 let temporal_symmetry =
-  let doc = {|If present, generate the full temporal symmetry predicate.|} in
+  let doc =
+    {|If present, generate the full temporal symmetry breaking predicate. Otherwise a single-state symmetry breaking predicate is generated.|}
+  in
   Arg.(value & flag & info ["ts"; "temporal-symmetry"] ~doc)
+
+
+let symmetry_offset =
+  let doc =
+    {|Sets the offset of the single-state symmetry breaking predicate. Only taken into account if the option temporal-symmetry is NOT selected. $(docv) must be non-negative.|}
+  in
+  Arg.(
+    value
+    & opt natural_arg 0
+    & info ["so"; "symmetry-offset"] ~docv:"SYMMETRY_OFFSET" ~doc)
 
 
 (* verbosity options (already def'd in Logs_cli, thx!) *)
@@ -135,7 +147,8 @@ let main_term =
     $ outcome_format
     $ long_names
     $ bmc_length
-    $ temporal_symmetry)
+    $ temporal_symmetry
+    $ symmetry_offset)
 
 
 let main_info =

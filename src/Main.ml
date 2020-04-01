@@ -80,7 +80,8 @@ let main
     outcome_format
     long_names
     bmc
-    temporal_symmetry =
+    temporal_symmetry
+    symmetry_offset =
   ensure_session_leader ();
   let long_names =
     (* Debug ==> long names *)
@@ -131,7 +132,8 @@ let main
     let elo = Ast_to_elo.convert ast in
     let before_conversion = Mtime_clock.now () in
     let model =
-      Transfo.(get_exn elo_to_smv_t "to_smv1" |> run) (elo, temporal_symmetry)
+      Transfo.(get_exn elo_to_smv_t "to_smv1" |> run)
+        (elo, temporal_symmetry, symmetry_offset)
     in
     let conversion_time = Mtime.span before_conversion @@ Mtime_clock.now () in
     ( match verbosity with

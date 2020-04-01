@@ -29,30 +29,37 @@ module Make
 struct
   type atomic = Ltl.Atomic.t
 
-  (* Computes the LTL (actually propostional) formula encoding the symmetry 
-  in the initial state only *)
-  let initial_state_sym_to_ltl elo (sym : Symmetry.t) =
+  (** Computes the LTL (the only temporal connective is "next") formula encoding
+      the symmetry 
+      in a single state only (int the initial state if symmetry_offset = 0) *)
+  let single_state_sym_to_ltl symmetry_offset elo (sym : Symmetry.t) =
     let open Elo in
     let open Ltl in
-    Symmetry.fold
-      (fun (name1, tuple1) (name2, tuple2) (fml_acc : Ltl.t) ->
-        (*We assume that a symmetry is well-formed: each pair of
-              name and tuple (name, tuple) share the same name *)
-        if not (Name.equal name1 name2)
-        then assert false
-        else
-          let at1 = Ltl.Atomic.make elo.domain name1 tuple1 in
-          let at_fml1 = atomic at1 in
-          let at2 = Ltl.Atomic.make elo.domain name2 tuple2 in
-          let at_fml2 = atomic at2 in
-          and_
-            (implies at_fml1 (lazy at_fml2))
-            (lazy (implies (iff at_fml1 at_fml2) (lazy fml_acc))) )
-      sym
-      true_
+    let sym_fml =
+      Symmetry.fold
+        (fun (name1, tuple1) (name2, tuple2) (fml_acc : Ltl.t) ->
+          (*We assume that a symmetry is well-formed: each pair of
+               name and tuple (name, tuple) share the same name *)
+          if not (Name.equal name1 name2)
+          then assert false
+          else
+            let at1 = Ltl.Atomic.make elo.domain name1 tuple1 in
+            let at_fml1 = atomic at1 in
+            let at2 = Ltl.Atomic.make elo.domain name2 tuple2 in
+            let at_fml2 = atomic at2 in
+            and_
+              (implies at_fml1 (lazy at_fml2))
+              (lazy (implies (iff at_fml1 at_fml2) (lazy fml_acc))) )
+        sym
+        true_
+    in
+    let rec iter_next_ltl k phi =
+      if k = 0 then phi else iter_next_ltl (k - 1) (next phi)
+    in
+    iter_next_ltl symmetry_offset sym_fml
 
 
-  (* Computes the full LTL formula encoding the symmetry in a temporal context *)
+  (** Computes the full LTL formula encoding the symmetry in a temporal context *)
   let temporal_sym_to_ltl elo (sym : Symmetry.t) =
     let open Elo in
     let open Ltl in
@@ -75,13 +82,13 @@ struct
     always
     @@ implies
          (yesterday @@ historically all_equiv)
-         (lazy (initial_state_sym_to_ltl elo sym))
+         (lazy (single_state_sym_to_ltl 0 elo sym))
 
 
   (* Computes an LTL formula for the whole list of symmetries. 
     According to the value of the argument temporal_symmetry, the LTL formula
     either deals with the initial state or with the whole temporal trace. *)
-  let syms_to_ltl temporal_symmetry elo =
+  let syms_to_ltl temporal_symmetry symmetry_offset elo =
     let open Elo in
     let syms = elo.sym in
     List.fold_left
@@ -89,7 +96,7 @@ struct
         let cur_fml =
           if temporal_symmetry
           then temporal_sym_to_ltl elo sym
-          else initial_state_sym_to_ltl elo sym
+          else single_state_sym_to_ltl symmetry_offset elo sym
         in
         List.cons cur_fml fmls_acc )
       (*       S.cons ("-- (symmetry)", cur_fml) fmls_acc )*)
@@ -180,7 +187,7 @@ struct
         lbinary premise impl rhs_fml
 
 
-  let run (elo, temporal_symmetry) =
+  let run (elo, temporal_symmetry, symmetry_offset) =
     let open Elo in
     (* #781 Handle instance:
 
@@ -219,7 +226,7 @@ struct
       |> S.rev
     in
     (* handling symmetries *)
-    let syms_fmls = syms_to_ltl temporal_symmetry elo in
+    let syms_fmls = syms_to_ltl temporal_symmetry symmetry_offset elo in
     (* handling the goal *)
     let goal_blk = match elo.goal with Elo.Run (g, _) -> g in
     (* Partition the goal fmls into invars and non invars *)
@@ -238,18 +245,18 @@ struct
     (* Msg.debug (fun m -> m "Elo property : %a" Elo.pp_fml spec_fml); *)
     let spec_fml_str, prop_ltl =
       let s, p = ConvertFormulas.convert elo spec_fml in
-      if temporal_symmetry
+      if temporal_symmetry || symmetry_offset > 0
       then
         ( "-- A temporal symmetry breaking predicate is added at the \
            beginning of the LTLSPEC formula. This is due to the \
            --temporal-symmetry option of electrod. \n"
           ^ s
         , Ltl.and_ (Ltl.conj syms_fmls) (lazy p) )
-      else ConvertFormulas.convert elo spec_fml
+      else (s, p)
     in
     (* handling init, invariants and trans *)
     let inits =
-      if temporal_symmetry
+      if temporal_symmetry || symmetry_offset > 0
       then translate_formulas detected_inits
       else
         S.append
