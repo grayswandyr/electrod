@@ -1,3 +1,6 @@
+### 0.6 (2020-04-02)
+- add option --symmetry-offset/--so to offset the single-state symmetry breaking predicate.
+
 ### 0.5 (2020-02-28)
 - add option --temporal-symmetry/--ts to generate a full temporal symmetry formula
 - adapt to changes in the API of the Containers package
