@@ -52,11 +52,12 @@ let new_env vars stack =
         Fmt.(brackets @@ list ~sep:comma Ast.pp_var)
         (List.rev vars)
         Fmt.(brackets @@ list ~sep:comma Var.pp)
-        stack );
+        stack);
   List.rev_map (function Ast.BVar v -> v) vars @ stack
 
 
-let rec convert_fml stack ({prim_fml; _} : (Ast.var, Ast.ident) Gen_goal.fml) =
+let rec convert_fml stack ({ prim_fml; _ } : (Ast.var, Ast.ident) Gen_goal.fml)
+    =
   match prim_fml with
   | Qual (_, _) ->
       assert false (* simplified *)
@@ -66,7 +67,7 @@ let rec convert_fml stack ({prim_fml; _} : (Ast.var, Ast.ident) Gen_goal.fml) =
       assert false (* simplified *)
   | Quant (_, [], _) ->
       assert false (* impossible *)
-  | Quant (q, [(disj, vars, range)], block) ->
+  | Quant (q, [ (disj, vars, range) ], block) ->
       let range' = convert_exp stack range in
       let block' = convert_block (new_env vars stack) block in
       E.quant (convert_quant q) (disj, List.length vars, range') block'
@@ -176,7 +177,7 @@ and convert_lbinop (op : Gen_goal.lbinop) =
 
 
 and convert_exp
-    stack ({prim_exp; arity; _} : (Ast.var, Ast.ident) Gen_goal.exp) =
+    stack ({ prim_exp; arity; _ } : (Ast.var, Ast.ident) Gen_goal.exp) =
   let ar = convert_arity arity in
   match prim_exp with
   | BoxJoin (_, _) ->
@@ -221,7 +222,7 @@ and convert_exp
                    Ast.pp_prim_exp
                    prim_exp
                    (E.pp_exp 0)
-                   e ) )
+                   e))
 
 
 and convert_sim_bindings
@@ -264,7 +265,7 @@ and convert_rbinop (op : Gen_goal.rbinop) =
       E.join
 
 
-and convert_iexp stack ({prim_iexp; _} : (Ast.var, Ast.ident) Gen_goal.iexp) =
+and convert_iexp stack ({ prim_iexp; _ } : (Ast.var, Ast.ident) Gen_goal.iexp) =
   match prim_iexp with
   | Num n ->
       E.num n

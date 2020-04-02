@@ -182,8 +182,8 @@ module type LTL = sig
     ?next_is_X:bool -> Atomic.t Iter.t ref -> Format.formatter -> t -> unit
 end
 
-module LTL_from_Atomic (At : ATOMIC_PROPOSITION) :
-  LTL with module Atomic = At = struct
+module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
+struct
   module Atomic = At
 
   type tcomp =
@@ -243,7 +243,7 @@ module LTL_from_Atomic (At : ATOMIC_PROPOSITION) :
 
 
   (* default impl. for pp; to override later *)
-  
+
   (* let equal_tcomp_node x y = match x, y with  *)
   (*   | Lte, Lte *)
   (*   | Lt, Lt *)
@@ -456,7 +456,8 @@ module type MODEL = sig
     ; init : (string * ltl) Iter.t
     ; invariant : (string * ltl) Iter.t
     ; trans : (string * ltl) Iter.t
-    ; property : string * ltl }
+    ; property : string * ltl
+    }
 
   val make :
        elo:Elo.t

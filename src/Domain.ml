@@ -40,7 +40,7 @@ let univ_atoms domain =
   let open Relation in
   let open Scope in
   match get_exn Name.univ domain with
-  | Const {scope; _} ->
+  | Const { scope; _ } ->
     (match scope with Exact b -> b | Inexact _ -> assert false)
   | Var _ ->
       assert false
@@ -100,7 +100,7 @@ let update_domain_with_instance domain instance =
     | `Left dom_entry ->
         Some dom_entry
     | `Right _ ->
-        (* cannot happen: Raw_to_ast checked that every 
+        (* cannot happen: Raw_to_ast checked that every
            instance is in the domain *)
         assert false
   in
@@ -111,7 +111,7 @@ let rename atom_renaming name_renaming domain =
   to_list domain
   |> List.map (fun (name, rel) ->
          ( List.assoc ~eq:Name.equal name name_renaming
-         , Relation.rename atom_renaming name_renaming rel ) )
+         , Relation.rename atom_renaming name_renaming rel ))
   |> of_list
 
 

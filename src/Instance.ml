@@ -57,7 +57,7 @@ let rename atom_renaming name_renaming inst =
   to_list inst
   |> List.map (fun (name, ts) ->
          ( List.assoc ~eq:Name.equal name name_renaming
-         , Tuple_set.rename atom_renaming ts ) )
+         , Tuple_set.rename atom_renaming ts ))
   |> of_list
 
 

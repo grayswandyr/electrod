@@ -16,8 +16,8 @@ open Containers
 
 (** Tuples of atoms. *)
 
-(** invariant: atoms <> empty *)
 type t
+(** invariant: atoms <> empty *)
 
 val of_list1 : Atom.t list -> t
 (** Builds a tuple out of a non-empty list of atoms. *)

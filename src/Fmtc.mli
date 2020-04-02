@@ -114,17 +114,14 @@ val surround_ :
   -> 'b
   -> 'a
 
-val braces_ :
-  (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a -> unit
+val braces_ : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a -> unit
 
 val brackets_ :
   (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a -> unit
 
-val parens_ :
-  (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a -> unit
+val parens_ : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a -> unit
 
-val angles_ :
-  (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a -> unit
+val angles_ : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a -> unit
 
 val unless :
      ('a -> bool)

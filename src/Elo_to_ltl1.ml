@@ -32,7 +32,7 @@ let all_different ~eq xs =
   let rec walk acc = function
     | [] ->
         true
-    | [hd] ->
+    | [ hd ] ->
         not @@ List.mem ~eq hd acc
     | hd :: tl ->
         (not @@ List.mem ~eq hd acc) && walk (hd :: acc) tl
@@ -53,9 +53,9 @@ module Make (Ltl : Solver.LTL) = struct
   (***************************************************************** 
    * Semantic function
    ****************************************************************)
-  
+
   (* FIRST: some functions used for the semantics of a transitive closure. *)
-  
+
   (* given a 2-tuple set ts, this function computes the domain and the
      co-domain of ts, i.e., the set (sequence) of atoms that are the
      first elements of a 2-tuple in ts, and the set (sequence) of atoms
@@ -82,7 +82,7 @@ module Make (Ltl : Solver.LTL) = struct
                   ~sep:", "
                   (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp)
                   (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp) )
-             res )
+             res)
 
 
   (* given a 2-tuple set, this function computes the maximum length of
@@ -107,7 +107,7 @@ module Make (Ltl : Solver.LTL) = struct
             (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp)
             cod
             (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp)
-            core_ats );
+            core_ats);
       let core_length = S.length core_ats in
       (* is it possible that x1 is not in the core (intersection of the
          domain and the codomain) ? *)
@@ -115,14 +115,14 @@ module Make (Ltl : Solver.LTL) = struct
         S.subset ~eq:Atom.equal ~hash:Atom.hash dom core_ats
       in
       Msg.debug (fun m ->
-          m "compute_tc_length: first_elt_in_core = %B\n" first_elt_in_core );
+          m "compute_tc_length: first_elt_in_core = %B\n" first_elt_in_core);
       (* is it possible that xn is not in the core (intersection of the
          domain and the codomain) ? *)
       let last_elt_in_core =
         S.subset ~eq:Atom.equal ~hash:Atom.hash cod core_ats
       in
       Msg.debug (fun m ->
-          m "compute_tc_length: last_elt_in_core = %B\n" last_elt_in_core );
+          m "compute_tc_length: last_elt_in_core = %B\n" last_elt_in_core);
       ( match (first_elt_in_core, last_elt_in_core) with
       | true, true ->
           core_length
@@ -131,7 +131,7 @@ module Make (Ltl : Solver.LTL) = struct
       | _ ->
           core_length + 1 )
       |> Fun.tap (fun res ->
-             Msg.debug (fun m -> m "compute_tc_length --> length = %d" res) )
+             Msg.debug (fun m -> m "compute_tc_length --> length = %d" res))
 
 
   (* computes the transitive closure of the term acc_term by k iterative
@@ -153,7 +153,7 @@ module Make (Ltl : Solver.LTL) = struct
 
   (* computes the transitive closure of the term t by k joins
      (alternative to iter_squares) t + t.t + t.t.t + ... *)
-  
+
   (* let iter_tc (t : G.exp) k =
      if k = 0 then G.none
      else
@@ -165,9 +165,9 @@ module Make (Ltl : Solver.LTL) = struct
      tc := G.(rbinary ~ar !tc union !t_to_the_k);
      done;
      !tc *)
-  
+
   (* computes the transitive closure of the term t by t.(iden + t).(iden.t^2).(iden+(t^2)^2)... *)
-  
+
   (* let ioannidis_tc (t : G.exp) k =
      let ar = G.arity t in
      let prev_t = ref t in
@@ -180,8 +180,8 @@ module Make (Ltl : Solver.LTL) = struct
      i := 2 * !i;
      max_pow := !max_pow + !i
      done;
-     !term  *)
-  
+     !term *)
+
   (* utility function for build_Join *)
   let eligible_pairs ((tuple, r_sup, s_sup) : Tuple.t * TS.t * TS.t) :
       (Tuple.t * Tuple.t) Iter.t =
@@ -194,9 +194,9 @@ module Make (Ltl : Solver.LTL) = struct
         find
           (* find the *at most one* (for fixed tuple and x_r) x_s s.t. tuple = x_r . x_s *)
             (fun x_s ->
-            if Tuple.is_in_join tuple x_r x_s then Some (x_r, x_s) else None )
+            if Tuple.is_in_join tuple x_r x_s then Some (x_r, x_s) else None)
           s_sup_seq
-        |> function Some pair -> cons pair pairs | None -> pairs )
+        |> function Some pair -> cons pair pairs | None -> pairs)
       empty
       r_sup_seq
 
@@ -240,7 +240,7 @@ module Make (Ltl : Solver.LTL) = struct
       method build_Block (_ : stack) = conj
 
       method build_Card subst r r' =
-        let {must; may; _} = env#must_may_sup subst r in
+        let { must; may; _ } = env#must_may_sup subst r in
         let must_card = num @@ TS.size must in
         let may_card = count @@ List.map r' @@ TS.to_list may in
         plus must_card may_card
@@ -258,20 +258,15 @@ module Make (Ltl : Solver.LTL) = struct
                 (fun _visitors_this -> _visitors_this) _visitors_c1
               in
               let _visitors_r2 = self#visit_'exp env _visitors_c2 in
-              (_visitors_r0, _visitors_r1, _visitors_r2) )
+              (_visitors_r0, _visitors_r1, _visitors_r2))
             env
             _visitors_c0
         in
-        let _visitors_r1 = [true_] in
-        self#build_Compr
-          env
-          _visitors_c0
-          _visitors_c1
-          _visitors_r0
-          _visitors_r1
+        let _visitors_r1 = [ true_ ] in
+        self#build_Compr env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
 
       method private allocate_sbs_to_tuples
-            (ranges : G.exp list) (tuple : Tuple.t) : Tuple.t list =
+          (ranges : G.exp list) (tuple : Tuple.t) : Tuple.t list =
         let rec walk ranges atoms =
           match ranges with
           | [] ->
@@ -284,8 +279,8 @@ module Make (Ltl : Solver.LTL) = struct
 
       (* check if the disj's in the comprehension sim_bindings are respected *)
       method private check_compr_disj
-            (sbs : (bool * int * G.exp) list) (split_tuples : Tuple.t list)
-          : bool =
+          (sbs : (bool * int * G.exp) list) (split_tuples : Tuple.t list) : bool
+          =
         let rec walk sbs tuples =
           match sbs with
           | [] ->
@@ -299,7 +294,7 @@ module Make (Ltl : Solver.LTL) = struct
                     nbvars
                     Fmtc.(brackets @@ list ~sep:sp @@ Tuple.pp)
                     tuples
-                    alldiff );
+                    alldiff);
               alldiff && walk tl ys
           | (false, nbvars, _) :: tl ->
               let ys = List.drop nbvars tuples in
@@ -315,12 +310,12 @@ module Make (Ltl : Solver.LTL) = struct
          before computing the whole resulting formula.
       *)
       method build_Compr
-            (subst : stack)
-            (sbs : (bool * int * G.exp) list)
-            (body : G.fml list)
-            __sbs'
-            __body'
-            tuple =
+          (subst : stack)
+          (sbs : (bool * int * G.exp) list)
+          (body : G.fml list)
+          __sbs'
+          __body'
+          tuple =
         let compr_ar =
           List.fold_left (fun acc (_, n, r) -> acc + (n * G.arity r)) 0 sbs
         in
@@ -341,11 +336,11 @@ module Make (Ltl : Solver.LTL) = struct
                 Tuple.pp
                 tuple
                 (Tuple.arity tuple)
-                compr_ar );
+                compr_ar);
         (* the tuple is (in principle) of arity equal to the sum of arities of ranges of bound variables. To build the corresponding substitutions, we must first split this tuple into as many tuples as variables, each one with the adequate arity *)
         let ranges =
           List.flat_map
-            (fun (_, nbvars, range) -> List.repeat nbvars [range])
+            (fun (_, nbvars, range) -> List.repeat nbvars [ range ])
             sbs
         in
         let split_tuples = self#allocate_sbs_to_tuples ranges tuple in
@@ -364,21 +359,21 @@ module Make (Ltl : Solver.LTL) = struct
                 in
                 let r' = self#visit_exp acc_subst r (Tuple.concat boundvars) in
                 (* copy range nbvars times *)
-                let rs' = List.repeat nbvars [r'] in
+                let rs' = List.repeat nbvars [ r' ] in
                 let new_subst = List.rev boundvars @ acc_subst in
-                ((remaining, new_subst), rs') )
+                ((remaining, new_subst), rs'))
               (split_tuples, subst)
               sbs
           in
           conj (b' :: ranges')
           |> Fun.tap (fun res ->
-                 Msg.debug (fun m -> m "build_Compr --> %a" pp res) )
+                 Msg.debug (fun m -> m "build_Compr --> %a" pp res))
         else (
           Msg.debug (fun m -> m "build_Compr --> false (disj case)");
           false_ )
 
       method build_Diff
-            (_ : stack) (_ : G.exp) (_ : G.exp) e' f' (tuple : Tuple.t) =
+          (_ : stack) (_ : G.exp) (_ : G.exp) e' f' (tuple : Tuple.t) =
         e' tuple +&& lazy (not_ (f' tuple))
 
       method build_F (_ : stack) (a : ltl) : ltl = eventually a
@@ -416,15 +411,14 @@ module Make (Ltl : Solver.LTL) = struct
 
       method build_Iff (_ : stack) (a : ltl) (b : ltl) : ltl = iff a b
 
-      method build_Imp (_ : stack) (a : ltl) (b : ltl) : ltl =
-        implies a (lazy b)
+      method build_Imp (_ : stack) (a : ltl) (b : ltl) : ltl = implies a (lazy b)
 
       method build_In subst r (__s : G.exp) r' s' =
-        let {must; may; _} = env#must_may_sup subst r in
+        let { must; may; _ } = env#must_may_sup subst r in
         wedge ~range:(TS.to_iter must) (fun t -> lazy (s' t))
         +&& lazy
               (wedge ~range:(TS.to_iter may) (fun bs ->
-                   lazy (r' bs @=> lazy (s' bs)) ))
+                   lazy (r' bs @=> lazy (s' bs))))
 
       method build_Inter (_ : stack) _ _ e1 e2 tuple =
         e1 tuple +&& lazy (e2 tuple)
@@ -438,7 +432,7 @@ module Make (Ltl : Solver.LTL) = struct
       method build_LBin (_ : stack) _ _ _ f1' op' f2' = op' f1' f2'
 
       method build_LProj (_ : stack) _ _ s' r' tuple =
-        (s' @@ Tuple.(of_list1 [ith 0 tuple])) +&& lazy (r' tuple)
+        (s' @@ Tuple.(of_list1 [ ith 0 tuple ])) +&& lazy (r' tuple)
 
       method build_LUn (_ : stack) _ _ op' f' = op' f'
 
@@ -447,7 +441,7 @@ module Make (Ltl : Solver.LTL) = struct
       method build_Lte (_ : stack) : tcomp = lte
 
       method build_Name (subst : stack) rel _ tuple =
-        let {must; may; _} =
+        let { must; may; _ } =
           env#must_may_sup subst @@ G.name ~ar:(env#relation_arity rel) rel
         in
         if TS.mem tuple must
@@ -474,13 +468,12 @@ module Make (Ltl : Solver.LTL) = struct
       method build_Or (_ : stack) (a : ltl) (b : ltl) : ltl = or_ a (lazy b)
 
       method build_Over (subst : stack) __r s r' s' tuple =
-        let {must; may; _} = env#must_may_sup subst s in
-        let proj1 x = Tuple.(of_list1 [ith 0 x]) in
+        let { must; may; _ } = env#must_may_sup subst s in
+        let proj1 x = Tuple.(of_list1 [ ith 0 x ]) in
         let mustpart =
           wedge ~range:(TS.to_iter must) (fun t ->
               lazy
-                (if Tuple.equal (proj1 t) (proj1 tuple) then false_ else true_)
-          )
+                (if Tuple.equal (proj1 t) (proj1 tuple) then false_ else true_))
         in
         (* [newmay] helps compute the last AND above: it removes duplicate tuples
            that may appear in this translation: *)
@@ -516,10 +509,10 @@ module Make (Ltl : Solver.LTL) = struct
         let sb' =
           (fun (disj, nbvars, range) ->
             let range' = self#visit_'exp subst range in
-            (disj, nbvars, range') )
+            (disj, nbvars, range'))
             sb
         in
-        let range' = [true_] in
+        let range' = [ true_ ] in
         self#build_Quant subst q sb block q' sb' range'
 
       method build_Quant subst quant (disj, nbvars, s) blk _ (_, _, s') _ =
@@ -534,7 +527,7 @@ module Make (Ltl : Solver.LTL) = struct
              then
                filter (fun l ->
                    let sorted = sort_uniq ~cmp:Tuple.compare l in
-                   length l = length sorted )
+                   length l = length sorted)
              else Fun.id )
           |> to_iter
         in
@@ -558,7 +551,7 @@ module Make (Ltl : Solver.LTL) = struct
             (* [[...]] *)
             @@ G.block blk )
         in
-        let {must; may; _} = env#must_may_sup subst s in
+        let { must; may; _ } = env#must_may_sup subst s in
         let mustpart =
           bigop
             ~range:(tuples_of_sim_binding @@ TS.to_list must)
@@ -585,15 +578,14 @@ module Make (Ltl : Solver.LTL) = struct
                      (fun tuple -> lazy (s' tuple))
                  in
                  (* Msg.debug (fun m -> m "(build_Quant.premise) %a" Ltl.pp premise); *)
-                 lazy (link premise @@ sem_of_substituted_blk tuples) ))
+                 lazy (link premise @@ sem_of_substituted_blk tuples)))
         in
         smallop mustpart maypart
 
       method build_R (_ : stack) (a : ltl) (b : ltl) : ltl = releases a b
 
       method build_RBin
-            (_ : stack) (a : G.exp) (_ : G.rbinop) (b : G.exp) a' op' b' tuple
-          =
+          (_ : stack) (a : G.exp) (_ : G.rbinop) (b : G.exp) a' op' b' tuple =
         op' a b a' b' tuple
 
       method build_RComp (_ : stack) f1 __op f2 f1' op' f2' = op' f1 f2 f1' f2'
@@ -607,7 +599,7 @@ module Make (Ltl : Solver.LTL) = struct
               (wedge ~range:(TS.to_iter s_bounds.must) (fun t -> lazy (r' t)))
         +&& lazy
               (wedge ~range:(TS.to_iter inter) (fun bs ->
-                   lazy (r' bs @<=> s' bs) ))
+                   lazy (r' bs @<=> s' bs)))
         +&& lazy
               (wedge
                  ~range:(TS.to_iter @@ TS.diff r_bounds.may inter)
@@ -618,7 +610,7 @@ module Make (Ltl : Solver.LTL) = struct
                  (fun bs -> lazy (s' bs @=> lazy (r' bs))))
 
       method build_RIte
-            (_ : stack) (__c : G.fml) (__t : G.exp) __e c' t' e' tuple =
+          (_ : stack) (__c : G.fml) (__t : G.exp) __e c' t' e' tuple =
         (c' @=> lazy (t' tuple)) +&& lazy (not_ c' @=> lazy (e' tuple))
 
       method build_RNEq (subst : stack) r s r' s' =
@@ -626,7 +618,7 @@ module Make (Ltl : Solver.LTL) = struct
 
       method build_RProj (_ : stack) _ _ r' s' tuple =
         let lg = Tuple.arity tuple in
-        (s' @@ Tuple.of_list1 [Tuple.ith (lg - 1) tuple]) +&& lazy (r' tuple)
+        (s' @@ Tuple.of_list1 [ Tuple.ith (lg - 1) tuple ]) +&& lazy (r' tuple)
 
       method build_RTClos subst r _ tuple =
         (* FIXME *)
@@ -645,8 +637,8 @@ module Make (Ltl : Solver.LTL) = struct
       method build_TClos subst r __r' tuple =
         assert (Tuple.arity tuple = 2);
         Msg.debug (fun m ->
-            m "%s.build_TClos <-- %a" __MODULE__ G.(pp_exp (arity r)) r );
-        let {sup; _} = env#must_may_sup subst r in
+            m "%s.build_TClos <-- %a" __MODULE__ G.(pp_exp (arity r)) r);
+        let { sup; _ } = env#must_may_sup subst r in
         let k = compute_tc_length sup in
         Msg.debug (fun m -> m "TC bound: %d" k);
         (* let tc_naif = iter_tc r k in

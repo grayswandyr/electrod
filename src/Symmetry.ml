@@ -28,7 +28,7 @@ let rename atom_renaming relation_renaming (left, right) =
     List.map
       (fun (name, tuple) ->
         ( List.assoc ~eq:Name.equal name relation_renaming
-        , Tuple.rename atom_renaming tuple ) )
+        , Tuple.rename atom_renaming tuple ))
       l
   in
   (rename_list left, rename_list right)

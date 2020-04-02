@@ -21,7 +21,7 @@ let convert n =
   let rec aux n =
     let q = n / 26
     and r = n mod 26 in
-    if q = 0 then [r] else r :: aux q
+    if q = 0 then [ r ] else r :: aux q
   in
   aux n
 
@@ -42,7 +42,7 @@ let encode_atom = make_encode 'a'
 (* uppercase letters for relations *)
 let encode_relation = make_encode 'A'
 
-let is_univ_or_iden n = List.mem ~eq:Name.equal n [Name.iden; Name.univ]
+let is_univ_or_iden n = List.mem ~eq:Name.equal n [ Name.iden; Name.univ ]
 
 let compute_relation_renaming elo =
   Domain.to_list elo.Ast.domain
@@ -55,10 +55,10 @@ let compute_relation_renaming elo =
            if is_univ_or_iden new_name
            then
              (* it may happen that new_string happens to fall on "univ" or
-               "iden", which may induce errors in the translation process, so we
-               append a symbol (1) not used in the encoding set *)
+                "iden", which may induce errors in the translation process, so we
+                append a symbol (1) not used in the encoding set *)
              (name, Name.name @@ new_string ^ "1")
-           else (name, new_name) )
+           else (name, new_name))
 
 
 let compute_atom_renaming elo =
@@ -67,7 +67,7 @@ let compute_atom_renaming elo =
   |> List.mapi (fun i tuple ->
          let atom = Tuple.ith 0 tuple in
          let new_atom = Atom.atom @@ encode_atom i in
-         (atom, new_atom) )
+         (atom, new_atom))
 
 
 let rename_elo long_names elo =
@@ -83,7 +83,8 @@ let rename_elo long_names elo =
             |> Tuple_set.to_list
             |> List.map (Tuple.ith 0) )
       ; name_renaming =
-          id_renaming (Domain.to_list elo.Ast.domain |> List.map fst) }
+          id_renaming (Domain.to_list elo.Ast.domain |> List.map fst)
+      }
   else
     let atom_renaming = compute_atom_renaming elo in
     let name_renaming = compute_relation_renaming elo in
@@ -95,7 +96,7 @@ let rename_elo long_names elo =
           @@ list ~sep:semi
           @@ parens
           @@ pair ~sep:comma Atom.pp Atom.pp )
-          atom_renaming );
+          atom_renaming);
     Msg.debug (fun m ->
         m
           "Name renaming:@ %a"
@@ -103,7 +104,7 @@ let rename_elo long_names elo =
           @@ list ~sep:semi
           @@ parens
           @@ pair ~sep:comma Name.pp Name.pp )
-          name_renaming );
+          name_renaming);
     Ast.
       { elo with
         domain = Domain.rename atom_renaming name_renaming elo.domain
@@ -113,4 +114,5 @@ let rename_elo long_names elo =
       ; sym = List.map (Symmetry.rename atom_renaming name_renaming) elo.sym
       ; instance = Instance.rename atom_renaming name_renaming elo.instance
       ; atom_renaming
-      ; name_renaming }
+      ; name_renaming
+      }

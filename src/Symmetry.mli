@@ -20,5 +20,4 @@ val make : (Name.t * Tuple.t) list -> (Name.t * Tuple.t) list -> t
 
 val fold : (Name.t * Tuple.t -> Name.t * Tuple.t -> 'a -> 'a) -> t -> 'a -> 'a
 
-val rename :
-  (Atom.t, Atom.t) CCList.Assoc.t -> (Name.t * Name.t) list -> t -> t
+val rename : (Atom.t, Atom.t) CCList.Assoc.t -> (Name.t * Name.t) list -> t -> t

@@ -25,7 +25,8 @@ type raw_problem =
   ; raw_goal : raw_goal
   ; raw_invar : raw_block  (** may be empty *)
   ; raw_inst : raw_assignment list  (** may be empty *)
-  ; raw_syms : raw_symmetry list  (** may be empty *) }
+  ; raw_syms : raw_symmetry list  (** may be empty *)
+  }
 
 and raw_urelements = private
   | UIntvl of raw_interval
@@ -37,7 +38,7 @@ and raw_declaration = private
   | DConst of Raw_ident.t * int option * raw_scope
   | DVar of Raw_ident.t * int option * raw_scope * raw_scope option
 
-and raw_multiplicity = [`Lone | `One] option
+and raw_multiplicity = [ `Lone | `One ] option
 
 and raw_scope = private
   | SExact of raw_bound
@@ -55,13 +56,14 @@ and raw_element = private
   | EIntvl of raw_interval  (** 1-tuples *)
   | ETuple of raw_tuple
 
-(** A n-tuple (incl. n = 1). inv: nonempty list *)
 and raw_tuple = Raw_ident.t list
+(** A n-tuple (incl. n = 1). inv: nonempty list *)
 
 and raw_interval = Raw_ident.t * Raw_ident.t
 
 (** asignemnt of tuples to a relation *)
-and raw_assignment = Raw_ident.t * raw_tuple list  (** may be empty  *)
+and raw_assignment = Raw_ident.t * raw_tuple list
+(** may be empty  *)
 
 and raw_symmetry =
   (Raw_ident.t * raw_tuple) list * (Raw_ident.t * raw_tuple) list
