@@ -1,13 +1,13 @@
 /*******************************************************************************
  * electrod - a model finder for relational first-order linear temporal logic
- * 
+ *
  * Copyright (C) 2016-2020 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
- * 
+ *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- * 
+ *
  * SPDX-License-Identifier: MPL-2.0
  * License-Filename: LICENSE.md
  ******************************************************************************/
@@ -17,9 +17,11 @@
 
 (* fixes issue between Menhir and dune *)
 (* https://github.com/ocaml/dune/issues/2450 *)
-module Libelectrod = struct end  
+module Libelectrod = struct end
 
-module R = Raw
+(* Do not declare an alias [R] for the module [Raw], as this will cause
+   Menhir >= 20200525 to infer types that refer to [R] instead of [Raw]. *)
+(* module R = Raw *)
 
 module G = Gen_goal
 
@@ -27,12 +29,12 @@ let exp_no_arity = G.exp (Some 0)
 
 
 %}
-  
+
 %start <Raw.raw_urelements list
  * Raw.raw_declaration list
  * Raw.raw_paragraph list> parse_problem
 
-%token UNIV NONE VAR COLON SEMI EOF EQ IN NEQ AND OR HISTORICALLY 
+%token UNIV NONE VAR COLON SEMI EOF EQ IN NEQ AND OR HISTORICALLY
 %token IMPLIES IFF UNTIL RELEASES SINCE NEXT ONCE PREVIOUS LET
 %token LPAREN RPAREN LBRACKET RBRACKET DOTDOT PLUS ARROW
 %token ALL SOME DISJ ONE LONE NO COMMA LBRACE RBRACE BAR
@@ -44,7 +46,7 @@ let exp_no_arity = G.exp (Some 0)
 %token NEG ADD SUB HASH //INT
 
 
-%token SYM INST 
+%token SYM INST
 
 /* plain ID */
 %token <string> PLAIN_ID
@@ -63,7 +65,7 @@ let exp_no_arity = G.exp (Some 0)
 %left IFF
 %right IMPLIES ELSE
 %left AND
-%left RELEASES SINCE UNTIL 
+%left RELEASES SINCE UNTIL
 %nonassoc NOT NEXT ALWAYS SOMETIME EVENTUALLY PREVIOUS HISTORICALLY ONCE
 %nonassoc /*LT LTE GT GTE*/ EQ NEQ IN NOT_IN
 //%nonassoc NO SOME LONE ONE      (* for formulas as 'some E' (= E != none) *)
@@ -87,14 +89,14 @@ let exp_no_arity = G.exp (Some 0)
 
 paragraph:
     i = insts
-    { R.ParInst i }
+    { Raw.ParInst i }
     | sy = syms
-    { R.ParSym sy }
+    { Raw.ParSym sy }
     | gs = goal
-    { R.ParGoal gs }
+    { Raw.ParGoal gs }
     | f = invariant
-    { R.ParInv f }
- 
+    { Raw.ParInv f }
+
   ////////////////////////////////////////////////////////////////////////
   // universe
   ////////////////////////////////////////////////////////////////////////
@@ -105,21 +107,21 @@ universe:
 
 urelements:
   i = interval
-	{ R.uintvl i }
+	{ Raw.uintvl i }
   | at = PLAIN_ID
   | at = IDX_ID
-  { R.uplain @@ Raw_ident.ident at $startpos $endpos }
+  { Raw.uplain @@ Raw_ident.ident at $startpos $endpos }
   | nb = NUMBER
-  { R.uplain @@ Raw_ident.ident (string_of_int nb) $startpos $endpos }
-           
-  
+  { Raw.uplain @@ Raw_ident.ident (string_of_int nb) $startpos $endpos }
+
+
 declaration:
 	CONST id = PLAIN_ID ar = colon_w_or_wo_arity sc = scope ioption(SEMI)
-	{ R.dconst (Raw_ident.ident id $startpos(id) $endpos(id)) ar sc }
+	{ Raw.dconst (Raw_ident.ident id $startpos(id) $endpos(id)) ar sc }
   |
   VAR id = PLAIN_ID ar = colon_w_or_wo_arity sc = scope
     fby = next_scope? ioption(SEMI)
-	{ R.dvar (Raw_ident.ident id $startpos(id) $endpos(id)) ar sc fby }
+	{ Raw.dvar (Raw_ident.ident id $startpos(id) $endpos(id)) ar sc fby }
 
 colon_w_or_wo_arity:
   COLON
@@ -127,28 +129,28 @@ colon_w_or_wo_arity:
   | ca = COLON_ARITY
   { Some ca }
 
-next_scope: THEN sc = scope 
+next_scope: THEN sc = scope
   { sc }
 
-%inline scope: 
+%inline scope:
 	b = bound
-	{ R.sexact b }
+	{ Raw.sexact b }
 	| b1 = bound mult = boundmult? b2 = bound
-	{ R.sinexact b1 mult b2 }
+	{ Raw.sinexact b1 mult b2 }
 
-bound: 
+bound:
 	UNIV
-	{ R.buniv }
-  | id = PLAIN_ID     
-  { R.bref (Raw_ident.ident id $startpos(id) $endpos(id)) }
+	{ Raw.buniv }
+  | id = PLAIN_ID
+  { Raw.bref (Raw_ident.ident id $startpos(id) $endpos(id)) }
 	| b = parens(bound)
 	{ b }
 	| b1 = bound ARROW mult = boundmult? b2 = bound
-	{ R.bprod b1 mult b2 }
+	{ Raw.bprod b1 mult b2 }
 	| b1 = bound PLUS b2 = bound
-	{ R.bunion b1 b2  }
+	{ Raw.bunion b1 b2  }
   | elts = braces(element*)
-  { R.belts elts }
+  { Raw.belts elts }
 
 boundmult:
   LONE
@@ -158,33 +160,33 @@ boundmult:
 
 element:
   i = interval  /* necessarily: at least two 1-tuples */
-  { R.eintvl i }
+  { Raw.eintvl i }
   | t = tuple    /* one parenthesised tuple of any arity >= 1 is possible */
-  { R.etuple t }
+  { Raw.etuple t }
   | at = atom    /* a single atom without parentheses */
-  { R.etuple [at] }
-  
+  { Raw.etuple [at] }
+
 
 tuple:
   ats = parens(atom+)
   { ats }
-  
+
 interval:
   at1 = IDX_ID
   DOTDOT
   at2 = IDX_ID
   {
-    R.interval (Raw_ident.ident at1 $startpos(at1) $endpos(at1))
+    Raw.interval (Raw_ident.ident at1 $startpos(at1) $endpos(at1))
       (Raw_ident.ident at2 $startpos(at2) $endpos(at2))
- } 
+ }
 
 atom:
   at = PLAIN_ID
  | at = IDX_ID
- { Raw_ident.ident at $startpos $endpos } 
+ { Raw_ident.ident at $startpos $endpos }
  | nb = NUMBER
- { Raw_ident.ident (string_of_int nb) $startpos $endpos } 
- 
+ { Raw_ident.ident (string_of_int nb) $startpos $endpos }
+
 
 
 
@@ -200,7 +202,7 @@ inst:
  id = PLAIN_ID EQ tuples = braces(tuple*) ioption(SEMI)
  { (Raw_ident.ident id $startpos(id) $endpos(id), tuples) }
 
- 
+
 
 
   ////////////////////////////////////////////////////////////////////////
@@ -216,17 +218,17 @@ bracketed_symmetry:
  {sy}
 
 symmetry:
-  syms1 = sym_element+ LTE syms2 = sym_element+ 
+  syms1 = sym_element+ LTE syms2 = sym_element+
   {syms1, syms2}
 
 sym_element:
   atoms = parens(atom+)
   {List.hd atoms, List.tl atoms}
-      
+
   ////////////////////////////////////////////////////////////////////////
   // invariant
   ////////////////////////////////////////////////////////////////////////
- 
+
 %inline invariant:
 	INVARIANT fs = specification
 	{ fs }
@@ -234,11 +236,11 @@ sym_element:
 specification:
 	fs = formula_semi*
   { fs }
-  
+
   ////////////////////////////////////////////////////////////////////////
   // goal
   ////////////////////////////////////////////////////////////////////////
- 
+
 %inline goal:
 	RUN fs = formula_semi+ exp = ioption(expect_field)
 {G.run fs exp }
@@ -247,8 +249,8 @@ expect_field:
 	EXPECT exp_val = expected_value
 	{ exp_val }
 
-expected_value: 
-	SAT { true } 
+expected_value:
+	SAT { true }
 	| UNSAT { false }
 
 formula_semi:
@@ -259,19 +261,19 @@ formula :
      TRUE
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.true_ }
-  
+
 	| FALSE
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.false_ }
-  
+
 	| qual = rqualify e = expr
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.qual qual e }
-  
+
 	| e1 = expr op = comp_op e2 = expr
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.rcomp e1 op e2 }
-  
+
 	| e1 = iexpr op = icomp_op e2 = iexpr
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.icomp e1 op e2 }
@@ -279,35 +281,35 @@ formula :
 	| op = lunop f = formula
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.lunary op f }
-  
+
   | f1 = formula op = lbinop f2 = formula
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.lbinary f1 op f2 }
-	
+
 	| q = quant decls = comma_sep1(ae_decl) block = f_block_or_bar
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.quant q decls block }
-  
+
 	| LET decls = comma_sep1(let_decl) block = f_block_or_bar
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.let_ decls block}
-      
-	|  f = formula IMPLIES t = formula ELSE e = formula 
+
+	|  f = formula IMPLIES t = formula ELSE e = formula
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.fite f t e }
-      
-	|  f = formula IMPLIES t = formula 
+
+	|  f = formula IMPLIES t = formula
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.lbinary f G.impl t  }
-      
+
 	| f = f_block
 	{ G.fml (Location.from_positions $startpos $endpos)
     @@ G.block f }
-  
+
 	| f = parens(formula)
 	    { f }
 
-  
+
 %inline quant:
 	ALL
 	{ G.all }
@@ -327,7 +329,7 @@ formula :
 %inline plain_id:
   id = PLAIN_ID
  	{ Raw_ident.ident id $startpos(id) $endpos(id) }
-  
+
 %inline f_block_or_bar:
  	BAR f = formula
 	{ [f] }
@@ -371,61 +373,61 @@ formula :
 	{ G.previous }
 	| HISTORICALLY
 	{ G.historically }
-    
+
 
     ////////////////////////////////////////////////////////////////////////
     // RELATIONAL EXPRESSIONS
     ////////////////////////////////////////////////////////////////////////
-  
+
 expr:
-  NONE 
+  NONE
 	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.none }
-  
+
 	| UNIV
 	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.univ}
-  
+
 	| IDEN
 	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.iden }
-  
+
 /*	| INT
 	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.int }*/
-  
+
   | id = PLAIN_ID
 	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.ident @@ Raw_ident.ident id $startpos $endpos}
-      
+
 	| op = runop e = expr
 	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.runary op e }
-  
+
 	| e1 = expr op  = rbinop e2 = expr
 	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.rbinary e1 op e2 }
-  
+
 	| f = formula IMPLIES t = expr ELSE e = expr
 	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.rite f t e}
-  
+
 	| exp = expr args = brackets(comma_sep1(expr))
 	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.boxjoin exp args }
-  
+
 	| compr = braces(compr_body)
 	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ compr}
-  
+
 	| e = expr PRIME
 	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.prime e}
-  
+
 	| e = parens(expr)
 	    { e }
 
-      
+
 
 %inline comp_op:
  	NOT_IN
@@ -433,7 +435,7 @@ expr:
   | IN
 	{ G.in_ }
   | EQ
-	{ G.req } 
+	{ G.req }
   | NEQ
  	{ G.rneq }
 
@@ -480,12 +482,12 @@ expr:
 %inline let_decl:
 	id = PLAIN_ID EQ e = expr
 	{ (Raw_ident.ident id $startpos(id) $endpos(id), e) }
- 
- 
+
+
     ////////////////////////////////////////////////////////////////////////
     // INTEGER EXPRESSIONS
      ////////////////////////////////////////////////////////////////////////
-  
+
 iexpr:
   n = NUMBER
   { G.iexp (Location.from_positions $startpos $endpos)
@@ -495,36 +497,36 @@ iexpr:
     @@ G.card e  }
   | NEG e = brackets(iexpr)
   { G.iexp (Location.from_positions $startpos $endpos)
-    @@ G.(iunary neg e) } 
+    @@ G.(iunary neg e) }
   | ADD e = brackets(two_iexprs)
       {
         let (e1, e2) = e in
         G.iexp (Location.from_positions $startpos $endpos)
     @@ G.(ibinary e1 add e2)  }
   | SUB e = brackets(two_iexprs)
-  { 
+  {
     let (e1, e2) = e in
     G.iexp (Location.from_positions $startpos $endpos)
-    @@ G.(ibinary e1 sub e2)  } 
-  
+    @@ G.(ibinary e1 sub e2)  }
+
 	| e = parens(iexpr)
 	        { e }
-  
+
 %inline two_iexprs:
   e1 = iexpr COMMA e2 = iexpr
   { (e1, e2) }
-  
+
 icomp_op:
   | LT
 	{ G.lt}
 	| LTE
 	{ G.lte }
 	| GT
-	{ G.gt } 
+	{ G.gt }
 	| GTE
 	{ G.gte }
   | EQ
-	{ G.ieq } 
+	{ G.ieq }
   | NEQ
  	{ G.ineq }
 
@@ -532,19 +534,19 @@ icomp_op:
     ////////////////////////////////////////////////////////////////////////
     // MENHIR MACROS
     ////////////////////////////////////////////////////////////////////////
-        
-      
+
+
 %public %inline comma_sep1(X) :
   xs = separated_nonempty_list(COMMA, X)
     { xs }
 
 
-    
+
 %public %inline braces(X):
   x = delimited(LBRACE, X, RBRACE)
     { x }
 
-    
+
 %public %inline brackets(X):
   x = delimited(LBRACKET, X, RBRACKET)
     { x }
@@ -559,6 +561,3 @@ icomp_op:
  { false }
  | X
  { true }
-
-
-    
