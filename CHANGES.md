@@ -1,3 +1,6 @@
+### 0.6.2 (2020-06-11)
+- inhibit warning 63 in release mode, see <https://github.com/ocaml/dune/issues/2450>
+
 ### 0.6.1 (2020-06-11)
 - F. Pottier's fix to work with Menhir 20200525
 
