@@ -15,21 +15,12 @@
 open Containers
 
 type t =
-  | Const of
-      { name : Name.t
-      ; arity : int
-      ; scope : Scope.t
-      }
-  | Var of
-      { name : Name.t
-      ; arity : int
-      ; scope : Scope.t
-      ; fby : Scope.t option
-      }
+  | Const of {name : Name.t; arity : int; scope : Scope.t}
+  | Var of {name : Name.t; arity : int; scope : Scope.t; fby : Scope.t option}
 
-let const name arity scope = Const { name; arity; scope }
+let const name arity scope = Const {name; arity; scope}
 
-let var name arity scope fby = Var { name; arity; scope; fby }
+let var name arity scope fby = Var {name; arity; scope; fby}
 
 let equal rel1 rel2 =
   match (rel1, rel2) with
@@ -46,9 +37,9 @@ let equal rel1 rel2 =
       false
 
 
-let arity = function Const { arity; _ } | Var { arity; _ } -> arity
+let arity = function Const {arity; _} | Var {arity; _} -> arity
 
-let name = function Const { name; _ } | Var { name; _ } -> name
+let name = function Const {name; _} | Var {name; _} -> name
 
 let is_set rel = arity rel = 1
 
@@ -58,12 +49,14 @@ let is_const = function Const _ -> true | Var _ -> false
 
 let is_var = function Const _ -> false | Var _ -> true
 
-let scope = function Const { scope; _ } | Var { scope; _ } -> scope
+let scope = function Const {scope; _} | Var {scope; _} -> scope
 
 let pp ?(print_name = true) out rel =
   let open! Fmtc in
   (* shadows const *)
-  let pp_name = if print_name then sp **> colon **> nbsp **> Name.pp else nop in
+  let pp_name =
+    if print_name then sp **> colon **> nbsp **> Name.pp else nop
+  in
   let pp_def const_or_var name scope fby arity =
     pp_name out name;
     (styled `Bold @@ string) out const_or_var;
@@ -83,17 +76,17 @@ let pp ?(print_name = true) out rel =
     Format.pp_close_box out ()
   in
   match rel with
-  | Const { name; scope; arity } ->
+  | Const {name; scope; arity} ->
       pp_def "const" name scope None arity
-  | Var { name; scope; fby; arity } ->
+  | Var {name; scope; fby; arity} ->
       pp_def "var" name scope fby arity
 
 
-let must = function Const { scope; _ } | Var { scope; _ } -> Scope.must scope
+let must = function Const {scope; _} | Var {scope; _} -> Scope.must scope
 
-let may = function Const { scope; _ } | Var { scope; _ } -> Scope.may scope
+let may = function Const {scope; _} | Var {scope; _} -> Scope.may scope
 
-let sup = function Const { scope; _ } | Var { scope; _ } -> Scope.sup scope
+let sup = function Const {scope; _} | Var {scope; _} -> Scope.sup scope
 
 let rename atom_renaming name_renaming rel =
   match rel with
@@ -101,15 +94,13 @@ let rename atom_renaming name_renaming rel =
       Const
         { const with
           name = List.assoc ~eq:Name.equal const.name name_renaming
-        ; scope = Scope.rename atom_renaming const.scope
-        }
+        ; scope = Scope.rename atom_renaming const.scope }
   | Var var ->
       Var
         { var with
           name = List.assoc ~eq:Name.equal var.name name_renaming
         ; scope = Scope.rename atom_renaming var.scope
-        ; fby = Option.map (Scope.rename atom_renaming) var.fby
-        }
+        ; fby = Option.map (Scope.rename atom_renaming) var.fby }
 
 
 let to_string ?(print_name = true) rel = Fmtc.to_to_string (pp ~print_name) rel

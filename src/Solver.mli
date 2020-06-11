@@ -207,8 +207,8 @@ module type MODEL = sig
     ; (* fst: string repr of Elo formula *)
       trans : (string * ltl) Iter.t
     ; (* fst: string repr of Elo formula *)
-      property : string * ltl (* fst: string repr of Elo formula *)
-    }
+      property : string * ltl
+    (* fst: string repr of Elo formula *) }
 
   val make :
        elo:Elo.t

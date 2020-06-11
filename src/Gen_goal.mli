@@ -18,8 +18,7 @@ type ('v, 'i) t = private Run of (('v, 'i) block * bool option) [@@unboxed]
 
 and ('v, 'i) fml =
   { prim_fml : ('v, 'i) prim_fml
-  ; fml_loc : Location.t
-  }
+  ; fml_loc : Location.t }
 
 and ('v, 'i) prim_fml = private
   | True
@@ -84,8 +83,7 @@ and icomp_op = private
 and ('v, 'i) exp =
   { prim_exp : ('v, 'i) prim_exp
   ; exp_loc : Location.t
-  ; arity : int option
-  }
+  ; arity : int option }
 
 and ('v, 'i) prim_exp = private
   | None_
@@ -122,8 +120,7 @@ and rbinop = private
 
 and ('v, 'i) iexp =
   { prim_iexp : ('v, 'i) prim_iexp
-  ; iexp_loc : Location.t
-  }
+  ; iexp_loc : Location.t }
 
 and ('v, 'i) prim_iexp = private
   | Num of int
@@ -572,7 +569,8 @@ class virtual ['c] fold :
          ; build_Prime : 'd -> 'l -> 'm
          ; build_Prod : 'd -> 'p
          ; build_Qual : 'd -> 'w -> 'l -> 'k
-         ; build_Quant : 'd -> 'h -> (disj * 'o list * 'l) list -> 'j list -> 'k
+         ; build_Quant :
+             'd -> 'h -> (disj * 'o list * 'l) list -> 'j list -> 'k
          ; build_R : 'd -> 'i
          ; build_RBin : 'd -> 'l -> 'p -> 'l -> 'm
          ; build_RComp : 'd -> 'l -> 'v -> 'l -> 'k

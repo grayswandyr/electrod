@@ -21,17 +21,8 @@ open Containers
     instant and then a scope for all other instants. The arity is compulsorily
     specified by the user for empty bounds and optionally otherwise.*)
 type t =
-  | Const of
-      { name : Name.t
-      ; arity : int
-      ; scope : Scope.t
-      }
-  | Var of
-      { name : Name.t
-      ; arity : int
-      ; scope : Scope.t
-      ; fby : Scope.t option
-      }
+  | Const of {name : Name.t; arity : int; scope : Scope.t}
+  | Var of {name : Name.t; arity : int; scope : Scope.t; fby : Scope.t option}
 
 val const : Name.t -> int -> Scope.t -> t
 (** {1 Constructors} *)

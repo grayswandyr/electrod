@@ -1,3 +1,6 @@
+### 0.6.1 (2020-06-11)
+- F. Pottier's fix to work with Menhir 20200525
+
 ### 0.6 (2020-04-02)
 - add option --symmetry-offset/--so to offset the single-state symmetry breaking predicate.
 

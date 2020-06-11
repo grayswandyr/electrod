@@ -14,8 +14,8 @@
 
 (** Specification of transformations. *)
 
-type ('src, 'dst) t
 (** A transformation conforms to the following signature.  *)
+type ('src, 'dst) t
 
 val make : string -> ('src -> 'dst) -> ('src, 'dst) t
 (** Constructor. The first parameter is the name: it must be unique in the whole
@@ -33,8 +33,8 @@ val fby : ('a, 'b) t -> ('b, 'c) t -> ('a, 'c) t
 val identity : ('a, 'a) t
 (** Identity transformation *)
 
-type ('src, 'dst) tlist
 (** A list of transformations with given source and target type. *)
+type ('src, 'dst) tlist
 
 val tlist : ('src, 'dst) t list -> ('src, 'dst) tlist
 (** Creates a list of transformations with a default one .*)

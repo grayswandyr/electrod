@@ -14,12 +14,11 @@
 
 (** Identifiers in "raw" ASTs. *)
 
-type t =
-  { ident : string
-  ; loc : Location.t
-  }
 (** Any form of identifier for constants (atoms, relations) in the source
     code. *)
+type t =
+  { ident : string
+  ; loc : Location.t }
 
 (** {1 Constructor}  *)
 
