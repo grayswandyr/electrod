@@ -40,7 +40,7 @@ let create_new_vars_and_assoc_list_and_comp_fml vs ar =
                req
                (exp ar L.dummy new_var_as_ident) )
           and_
-          (fml L.dummy prim_fml) ) )
+          (fml L.dummy prim_fml) ))
     vs
     ([], [], true_)
 
@@ -67,7 +67,7 @@ class simplify =
             in
             ( (disj, new_vars, e) :: sim_bindings
             , assoc @ acc_assoc
-            , lbinary (fml L.dummy prim_fml) and_ (fml L.dummy acc_fml) ) )
+            , lbinary (fml L.dummy prim_fml) and_ (fml L.dummy acc_fml) ))
           sim_bindings
           ([], [], true_)
       in
@@ -84,7 +84,7 @@ class simplify =
         quant
           all
           new_sim_bindings
-          [fml L.dummy @@ lbinary fml_subst_blk impl (fml L.dummy cmp_fml)]
+          [ fml L.dummy @@ lbinary fml_subst_blk impl (fml L.dummy cmp_fml) ]
       in
       let temporary_fml =
         quant
@@ -94,7 +94,8 @@ class simplify =
             @@ lbinary
                  (fml L.dummy (block blk))
                  and_
-                 (fml L.dummy temp_forall_fml) ]
+                 (fml L.dummy temp_forall_fml)
+          ]
       in
       self#visit_prim_fml env temporary_fml
 
@@ -112,7 +113,7 @@ class simplify =
     method! visit_Quant env q sim_bindings blk =
       Msg.debug (fun m ->
           m "Simplify1.visit_Quant <-- %a" Ast.pp_prim_fml
-          @@ quant q sim_bindings blk );
+          @@ quant q sim_bindings blk);
       match q with
       | One ->
           self#visit_Quant_One env q sim_bindings blk
@@ -123,17 +124,17 @@ class simplify =
             match sim_bindings with
             | [] ->
                 assert false
-            | [(disj, vs, e)] ->
+            | [ (disj, vs, e) ] ->
                 let blk' = List.map (self#visit_fml env) blk in
-                quant q [(disj, vs, self#visit_exp env e)] blk'
+                quant q [ (disj, vs, self#visit_exp env e) ] blk'
             | (disj, vs, e) :: bs ->
                 quant
                   q
-                  [(disj, vs, self#visit_exp env e)]
-                  [fml e.exp_loc @@ self#visit_Quant env q bs blk]
+                  [ (disj, vs, self#visit_exp env e) ]
+                  [ fml e.exp_loc @@ self#visit_Quant env q bs blk ]
           in
           Msg.debug (fun m ->
-              m "Simplify1.visit_Quant --> %a" Ast.pp_prim_fml res );
+              m "Simplify1.visit_Quant --> %a" Ast.pp_prim_fml res);
           res
 
     (* substitute let bindings *)
@@ -145,7 +146,7 @@ class simplify =
       (*             @@ let_ bindings fmls); *)
       List.fold_right
         (function
-          | Ast.BVar v, e -> Ast.substitute#visit_prim_fml [(v, e.prim_exp)])
+          | Ast.BVar v, e -> Ast.substitute#visit_prim_fml [ (v, e.prim_exp) ])
         bindings
         (block fmls)
       |> self#visit_prim_fml env
@@ -154,7 +155,7 @@ class simplify =
     (* @@ fun res -> *)
     (* Msg.debug (fun m -> m "Simplify1.visit_Let --> %a" *)
     (*                       Ast.pp_prim_fml res) *)
-    
+
     (* change relation qualifiers into formulas *)
     method! visit_Qual env q expr =
       (* Msg.debug (fun m -> m "Simplify1.visit_Qual <-- %a" *)
@@ -165,8 +166,8 @@ class simplify =
         | ROne ->
             quant
               one
-              [(false, [Ast.bound_var @@ fresh_var "one" expr], expr)]
-              [fml expr.exp_loc true_]
+              [ (false, [ Ast.bound_var @@ fresh_var "one" expr ], expr) ]
+              [ fml expr.exp_loc true_ ]
         | RLone ->
             lbinary
               (fml expr.exp_loc @@ qual rno expr)
@@ -175,8 +176,8 @@ class simplify =
         | RSome ->
             quant
               some
-              [(false, [Ast.bound_var @@ fresh_var "some" expr], expr)]
-              [fml expr.exp_loc true_]
+              [ (false, [ Ast.bound_var @@ fresh_var "some" expr ], expr) ]
+              [ fml expr.exp_loc true_ ]
         | RNo ->
             rcomp expr in_ @@ exp None expr.exp_loc none
       in
@@ -186,7 +187,7 @@ class simplify =
     (* @@ fun res -> *)
     (* Msg.debug (fun m -> m "Simplify1.visit_Qual --> %a" *)
     (*                       Ast.pp_prim_fml res) *)
-    
+
     (* change box join in join *)
     method! visit_BoxJoin env call args =
       (* Msg.debug (fun m -> m "Simplify1.visit_BoxJoin <-- %a[%a]" *)
@@ -198,7 +199,7 @@ class simplify =
             exp
               Option.(return @@ (get_exn arg.arity + get_exn r.arity - 2))
               L.(span (arg.exp_loc, r.exp_loc))
-            @@ rbinary arg join r )
+            @@ rbinary arg join r)
           args
           call
       in
@@ -209,11 +210,11 @@ class simplify =
     (* Msg.debug (fun m -> m "Simplify1.visit_BoxJoin --> %a" *)
     (*                       Ast.pp_prim_exp *)
     (*                       res) *)
-    
+
     (* reintroducing lost implications*)
     method! visit_prim_fml env f =
       match f with
-      | LBin ({prim_fml = LUn (Not, f1); _}, Or, f2) ->
+      | LBin ({ prim_fml = LUn (Not, f1); _ }, Or, f2) ->
           let f1' = super#visit_fml env f1
           and f2' = super#visit_fml env f2 in
           lbinary f1' impl f2'
@@ -237,7 +238,8 @@ let run elo =
   let simpl = new simplify in
   { elo with
     goal = simpl#visit_t () elo.goal
-  ; invariants = simpl#visit_block () elo.invariants }
+  ; invariants = simpl#visit_block () elo.invariants
+  }
 
 
 (* |> Fun.tap (fun _ -> Msg.debug (fun m -> m "Finished Simplify1.simplify_fml")) *)

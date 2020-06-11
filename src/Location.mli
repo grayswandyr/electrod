@@ -41,7 +41,8 @@ val dummy : t
 
 type 'a located =
   { data : 'a
-  ; loc : t }
+  ; loc : t
+  }
 
 val make_located : 'a -> t -> 'a located
 

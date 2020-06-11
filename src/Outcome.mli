@@ -34,7 +34,8 @@ type t = private
   { trace : states option
   ; nbvars : int  (** number of Booleans used  *)
   ; conversion_time : Mtime.span
-  ; analysis_time : Mtime.span }
+  ; analysis_time : Mtime.span
+  }
 
 val no_trace : int -> Mtime.span -> Mtime.span -> t
 (** Represents the absence of trace (so usually: UNSAT). *)
@@ -62,4 +63,4 @@ val loop_is_present : states -> bool
 val to_loop : state -> state
 (** Converts any state to a loop state *)
 
-val pp : format:[`XML | `Plain | `Chrono] -> Format.formatter -> t -> unit
+val pp : format:[ `XML | `Plain | `Chrono ] -> Format.formatter -> t -> unit

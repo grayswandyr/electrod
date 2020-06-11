@@ -18,7 +18,8 @@
     code. *)
 type t =
   { ident : string
-  ; loc : Location.t }
+  ; loc : Location.t
+  }
 
 (** {1 Constructor}  *)
 

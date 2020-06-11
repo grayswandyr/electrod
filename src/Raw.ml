@@ -25,7 +25,8 @@ type raw_problem =
   ; raw_goal : raw_goal
   ; raw_invar : raw_block  (** may be empty *)
   ; raw_inst : raw_assignment list  (** may be empty *)
-  ; raw_syms : raw_symmetry list  (** may be empty *) }
+  ; raw_syms : raw_symmetry list  (** may be empty *)
+  }
 
 and raw_urelements =
   | UIntvl of raw_interval
@@ -35,7 +36,7 @@ and raw_declaration =
   | DConst of Raw_ident.t * int option * raw_scope
   | DVar of Raw_ident.t * int option * raw_scope * raw_scope option
 
-and raw_multiplicity = [`Lone | `One] option
+and raw_multiplicity = [ `Lone | `One ] option
 
 and raw_scope =
   | SExact of raw_bound
@@ -100,7 +101,7 @@ let uintvl intvl = UIntvl intvl
 let uplain atom = UPlain atom
 
 let problem file raw_univ raw_decls raw_goal raw_invar raw_inst raw_syms =
-  {file; raw_univ; raw_decls; raw_goal; raw_invar; raw_inst; raw_syms}
+  { file; raw_univ; raw_decls; raw_goal; raw_invar; raw_inst; raw_syms }
 
 
 let decl_id = function DConst (id, _, _) | DVar (id, _, _, _) -> id

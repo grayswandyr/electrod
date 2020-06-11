@@ -60,7 +60,8 @@ type t =
   ; invariants : (var, ident) G.fml list
   ; goal : goal
   ; atom_renaming : (Atom.t, Atom.t) List.Assoc.t
-  ; name_renaming : (Name.t, Name.t) List.Assoc.t }
+  ; name_renaming : (Name.t, Name.t) List.Assoc.t
+  }
 
 let make file domain instance sym invariants goal =
   { file
@@ -70,7 +71,8 @@ let make file domain instance sym invariants goal =
   ; invariants
   ; goal
   ; atom_renaming = []
-  ; name_renaming = [] }
+  ; name_renaming = []
+  }
 
 
 (* pretty printers *)
@@ -101,7 +103,7 @@ let pp_block = G.pp_block pp_var pp_ident
 
 let pp_sim_binding = G.pp_sim_binding pp_var pp_ident
 
-let pp out {domain; instance; invariants; goal; _} =
+let pp out { domain; instance; invariants; goal; _ } =
   let open Fmtc in
   pf
     out
@@ -128,8 +130,7 @@ let substitute =
     method visit_'i _ = Fun.id
 
     method! visit_Ident
-          (env : (Var.t, (var, ident) G.prim_exp) CCList.Assoc.t) (id : ident)
-        =
+        (env : (Var.t, (var, ident) G.prim_exp) CCList.Assoc.t) (id : ident) =
       (* Msg.debug *)
       (*   (fun m -> m "Ast.substitute.visit_Ident: %a [%a]" *)
       (*               pp_ident id *)
@@ -151,7 +152,7 @@ let substitute =
     (*                  @@ pp_prim_exp) *)
     (*                 env); *)
     (*   super#visit_exp env exp *)
-    
+
     (* method visit_prim_fml env pfml = *)
     (*   Msg.debug *)
     (*     (fun m -> m "%a [%a]" *)
@@ -183,7 +184,7 @@ let rename =
     method visit_'i _ = Fun.id
 
     method! visit_Ident
-          (relation_renaming : (Name.t, Name.t) List.Assoc.t) (id : ident) =
+        (relation_renaming : (Name.t, Name.t) List.Assoc.t) (id : ident) =
       match id with
       | Name name ->
           G.ident (Name (List.assoc ~eq:Name.equal name relation_renaming))

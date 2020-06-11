@@ -17,7 +17,8 @@
 type bounds =
   { must : Tuple_set.t
   ; sup : Tuple_set.t
-  ; may : Tuple_set.t }
+  ; may : Tuple_set.t
+  }
 
 val make_bounds_exp : Domain.t -> Elo.exp * Tuple.t list -> bounds
 (** Computes the must/may/sup bounds of an expression [exp], given the [domain]

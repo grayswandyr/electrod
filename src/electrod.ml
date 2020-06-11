@@ -48,13 +48,13 @@ let tool =
   in
   Arg.(
     value
-    & opt (enum [("nuXmv", Main.NuXmv); ("NuSMV", Main.NuSMV)]) Main.NuXmv
-    & info ["t"; "tool"] ~docv:"TOOL" ~doc)
+    & opt (enum [ ("nuXmv", Main.NuXmv); ("NuSMV", Main.NuSMV) ]) Main.NuXmv
+    & info [ "t"; "tool" ] ~docv:"TOOL" ~doc)
 
 
 let bmc_length =
   let doc = {|Sets the bound on trace steps. $(docv) must be non-negative.|} in
-  Arg.(value & opt (some natural_arg) None & info ["bmc"] ~docv:"BOUND" ~doc)
+  Arg.(value & opt (some natural_arg) None & info [ "bmc" ] ~docv:"BOUND" ~doc)
 
 
 let script =
@@ -67,7 +67,7 @@ let script =
   Arg.(
     value
     & opt (some non_dir_file) None
-    & info ["s"; "script"] ~docv:"SCRIPT_FILE" ~doc)
+    & info [ "s"; "script" ] ~docv:"SCRIPT_FILE" ~doc)
 
 
 let keep_files =
@@ -75,26 +75,26 @@ let keep_files =
     {|If present, keep the generated model and script files (in the same 
       directory as ELECTROD_FILE). |}
   in
-  Arg.(value & flag & info ["kg"; "keep-generated"] ~doc)
+  Arg.(value & flag & info [ "kg"; "keep-generated" ] ~doc)
 
 
 let no_analysis =
   let doc =
     {|If present, do not perform the analysis (files are still generated).|}
   in
-  Arg.(value & flag & info ["na"; "no-analysis"] ~doc)
+  Arg.(value & flag & info [ "na"; "no-analysis" ] ~doc)
 
 
 let print_generated =
   let doc = {|If present, print the generated file on the standard output.|} in
-  Arg.(value & flag & info ["pg"; "print-generated"] ~doc)
+  Arg.(value & flag & info [ "pg"; "print-generated" ] ~doc)
 
 
 let long_names =
   let doc =
     {|If present, use long relation and atom names in the generated file.|}
   in
-  Arg.(value & flag & info ["ln"; "long-names"] ~doc)
+  Arg.(value & flag & info [ "ln"; "long-names" ] ~doc)
 
 
 let outcome_format =
@@ -105,16 +105,16 @@ let outcome_format =
   Arg.(
     value
     & opt
-        (enum [("chrono", `Chrono); ("plain", `Plain); ("xml", `XML)])
+        (enum [ ("chrono", `Chrono); ("plain", `Plain); ("xml", `XML) ])
         `Chrono
-    & info ["of"; "outcome-format"] ~docv:"FORMAT" ~doc)
+    & info [ "of"; "outcome-format" ] ~docv:"FORMAT" ~doc)
 
 
 let temporal_symmetry =
   let doc =
     {|If present, generate the full temporal symmetry breaking predicate. Otherwise a single-state symmetry breaking predicate is generated.|}
   in
-  Arg.(value & flag & info ["ts"; "temporal-symmetry"] ~doc)
+  Arg.(value & flag & info [ "ts"; "temporal-symmetry" ] ~doc)
 
 
 let symmetry_offset =
@@ -124,7 +124,7 @@ let symmetry_offset =
   Arg.(
     value
     & opt natural_arg 0
-    & info ["so"; "symmetry-offset"] ~docv:"SYMMETRY_OFFSET" ~doc)
+    & info [ "so"; "symmetry-offset" ] ~docv:"SYMMETRY_OFFSET" ~doc)
 
 
 (* verbosity options (already def'd in Logs_cli, thx!) *)
