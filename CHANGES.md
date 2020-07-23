@@ -1,3 +1,6 @@
+### 0.7.0 (2020-07-23)
+- use same logical connectives and precedence as in Electrum
+
 ### 0.6.2 (2020-06-11)
 - inhibit warning 63 in release mode, see <https://github.com/ocaml/dune/issues/2450>
 
