@@ -291,6 +291,8 @@ val substitute :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.quant
   ; visit_Sub :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.ibinop
+  ; visit_T :
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.lbinop
   ; visit_TClos :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.runop
   ; visit_Transpose :
@@ -544,6 +546,7 @@ val rename :
   ; visit_S : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.lbinop
   ; visit_Some_ : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.quant
   ; visit_Sub : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.ibinop
+  ; visit_T : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.lbinop
   ; visit_TClos : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.runop
   ; visit_Transpose : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.runop
   ; visit_True :

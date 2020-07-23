@@ -1,6 +1,6 @@
 (define-generic-mode 'electrod-mode
 	'("--") 
-	'("check" "run" "invariant" "true" "false" "next" "always" "sometime" "until" "releases"
+	'("check" "run" "invariant" "true" "false" "next" "always" "until" "releases"
 		"previous" "historically" "once" "eventually" 
 		"since" "all" "some" "one" "set" "no" "lone" "let" "disj" "iff" "implies"
 		"then" "else" "or" "and" "in" "inst" "sym" "not" "var" "const" "univ" "iden" "none")

@@ -634,6 +634,8 @@ module Make (Ltl : Solver.LTL) = struct
 
       method build_Sub (_ : stack) (a : term) (b : term) : term = minus a b
 
+      method build_T (_ : stack) (a : ltl) (b : ltl) : ltl = triggered a b
+
       method build_TClos subst r __r' tuple =
         assert (Tuple.arity tuple = 2);
         Msg.debug (fun m ->

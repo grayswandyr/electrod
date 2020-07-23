@@ -143,7 +143,7 @@ and convert_icomp_op (comp : Gen_goal.icomp_op) =
 and convert_lunop (op : Gen_goal.lunop) =
   match op with
   | F ->
-      E.sometime
+      E.eventually
   | G ->
       E.always
   | Not ->
@@ -174,6 +174,8 @@ and convert_lbinop (op : Gen_goal.lbinop) =
       E.releases
   | S ->
       E.since
+  | T ->
+      E.triggered
 
 
 and convert_exp

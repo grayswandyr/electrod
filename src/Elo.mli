@@ -36,6 +36,7 @@ and lbinop = private
   | U
   | R
   | S
+  | T
 
 and lunop = private
   | F
@@ -183,9 +184,11 @@ val releases : lbinop
 
 val since : lbinop
 
+val triggered : lbinop
+
 val not_ : lunop
 
-val sometime : lunop
+val eventually : lunop
 
 val always : lunop
 
@@ -417,6 +420,7 @@ class ['c] map :
          ; visit_S : 'env -> lbinop
          ; visit_Some_ : 'env -> quant
          ; visit_Sub : 'env -> ibinop
+         ; visit_T : 'env -> lbinop
          ; visit_TClos : 'env -> runop
          ; visit_Transpose : 'env -> runop
          ; visit_True : 'env -> (fml, exp, iexp) ofml
@@ -567,6 +571,8 @@ class ['c] map :
 
     method visit_Sub : 'env -> ibinop
 
+    method visit_T : 'env -> lbinop
+
     method visit_TClos : 'env -> runop
 
     method visit_Transpose : 'env -> runop
@@ -716,6 +722,7 @@ class virtual ['c] fold :
          ; build_S : 'env -> 'i
          ; build_Some_ : 'env -> 'h
          ; build_Sub : 'env -> 'g
+         ; build_T : 'env -> 'i
          ; build_TClos : 'env -> 's
          ; build_Transpose : 'env -> 's
          ; build_True : 'env -> 'j
@@ -784,6 +791,7 @@ class virtual ['c] fold :
          ; visit_S : 'env -> 'i
          ; visit_Some_ : 'env -> 'h
          ; visit_Sub : 'env -> 'g
+         ; visit_T : 'env -> 'i
          ; visit_TClos : 'env -> 's
          ; visit_Transpose : 'env -> 's
          ; visit_True : 'env -> 'j
@@ -922,6 +930,8 @@ class virtual ['c] fold :
 
     method virtual build_Sub : 'env -> 'g
 
+    method virtual build_T : 'env -> 'i
+
     method virtual build_TClos : 'env -> 's
 
     method virtual build_Transpose : 'env -> 's
@@ -1057,6 +1067,8 @@ class virtual ['c] fold :
     method visit_Some_ : 'env -> 'h
 
     method visit_Sub : 'env -> 'g
+
+    method visit_T : 'env -> 'i
 
     method visit_TClos : 'env -> 's
 

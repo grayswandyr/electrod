@@ -20,4 +20,4 @@ all m : Man | lone m.wife
 husband = ~wife
 
 run
-always (some m : Man | next some m.wife => eventually some w : Woman | w = m.wife)
+always (some m : Man | after some m.wife => eventually some w : Woman | w = m.wife)

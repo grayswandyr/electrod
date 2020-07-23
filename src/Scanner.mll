@@ -81,27 +81,27 @@ rule main infile = parse
 | "false"
 		{ FALSE }
                     (* FUTURE OPERATORS *)
-| "next"
-    { NEXT }
+| "after"
+    { AFTER }
 | "always"
     { ALWAYS }
-| ("sometime")
-    { SOMETIME }
-| ("eventually")
+| "eventually"
     { EVENTUALLY }
 | "until"
     { UNTIL }
 | "releases"
     { RELEASES }
                     (* PAST OPERATORS *)
-| "previous"
-    { PREVIOUS }
+| "before"
+    { BEFORE }
 | "historically"
     { HISTORICALLY }
 | "once"
     { ONCE }
 | "since"
     { SINCE }
+| "triggered"
+    { TRIGGERED }
                     (* F-O QUANTIFIERS + MULTIPLICITIES *)
 | "all"
     { ALL }
@@ -144,6 +144,7 @@ Msg.Fatal.lexical
     { SYM }
 | ("not")
     { NOT }
+
 | "var"
     { VAR }
 | "const"

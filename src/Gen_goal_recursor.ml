@@ -153,6 +153,8 @@ class virtual ['self] recursor =
 
     method virtual build_Sub : _
 
+    method virtual build_T : _
+
     method virtual build_TClos : _
 
     method virtual build_Transpose : _
@@ -360,6 +362,8 @@ class virtual ['self] recursor =
 
     method visit_S env = self#build_S env
 
+    method visit_T env = self#build_T env
+
     method visit_lbinop env _visitors_this =
       match _visitors_this with
       | And ->
@@ -376,6 +380,8 @@ class virtual ['self] recursor =
           self#visit_R env
       | S ->
           self#visit_S env
+      | T ->
+          self#visit_T env
 
     method visit_F env = self#build_F env
 

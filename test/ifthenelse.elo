@@ -51,4 +51,4 @@ always {
 };
 
 
-sometime some s
+eventually some s

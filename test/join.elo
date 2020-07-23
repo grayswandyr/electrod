@@ -6,4 +6,4 @@ const s : {} univ
 
 run
 
-sometime one disj x, y : r | x.y.s in s.x.y
+eventually one disj x, y : r | x.y.s in s.x.y

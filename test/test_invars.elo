@@ -15,7 +15,7 @@ always r in r;
 
 always some x: ra | x.r = rb ;
 
-(*sometime (r in rb->rc); *)
+(*eventually (r in rb->rc); *)
 always  (r = ra -> rb) ;
 
 (*ra in rb.r and ra in rc.r and rb in rc.r

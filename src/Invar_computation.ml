@@ -156,6 +156,8 @@ class ['self] computer (elo : Elo.t) =
 
     method build_S () _ _ = Temporal
 
+    method build_T () _ _ = Temporal
+
     (* lunop *)
     method build_LUn () op' f' = op' f'
 

@@ -195,7 +195,7 @@ always ((!(this##Room#current = ((this##Room#current)' )) implies
    NoIntervening_k: this##Key { 
     (this##_checkin -> NoIntervening_g -> NoIntervening_r -> NoIntervening_k) in 
     this##_E#_event implies 
-    next ((this##_entryWithRecoding -> NoIntervening_g -> NoIntervening_r -> 
+    after ((this##_entryWithRecoding -> NoIntervening_g -> NoIntervening_r -> 
      NoIntervening_k) in this##_E#_event or 
      (this##_entryWithoutRecoding -> NoIntervening_g -> NoIntervening_r -> 
      NoIntervening_k) in this##_E#_event)

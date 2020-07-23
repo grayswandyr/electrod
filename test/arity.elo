@@ -23,4 +23,4 @@ some { disj x, y : wife, s : Man, t : s.wife | s->t in Man->Woman}
 
 run
 no husband;
-sometime some husband
+eventually some husband

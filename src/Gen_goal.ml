@@ -68,6 +68,8 @@ and lbinop =
   | R
   (* releases *)
   | S
+  (* triggered *)
+  | T
 
 (* since *)
 and lunop =
@@ -229,9 +231,11 @@ let releases = R
 
 let since = S
 
+let triggered = T
+
 let not_ = Not
 
-let sometime = F
+let eventually = F
 
 let always = G
 
@@ -519,6 +523,8 @@ and pp_lbinop out x =
       "releases"
   | S ->
       "since"
+  | T ->
+      "triggered"
 
 
 and pp_quant out x =

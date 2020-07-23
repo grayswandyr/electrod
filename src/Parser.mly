@@ -35,11 +35,11 @@ let exp_no_arity = G.exp (Some 0)
  * Raw.raw_paragraph list> parse_problem
 
 %token UNIV NONE VAR COLON SEMI EOF EQ IN NEQ AND OR HISTORICALLY
-%token IMPLIES IFF UNTIL RELEASES SINCE NEXT ONCE PREVIOUS LET
+%token IMPLIES IFF UNTIL RELEASES SINCE AFTER ONCE BEFORE LET
 %token LPAREN RPAREN LBRACKET RBRACKET DOTDOT PLUS ARROW
 %token ALL SOME DISJ ONE LONE NO COMMA LBRACE RBRACE BAR
-%token GT GTE LT LTE TRUE FALSE SOMETIME EVENTUALLY ALWAYS NOT
-%token TILDE HAT STAR IDEN ELSE CONST INVARIANT
+%token GT GTE LT LTE TRUE FALSE EVENTUALLY ALWAYS NOT
+%token TILDE HAT STAR IDEN ELSE CONST INVARIANT TRIGGERED
 %token INTER OVERRIDE LPROJ RPROJ MINUS DOT PRIME
 %token THEN NOT_IN RUN EXPECT SAT UNSAT
 // for integer expressions
@@ -61,12 +61,12 @@ let exp_no_arity = G.exp (Some 0)
 
 /* in ascending order of priority */
 %nonassoc BAR
+%left RELEASES SINCE UNTIL TRIGGERED
 %left OR
 %left IFF
 %right IMPLIES ELSE
 %left AND
-%left RELEASES SINCE UNTIL
-%nonassoc NOT NEXT ALWAYS SOMETIME EVENTUALLY PREVIOUS HISTORICALLY ONCE
+%nonassoc NOT AFTER ALWAYS EVENTUALLY BEFORE HISTORICALLY ONCE
 %nonassoc /*LT LTE GT GTE*/ EQ NEQ IN NOT_IN
 //%nonassoc NO SOME LONE ONE      (* for formulas as 'some E' (= E != none) *)
 %left MINUS PLUS
@@ -78,8 +78,8 @@ let exp_no_arity = G.exp (Some 0)
 %left RPROJ
 %left LBRACKET                  (* for box join *)
 %left DOT
-%nonassoc TILDE HAT STAR
 %nonassoc PRIME
+%nonassoc TILDE HAT STAR
 
 %%
 
@@ -355,21 +355,21 @@ formula :
 	{ G.releases }
 	| SINCE
 	{ G.since }
+	| TRIGGERED
+	{ G.triggered }
 
 %inline lunop:
-	SOMETIME
-	{ G.sometime }
 	| EVENTUALLY
-	{ G.sometime }
+	{ G.eventually }
 	| ALWAYS
 	{ G.always }
 	| NOT
 	{ G.not_ }
 	| ONCE
 	{ G.once }
-	| NEXT
+	| AFTER
 	{ G.next }
-	| PREVIOUS
+	| BEFORE
 	{ G.previous }
 	| HISTORICALLY
 	{ G.historically }

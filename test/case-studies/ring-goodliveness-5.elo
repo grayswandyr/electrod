@@ -65,7 +65,7 @@ all GoodLiveness_p: this##Process {
  };
 no this##elected;
 always (((this##elected)' ) = ({GoodLiveness_p: this##Process { 
-  next ((GoodLiveness_p . this##Process#id) in (GoodLiveness_p . 
+  after ((GoodLiveness_p . this##Process#id) in (GoodLiveness_p . 
    this##Process#toSend)) and 
   !((GoodLiveness_p . this##Process#id) in (GoodLiveness_p . 
     this##Process#toSend))
@@ -96,7 +96,7 @@ always (all GoodLiveness_p: this##Process {
   });
 !((some this##Process and 
    always (some (this##Process . this##Process#toSend) implies 
-    next (some Progress_p: this##Process { 
+    after (some Progress_p: this##Process { 
       !((Progress_p . (this##Process#toSend)' ) = (Progress_p . 
         this##Process#toSend))
       }))) implies 

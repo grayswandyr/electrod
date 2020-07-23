@@ -57,6 +57,7 @@ and lbinop = private
   | U
   | R
   | S
+  | T
 
 and lunop = private
   | F
@@ -242,6 +243,7 @@ class virtual ['c] map :
          ; visit_S : 'd -> lbinop
          ; visit_Some_ : 'd -> quant
          ; visit_Sub : 'd -> ibinop
+         ; visit_T : 'd -> lbinop
          ; visit_TClos : 'd -> runop
          ; visit_Transpose : 'd -> runop
          ; visit_True : 'd -> ('j, 'h) prim_fml
@@ -424,6 +426,8 @@ class virtual ['c] map :
 
     method visit_Sub : 'd -> ibinop
 
+    method visit_T : 'd -> lbinop
+
     method visit_TClos : 'd -> runop
 
     method visit_Transpose : 'd -> runop
@@ -590,6 +594,7 @@ class virtual ['c] fold :
          ; build_S : 'd -> 'i
          ; build_Some_ : 'd -> 'h
          ; build_Sub : 'd -> 'g
+         ; build_T : 'd -> 'i
          ; build_TClos : 'd -> 'x
          ; build_Transpose : 'd -> 'x
          ; build_True : 'd -> 'k
@@ -673,6 +678,7 @@ class virtual ['c] fold :
          ; visit_S : 'd -> 'i
          ; visit_Some_ : 'd -> 'h
          ; visit_Sub : 'd -> 'g
+         ; visit_T : 'd -> 'i
          ; visit_TClos : 'd -> 'x
          ; visit_Transpose : 'd -> 'x
          ; visit_True : 'd -> 'k
@@ -838,6 +844,8 @@ class virtual ['c] fold :
 
     method virtual build_Sub : 'd -> 'g
 
+    method virtual build_T : 'd -> 'i
+
     method virtual build_TClos : 'd -> 'x
 
     method virtual build_Transpose : 'd -> 'x
@@ -999,6 +1007,8 @@ class virtual ['c] fold :
 
     method visit_Sub : 'd -> 'g
 
+    method visit_T : 'd -> 'i
+
     method visit_TClos : 'd -> 'x
 
     method visit_Transpose : 'd -> 'x
@@ -1141,11 +1151,13 @@ val until : lbinop
 
 val releases : lbinop
 
+val triggered : lbinop
+
 val since : lbinop
 
 val not_ : lunop
 
-val sometime : lunop
+val eventually : lunop
 
 val always : lunop
 

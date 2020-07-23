@@ -64,7 +64,7 @@ all BadLiveness_p: this##Process {
  };
 no this##elected;
 always (((this##elected)' ) = ({BadLiveness_p: this##Process { 
-  next ((BadLiveness_p . this##Process#id) in (BadLiveness_p . 
+  after ((BadLiveness_p . this##Process#id) in (BadLiveness_p . 
    this##Process#toSend)) and 
   !((BadLiveness_p . this##Process#id) in (BadLiveness_p . this##Process#toSend)
     )

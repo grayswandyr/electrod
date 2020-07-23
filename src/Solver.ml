@@ -134,7 +134,7 @@ module type LTL = sig
 
   val since : t -> t -> t
 
-  val trigerred : t -> t -> t
+  val triggered : t -> t -> t
 
   val num : int -> term
 
@@ -362,7 +362,7 @@ struct
 
   let since p1 p2 = S (p1, p2)
 
-  let trigerred p1 p2 = T (p1, p2)
+  let triggered p1 p2 = T (p1, p2)
 
   let comp op t1 t2 =
     match (op, t1, t2) with

@@ -137,7 +137,7 @@ module type LTL = sig
 
   val since : t -> t -> t
 
-  val trigerred : t -> t -> t
+  val triggered : t -> t -> t
 
   val num : int -> term
 

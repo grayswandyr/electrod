@@ -21,4 +21,4 @@ always {
 			 event = e3 => C in s';
 };
 
-sometime (no s and next sometime #s = 3)
+eventually (no s and after eventually #s = 3)
