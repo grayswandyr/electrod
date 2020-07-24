@@ -61,11 +61,11 @@ let exp_no_arity = G.exp (Some 0)
 
 /* in ascending order of priority */
 %nonassoc BAR
-%left RELEASES SINCE UNTIL TRIGGERED
 %left OR
 %left IFF
 %right IMPLIES ELSE
 %left AND
+%nonassoc RELEASES SINCE UNTIL TRIGGERED
 %nonassoc NOT AFTER ALWAYS EVENTUALLY BEFORE HISTORICALLY ONCE
 %nonassoc /*LT LTE GT GTE*/ EQ NEQ IN NOT_IN
 //%nonassoc NO SOME LONE ONE      (* for formulas as 'some E' (= E != none) *)
@@ -74,8 +74,7 @@ let exp_no_arity = G.exp (Some 0)
 %left OVERRIDE
 %left INTER
 %left ARROW
-%left LPROJ
-%left RPROJ
+%left LPROJ RPROJ
 %left LBRACKET                  (* for box join *)
 %left DOT
 %nonassoc PRIME
