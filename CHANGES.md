@@ -1,3 +1,6 @@
+### 0.7.1 (2020-07-24)
+- fix precedences (after update to Electrum)
+
 ### 0.7.0 (2020-07-23)
 - use same logical connectives and precedence as in Electrum
 
