@@ -1,3 +1,7 @@
+### 0.7.2 (2020-11-26)
+- adapt to (and require) containers 3.0
+- remove vacuity tests in Raw_to_ast (no reason to fail there)
+
 ### 0.7.1 (2020-07-24)
 - fix precedences (after update to Electrum)
 
