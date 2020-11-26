@@ -573,26 +573,6 @@ let compute_arities elo =
   and walk_prim_fml ctx = function
     | (True | False) as b ->
         b
-    | Qual (ROne, exp) ->
-        let exp' = walk_exp ctx exp in
-        if Option.is_none exp'.arity
-        then
-          Msg.Fatal.arity_error (fun args ->
-              args elo.Ast.file exp
-              @@ Fmtc.strf
-                   "enclosing formula is false as %s is always empty"
-                   (str_exp exp))
-        else qual rone exp'
-    | Qual (RSome, exp) ->
-        let exp' = walk_exp ctx exp in
-        if Option.is_none exp'.arity
-        then
-          Msg.Fatal.arity_error (fun args ->
-              args elo.Ast.file exp
-              @@ Fmtc.strf
-                   "enclosing formula is false as %s is always empty"
-                   (str_exp exp))
-        else qual rsome exp'
     | Qual (q, exp) ->
         qual q @@ walk_exp ctx exp
     | RComp (e1, op, e2) ->
