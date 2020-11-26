@@ -84,16 +84,15 @@ module Extract = struct
           |> Gen.to_list)
 
 
-  (* splits the string into 2 parts, the first containing [nb] characters *)
-  let split_string s nb =
-    let open String in
-    let lg = length s in
+  (* splits the string into 2 parts, the first containing [num] characters *)
+  let split_string s (num : int) =
+    let lg = String.length s in
     (* debug (fun m -> m "%s (%d) / %d" s lg nb); *)
-    assert (nb >= 0 && nb <= lg);
+    assert (num >= 0 && num <= lg);
     (* debug (fun m -> m "sub %d %d" 0 nb); *)
-    let first = sub s 0 nb in
+    let first = String.sub s 0 num in
     (* debug (fun m -> m "sub %d %d" nb (lg-nb)); *)
-    let last = sub s nb (lg - nb) in
+    let last = String.sub s num (lg - num) in
     (* debug (fun m -> m "%s°%s" first last); *)
     (first, last)
 

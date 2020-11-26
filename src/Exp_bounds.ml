@@ -225,9 +225,10 @@ let make_bounds_exp =
   fun domain ->
     CCCache.with_cache_rec
       cache
-      (fun fbounds_exp
-           ((G.Exp { node = { prim_exp = pe; _ }; _ }, subst) as args)
-           ->
+      (fun
+        fbounds_exp
+        ((G.Exp { node = { prim_exp = pe; _ }; _ }, subst) as args)
+      ->
         let open G in
         match pe with
         | Var v ->

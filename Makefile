@@ -34,6 +34,17 @@ utop:
 doc:
 	dune build @doc && x-www-browser _build/default/_doc/_html/index.html
 
+deps: opam
+
+$(opam_file): dune-project
+	-dune build @install        # Update the $(project_name).opam file
+	-git add $(opam_file)       # opam uses the state of master for it updates
+	-git commit $(opam_file) -m "Updating package dependencies"
+	opam install . --deps-only  # Install the new dependencies
+
+switch: deps
+	opam switch create . $(opam_switch) --deps-only
+	
 show-deps:
 	dune external-lib-deps --missing @install
 

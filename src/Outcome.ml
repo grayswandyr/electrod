@@ -194,7 +194,7 @@ module PPXML = struct
         attribute
         Name.pp
         name
-        (Tuple.Set.pp ~sep:"" pp_tuple)
+        (Tuple.Set.pp ~pp_sep:(const string "") pp_tuple)
         (Tuple_set.tuples ts)
         kwd
         tag

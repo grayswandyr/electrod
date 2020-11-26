@@ -44,10 +44,10 @@ let pp out rels =
     "  %a"
     ( vbox
     @@ Map.pp
-         ~sep:" "
-         ~arrow:" = "
-         ~start:""
-         ~stop:""
+         ~pp_sep:(const string " ")
+         ~pp_arrow:(const string " = ")
+         ~pp_start:(const string "")
+         ~pp_stop:(const string "")
          (styled `Cyan Name.pp)
          Tuple_set.pp )
     rels

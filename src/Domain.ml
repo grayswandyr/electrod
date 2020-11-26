@@ -52,10 +52,10 @@ let pp out rels =
   Fmtc.(
     vbox
     @@ Map.pp
-         ~sep:" "
-         ~arrow:" : "
-         ~start:""
-         ~stop:""
+         ~pp_sep:(const string " ")
+         ~pp_arrow:(const string " : ")
+         ~pp_start:(const string "")
+         ~pp_stop:(const string "")
          (styled `Cyan Name.pp)
          (Relation.pp ~print_name:false))
     out

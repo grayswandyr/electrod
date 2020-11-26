@@ -99,7 +99,7 @@ val map : (Tuple.t -> Tuple.t) -> t -> t
 
 val rename : (Atom.t, Atom.t) List.Assoc.t -> t -> t
 
-val to_iter : t -> Tuple.t CCSet.sequence
+val to_iter : t -> Tuple.t CCSet.iter
 
 val to_list : t -> Tuple.t list
 

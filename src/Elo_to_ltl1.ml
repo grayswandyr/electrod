@@ -79,7 +79,7 @@ module Make (Ltl : Solver.LTL) = struct
              ar
              ( Fmtc.parens
              @@ Pair.pp
-                  ~sep:", "
+                  ~pp_sep:Fmtc.(const string ", ")
                   (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp)
                   (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp) )
              res)

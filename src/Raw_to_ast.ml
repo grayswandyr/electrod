@@ -435,9 +435,9 @@ let refine_identifiers raw_pb =
     | False ->
         (ctx, false_)
     | Block b ->
-        (ctx, Pair.map_snd block (walk_block ctx b))
+        (ctx, Pair.snd_map block (walk_block ctx b))
     | LUn (op, fml) ->
-        (ctx, Pair.map_snd (lunary op) (walk_fml ctx fml))
+        (ctx, Pair.snd_map (lunary op) (walk_fml ctx fml))
     | LBin (f1, op, f2) ->
         (ctx, lbinary (snd @@ walk_fml ctx f1) op (snd @@ walk_fml ctx f2))
     | Qual (q, r) ->

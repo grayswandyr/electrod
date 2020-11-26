@@ -27,7 +27,7 @@ type t = TS.t
 
 let pp out b =
   Fmtc.pf out "@[<hov 2>{";
-  TS.pp (* ~start:"" ~stop:"" *) ~sep:" " Tuple.pp out b;
+  TS.pp (* ~start:"" ~stop:"" *) ~pp_sep:Fmtc.(const string " ") Tuple.pp out b;
   Fmtc.pf out "}@]"
 
 
