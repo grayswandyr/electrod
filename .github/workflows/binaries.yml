@@ -28,10 +28,11 @@ jobs:
     - uses: avsm/setup-ocaml@v1
       with:
         ocaml-version: ${{ matrix.ocaml-version }}
+    - run: opam pin add electrod -n .
     - name: Packages
       run: opam depext -yt electrod
     - name: Dependencies
-      run: opam install --deps-only .
+      run: opam install -t . --deps-only 
     - name: Build
       run: opam exec -- dune build @install
     - uses: actions/upload-artifact@v1
