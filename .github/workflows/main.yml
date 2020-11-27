@@ -1,5 +1,5 @@
 name: Electrod
-on: [push]
+on: push
 jobs:
   run:
     name: Tests
@@ -9,7 +9,6 @@ jobs:
         operating-system: [macos-latest, ubuntu-latest, windows-latest]
         ocaml-version: 
           - 4.11.0
-          - 4.10.1
     steps:
     - uses: actions/checkout@master
     - uses: avsm/setup-ocaml@v1
@@ -46,11 +45,13 @@ jobs:
         sudo add-apt-repository -y ppa:avsm/musl
         sudo apt-get update
         sudo apt-get install -y musl-tools
-    - uses: avsm/setup-ocaml@master
+    - uses: avsm/setup-ocaml@v1
       with:
         ocaml-version: ${{ matrix.ocaml-version }}
-    - name: Dune
-      run: opam install -y dune
+    - name: Packages
+      run: opam depext -yt electrod
+    - name: Dependencies
+      run: opam install --deps-only electrod
     - name: Build
       run: opam exec -- dune build @install
     - uses: actions/upload-artifact@v1
