@@ -38,4 +38,4 @@ jobs:
     - uses: actions/upload-artifact@v1
       with:
         name: ${{ matrix.artifact-name }}
-        path: _build/default/bin/electrod.exe
+        path: electrod.exe
