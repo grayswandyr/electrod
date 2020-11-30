@@ -58,42 +58,52 @@ module SMV_atom : Solver.ATOMIC_PROPOSITION = struct
 
   let atom_sep = Fmtc.minus
 
-  let make domain name tuple =
-    let rel = Domain.get_exn name domain in
-    let dom_arity =
-      let open Scope in
-      match Relation.scope rel with
-      | Exact _ ->
-          assert false
-      | Inexact (Plain_relation _) ->
-          None
-      | Inexact (Partial_function (ar, _)) ->
-          Some ar
-      | Inexact (Total_function (ar, _)) ->
-          Some ar
+  let make domain =
+    let name_tuple (name, tuple) =
+      let rel = Domain.get_exn name domain in
+      let dom_arity =
+        let open Scope in
+        match Relation.scope rel with
+        | Exact _ ->
+            assert false
+        | Inexact (Plain_relation _) ->
+            None
+        | Inexact (Partial_function (ar, _)) ->
+            Some ar
+        | Inexact (Total_function (ar, _)) ->
+            Some ar
+      in
+      let const = Relation.is_const rel in
+      let partial = rel |> Relation.scope |> Scope.is_partial in
+      let ats = Tuple.to_list tuple in
+      let name_str =
+        let s = Fmtc.to_to_string Name.pp name in
+        if String.prefix ~pre:"$" s
+        then (* Skolem vars may have a name incompatible with SMV so: *)
+          "_" ^ s
+        else s
+      in
+      let full_str =
+        Format.sprintf
+          "%s%s%a"
+          name_str
+          rel_sep
+          Fmtc.(list ~sep:atom_sep Atom.pp)
+          ats
+      in
+      let sym = Symbol.make full_str in
+      (* keep track of creations to allow to get original pairs back *)
+      (* Note: this is an effect but it's fine with the cache hereunder as we want the same symbol to be used for the same name and tuple. *)
+      HT.add names_and_tuples sym (name, tuple);
+      { sym; dom_arity; const; partial }
     in
-    let const = Relation.is_const rel in
-    let partial = rel |> Relation.scope |> Scope.is_partial in
-    let ats = Tuple.to_list tuple in
-    let name_str =
-      let s = Fmtc.to_to_string Name.pp name in
-      if String.prefix ~pre:"$" s
-      then (* Skolem vars may have a name incompatible with SMV so: *)
-        "_" ^ s
-      else s
+    let cache =
+      CCCache.unbounded
+        ~eq:(Pair.equal Name.equal Tuple.equal)
+        ~hash:(Hash.pair Name.hash Tuple.hash)
+        1793
     in
-    let full_str =
-      Format.sprintf
-        "%s%s%a"
-        name_str
-        rel_sep
-        Fmtc.(list ~sep:atom_sep Atom.pp)
-        ats
-    in
-    let sym = Symbol.make full_str in
-    (* keep track of creations to allow to get original pairs back *)
-    HT.add names_and_tuples sym (name, tuple);
-    { sym; dom_arity; const; partial }
+    fun name tuple -> CCCache.with_cache cache name_tuple (name, tuple)
 
 
   let split at = HT.get names_and_tuples at.sym
