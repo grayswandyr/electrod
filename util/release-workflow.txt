@@ -3,7 +3,7 @@
 # semantic versioning (VVV herebelow), without 'v'
 
 # IMMEDIATELY prepare changelog
-echo "### VVV ($(date -Idate))" | cat - CHANGES.md > temp && mv temp CHANGES.md && $EDITOR CHANGES.md 
+echo "### VVV ($(date -Idate))" | cat - CHANGES.md > temp && mv temp CHANGES.md && $EDITOR CHANGES.md &
 
 # if needed, change, clean & update headers
 bash util/headache/headache.sh

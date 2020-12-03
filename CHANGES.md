@@ -1,3 +1,8 @@
+### 0.8.0 (2020-12-03)
+- huge translation boost and lower memory footprint
+- beta: use of Github Actions should enable to produce Windows versions
+- fix one compiler version (currently 4.11.0) 
+
 ### 0.7.2 (2020-11-26)
 - adapt to (and require) containers 3.0
 - remove vacuity tests in Raw_to_ast (no reason to fail there)
