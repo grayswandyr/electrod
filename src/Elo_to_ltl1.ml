@@ -202,6 +202,8 @@ module Make (Ltl : Solver.LTL) = struct
 
 
   class environment (elo : Elo.t) =
+    (* Atomic.make is a cached function for its last two arguments (out of 3), so we compute it for its first argument to avoid unnecessary recomputations *)
+    let make_atom_aux = Atomic.make elo.Elo.domain in
     object (_ : 'self)
       val bounds_exp_aux = Exp_bounds.make_bounds_exp elo.Elo.domain
 
@@ -217,7 +219,7 @@ module Make (Ltl : Solver.LTL) = struct
 
       method make_atom (name : Name.t) (t : Tuple.t) =
         assert (Domain.mem name elo.Elo.domain);
-        Ltl.atomic @@ Atomic.make elo.Elo.domain name t
+        Ltl.atomic @@ make_atom_aux name t
 
       method is_const (name : Name.t) =
         assert (Domain.mem name elo.Elo.domain);
@@ -366,8 +368,6 @@ module Make (Ltl : Solver.LTL) = struct
               sbs
           in
           conj (b' :: ranges')
-          |> Fun.tap (fun res ->
-                 Msg.debug (fun m -> m "build_Compr --> %a" pp res))
         else (
           Msg.debug (fun m -> m "build_Compr --> false (disj case)");
           false_ )
@@ -694,7 +694,17 @@ module Make (Ltl : Solver.LTL) = struct
   (* Converts an Ast formula to an LTL formula, gathering at the same time the
      rigid and flexible variables having appeared during the walk. *)
   let convert elo elo_fml =
+    let comment = formula_as_comment elo_fml in
+    Msg.debug (fun m ->
+        m
+          "----------------------------------------------------------------------\n\
+           %s"
+          comment);
+    let before_conversion = Mtime_clock.now () in
     let env = new environment elo in
     let ltl_fml = (new converter env)#visit_fml [] elo_fml in
-    (formula_as_comment elo_fml, ltl_fml)
+    let conversion_time = Mtime.span before_conversion @@ Mtime_clock.now () in
+    Msg.debug (fun m ->
+        m "Conversion done in %a@." Mtime.Span.pp conversion_time);
+    (comment, ltl_fml)
 end

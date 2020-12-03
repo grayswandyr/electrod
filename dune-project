@@ -17,7 +17,7 @@
 (package
  (name electrod)
  (depends
-  (ocaml (>= 4.05.0))
+  (ocaml (>= 4.11.0))
   (dune (>= 2.0))
   dune-build-info
   cmdliner 
