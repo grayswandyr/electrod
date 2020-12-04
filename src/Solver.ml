@@ -476,6 +476,7 @@ module type MODEL = sig
     -> elo:Elo.t
     -> file:string
     -> bmc:int option
+    -> pp_generated:bool
     -> t
     -> Outcome.t
 

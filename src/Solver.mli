@@ -227,6 +227,7 @@ module type MODEL = sig
     -> elo:Elo.t
     -> file:string
     -> bmc:int option (** BMC mode with bound on steps *)
+    -> pp_generated:bool
     -> t
     -> Outcome.t
   (** [analyze domain script filename model] runs the solver on [model]
