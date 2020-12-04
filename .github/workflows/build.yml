@@ -1,5 +1,7 @@
 name: Electrod
 on: push
+  branches:
+    - develop
 jobs:
   run:
     name: Tests

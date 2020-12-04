@@ -1,6 +1,6 @@
 # semantic versioning (VVV herebelow), without 'v'
 
-git flow feature start VVV
+git flow release start VVV
 
 # IMMEDIATELY prepare changelog
 echo "### VVV ($(date -Idate))" | cat - CHANGES.md > temp && mv temp CHANGES.md && $EDITOR CHANGES.md &
