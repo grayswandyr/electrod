@@ -172,6 +172,7 @@ let main
         ~script
         ~file
         ~bmc
+        ~pp_generated:long_names
         model
     in
     if not no_analysis

@@ -562,12 +562,22 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
 
 
   (* write in temp file *)
-  let make_model_file dir infile model =
+  let make_model_file dir infile pp_generated model =
     let src_file = Filename.basename infile in
     let tgt = Filename.temp_file ~temp_dir:dir (src_file ^ "-") ".smv" in
     let nbvars = ref 0 in
     IO.with_out tgt (fun out ->
-        nbvars := pp_count_variables (Format.formatter_of_out_channel out) model);
+        let open Format in
+        let chan = formatter_of_out_channel out in
+        ( if not pp_generated
+        then
+          (* no pretty-printing => redefine indentation function to output nothing *)
+          let out_funs = pp_get_formatter_out_functions chan () in
+          let out_funs =
+            { out_funs with out_indent = (fun _ -> out_funs.out_string "" 0 0) }
+          in
+          pp_set_formatter_out_functions chan out_funs );
+        nbvars := pp_count_variables chan model);
     (tgt, !nbvars)
 
 
@@ -603,6 +613,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
       ~elo
       ~file
       ~bmc
+      ~pp_generated
       model : Outcome.t =
     let keep_or_remove_files scr smv =
       if keep_files
@@ -625,7 +636,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     let dir = Filename.dirname file in
     let scr = make_script_file bmc dir script in
     let before_generation = Mtime_clock.now () in
-    let smv, nbvars = make_model_file dir file model in
+    let smv, nbvars = make_model_file dir file pp_generated model in
     let after_generation = Mtime_clock.now () in
     Msg.info (fun m ->
         let size, unit_ =
