@@ -1,3 +1,6 @@
+### 0.9.0 (2020-12-04)
+- output much shorter files (unless pretty-printing is on)
+
 ### 0.8.0 (2020-12-03)
 - huge translation boost and lower memory footprint
 - beta: use of Github Actions should enable to produce Windows versions
