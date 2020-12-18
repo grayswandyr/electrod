@@ -677,6 +677,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
       Logs.info (fun m -> m "Starting analysis:@[<h2>@ %s@]" to_call);
       let before_run = Mtime_clock.now () in
       let okout, errout, errcode = CCUnix.call "%s" to_call in
+
       let after_run = Mtime_clock.now () in
       (* go back to default behavior *)
       Sys.set_signal Sys.sigterm previous_handler;
@@ -690,17 +691,17 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
       let validity_check line =
         match bmc with
         | None ->
-            String.suffix ~suf:"is true" line
+            String.mem ~sub:"is true" line
         | Some length ->
             let valid_bmc_string =
               "-- no counterexample found with bound " ^ string_of_int length
             in
-            String.equal valid_bmc_string line
+            String.mem ~sub:valid_bmc_string line
       in
       let spec =
         String.lines_gen okout
         |> Gen.drop_while (fun line ->
-               (not @@ String.suffix ~suf:"is false" line)
+               (not @@ String.mem ~sub:"is false" line)
                && (not @@ validity_check line))
       in
       keep_or_remove_files scr smv;
