@@ -30,7 +30,7 @@
  (libraries containers containers-data containers.unix fmt fmt.tty gen
    hashcons logs.fmt mtime.clock.os printbox iter stdcompat stdlib-shims)
  (preprocess
-  (pps ppx_deriving visitors.ppx)))
+  (pps visitors.ppx)))
 
 ; Generate Scripts.ml file
 

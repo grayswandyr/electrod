@@ -1,8 +1,8 @@
-(lang dune 2.0)
+(lang dune 2.7)
 
 (name electrod)
 
-(using menhir 2.0)
+(using menhir 2.1)
 
 (allow_approximate_merlin)
 
