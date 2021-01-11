@@ -7,6 +7,8 @@ arch := $(shell opam var arch)
 
 RELEASE = ./$(TARGET).${os}.${arch}
 
+opam_switch = 4.11.1
+
 all: build
 
 build:
@@ -14,9 +16,6 @@ build:
 
 watch:
 	dune build --watch @check @fmt --auto-promote --diff-command=-
-
-build-release:
-	dune build --workspace dune-workspace.release @all
 
 # generate opam file (in particular)
 opam:

@@ -1,3 +1,7 @@
+### 0.1.0 (2021-01-11)
+- build (using Github Actions) on Windows
+- fix nuXmv/NuSMV output parsing on Windows, which prevented correct behavior
+
 ### 0.9.0 (2020-12-04)
 - output much shorter files (unless pretty-printing is on)
 

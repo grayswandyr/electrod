@@ -1,7 +1,5 @@
 name: Electrod
-on: push
-  branches:
-    - develop
+on: push  
 jobs:
   run:
     name: Tests

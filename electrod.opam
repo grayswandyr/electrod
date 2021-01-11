@@ -16,7 +16,7 @@ doc: "https://grayswandyr.github.io/electrod/api"
 bug-reports: "https://github.com/grayswandyr/electrod/issues"
 depends: [
   "ocaml" {>= "4.11.0"}
-  "dune" {>= "2.0"}
+  "dune" {>= "2.7" & >= "2.0"}
   "dune-build-info"
   "cmdliner"
   "containers" {>= "3.0"}
@@ -34,9 +34,10 @@ depends: [
   "stdcompat"
   "stdlib-shims"
   "visitors" {>= "20190513"}
+  "odoc" {with-doc}
 ]
 build: [
-  ["dune" "subst"] {pinned}
+  ["dune" "subst"] {dev}
   [
     "dune"
     "build"
