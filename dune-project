@@ -18,7 +18,7 @@
  (name electrod)
  (depends
   (ocaml (>= 4.11.0))
-  (dune (>= 2.0))
+  (dune (>= 2.7.0))
   dune-build-info
   cmdliner 
   (containers (>= 3.0)) 
@@ -36,6 +36,11 @@
   stdcompat
   stdlib-shims
   (visitors (>= 20190513))
+  ;; Dev dependencies
+  (utop :dev)
+  (merlin :dev)
+  (ocamlformat :dev)
+  (ocaml-lsp-server :dev)
   )
  (synopsis "Formal analysis for the Electrod formal pivot language")
  (description 
