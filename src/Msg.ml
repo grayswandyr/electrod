@@ -134,7 +134,7 @@ module Extract = struct
         let suspect_last, innocent_last =
           split_string last suspect_last_last_idx
         in
-        let suspect = (suspect_first :: suspect_middle) @ [ suspect_last ] in
+        let suspect = suspect_first :: suspect_middle @ [ suspect_last ] in
         (innocent_first, (suspect, innocent_last))
 
   (* pair of pairs! *)

@@ -49,7 +49,7 @@ struct
             let at_fml2 = atomic at2 in
             and_
               (implies at_fml1 (lazy at_fml2))
-              (lazy (implies (iff at_fml1 at_fml2) (lazy fml_acc))))
+              (lazy (implies (iff at_fml1 at_fml2) (lazy fml_acc))) )
         sym
         true_
     in
@@ -75,7 +75,7 @@ struct
             let at_fml1 = atomic at1 in
             let at2 = Ltl.Atomic.make elo.domain name2 tuple2 in
             let at_fml2 = atomic at2 in
-            and_ (iff at_fml1 at_fml2) (lazy fml_acc))
+            and_ (iff at_fml1 at_fml2) (lazy fml_acc) )
         sym
         true_
     in
@@ -98,7 +98,7 @@ struct
           then temporal_sym_to_ltl elo sym
           else single_state_sym_to_ltl symmetry_offset elo sym
         in
-        List.cons cur_fml fmls_acc)
+        List.cons cur_fml fmls_acc )
       (*       S.cons ("-- (symmetry)", cur_fml) fmls_acc )*)
       List.empty
       syms
@@ -119,7 +119,7 @@ struct
   let split_invar_noninvar_fmls elo blk =
     let open Invar_computation in
     let invf, tmp_restf =
-      List.partition_map
+      List.partition_filter_map
         (fun fml ->
           let color = Invar_computation.color elo fml in
           (* Msg.debug (fun m ->
@@ -129,11 +129,11 @@ struct
           | Invar | Static_prop ->
               `Left (remove_always_from_invar fml)
           | Init | Primed_prop | Trans | Temporal ->
-              `Right fml)
+              `Right fml )
         blk
     in
     let transf, tmp_restf2 =
-      List.partition_map
+      List.partition_filter_map
         (fun fml ->
           let color = Invar_computation.color elo fml in
           (* Msg.debug (fun m ->
@@ -143,17 +143,17 @@ struct
           | Trans ->
               `Left (remove_always_from_invar fml)
           | _ ->
-              `Right fml)
+              `Right fml )
         tmp_restf
     in
     let initf, restf =
-      List.partition_map
+      List.partition_filter_map
         (fun fml ->
           let color = Invar_computation.color elo fml in
           (* Msg.debug (fun m ->
               m "Color of formula %a : %a\n"
               Elo.pp_fml fml Invar_computation.pp color); *)
-          match color with Init -> `Left fml | _ -> `Right fml)
+          match color with Init -> `Left fml | _ -> `Right fml )
         tmp_restf2
     in
     match (restf, List.rev invf, List.rev transf, List.rev initf) with
@@ -207,7 +207,7 @@ struct
         }
     in
     Msg.debug (fun m ->
-        m "Elo_to_model1.run: after instance update:@ %a" Elo.pp elo);
+        m "Elo_to_model1.run: after instance update:@ %a" Elo.pp elo );
     (* walk through formulas, convert them to LTL and accumulate rigid
        and flexible variables. *)
     (* let exception Early_stop in *)
@@ -219,7 +219,7 @@ struct
           (* if ltl = Ltl.false_ then *)
           (*   raise Early_stop *)
           (* else *)
-          S.cons (fml_str, ltl) acc_fml)
+          S.cons (fml_str, ltl) acc_fml )
         S.empty
         fmls
       (* with *)

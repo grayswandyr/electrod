@@ -32,7 +32,7 @@ class simplify =
     method! visit_Qual env qual exp =
       Msg.debug (fun m ->
           m "Simplify2.visit_Qual <-- %a" Ast.pp_prim_fml
-          @@ Gen_goal.qual qual exp);
+          @@ Gen_goal.qual qual exp );
       let prim_fml =
         match qual with
         | ROne ->
@@ -48,7 +48,7 @@ class simplify =
       |> Fun.tap
          @@ fun res ->
          Msg.debug (fun m ->
-             m "Simplify2.visit_Qual --> %a" Ast.pp_prim_fml res)
+             m "Simplify2.visit_Qual --> %a" Ast.pp_prim_fml res )
   end
 
 let run elo =

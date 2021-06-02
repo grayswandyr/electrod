@@ -58,7 +58,7 @@ let compute_relation_renaming elo =
                 "iden", which may induce errors in the translation process, so we
                 append a symbol (1) not used in the encoding set *)
              (name, Name.name @@ new_string ^ "1")
-           else (name, new_name))
+           else (name, new_name) )
 
 
 let compute_atom_renaming elo =
@@ -67,7 +67,7 @@ let compute_atom_renaming elo =
   |> List.mapi (fun i tuple ->
          let atom = Tuple.ith 0 tuple in
          let new_atom = Atom.atom @@ encode_atom i in
-         (atom, new_atom))
+         (atom, new_atom) )
 
 
 let rename_elo long_names elo =
@@ -96,7 +96,7 @@ let rename_elo long_names elo =
           @@ list ~sep:semi
           @@ parens
           @@ pair ~sep:comma Atom.pp Atom.pp )
-          atom_renaming);
+          atom_renaming );
     Msg.debug (fun m ->
         m
           "Name renaming:@ %a"
@@ -104,7 +104,7 @@ let rename_elo long_names elo =
           @@ list ~sep:semi
           @@ parens
           @@ pair ~sep:comma Name.pp Name.pp )
-          name_renaming);
+          name_renaming );
     Ast.
       { elo with
         domain = Domain.rename atom_renaming name_renaming elo.domain

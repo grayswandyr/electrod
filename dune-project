@@ -21,7 +21,7 @@
   (dune (>= 2.7.0))
   dune-build-info
   cmdliner 
-  (containers (>= 3.0)) 
+  (containers (>= 3.4)) 
   containers-data
   (fmt (>= 0.8.7))
   gen

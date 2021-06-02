@@ -42,7 +42,7 @@ let check_duplicate_atoms infile atoms =
   if List.length atoms > List.length dedup
   then
     Msg.Warn.univ_duplicate_atoms (fun args ->
-        args infile (List.sort Atom.compare atoms) dedup);
+        args infile (List.sort Atom.compare atoms) dedup );
   dedup
 
 
@@ -67,7 +67,7 @@ let compute_univ infile raw_univ =
         | UIntvl intvl ->
             interval_to_atoms infile intvl
         | UPlain id ->
-            [ Atom.of_raw_ident id ])
+            [ Atom.of_raw_ident id ] )
       raw_univ
   in
   let dedup = check_duplicate_atoms infile atoms in
@@ -89,7 +89,7 @@ let compute_tuples infile domain = function
           (fun t ->
             if not @@ TS.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain
             then [ t ]
-            else [])
+            else [] )
           atoms
       in
       ( if not @@ List.is_empty absent
@@ -117,7 +117,7 @@ let compute_tuples infile domain = function
           (fun t ->
             if not @@ TS.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain
             then [ t ]
-            else [])
+            else [] )
           atoms
       in
       ( if not @@ List.is_empty absent
@@ -160,8 +160,8 @@ let compute_bound infile domain (which : [ `Inf | `Sup | `Exact ]) id raw_bound
         (* Msg.debug (fun m -> m "Raw_to_ast.compute_bound:BUniv"); *)
         Domain.univ_atoms domain
     | BRef ref_id ->
-      ( (* Msg.debug (fun m -> m "Raw_to_ast.compute_bound:BRef"); *)
-      match Domain.get (Name.of_raw_ident ref_id) domain with
+      (* Msg.debug (fun m -> m "Raw_to_ast.compute_bound:BRef"); *)
+      ( match Domain.get (Name.of_raw_ident ref_id) domain with
       | None ->
           Msg.Fatal.undeclared_id (fun args -> args infile ref_id)
       | Some rel ->
@@ -207,7 +207,7 @@ let compute_bound infile domain (which : [ `Inf | `Sup | `Exact ]) id raw_bound
         if TS.size bnd <> List.length tuples
         then
           Msg.Warn.duplicate_elements (fun args ->
-              args infile id which TS.pp bnd);
+              args infile id which TS.pp bnd );
         bnd
   in
   walk raw_bound
@@ -281,7 +281,7 @@ let decide_arity infile id specified_arity computed_arity =
       Msg.Fatal.cannot_decide_arity (fun args -> args infile id)
   | Some ar when ar <> computed_arity && computed_arity <> 0 ->
       Msg.Fatal.specified_computed_arities_discrepancy (fun args ->
-          args infile id ar computed_arity)
+          args infile id ar computed_arity )
   | None ->
       computed_arity
   | Some ar ->
@@ -309,7 +309,7 @@ let compute_decl infile domain = function
             init_arity (* 0 : arity cannot be inferred *)
         | Some ar when ar <> init_arity && init_arity <> 0 ->
             Msg.Fatal.init_and_fby_incompatible_arities (fun args ->
-                args infile id init_arity ar)
+                args infile id init_arity ar )
         | Some ar ->
             ar
       in
@@ -375,8 +375,8 @@ let compute_instances domain (pb : Raw.raw_problem) =
       if Instance.mem n acc
       then
         Msg.Fatal.instance_already_declared (fun args ->
-            args pb.file @@ fst asgn)
-      else Instance.add n ts acc)
+            args pb.file @@ fst asgn )
+      else Instance.add n ts acc )
     Instance.empty
     pb.raw_inst
 
@@ -393,8 +393,8 @@ let compute_symmetries (pb : Raw.raw_problem) =
   in
   let compute_single_sym
       (sym :
-        (Raw_ident.t * Raw.raw_tuple) list * (Raw_ident.t * Raw.raw_tuple) list)
-      =
+        (Raw_ident.t * Raw.raw_tuple) list * (Raw_ident.t * Raw.raw_tuple) list
+        ) =
     match sym with
     | [], [] ->
         Symmetry.make [] []
@@ -479,7 +479,7 @@ let refine_identifiers raw_pb =
       if disj && List.length vs = 1
       then (
         Msg.Warn.disj_with_only_one_variable (fun args ->
-            args raw_pb.file (List.hd vs));
+            args raw_pb.file (List.hd vs) );
         false )
       else disj
     in
@@ -534,7 +534,7 @@ let refine_identifiers raw_pb =
     List.map
       (fun decl ->
         Pair.dup_map (fun id -> Ast.name_ident (Name.of_raw_ident id))
-        @@ Raw.decl_id decl)
+        @@ Raw.decl_id decl )
       raw_pb.raw_decls
     @ [ ( Raw_ident.ident "univ" Lexing.dummy_pos Lexing.dummy_pos
         , Ast.name_ident Name.univ )
@@ -595,7 +595,7 @@ let compute_arities elo =
                    ar1
                    (str_exp e2)
                    Fmtc.(option ~none:(const string "none") int)
-                   ar2))
+                   ar2 ) )
         else rcomp e1' op e2'
     | IComp (e1, op, e2) ->
         let e1' = walk_iexp ctx e1 in
@@ -682,7 +682,7 @@ let compute_arities elo =
               (Fmtc.strf
                  "incompatible arities between %s and %s"
                  (str_exp e1')
-                 (str_exp e2'))
+                 (str_exp e2') )
         | Diff when Option.is_none ar1 ->
             return_exp exp None @@ rbinary e1' op e2'
         | Diff when Option.equal ( = ) ar1 ar2 || Option.is_none ar2 ->
@@ -692,7 +692,7 @@ let compute_arities elo =
               (Fmtc.strf
                  "incompatible arities between %s and %s"
                  (str_exp e1')
-                 (str_exp e2'))
+                 (str_exp e2') )
         | Inter when Option.is_none ar1 || Option.is_none ar2 ->
             return_exp exp None @@ rbinary e1' op e2'
         | Inter when Option.equal ( = ) ar1 ar2 ->
@@ -702,7 +702,7 @@ let compute_arities elo =
               (Fmtc.strf
                  "incompatible arities between %s and %s"
                  (str_exp e1')
-                 (str_exp e2'))
+                 (str_exp e2') )
         | Over when Option.equal ( = ) ar1 ar2 ->
             if CCOpt.compare CCInt.compare ar1 (Some 1) <= 0
             then Result.fail (Fmtc.strf "arity of %s is < 2" (str_exp e1'))
@@ -716,7 +716,7 @@ let compute_arities elo =
               (Fmtc.strf
                  "incompatible arities between %s and %s"
                  (str_exp e1')
-                 (str_exp e2'))
+                 (str_exp e2') )
         | LProj when Option.is_none ar1 ->
             return_exp exp None @@ rbinary e1' op e2'
         | LProj when Option.equal ( = ) ar1 (Some 1) ->
@@ -770,7 +770,7 @@ let compute_arities elo =
               Gen_goal.exp
                 Option.(map2 ( + ) (pure (-2)) @@ map2 ( + ) arg.arity r.arity)
                 Location.(span (arg.exp_loc, r.exp_loc))
-              @@ rbinary arg join r)
+              @@ rbinary arg join r )
             args'
             call'
         in
@@ -782,7 +782,7 @@ let compute_arities elo =
         ( match
             List.(
               flat_map (fun (_, vs, _) ->
-                  map (fun v -> ctx2#arity @@ var_ident_of_bound_var v) vs))
+                  map (fun v -> ctx2#arity @@ var_ident_of_bound_var v) vs ))
               sbs'
           with
         | [] ->

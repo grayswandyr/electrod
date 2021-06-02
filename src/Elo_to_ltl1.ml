@@ -82,7 +82,7 @@ module Make (Ltl : Solver.LTL) = struct
                   ~pp_sep:Fmtc.(const string ", ")
                   (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp)
                   (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp) )
-             res)
+             res )
 
 
   (* given a 2-tuple set, this function computes the maximum length of
@@ -107,7 +107,7 @@ module Make (Ltl : Solver.LTL) = struct
             (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp)
             cod
             (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp)
-            core_ats);
+            core_ats );
       let core_length = S.length core_ats in
       (* is it possible that x1 is not in the core (intersection of the
          domain and the codomain) ? *)
@@ -115,14 +115,14 @@ module Make (Ltl : Solver.LTL) = struct
         S.subset ~eq:Atom.equal ~hash:Atom.hash dom core_ats
       in
       Msg.debug (fun m ->
-          m "compute_tc_length: first_elt_in_core = %B\n" first_elt_in_core);
+          m "compute_tc_length: first_elt_in_core = %B\n" first_elt_in_core );
       (* is it possible that xn is not in the core (intersection of the
          domain and the codomain) ? *)
       let last_elt_in_core =
         S.subset ~eq:Atom.equal ~hash:Atom.hash cod core_ats
       in
       Msg.debug (fun m ->
-          m "compute_tc_length: last_elt_in_core = %B\n" last_elt_in_core);
+          m "compute_tc_length: last_elt_in_core = %B\n" last_elt_in_core );
       ( match (first_elt_in_core, last_elt_in_core) with
       | true, true ->
           core_length
@@ -131,7 +131,7 @@ module Make (Ltl : Solver.LTL) = struct
       | _ ->
           core_length + 1 )
       |> Fun.tap (fun res ->
-             Msg.debug (fun m -> m "compute_tc_length --> length = %d" res))
+             Msg.debug (fun m -> m "compute_tc_length --> length = %d" res) )
 
 
   (* computes the transitive closure of the term acc_term by k iterative
@@ -194,9 +194,9 @@ module Make (Ltl : Solver.LTL) = struct
         find
           (* find the *at most one* (for fixed tuple and x_r) x_s s.t. tuple = x_r . x_s *)
             (fun x_s ->
-            if Tuple.is_in_join tuple x_r x_s then Some (x_r, x_s) else None)
+            if Tuple.is_in_join tuple x_r x_s then Some (x_r, x_s) else None )
           s_sup_seq
-        |> function Some pair -> cons pair pairs | None -> pairs)
+        |> function Some pair -> cons pair pairs | None -> pairs )
       empty
       r_sup_seq
 
@@ -260,7 +260,7 @@ module Make (Ltl : Solver.LTL) = struct
                 (fun _visitors_this -> _visitors_this) _visitors_c1
               in
               let _visitors_r2 = self#visit_'exp env _visitors_c2 in
-              (_visitors_r0, _visitors_r1, _visitors_r2))
+              (_visitors_r0, _visitors_r1, _visitors_r2) )
             env
             _visitors_c0
         in
@@ -296,7 +296,7 @@ module Make (Ltl : Solver.LTL) = struct
                     nbvars
                     Fmtc.(brackets @@ list ~sep:sp @@ Tuple.pp)
                     tuples
-                    alldiff);
+                    alldiff );
               alldiff && walk tl ys
           | (false, nbvars, _) :: tl ->
               let ys = List.drop nbvars tuples in
@@ -338,7 +338,7 @@ module Make (Ltl : Solver.LTL) = struct
                 Tuple.pp
                 tuple
                 (Tuple.arity tuple)
-                compr_ar);
+                compr_ar );
         (* the tuple is (in principle) of arity equal to the sum of arities of ranges of bound variables. To build the corresponding substitutions, we must first split this tuple into as many tuples as variables, each one with the adequate arity *)
         let ranges =
           List.flat_map
@@ -363,7 +363,7 @@ module Make (Ltl : Solver.LTL) = struct
                 (* copy range nbvars times *)
                 let rs' = List.repeat nbvars [ r' ] in
                 let new_subst = List.rev boundvars @ acc_subst in
-                ((remaining, new_subst), rs'))
+                ((remaining, new_subst), rs') )
               (split_tuples, subst)
               sbs
           in
@@ -418,7 +418,7 @@ module Make (Ltl : Solver.LTL) = struct
         wedge ~range:(TS.to_iter must) (fun t -> lazy (s' t))
         +&& lazy
               (wedge ~range:(TS.to_iter may) (fun bs ->
-                   lazy (r' bs @=> lazy (s' bs))))
+                   lazy (r' bs @=> lazy (s' bs)) ) )
 
       method build_Inter (_ : stack) _ _ e1 e2 tuple =
         e1 tuple +&& lazy (e2 tuple)
@@ -473,7 +473,7 @@ module Make (Ltl : Solver.LTL) = struct
         let mustpart =
           wedge ~range:(TS.to_iter must) (fun t ->
               lazy
-                (if Tuple.equal (proj1 t) (proj1 tuple) then false_ else true_))
+                (if Tuple.equal (proj1 t) (proj1 tuple) then false_ else true_) )
         in
         (* [newmay] helps compute the last AND above: it removes duplicate tuples
            that may appear in this translation: *)
@@ -509,7 +509,7 @@ module Make (Ltl : Solver.LTL) = struct
         let sb' =
           (fun (disj, nbvars, range) ->
             let range' = self#visit_'exp subst range in
-            (disj, nbvars, range'))
+            (disj, nbvars, range') )
             sb
         in
         let range' = [ true_ ] in
@@ -527,7 +527,7 @@ module Make (Ltl : Solver.LTL) = struct
              then
                filter (fun l ->
                    let sorted = sort_uniq ~cmp:Tuple.compare l in
-                   length l = length sorted)
+                   length l = length sorted )
              else Fun.id )
           |> to_iter
         in
@@ -578,7 +578,7 @@ module Make (Ltl : Solver.LTL) = struct
                      (fun tuple -> lazy (s' tuple))
                  in
                  (* Msg.debug (fun m -> m "(build_Quant.premise) %a" Ltl.pp premise); *)
-                 lazy (link premise @@ sem_of_substituted_blk tuples)))
+                 lazy (link premise @@ sem_of_substituted_blk tuples) ) )
         in
         smallop mustpart maypart
 
@@ -595,19 +595,18 @@ module Make (Ltl : Solver.LTL) = struct
         let s_bounds = env#must_may_sup subst s in
         let inter = TS.inter r_bounds.may s_bounds.may in
         wedge ~range:(TS.to_iter r_bounds.must) (fun t -> lazy (s' t))
-        +&& lazy
-              (wedge ~range:(TS.to_iter s_bounds.must) (fun t -> lazy (r' t)))
+        +&& lazy (wedge ~range:(TS.to_iter s_bounds.must) (fun t -> lazy (r' t)))
         +&& lazy
               (wedge ~range:(TS.to_iter inter) (fun bs ->
-                   lazy (r' bs @<=> s' bs)))
+                   lazy (r' bs @<=> s' bs) ) )
         +&& lazy
               (wedge
                  ~range:(TS.to_iter @@ TS.diff r_bounds.may inter)
-                 (fun bs -> lazy (r' bs @=> lazy (s' bs))))
+                 (fun bs -> lazy (r' bs @=> lazy (s' bs))) )
         +&& lazy
               (wedge
                  ~range:(TS.to_iter @@ TS.diff s_bounds.may inter)
-                 (fun bs -> lazy (s' bs @=> lazy (r' bs))))
+                 (fun bs -> lazy (s' bs @=> lazy (r' bs))) )
 
       method build_RIte
           (_ : stack) (__c : G.fml) (__t : G.exp) __e c' t' e' tuple =
@@ -639,7 +638,7 @@ module Make (Ltl : Solver.LTL) = struct
       method build_TClos subst r __r' tuple =
         assert (Tuple.arity tuple = 2);
         Msg.debug (fun m ->
-            m "%s.build_TClos <-- %a" __MODULE__ G.(pp_exp (arity r)) r);
+            m "%s.build_TClos <-- %a" __MODULE__ G.(pp_exp (arity r)) r );
         let { sup; _ } = env#must_may_sup subst r in
         let k = compute_tc_length sup in
         Msg.debug (fun m -> m "TC bound: %d" k);
@@ -699,12 +698,12 @@ module Make (Ltl : Solver.LTL) = struct
         m
           "----------------------------------------------------------------------\n\
            %s"
-          comment);
+          comment );
     let before_conversion = Mtime_clock.now () in
     let env = new environment elo in
     let ltl_fml = (new converter env)#visit_fml [] elo_fml in
     let conversion_time = Mtime.span before_conversion @@ Mtime_clock.now () in
     Msg.debug (fun m ->
-        m "Conversion done in %a@." Mtime.Span.pp conversion_time);
+        m "Conversion done in %a@." Mtime.Span.pp conversion_time );
     (comment, ltl_fml)
 end

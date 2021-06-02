@@ -28,7 +28,7 @@ let check_paragraphs file pars =
           | Raw.ParGoal _ ->
               true
           | Raw.ParInst _ | Raw.ParSym _ | Raw.ParInv _ ->
-              false)
+              false )
         pars
     in
     if length candidates = 1
@@ -37,7 +37,7 @@ let check_paragraphs file pars =
       match candidates with [ Raw.ParGoal g ] -> g | _ -> assert false
     else
       Msg.Fatal.syntax_error_paragraphs (fun args ->
-          args file "one goal must be declared exactly")
+          args file "one goal must be declared exactly" )
   in
   let invar =
     let candidates =
@@ -46,7 +46,7 @@ let check_paragraphs file pars =
           | Raw.ParInv _ ->
               true
           | Raw.ParGoal _ | Raw.ParInst _ | Raw.ParSym _ ->
-              false)
+              false )
         pars
     in
     if length candidates <= 1
@@ -61,7 +61,7 @@ let check_paragraphs file pars =
           assert false
     else
       Msg.Fatal.syntax_error_paragraphs (fun args ->
-          args file "at most one invariant section may be declared")
+          args file "at most one invariant section may be declared" )
   in
   let inst =
     let candidates =
@@ -70,7 +70,7 @@ let check_paragraphs file pars =
           | Raw.ParInst _ ->
               true
           | Raw.ParGoal _ | Raw.ParSym _ | Raw.ParInv _ ->
-              false)
+              false )
         pars
     in
     if length candidates <= 1
@@ -85,7 +85,7 @@ let check_paragraphs file pars =
           assert false
     else
       Msg.Fatal.syntax_error_paragraphs (fun args ->
-          args file "at most one (partial) instance may be declared")
+          args file "at most one (partial) instance may be declared" )
   in
   let sym =
     let candidates =
@@ -94,7 +94,7 @@ let check_paragraphs file pars =
           | Raw.ParSym _ ->
               true
           | Raw.ParGoal _ | Raw.ParInst _ | Raw.ParInv _ ->
-              false)
+              false )
         pars
     in
     if length candidates <= 1
@@ -109,7 +109,7 @@ let check_paragraphs file pars =
           assert false
     else
       Msg.Fatal.syntax_error_paragraphs (fun args ->
-          args file "at most one list of symmetries may be declared")
+          args file "at most one list of symmetries may be declared" )
   in
   (goal, invar, inst, sym)
 

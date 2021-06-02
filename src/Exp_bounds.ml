@@ -134,7 +134,7 @@ let rec sup_sim_bindings fbounds_exp (subst : Tuple.t list) sim_bindings :
         pp_subst
         subst
         G.(pp_sim_bindings (List.length subst))
-        sim_bindings);
+        sim_bindings );
   ( match sim_bindings with
   | [] ->
       assert false
@@ -151,7 +151,7 @@ let rec sup_sim_bindings fbounds_exp (subst : Tuple.t list) sim_bindings :
            whole possibilities *)
       List.fold_left
         (fun acc line ->
-          acc @ product_for_one_hd_combination fbounds_exp subst tl line)
+          acc @ product_for_one_hd_combination fbounds_exp subst tl line )
         []
         hd_sup )
   |> Fun.tap (fun res ->
@@ -163,7 +163,7 @@ let rec sup_sim_bindings fbounds_exp (subst : Tuple.t list) sim_bindings :
                G.(pp_sim_bindings (List.length subst))
                sim_bindings
                Fmtc.(braces @@ list ~sep:sp @@ Tuple.pp)
-               res))
+               res ) )
 
 
 (* given the list of tuples corresponding to the bound for the head sim
@@ -207,7 +207,7 @@ let make_bounds_exp =
             (G.pp_exp @@ List.length subst)
             exp
             TS.pp
-            sup);
+            sup );
     { must; sup; may = TS.diff sup must }
   in
   let eq x1 x2 = CCEqual.(pair physical (list Tuple.equal)) x1 x2 in
@@ -277,7 +277,7 @@ let make_bounds_exp =
                          (G.pp_prim_exp @@ List.length subst)
                          pe
                          TS.pp
-                         res.may))
+                         res.may ) )
         | RUn (RTClos, e) ->
             let iden = Domain.get_exn Name.iden domain in
             let b = fbounds_exp (e, subst) in
@@ -298,7 +298,7 @@ let make_bounds_exp =
                          (G.pp_prim_exp @@ List.length subst)
                          pe
                          TS.pp
-                         res.may))
+                         res.may ) )
         | RBin (e1, Union, e2) ->
             let b1 = fbounds_exp (e1, subst) in
             let b2 = fbounds_exp (e2, subst) in
@@ -365,4 +365,4 @@ let make_bounds_exp =
             fbounds_exp (e, subst)
         | Compr (sim_bindings, _) ->
             let sup_list = sup_sim_bindings fbounds_exp subst sim_bindings in
-            return_bounds args TS.empty (TS.of_tuples sup_list))
+            return_bounds args TS.empty (TS.of_tuples sup_list) )

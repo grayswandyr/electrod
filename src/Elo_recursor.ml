@@ -225,7 +225,7 @@ class virtual ['self] recursor =
             (fun _visitors_this -> _visitors_this) _visitors_c1
           in
           let _visitors_r2 = self#visit_'exp env _visitors_c2 in
-          (_visitors_r0, _visitors_r1, _visitors_r2))
+          (_visitors_r0, _visitors_r1, _visitors_r2) )
           _visitors_c1
       in
       let _visitors_r2 = self#visit_list self#visit_'fml env _visitors_c2 in
@@ -466,7 +466,7 @@ class virtual ['self] recursor =
               (fun _visitors_this -> _visitors_this) _visitors_c1
             in
             let _visitors_r2 = self#visit_'exp env _visitors_c2 in
-            (_visitors_r0, _visitors_r1, _visitors_r2))
+            (_visitors_r0, _visitors_r1, _visitors_r2) )
           env
           _visitors_c0
       in

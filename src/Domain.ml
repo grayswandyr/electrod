@@ -111,7 +111,7 @@ let rename atom_renaming name_renaming domain =
   to_list domain
   |> List.map (fun (name, rel) ->
          ( List.assoc ~eq:Name.equal name name_renaming
-         , Relation.rename atom_renaming name_renaming rel ))
+         , Relation.rename atom_renaming name_renaming rel ) )
   |> of_list
 
 

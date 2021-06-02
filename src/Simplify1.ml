@@ -40,7 +40,7 @@ let create_new_vars_and_assoc_list_and_comp_fml vs ar =
                req
                (exp ar L.dummy new_var_as_ident) )
           and_
-          (fml L.dummy prim_fml) ))
+          (fml L.dummy prim_fml) ) )
     vs
     ([], [], true_)
 
@@ -67,7 +67,7 @@ class simplify =
             in
             ( (disj, new_vars, e) :: sim_bindings
             , assoc @ acc_assoc
-            , lbinary (fml L.dummy prim_fml) and_ (fml L.dummy acc_fml) ))
+            , lbinary (fml L.dummy prim_fml) and_ (fml L.dummy acc_fml) ) )
           sim_bindings
           ([], [], true_)
       in
@@ -113,7 +113,7 @@ class simplify =
     method! visit_Quant env q sim_bindings blk =
       Msg.debug (fun m ->
           m "Simplify1.visit_Quant <-- %a" Ast.pp_prim_fml
-          @@ quant q sim_bindings blk);
+          @@ quant q sim_bindings blk );
       match q with
       | One ->
           self#visit_Quant_One env q sim_bindings blk
@@ -134,7 +134,7 @@ class simplify =
                   [ fml e.exp_loc @@ self#visit_Quant env q bs blk ]
           in
           Msg.debug (fun m ->
-              m "Simplify1.visit_Quant --> %a" Ast.pp_prim_fml res);
+              m "Simplify1.visit_Quant --> %a" Ast.pp_prim_fml res );
           res
 
     (* substitute let bindings *)
@@ -146,7 +146,8 @@ class simplify =
       (*             @@ let_ bindings fmls); *)
       List.fold_right
         (function
-          | Ast.BVar v, e -> Ast.substitute#visit_prim_fml [ (v, e.prim_exp) ])
+          | Ast.BVar v, e -> Ast.substitute#visit_prim_fml [ (v, e.prim_exp) ]
+          )
         bindings
         (block fmls)
       |> self#visit_prim_fml env
@@ -197,9 +198,13 @@ class simplify =
         List.fold_right
           (fun arg r ->
             exp
-              Option.(return @@ (get_exn arg.arity + get_exn r.arity - 2))
+              Option.(
+                return
+                @@ get_exn_or __LOC__ arg.arity
+                   + get_exn_or __LOC__ r.arity
+                   - 2)
               L.(span (arg.exp_loc, r.exp_loc))
-            @@ rbinary arg join r)
+            @@ rbinary arg join r )
           args
           call
       in

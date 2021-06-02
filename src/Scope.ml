@@ -135,7 +135,7 @@ let rename atom_renaming = function
   | Inexact (Plain_relation (inf, sup)) ->
       Inexact
         (Plain_relation
-           (TS.rename atom_renaming inf, TS.rename atom_renaming sup))
+           (TS.rename atom_renaming inf, TS.rename atom_renaming sup) )
   | Inexact (Partial_function (dom_ar, sup)) ->
       Inexact (Partial_function (dom_ar, TS.rename atom_renaming sup))
   | Inexact (Total_function (dom_ar, sup)) ->

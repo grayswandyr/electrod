@@ -508,8 +508,12 @@ class virtual ['c] map :
       'env 'a 'b. ('env -> 'a -> 'b) -> 'env -> 'a ref -> 'b ref
 
     method private visit_result :
-      'env 'a 'b 'e 'f.    ('env -> 'a -> 'b) -> ('env -> 'e -> 'f) -> 'env
-      -> ('a, 'e) result -> ('b, 'f) result
+      'env 'a 'b 'e 'f.
+         ('env -> 'a -> 'b)
+      -> ('env -> 'e -> 'f)
+      -> 'env
+      -> ('a, 'e) result
+      -> ('b, 'f) result
 
     method visit_rqualify : 'd -> rqualify -> rqualify
 
@@ -1089,8 +1093,12 @@ class virtual ['c] fold :
       'env 'a 'b. ('env -> 'a -> 'b) -> 'env -> 'a ref -> 'b ref
 
     method private visit_result :
-      'env 'a 'b 'e 'f.    ('env -> 'a -> 'b) -> ('env -> 'e -> 'f) -> 'env
-      -> ('a, 'e) result -> ('b, 'f) result
+      'env 'a 'b 'e 'f.
+         ('env -> 'a -> 'b)
+      -> ('env -> 'e -> 'f)
+      -> 'env
+      -> ('a, 'e) result
+      -> ('b, 'f) result
 
     method visit_rqualify : 'd -> rqualify -> 'w
 

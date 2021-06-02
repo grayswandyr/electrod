@@ -52,7 +52,7 @@ let new_env vars stack =
         Fmt.(brackets @@ list ~sep:comma Ast.pp_var)
         (List.rev vars)
         Fmt.(brackets @@ list ~sep:comma Var.pp)
-        stack);
+        stack );
   List.rev_map (function Ast.BVar v -> v) vars @ stack
 
 
@@ -224,7 +224,7 @@ and convert_exp
                    Ast.pp_prim_exp
                    prim_exp
                    (E.pp_exp 0)
-                   e))
+                   e ) )
 
 
 and convert_sim_bindings
