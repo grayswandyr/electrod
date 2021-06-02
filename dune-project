@@ -37,10 +37,7 @@
   stdlib-shims
   (visitors (>= 20190513))
   ;; Dev dependencies
-  (utop :dev)
-  (merlin :dev)
   (ocamlformat :dev)
-  (ocaml-lsp-server :dev)
   )
  (synopsis "Formal analysis for the Electrod formal pivot language")
  (description 
