@@ -182,9 +182,8 @@ class simplify =
             exp
               Option.(
                 return
-                @@ get_exn_or "empty arity" arg.arity
-                   + get_exn_or "empty arity" r.arity
-                   - 2)
+                @@ get_exn_or __LOC__ arg.arity
+                   + get_exn_or __LOC__ r.arity - 2)
               L.(span (arg.exp_loc, r.exp_loc))
             @@ rbinary arg join r)
           args call
