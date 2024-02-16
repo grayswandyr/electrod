@@ -19,9 +19,9 @@
   dune 
   dune-build-info
   cmdliner 
-  (containers (>= 3.0)) 
+  containers
   containers-data
-  (fmt (>= 0.8.7))
+  fmt
   gen
   hashcons
   logs
@@ -34,7 +34,7 @@
   iter
   stdcompat
   stdlib-shims
-  (visitors (= 20210608))
+  visitors 
   ;; Dev dependencies
   (utop :dev)
   (merlin :dev)
