@@ -14,15 +14,17 @@
 
 (** Provides fresh identifiers for variables (in formulas) at every stage. *)
 
-(** type of an identifier *)
-type t =
-  { id : int  (** [id] identifies an identifier uniquely *)
-  ; name : string
-        (** [name] is a base string used to give a 
+type t = {
+  id : int;  (** [id] identifies an identifier uniquely *)
+  name : string;
+      (** [name] is a base string used to give a 
                                     human-friendly display *)
-  ; sep : string
-  ; loc : Location.t option
-  }
+  sep : string;
+  loc : Location.t option;
+}
+[@@warning "-69"]
+(** type of an identifier *)
+(* removes unused field warning *)
 
 let fresh =
   let c = ref 0 in
@@ -32,30 +34,23 @@ let fresh =
     incr c;
     res
 
-
 let fresh_copy var = fresh @@ var.name
 
 let fresh_of_raw_ident ?(sep = "/") v =
   fresh ~sep ~loc:(Raw_ident.location v) (Raw_ident.basename v)
 
-
 let compare id1 id2 = CCInt.compare id1.id id2.id
-
 let equal { id = id1; _ } { id = id2; _ } = id1 = id2
-
 let style = `Yellow
 
 let pp out { id; name; sep; _ } =
-  Fmtc.pf
-    out
-    "%a%a%a"
+  Fmtc.pf out "%a%a%a"
     Fmtc.(styled style string)
     name
     Fmtc.(styled style string)
     sep
     Fmtc.(styled style int)
     id
-
 
 module P = Intf.Print.Mixin (struct
   type nonrec t = t

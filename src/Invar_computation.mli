@@ -36,7 +36,6 @@ type goal_color = private
   | Temporal
 
 val to_string : goal_color -> string
-
 val pp : Format.formatter -> goal_color -> unit
 
 val remove_always_from_invar : Elo.fml -> Elo.fml

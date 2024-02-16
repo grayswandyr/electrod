@@ -27,27 +27,20 @@ let pp_subst out subst =
     out
     (List.mapi (fun i tuple -> (i, tuple)) subst)
 
-
 let all_different ~eq xs =
   let rec walk acc = function
-    | [] ->
-        true
-    | [ hd ] ->
-        not @@ List.mem ~eq hd acc
-    | hd :: tl ->
-        (not @@ List.mem ~eq hd acc) && walk (hd :: acc) tl
+    | [] -> true
+    | [ hd ] -> not @@ List.mem ~eq hd acc
+    | hd :: tl -> (not @@ List.mem ~eq hd acc) && walk (hd :: acc) tl
   in
   walk [] xs
-
 
 module Make (Ltl : Solver.LTL) = struct
   open Ltl
   open Ltl.Infix
 
   type atomic = Ltl.Atomic.t
-
   type ltl = Ltl.t
-
   type goal = G.t
 
   (***************************************************************** 
@@ -69,21 +62,15 @@ module Make (Ltl : Solver.LTL) = struct
       (S.cons (Tuple.ith 0 tup) s1_acc, S.cons (Tuple.ith 1 tup) s2_acc)
     in
     S.fold split_seq (S.empty, S.empty) s
-    |> Fun.tap
-       @@ fun res ->
+    |> Fun.tap @@ fun res ->
        Msg.debug (fun m ->
-           m
-             "compute_domain_codomain(%a) --> (ar = %d)@ = %a"
-             TS.pp
-             ts
-             ar
-             ( Fmtc.parens
+           m "compute_domain_codomain(%a) --> (ar = %d)@ = %a" TS.pp ts ar
+             (Fmtc.parens
              @@ Pair.pp
                   ~pp_sep:Fmtc.(const string ", ")
                   (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp)
-                  (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp) )
+                  (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp))
              res)
-
 
   (* given a 2-tuple set, this function computes the maximum length of
      a path (x1, ... xn) such that each 2-tuple (xi, xi+1) is in the
@@ -93,15 +80,13 @@ module Make (Ltl : Solver.LTL) = struct
     let tsarity = TS.inferred_arity ts in
     Msg.debug (fun m -> m "compute_tc_length: arity of relation : %d\n" tsarity);
     assert (tsarity = 2 || tsarity = 0);
-    if tsarity = 0
-    then 0
+    if tsarity = 0 then 0
     else
       let module S = Iter in
       let dom, cod = compute_domain_codomain ts in
       let core_ats = S.inter ~eq:Atom.equal ~hash:Atom.hash dom cod in
       Msg.debug (fun m ->
-          m
-            "compute_tc_length: inter %a %a = %a\n"
+          m "compute_tc_length: inter %a %a = %a\n"
             (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp)
             dom
             (Fmtc.braces_ @@ S.pp_seq ~sep:", " Atom.pp)
@@ -123,33 +108,26 @@ module Make (Ltl : Solver.LTL) = struct
       in
       Msg.debug (fun m ->
           m "compute_tc_length: last_elt_in_core = %B\n" last_elt_in_core);
-      ( match (first_elt_in_core, last_elt_in_core) with
-      | true, true ->
-          core_length
-      | false, false ->
-          core_length + 2
-      | _ ->
-          core_length + 1 )
+      (match (first_elt_in_core, last_elt_in_core) with
+      | true, true -> core_length
+      | false, false -> core_length + 2
+      | _ -> core_length + 1)
       |> Fun.tap (fun res ->
              Msg.debug (fun m -> m "compute_tc_length --> length = %d" res))
-
 
   (* computes the transitive closure of the term acc_term by k iterative
      squares (t+t.t)+(t+t.t)(t+t.t) + ... *)
 
   let rec iter_squares (acc_term : G.exp) k =
     match k with
-    | 0 ->
-        G.none
-    | 1 ->
-        acc_term
+    | 0 -> G.none
+    | 1 -> acc_term
     | _ ->
         let ar = G.arity acc_term in
         let new_exp =
           G.(rbinary ~ar acc_term union @@ rbinary ~ar acc_term join acc_term)
         in
         iter_squares new_exp (max (k lsr 1) ((k + 1) lsr 1))
-
 
   (* computes the transitive closure of the term t by k joins
      (alternative to iter_squares) t + t.t + t.t.t + ... *)
@@ -196,10 +174,10 @@ module Make (Ltl : Solver.LTL) = struct
             (fun x_s ->
             if Tuple.is_in_join tuple x_r x_s then Some (x_r, x_s) else None)
           s_sup_seq
-        |> function Some pair -> cons pair pairs | None -> pairs)
-      empty
-      r_sup_seq
-
+        |> function
+        | Some pair -> cons pair pairs
+        | None -> pairs)
+      empty r_sup_seq
 
   class environment (elo : Elo.t) =
     (* Atomic.make is a cached function for its last two arguments (out of 3), so we compute it for its first argument to avoid unnecessary recomputations *)
@@ -212,10 +190,8 @@ module Make (Ltl : Solver.LTL) = struct
 
       method relation_arity name =
         match Domain.get name elo.Elo.domain with
-        | None ->
-            assert false
-        | Some rel ->
-            Relation.arity rel
+        | None -> assert false
+        | Some rel -> Relation.arity rel
 
       method make_atom (name : Name.t) (t : Tuple.t) =
         assert (Domain.mem name elo.Elo.domain);
@@ -232,13 +208,9 @@ module Make (Ltl : Solver.LTL) = struct
 
       (* a stack *)
       inherit ['self] Elo_recursor.recursor
-
       method build_Add (_ : stack) (a : term) (b : term) : term = plus a b
-
       method build_All (_ : stack) = G.all
-
       method build_And (_ : stack) (a : ltl) (b : ltl) : ltl = and_ a (lazy b)
-
       method build_Block (_ : stack) = conj
 
       method build_Card subst r r' =
@@ -261,18 +233,16 @@ module Make (Ltl : Solver.LTL) = struct
               in
               let _visitors_r2 = self#visit_'exp env _visitors_c2 in
               (_visitors_r0, _visitors_r1, _visitors_r2))
-            env
-            _visitors_c0
+            env _visitors_c0
         in
         let _visitors_r1 = [ true_ ] in
         self#build_Compr env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
 
-      method private allocate_sbs_to_tuples
-          (ranges : G.exp list) (tuple : Tuple.t) : Tuple.t list =
+      method private allocate_sbs_to_tuples (ranges : G.exp list)
+          (tuple : Tuple.t) : Tuple.t list =
         let rec walk ranges atoms =
           match ranges with
-          | [] ->
-              []
+          | [] -> []
           | hd :: tl ->
               let xs, ys = List.take_drop (G.arity hd) atoms in
               Tuple.of_list1 xs :: walk tl ys
@@ -280,23 +250,19 @@ module Make (Ltl : Solver.LTL) = struct
         walk ranges @@ Tuple.to_list tuple
 
       (* check if the disj's in the comprehension sim_bindings are respected *)
-      method private check_compr_disj
-          (sbs : (bool * int * G.exp) list) (split_tuples : Tuple.t list) : bool
-          =
+      method private check_compr_disj (sbs : (bool * int * G.exp) list)
+          (split_tuples : Tuple.t list) : bool =
         let rec walk sbs tuples =
           match sbs with
-          | [] ->
-              true
+          | [] -> true
           | (true, nbvars, _) :: tl ->
               let xs, ys = List.take_drop nbvars tuples in
               let alldiff = all_different ~eq:Tuple.equal xs in
               Msg.info (fun m ->
-                  m
-                    "check_compr_disj (true, %d, _) tuples = %a alldiff = %B"
+                  m "check_compr_disj (true, %d, _) tuples = %a alldiff = %B"
                     nbvars
                     Fmtc.(brackets @@ list ~sep:sp @@ Tuple.pp)
-                    tuples
-                    alldiff);
+                    tuples alldiff);
               alldiff && walk tl ys
           | (false, nbvars, _) :: tl ->
               let ys = List.drop nbvars tuples in
@@ -311,34 +277,19 @@ module Make (Ltl : Solver.LTL) = struct
          substitutions and then compute separately the semantics of every binding,
          before computing the whole resulting formula.
       *)
-      method build_Compr
-          (subst : stack)
-          (sbs : (bool * int * G.exp) list)
-          (body : G.fml list)
-          __sbs'
-          __body'
-          tuple =
+      method build_Compr (subst : stack) (sbs : (bool * int * G.exp) list)
+          (body : G.fml list) __sbs' __body' tuple =
         let compr_ar =
           List.fold_left (fun acc (_, n, r) -> acc + (n * G.arity r)) 0 sbs
         in
         let depth = List.length subst in
-        if Tuple.arity tuple <> compr_ar
-        then
+        if Tuple.arity tuple <> compr_ar then
           Msg.err (fun m ->
               m
                 "%s.build_Compr [[{%a@ |@ %a}]]_%a(%a): tuple arity (%d) \
                  incompatible with expression arity (%d)"
-                __MODULE__
-                (G.pp_sim_bindings depth)
-                sbs
-                (G.pp_block depth)
-                body
-                pp_subst
-                subst
-                Tuple.pp
-                tuple
-                (Tuple.arity tuple)
-                compr_ar);
+                __MODULE__ (G.pp_sim_bindings depth) sbs (G.pp_block depth) body
+                pp_subst subst Tuple.pp tuple (Tuple.arity tuple) compr_ar);
         (* the tuple is (in principle) of arity equal to the sum of arities of ranges of bound variables. To build the corresponding substitutions, we must first split this tuple into as many tuples as variables, each one with the adequate arity *)
         let ranges =
           List.flat_map
@@ -346,8 +297,7 @@ module Make (Ltl : Solver.LTL) = struct
             sbs
         in
         let split_tuples = self#allocate_sbs_to_tuples ranges tuple in
-        if self#check_compr_disj sbs split_tuples
-        then
+        if self#check_compr_disj sbs split_tuples then
           (* semantics of [b] is [[ b [tuples / variables] ]] *)
           let b' =
             self#visit_fml (List.rev split_tuples @ subst) @@ G.block body
@@ -364,16 +314,15 @@ module Make (Ltl : Solver.LTL) = struct
                 let rs' = List.repeat nbvars [ r' ] in
                 let new_subst = List.rev boundvars @ acc_subst in
                 ((remaining, new_subst), rs'))
-              (split_tuples, subst)
-              sbs
+              (split_tuples, subst) sbs
           in
           conj (b' :: ranges')
         else (
           Msg.debug (fun m -> m "build_Compr --> false (disj case)");
-          false_ )
+          false_)
 
-      method build_Diff
-          (_ : stack) (_ : G.exp) (_ : G.exp) e' f' (tuple : Tuple.t) =
+      method build_Diff (_ : stack) (_ : G.exp) (_ : G.exp) e' f'
+          (tuple : Tuple.t) =
         e' tuple +&& lazy (not_ (f' tuple))
 
       method build_F (_ : stack) (a : ltl) : ltl = eventually a
@@ -382,36 +331,29 @@ module Make (Ltl : Solver.LTL) = struct
         ifthenelse c t e
 
       method build_False (_ : stack) : ltl = false_
-
       method build_G (_ : stack) (a : ltl) : ltl = always a
-
       method build_Gt (_ : stack) : tcomp = gt
-
       method build_Gte (_ : stack) : tcomp = gte
-
       method build_H (_ : stack) (a : ltl) : ltl = historically a
-
       method build_IBin (_ : stack) _ _ _ i1' op' i2' = op' i1' i2'
 
       method build_IComp (_ : stack) __e1 _ __e2 e1_r op e2_r =
         comp op e1_r e2_r
 
       method build_IEq (_ : stack) : tcomp = eq
-
       method build_INEq (_ : stack) : tcomp = neq
-
       method build_IUn (_ : stack) _ _ op' i' = op' i'
 
       method build_Iden (_ : stack) tuple =
         (* FIXME *)
         assert (Tuple.arity tuple = 2);
-        if Atom.equal (Tuple.ith 0 tuple) (Tuple.ith 1 tuple)
-        then true_
+        if Atom.equal (Tuple.ith 0 tuple) (Tuple.ith 1 tuple) then true_
         else false_
 
       method build_Iff (_ : stack) (a : ltl) (b : ltl) : ltl = iff a b
 
-      method build_Imp (_ : stack) (a : ltl) (b : ltl) : ltl = implies a (lazy b)
+      method build_Imp (_ : stack) (a : ltl) (b : ltl) : ltl =
+        implies a (lazy b)
 
       method build_In subst r (__s : G.exp) r' s' =
         let { must; may; _ } = env#must_may_sup subst r in
@@ -435,36 +377,27 @@ module Make (Ltl : Solver.LTL) = struct
         (s' @@ Tuple.(of_list1 [ ith 0 tuple ])) +&& lazy (r' tuple)
 
       method build_LUn (_ : stack) _ _ op' f' = op' f'
-
       method build_Lt (_ : stack) : tcomp = lt
-
       method build_Lte (_ : stack) : tcomp = lte
 
       method build_Name (subst : stack) rel _ tuple =
         let { must; may; _ } =
           env#must_may_sup subst @@ G.name ~ar:(env#relation_arity rel) rel
         in
-        if TS.mem tuple must
-        then true_
-        else if TS.mem tuple may
-        then env#make_atom rel tuple
+        if TS.mem tuple must then true_
+        else if TS.mem tuple may then env#make_atom rel tuple
         else false_
 
       method build_Neg (_ : stack) (a : term) : term = neg a
-
       method build_No (_ : stack) = G.no_
-
       method build_None_ (_ : stack) __tuple = false_
-
       method build_Not (_ : stack) (a : ltl) : ltl = not_ a
 
       method build_NotIn (subst : stack) r s r' s' =
         not_ @@ self#build_In subst r s r' s'
 
       method build_Num (_ : stack) n _ = num n
-
       method build_O (_ : stack) (a : ltl) : ltl = once a
-
       method build_Or (_ : stack) (a : ltl) (b : ltl) : ltl = or_ a (lazy b)
 
       method build_Over (subst : stack) __r s r' s' tuple =
@@ -490,7 +423,6 @@ module Make (Ltl : Solver.LTL) = struct
         s' tuple +|| lazy (mustpart +&& lazy (r' tuple +&& lazy maypart))
 
       method build_P (_ : stack) (a : ltl) : ltl = yesterday a
-
       method build_Prime (_ : stack) _ e' tuple = next @@ e' tuple
 
       method build_Prod (_ : stack) r s r' s' tuple =
@@ -498,8 +430,7 @@ module Make (Ltl : Solver.LTL) = struct
            arity is [None] (for 'none'), then we must just return
            false. Otherwise the tuple is split. *)
         match (G.arity r, G.arity s) with
-        | 0, _ | _, 0 ->
-            false_
+        | 0, _ | _, 0 -> false_
         | ar_r, _ ->
             let t1, t2 = Tuple.split tuple ar_r in
             r' t1 +&& lazy (s' t2)
@@ -523,12 +454,11 @@ module Make (Ltl : Solver.LTL) = struct
           (* take their cartesian product *)
           |> cartesian_product
           (* remove lines where there are tuples in common if [disj = true] *)
-          |> ( if disj
-             then
-               filter (fun l ->
-                   let sorted = sort_uniq ~cmp:Tuple.compare l in
-                   length l = length sorted)
-             else Fun.id )
+          |> (if disj then
+                filter (fun l ->
+                    let sorted = sort_uniq ~cmp:Tuple.compare l in
+                    length l = length sorted)
+              else Fun.id)
           |> to_iter
         in
         (* [pos_or_neg] tells whether the quantifier was a [no ...], in
@@ -537,19 +467,16 @@ module Make (Ltl : Solver.LTL) = struct
            formula. *)
         let bigop, smallop, link, pos_or_neg =
           match quant with
-          | G.All ->
-              (wedge, and_, implies, Fun.id)
-          | G.Some_ ->
-              (vee, or_, and_, Fun.id)
-          | G.No ->
-              (wedge, and_, implies, not_)
+          | G.All -> (wedge, and_, implies, Fun.id)
+          | G.Some_ -> (vee, or_, and_, Fun.id)
+          | G.No -> (wedge, and_, implies, not_)
         in
         let sem_of_substituted_blk tuples =
           lazy
-            ( pos_or_neg
+            (pos_or_neg
             @@ (self#visit_fml @@ List.rev tuples @ subst)
             (* [[...]] *)
-            @@ G.block blk )
+            @@ G.block blk)
         in
         let { must; may; _ } = env#must_may_sup subst s in
         let mustpart =
@@ -584,8 +511,8 @@ module Make (Ltl : Solver.LTL) = struct
 
       method build_R (_ : stack) (a : ltl) (b : ltl) : ltl = releases a b
 
-      method build_RBin
-          (_ : stack) (a : G.exp) (_ : G.rbinop) (b : G.exp) a' op' b' tuple =
+      method build_RBin (_ : stack) (a : G.exp) (_ : G.rbinop) (b : G.exp) a'
+          op' b' tuple =
         op' a b a' b' tuple
 
       method build_RComp (_ : stack) f1 __op f2 f1' op' f2' = op' f1 f2 f1' f2'
@@ -609,8 +536,8 @@ module Make (Ltl : Solver.LTL) = struct
                  ~range:(TS.to_iter @@ TS.diff s_bounds.may inter)
                  (fun bs -> lazy (s' bs @=> lazy (r' bs))))
 
-      method build_RIte
-          (_ : stack) (__c : G.fml) (__t : G.exp) __e c' t' e' tuple =
+      method build_RIte (_ : stack) (__c : G.fml) (__t : G.exp) __e c' t' e'
+          tuple =
         (c' @=> lazy (t' tuple)) +&& lazy (not_ c' @=> lazy (e' tuple))
 
       method build_RNEq (subst : stack) r s r' s' =
@@ -627,13 +554,9 @@ module Make (Ltl : Solver.LTL) = struct
         +|| lazy (self#visit_RUn subst G.tclos r tuple)
 
       method build_RUn (_ : stack) (_ : G.runop) (e : G.exp) op' e' = op' e e'
-
       method build_S (_ : stack) (a : ltl) (b : ltl) : ltl = since a b
-
       method build_Some_ (_ : stack) = G.some
-
       method build_Sub (_ : stack) (a : term) (b : term) : term = minus a b
-
       method build_T (_ : stack) (a : ltl) (b : ltl) : ltl = triggered a b
 
       method build_TClos subst r __r' tuple =
@@ -658,29 +581,19 @@ module Make (Ltl : Solver.LTL) = struct
         r' @@ Tuple.transpose tuple
 
       method build_True (_ : stack) = true_
-
       method build_U (_ : stack) (a : ltl) (b : ltl) : ltl = until a b
-
       method build_Union (_ : stack) _ _ e1 e2 x = e1 x +|| lazy (e2 x)
-
       method build_Univ (_ : stack) __tuple = true_
 
       (* FIXME *)
       method build_Var (subst : stack) idx _ tuple =
         match List.get_at_idx idx subst with
         | None ->
-            Fmtc.kstrf
-              failwith
-              "%s.build_Var: variable %d not found in %a"
-              __MODULE__
-              idx
-              pp_subst
-              subst
-        | Some value ->
-            if Tuple.equal value tuple then true_ else false_
+            Fmtc.kstr failwith "%s.build_Var: variable %d not found in %a"
+              __MODULE__ idx pp_subst subst
+        | Some value -> if Tuple.equal value tuple then true_ else false_
 
       method build_X (_ : stack) (a : ltl) : ltl = next a
-
       method build_oexp (_ : stack) __e e' __ar tuple = e' tuple
     end
 
@@ -689,7 +602,6 @@ module Make (Ltl : Solver.LTL) = struct
   let formula_as_comment fml =
     let str = Fmt.to_to_string (Elo.pp_fml 0) fml in
     "-- " ^ String.replace ~which:`All ~sub:"\n" ~by:"\n-- " str
-
 
   (* Converts an Ast formula to an LTL formula, gathering at the same time the
      rigid and flexible variables having appeared during the walk. *)

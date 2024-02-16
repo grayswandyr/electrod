@@ -16,9 +16,9 @@
 
 open Containers
 
+type t
 (** Virtually: a map between relation names and their definition as sets of
     tuples. *)
-type t
 
 val empty : t
 (** Constructor. *)
@@ -45,14 +45,12 @@ val to_list : t -> (Name.t * Relation.t) list
 (** Returns the map as an association list *)
 
 val of_list : (Name.t * Relation.t) list -> t
-
 val equal : t -> t -> bool
 
 val must : Name.t -> t -> Tuple_set.t
 (** Returns the "may" and "must" tuple sets associated to a relation name.  *)
 
 val may : Name.t -> t -> Tuple_set.t
-
 val sup : Name.t -> t -> Tuple_set.t
 
 val musts : ?with_univ_and_ident:bool -> t -> (Name.t, Tuple_set.t) List.Assoc.t

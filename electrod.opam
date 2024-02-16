@@ -15,8 +15,8 @@ homepage: "https://github.com/grayswandyr/electrod"
 doc: "https://grayswandyr.github.io/electrod/api"
 bug-reports: "https://github.com/grayswandyr/electrod/issues"
 depends: [
-  "ocaml" {>= "4.11.0"}
-  "dune" {>= "2.7" & >= "2.7.0"}
+  "ocaml" {= "4.14.1"}
+  "dune" {>= "3.14"}
   "dune-build-info"
   "cmdliner"
   "containers" {>= "3.0"}
@@ -30,10 +30,11 @@ depends: [
   "mtime"
   "ppx_deriving"
   "printbox"
+  "printbox-text"
   "iter"
   "stdcompat"
   "stdlib-shims"
-  "visitors" {>= "20190513"}
+  "visitors" {= "20210608"}
   "utop" {dev}
   "merlin" {dev}
   "ocamlformat" {dev}

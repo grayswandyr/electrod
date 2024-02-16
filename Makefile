@@ -49,7 +49,7 @@ show-deps:
 
 clean:
 	@dune clean
-	@git clean -dfXq
+	@git clean -dfxq -e _opam
 	@rm -f ./$(TARGET) electrod.install
 
-include $(shell ocamlfind query visitors)/Makefile.preprocess
+#include $(shell ocamlfind query visitors)/Makefile.preprocess

@@ -1,0 +1,18 @@
+(executable
+ (public_name electrod)
+ (package electrod)
+ (promote
+  (until-clean)
+  (into ..))
+ (modules
+  ("Main" electrod))
+ (libraries
+  electrod.libelectrod
+  dune-build-info
+  cmdliner
+  fmt
+  fmt.cli
+  fmt.tty
+  logs.cli
+  logs.fmt
+  stdlib-shims))

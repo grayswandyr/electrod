@@ -16,14 +16,13 @@ open Containers
 
 (** Type for sets of tuples. *)
 
-(** Set of tuples. Invariant: all tuples in the tuple set have the same arity *)
 type t
+(** Set of tuples. Invariant: all tuples in the tuple set have the same arity *)
 
 val empty : t
 (** The empty tuple set. *)
 
 val singleton : Tuple.t -> t
-
 val add : Tuple.t -> t -> t
 
 val of_tuples : Tuple.t list -> t
@@ -96,11 +95,8 @@ val filter : (Tuple.t -> bool) -> t -> t
 (** Filters tuples depending on a predicate.  *)
 
 val map : (Tuple.t -> Tuple.t) -> t -> t
-
 val rename : (Atom.t, Atom.t) List.Assoc.t -> t -> t
-
 val to_iter : t -> Tuple.t CCSet.iter
-
 val to_list : t -> Tuple.t list
 
 include Intf.Print.S with type t := t

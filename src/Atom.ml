@@ -12,13 +12,10 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-type t =
-  { sym : Symbol.t
-  ; loc : Location.t option
-  }
+type t = { sym : Symbol.t; loc : Location.t option } [@@warning "-69"]
+(* removes unused field warning *)
 
 let compare a1 a2 = Symbol.compare a1.sym a2.sym
-
 let equal a1 a2 = Symbol.equal a1.sym a2.sym
 
 (* |> Fun.tap *)
@@ -29,9 +26,7 @@ let equal a1 a2 = Symbol.equal a1.sym a2.sym
 (*            res)) *)
 
 let atom ?loc s = { sym = Symbol.make s; loc }
-
 let of_raw_ident id = atom ~loc:(Raw_ident.location id) (Raw_ident.basename id)
-
 let hash atom = Symbol.hash atom.sym
 
 (** Generic interface implementations *)

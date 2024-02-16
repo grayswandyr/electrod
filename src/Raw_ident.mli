@@ -14,12 +14,9 @@
 
 (** Identifiers in "raw" ASTs. *)
 
+type t = { ident : string; loc : Location.t }
 (** Any form of identifier for constants (atoms, relations) in the source
     code. *)
-type t =
-  { ident : string
-  ; loc : Location.t
-  }
 
 (** {1 Constructor}  *)
 
@@ -28,9 +25,6 @@ val ident : string -> Lexing.position -> Lexing.position -> t
 (** {1 Accessors} *)
 
 val basename : t -> string
-
 val location : t -> Location.t
-
 val eq_name : t -> t -> bool
-
 val pp : Format.formatter -> t -> unit

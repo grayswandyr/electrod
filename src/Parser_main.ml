@@ -25,14 +25,11 @@ let check_paragraphs file pars =
     let candidates =
       filter
         (function
-          | Raw.ParGoal _ ->
-              true
-          | Raw.ParInst _ | Raw.ParSym _ | Raw.ParInv _ ->
-              false)
+          | Raw.ParGoal _ -> true
+          | Raw.ParInst _ | Raw.ParSym _ | Raw.ParInv _ -> false)
         pars
     in
-    if length candidates = 1
-    then
+    if length candidates = 1 then
       (* there must be one goal *)
       match candidates with [ Raw.ParGoal g ] -> g | _ -> assert false
     else
@@ -43,22 +40,16 @@ let check_paragraphs file pars =
     let candidates =
       filter
         (function
-          | Raw.ParInv _ ->
-              true
-          | Raw.ParGoal _ | Raw.ParInst _ | Raw.ParSym _ ->
-              false)
+          | Raw.ParInv _ -> true
+          | Raw.ParGoal _ | Raw.ParInst _ | Raw.ParSym _ -> false)
         pars
     in
-    if length candidates <= 1
-    then
+    if length candidates <= 1 then
       (* there may be one list of instances *)
       match candidates with
-      | [] ->
-          []
-      | [ Raw.ParInv g ] ->
-          g
-      | _ ->
-          assert false
+      | [] -> []
+      | [ Raw.ParInv g ] -> g
+      | _ -> assert false
     else
       Msg.Fatal.syntax_error_paragraphs (fun args ->
           args file "at most one invariant section may be declared")
@@ -67,22 +58,16 @@ let check_paragraphs file pars =
     let candidates =
       filter
         (function
-          | Raw.ParInst _ ->
-              true
-          | Raw.ParGoal _ | Raw.ParSym _ | Raw.ParInv _ ->
-              false)
+          | Raw.ParInst _ -> true
+          | Raw.ParGoal _ | Raw.ParSym _ | Raw.ParInv _ -> false)
         pars
     in
-    if length candidates <= 1
-    then
+    if length candidates <= 1 then
       (* there may be one list of instances *)
       match candidates with
-      | [] ->
-          []
-      | [ Raw.ParInst g ] ->
-          g
-      | _ ->
-          assert false
+      | [] -> []
+      | [ Raw.ParInst g ] -> g
+      | _ -> assert false
     else
       Msg.Fatal.syntax_error_paragraphs (fun args ->
           args file "at most one (partial) instance may be declared")
@@ -91,32 +76,24 @@ let check_paragraphs file pars =
     let candidates =
       filter
         (function
-          | Raw.ParSym _ ->
-              true
-          | Raw.ParGoal _ | Raw.ParInst _ | Raw.ParInv _ ->
-              false)
+          | Raw.ParSym _ -> true
+          | Raw.ParGoal _ | Raw.ParInst _ | Raw.ParInv _ -> false)
         pars
     in
-    if length candidates <= 1
-    then
+    if length candidates <= 1 then
       (* there may be one list of symmetries *)
       match candidates with
-      | [] ->
-          []
-      | [ Raw.ParSym g ] ->
-          g
-      | _ ->
-          assert false
+      | [] -> []
+      | [ Raw.ParSym g ] -> g
+      | _ -> assert false
     else
       Msg.Fatal.syntax_error_paragraphs (fun args ->
           args file "at most one list of symmetries may be declared")
   in
   (goal, invar, inst, sym)
 
-
 let parse_file file =
-  IO.with_in file
-  @@ fun ic ->
+  IO.with_in file @@ fun ic ->
   let lexbuf = Lexing.from_channel ic in
   try
     let raw_univ, raw_decls, raw_paragraphs =
@@ -125,18 +102,9 @@ let parse_file file =
     let raw_goal, raw_fact, raw_inst, raw_syms =
       check_paragraphs (Some file) raw_paragraphs
     in
-    Raw.problem
-      (Some file)
-      raw_univ
-      raw_decls
-      raw_goal
-      raw_fact
-      raw_inst
+    Raw.problem (Some file) raw_univ raw_decls raw_goal raw_fact raw_inst
       raw_syms
-  with
-  | P.Error ->
-      Msg.Fatal.syntax @@ fun args -> args file lexbuf
-
+  with P.Error -> Msg.Fatal.syntax @@ fun args -> args file lexbuf
 
 let parse_string s =
   let lexbuf = Lexing.from_string s in

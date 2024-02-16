@@ -34,11 +34,8 @@ val equal : t -> t -> bool
 (** Tells whether two names are the same *)
 
 val compare : t -> t -> int
-
 val hash : t -> int
-
 val style : Fmt.style
 
 include Intf.Print.S with type t := t
-
 module Map : CCMap.S with type key = t

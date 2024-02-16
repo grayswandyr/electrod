@@ -19,7 +19,6 @@ open Containers
 (*$}*)
 
 (*$
-  ;;
   inject
 
   open Test
@@ -33,7 +32,6 @@ let of_list1 xs =
   assert (not @@ List.is_empty xs);
   Array.of_list xs
 
-
 let tuple1 at = of_list1 [ at ]
 
 (* accessor *)
@@ -42,16 +40,13 @@ let arity tuple =
   assert (ar > 0);
   ar
 
-
 let hash tuple = Hash.array Atom.hash tuple
 
 (* printing *)
 let pp out atoms =
   let open Fmtc in
   (array ~sep:sp Atom.pp |> if arity atoms > 1 then parens else fun x -> x)
-    out
-    atoms
-
+    out atoms
 
 module P = Intf.Print.Mixin (struct
   type nonrec t = t
@@ -64,9 +59,7 @@ include P
 (* other accessors *)
 
 let to_list t = Array.to_list t
-
 let compare t1 t2 = Array.compare Atom.compare t1 t2
-
 let equal t1 t2 = Array.equal Atom.equal t1 t2
 
 (* transpose involutive *)
@@ -78,20 +71,15 @@ let transpose tuple =
   assert (arity tuple = 2);
   Array.rev tuple
 
-
 let ith i tuple =
   assert (i >= 0 && i < arity tuple);
   tuple.(i)
 
-
 let ( @@@ ) t1 t2 = Array.append t1 t2
 
 let concat = function
-  | [] ->
-      invalid_arg "Tuple.concat: empty list of tuples"
-  | hd :: tl ->
-      List.fold_left ( @@@ ) hd tl
-
+  | [] -> invalid_arg "Tuple.concat: empty list of tuples"
+  | hd :: tl -> List.fold_left ( @@@ ) hd tl
 
 (* join iden right neutral *)
 (*$Q join
@@ -122,13 +110,11 @@ let join tuple1 tuple2 =
   Array.blit t2 1 res (lg1 - 1) (lg2 - 1);
   res
 
-
 let is_in_join tup t1 t2 =
   let lg1 = Array.length t1 in
   assert (lg1 > 0);
   assert (Array.length t2 > 0);
   Atom.equal t1.(lg1 - 1) t2.(0) && (equal tup @@ join t1 t2)
-
 
 (* |> Fun.tap (fun res -> Msg.debug (fun m -> *)
 (*       m "is_in_join: %a =? %a.%a --> %B" *)
@@ -162,7 +148,6 @@ let split tuple len =
   let t2 = Array.sub t len (full_len - len) in
   (t1, t2)
 
-
 (* |> Fun.tap (fun res -> *)
 (*     Msg.debug (fun m -> m "split --> %a@." Fmtc.(parens @@ Pair.pp ~sep:"," pp pp) res)) *)
 
@@ -177,25 +162,20 @@ let all_different t =
   done;
   !yes
 
-
 let to_1tuples t =
   assert (Array.length t > 0);
   Array.fold_right (fun at acc -> of_list1 [ at ] :: acc) t []
 
-
 let to_ntuples n t =
   let lg = Array.length t in
   assert (lg > 0);
-  if lg mod n <> 0
-  then
+  if lg mod n <> 0 then
     invalid_arg
-    @@ Fmt.strf "Tuple.to_ntuples %d %a: length not a multiple of %d" n pp t n;
+    @@ Fmt.str "Tuple.to_ntuples %d %a: length not a multiple of %d" n pp t n;
   Array.to_list t |> List.sublists_of_len n |> List.map of_list1
-
 
 let rename atom_renaming t =
   Array.map (fun at -> List.assoc ~eq:Atom.equal at atom_renaming) t
-
 
 module Set = CCSet.Make (struct
   type nonrec t = t

@@ -53,7 +53,6 @@ module S = H.Make (struct
   type t = string
 
   let hash = String.hash
-
   let equal = String.equal
 end)
 
@@ -70,21 +69,13 @@ let dummy =
   let c = ref 0 in
   fun () -> name @@ "dummy!" ^ string_of_int @@ CCRef.get_then_incr c
 
-
 let hash sym = sym.H.hkey
-
 let compare s1 s2 = s1.H.tag - s2.H.tag
-
 let equal x1 x2 = Stdlib.(x1 == x2)
-
 let of_raw_ident id = name @@ Raw_ident.basename id
-
 let univ = name "univ"
-
 let iden = name "iden"
-
 let style = `Cyan
-
 let pp out name = Fmtc.(styled style string) out name.H.node
 
 module P = Intf.Print.Mixin (struct

@@ -16,89 +16,60 @@
 
 (** Licence: ISC *)
 
-(** Straight extension of Fmt to avoid having to open Fmt and Fmtc *)
 include Fmt
+(** Straight extension of Fmt to avoid having to open Fmt and Fmtc *)
 
 let nbsp = const string " "
-
 let hardline = Format.pp_force_newline
-
 let lbrace = const string "{"
-
 let rbrace = const string "}"
-
 let lparen = const string "("
-
 let rparen = const string ")"
-
 let langle = const string "<"
-
 let rangle = const string ">"
-
 let lbracket = const string "["
-
 let rbracket = const string "]"
-
 let squote = const string "'"
-
 let dquote = const string "\""
-
 let bquote = const string "`"
-
 let semi = const string ";"
-
 let colon = const string ":"
-
 let comma = const string ","
-
 let dot = const string "."
-
 let sharp = const string "#"
-
 let slash = const string "/"
-
 let backslash = const string "\\"
-
 let equal = const string "="
-
 let qmark = const string "?"
-
 let tilde = const string "~"
-
 let at = const string "@"
-
 let percent = const string "%"
-
 let dollar = const string "$"
-
 let caret = const string "^"
-
 let ampersand = const string "&"
-
 let star = const string "*"
-
 let plus = const string "+"
-
 let minus = const string "-"
-
 let underscore = const string "_"
-
 let bang = const string "!"
-
 let bar = const string "|"
-
 let squotes ppf v = quote ~mark:"'" ppf v
-
 let bquotes ppf v = quote ~mark:"`" ppf v
-
 let angles pp_v ppf v = pf ppf "@[<1><%a>@]" pp_v v
 
 (* all **... operators associate to the RIGHT and are of stronger precedence
    than @@ but lower than function application *)
 let ( **@ ) p1 p2 = append p1 p2
 
-let ( **< ) p1 p2 = prefix p1 p2
+let prefix pp_p pp_v ppf v =
+  pp_p ppf ();
+  pp_v ppf v
 
+let suffix pp_s pp_v ppf v =
+  pp_v ppf v;
+  pp_s ppf ()
+
+let ( **< ) p1 p2 = prefix p1 p2
 let ( **> ) p1 p2 = suffix p1 p2
 
 (* append, with a break *hint* in the middle *)
@@ -113,7 +84,6 @@ let surround bef aft pp_v out v =
   pp_v out v;
   aft out ()
 
-
 (* like surround, with a non-breakable-space right after bef (resp. right before aft) *)
 let surround_ bef aft pp_v out v =
   bef out ();
@@ -122,15 +92,10 @@ let surround_ bef aft pp_v out v =
   pf out " ";
   aft out ()
 
-
 let braces_ ppv_v out v = surround_ lbrace rbrace ppv_v out v
-
 let brackets_ ppv_v out v = surround_ lbracket rbracket ppv_v out v
-
 let parens_ ppv_v out v = surround_ lparen rparen ppv_v out v
-
 let angles_ ppv_v out v = surround_ langle rangle ppv_v out v
-
 let unless test ppf out v = if test v then pf out "" else ppf out v
 
 let repeat n pp =
@@ -138,18 +103,14 @@ let repeat n pp =
   let rec walk n pp = if n = 0 then nop else pp **< walk (n - 1) pp in
   walk n pp
 
-
 let infix ?(indent = 0) ?(par = true) middle left right out (m, l, r) =
-  if par
-  then pf out "(@[<hov%d>@[%a@]@ %a@ @[%a@]@])" indent left l middle m right r
+  if par then
+    pf out "(@[<hov%d>@[%a@]@ %a@ @[%a@]@])" indent left l middle m right r
   else pf out "@[<hov%d>@[%a@]@ %a@ @[%a@]@]" indent left l middle m right r
 
-
 let prefix ?(indent = 0) ?(par = true) pprefix pbody out (prefix, body) =
-  if par
-  then pf out "(@[<hov%d>%a@[%a@]@])" indent pprefix prefix pbody body
+  if par then pf out "(@[<hov%d>%a@[%a@]@])" indent pprefix prefix pbody body
   else pf out "@[<hov%d>%a@[%a@]@]" indent pprefix prefix pbody body
-
 
 let tuple2 = pair
 
@@ -161,20 +122,14 @@ let tuple3 ?sep1:(pp_sep1 = sp) ?sep2:(pp_sep2 = sp) pp1 pp2 pp3 ppf (x1, x2, x3
   pp_sep2 ppf ();
   pp3 ppf x3
 
-
 let triple = tuple3
 
 let bbox ?(indent = 0) pp ppf =
   Format.pp_open_box ppf indent;
   pf ppf "%a@]" pp
 
-
 let bbox2 out v = bbox ~indent:2 out v
-
 let box2 out v = box ~indent:2 out v
-
 let hbox2 out v = hbox out v
-
 let vbox2 out v = vbox ~indent:2 out v
-
 let hvbox2 out v = hvbox ~indent:2 out v

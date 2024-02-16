@@ -15,24 +15,16 @@
 open Containers
 open Lexing
 
-type t =
-  { begp : Lexing.position
-  ; endp : Lexing.position
-  }
+type t = { begp : Lexing.position; endp : Lexing.position }
 
 let from_positions begp endp =
   assert (begp.pos_cnum <= endp.pos_cnum);
   { begp; endp }
 
-
 let begl { begp; _ } = begp.pos_lnum
-
 let begc { begp; _ } = begp.pos_cnum - begp.pos_bol
-
 let endl { endp; _ } = endp.pos_lnum
-
 let endc { endp; _ } = endp.pos_cnum - endp.pos_bol
-
 let to_ints loc = ((begl loc, begc loc), (endl loc, endc loc))
 
 let span (loc1, loc2) =
@@ -44,18 +36,12 @@ let span (loc1, loc2) =
   in
   from_positions begp endp
 
-
 let dummy = { begp = Lexing.dummy_pos; endp = Lexing.dummy_pos }
 
-type 'a located =
-  { data : 'a
-  ; loc : t
-  }
+type 'a located = { data : 'a; loc : t }
 
 let make_located data loc = { data; loc }
-
 let pp_located pp out { data; _ } = pp out data
-
 let pp out loc = Fmtc.text_loc out @@ to_ints loc
 
 module P = Intf.Print.Mixin (struct

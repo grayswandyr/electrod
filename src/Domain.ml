@@ -18,72 +18,52 @@ module Map = Name.Map
 type t = Relation.t Map.t
 
 let equal dom1 dom2 = Map.equal Relation.equal dom1 dom2
-
 let empty = Map.empty
-
 let mem = Map.mem
 
 let add name rel domain =
   assert (not @@ Map.mem name domain);
   Map.add name rel domain
 
-
 let get_exn = Map.find
-
 let get = Map.get
-
 let to_list = Map.to_list
-
 let of_list = Map.of_list
 
 let univ_atoms domain =
   let open Relation in
   let open Scope in
   match get_exn Name.univ domain with
-  | Const { scope; _ } ->
-    (match scope with Exact b -> b | Inexact _ -> assert false)
-  | Var _ ->
-      assert false
-  | exception Not_found ->
-      assert false
-
+  | Const { scope; _ } -> (
+      match scope with Exact b -> b | Inexact _ -> assert false)
+  | Var _ -> assert false
+  | exception Not_found -> assert false
 
 let pp out rels =
   Fmtc.(
     vbox
-    @@ Map.pp
-         ~pp_sep:(const string " ")
-         ~pp_arrow:(const string " : ")
-         ~pp_start:(const string "")
-         ~pp_stop:(const string "")
+    @@ Map.pp ~pp_sep:(const string " ") ~pp_arrow:(const string " : ")
+         ~pp_start:(const string "") ~pp_stop:(const string "")
          (styled `Cyan Name.pp)
          (Relation.pp ~print_name:false))
-    out
-    rels
-
+    out rels
 
 let must name domain =
   assert (mem name domain);
   get_exn name domain |> Relation.scope |> Scope.must
 
-
 let may name domain =
   assert (mem name domain);
   get_exn name domain |> Relation.scope |> Scope.may
-
 
 let sup name domain =
   assert (mem name domain);
   get_exn name domain |> Relation.scope |> Scope.sup
 
-
 let musts ?(with_univ_and_ident = true) domain =
-  ( if with_univ_and_ident
-  then domain
-  else domain |> Map.remove Name.univ |> Map.remove Name.iden )
-  |> Map.map Relation.must
-  |> to_list
-
+  (if with_univ_and_ident then domain
+   else domain |> Map.remove Name.univ |> Map.remove Name.iden)
+  |> Map.map Relation.must |> to_list
 
 let arities = Fun.(Map.map Relation.arity %> to_list)
 
@@ -97,8 +77,7 @@ let update_domain_with_instance domain instance =
   let keep_instance __name = function
     | `Both (dom_entry, inst_entry) ->
         Some (relation_of_instance_item inst_entry dom_entry)
-    | `Left dom_entry ->
-        Some dom_entry
+    | `Left dom_entry -> Some dom_entry
     | `Right _ ->
         (* cannot happen: Raw_to_ast checked that every
            instance is in the domain *)
@@ -106,14 +85,12 @@ let update_domain_with_instance domain instance =
   in
   Map.merge_safe ~f:keep_instance domain (Instance.to_map instance)
 
-
 let rename atom_renaming name_renaming domain =
   to_list domain
   |> List.map (fun (name, rel) ->
-         ( List.assoc ~eq:Name.equal name name_renaming
-         , Relation.rename atom_renaming name_renaming rel ))
+         ( List.assoc ~eq:Name.equal name name_renaming,
+           Relation.rename atom_renaming name_renaming rel ))
   |> of_list
-
 
 module P = Intf.Print.Mixin (struct
   type nonrec t = t

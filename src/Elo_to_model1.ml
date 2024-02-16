@@ -40,8 +40,7 @@ struct
         (fun (name1, tuple1) (name2, tuple2) (fml_acc : Ltl.t) ->
           (*We assume that a symmetry is well-formed: each pair of
                name and tuple (name, tuple) share the same name *)
-          if not (Name.equal name1 name2)
-          then assert false
+          if not (Name.equal name1 name2) then assert false
           else
             let at1 = Ltl.Atomic.make elo.domain name1 tuple1 in
             let at_fml1 = atomic at1 in
@@ -50,14 +49,12 @@ struct
             and_
               (implies at_fml1 (lazy at_fml2))
               (lazy (implies (iff at_fml1 at_fml2) (lazy fml_acc))))
-        sym
-        true_
+        sym true_
     in
     let rec iter_next_ltl k phi =
       if k = 0 then phi else iter_next_ltl (k - 1) (next phi)
     in
     iter_next_ltl symmetry_offset sym_fml
-
 
   (** Computes the full LTL formula encoding the symmetry in a temporal context *)
   let temporal_sym_to_ltl elo (sym : Symmetry.t) =
@@ -68,22 +65,19 @@ struct
         (fun (name1, tuple1) (name2, tuple2) (fml_acc : Ltl.t) ->
           (*We assume that a symmetry is well-formed: each pair of
             name and tuple (name, tuple) share the same name *)
-          if not (Name.equal name1 name2)
-          then assert false
+          if not (Name.equal name1 name2) then assert false
           else
             let at1 = Ltl.Atomic.make elo.domain name1 tuple1 in
             let at_fml1 = atomic at1 in
             let at2 = Ltl.Atomic.make elo.domain name2 tuple2 in
             let at_fml2 = atomic at2 in
             and_ (iff at_fml1 at_fml2) (lazy fml_acc))
-        sym
-        true_
+        sym true_
     in
     always
     @@ implies
          (yesterday @@ historically all_equiv)
          (lazy (single_state_sym_to_ltl 0 elo sym))
-
 
   (* Computes an LTL formula for the whole list of symmetries.
      According to the value of the argument temporal_symmetry, the LTL formula
@@ -94,22 +88,17 @@ struct
     List.fold_left
       (fun fmls_acc sym ->
         let cur_fml =
-          if temporal_symmetry
-          then temporal_sym_to_ltl elo sym
+          if temporal_symmetry then temporal_sym_to_ltl elo sym
           else single_state_sym_to_ltl symmetry_offset elo sym
         in
         List.cons cur_fml fmls_acc)
       (*       S.cons ("-- (symmetry)", cur_fml) fmls_acc )*)
-      List.empty
-      syms
-
+      List.empty syms
 
   let add_sym_comment_to_ltl_fml_list fml_list =
     List.fold_left
       (fun fmls_acc fml -> S.cons ("--  (symmetry)", fml) fmls_acc)
-      S.empty
-      fml_list
-
+      S.empty fml_list
 
   (* Splits a list of formulas lf into four lists (initf, invf,
      transf, restf): the list of init formulas, invar formulas, the
@@ -119,35 +108,31 @@ struct
   let split_invar_noninvar_fmls elo blk =
     let open Invar_computation in
     let invf, tmp_restf =
-      List.partition_map
+      List.partition_filter_map
         (fun fml ->
           let color = Invar_computation.color elo fml in
           (* Msg.debug (fun m ->
               m "Color of formula %a : %a\n"
               Elo.pp_fml fml Invar_computation.pp color); *)
           match color with
-          | Invar | Static_prop ->
-              `Left (remove_always_from_invar fml)
-          | Init | Primed_prop | Trans | Temporal ->
-              `Right fml)
+          | Invar | Static_prop -> `Left (remove_always_from_invar fml)
+          | Init | Primed_prop | Trans | Temporal -> `Right fml)
         blk
     in
     let transf, tmp_restf2 =
-      List.partition_map
+      List.partition_filter_map
         (fun fml ->
           let color = Invar_computation.color elo fml in
           (* Msg.debug (fun m ->
               m "Color of formula %a : %a\n"
               Elo.pp_fml fml Invar_computation.pp color); *)
           match color with
-          | Trans ->
-              `Left (remove_always_from_invar fml)
-          | _ ->
-              `Right fml)
+          | Trans -> `Left (remove_always_from_invar fml)
+          | _ -> `Right fml)
         tmp_restf
     in
     let initf, restf =
-      List.partition_map
+      List.partition_filter_map
         (fun fml ->
           let color = Invar_computation.color elo fml in
           (* Msg.debug (fun m ->
@@ -157,17 +142,13 @@ struct
         tmp_restf2
     in
     match (restf, List.rev invf, List.rev transf, List.rev initf) with
-    | _ :: _, _, _, _ ->
-        (initf, invf, transf, restf)
+    | _ :: _, _, _, _ -> (initf, invf, transf, restf)
     | [], _, hd :: tl, _ ->
         (initf, invf, List.rev tl, [ add_always_to_invar hd ])
     | [], hd :: tl, _, _ ->
         (initf, List.rev tl, transf, [ add_always_to_invar hd ])
-    | [], _, _, hd :: tl ->
-        (List.rev tl, invf, transf, [ hd ])
-    | _ ->
-        assert false
-
+    | [], _, _, hd :: tl -> (List.rev tl, invf, transf, [ hd ])
+    | _ -> assert false
 
   (*the goal cannot be empty*)
 
@@ -177,15 +158,13 @@ struct
   let dualise_fmls fmls =
     let open Elo in
     match List.rev fmls with
-    | [] ->
-        assert false
+    | [] -> assert false
     | (Fml { node; _ } as hd) :: tl ->
         let premise = List.fold_left (fun x y -> lbinary x and_ y) true_ tl in
         let rhs_fml =
           match node with LUn (Not, subfml) -> subfml | _ -> lunary not_ hd
         in
         lbinary premise impl rhs_fml
-
 
   let run (elo, temporal_symmetry, symmetry_offset) =
     let open Elo in
@@ -201,9 +180,10 @@ struct
        refactoring won't be too painful. *)
     let elo =
       Elo.
-        { elo with
-          domain = Domain.update_domain_with_instance elo.domain elo.instance
-        ; instance = Instance.empty
+        {
+          elo with
+          domain = Domain.update_domain_with_instance elo.domain elo.instance;
+          instance = Instance.empty;
         }
     in
     Msg.debug (fun m ->
@@ -220,8 +200,7 @@ struct
           (*   raise Early_stop *)
           (* else *)
           S.cons (fml_str, ltl) acc_fml)
-        S.empty
-        fmls
+        S.empty fmls
       (* with *)
       (*   Early_stop -> S.(empty, empty, Ltl.false_) *)
       |> S.rev
@@ -247,19 +226,17 @@ struct
     (* Msg.debug (fun m -> m "Elo property : %a" Elo.pp_fml spec_fml); *)
     let spec_fml_str, prop_ltl =
       let s, p = ConvertFormulas.convert elo spec_fml in
-      if temporal_symmetry || symmetry_offset > 0
-      then
+      if temporal_symmetry || symmetry_offset > 0 then
         ( "-- A temporal symmetry breaking predicate is added at the beginning \
            of the LTLSPEC formula. This is due to the --temporal-symmetry \
-           option of electrod. \n"
-          ^ s
-        , Ltl.and_ (Ltl.conj syms_fmls) (lazy p) )
+           option of electrod. \n" ^ s,
+          Ltl.and_ (Ltl.conj syms_fmls) (lazy p) )
       else (s, p)
     in
     (* handling init, invariants and trans *)
     let inits =
-      if temporal_symmetry || symmetry_offset > 0
-      then translate_formulas detected_inits
+      if temporal_symmetry || symmetry_offset > 0 then
+        translate_formulas detected_inits
       else
         S.append
           (add_sym_comment_to_ltl_fml_list syms_fmls)
@@ -269,10 +246,6 @@ struct
       translate_formulas @@ List.append detected_invars elo.Elo.invariants
     in
     let trans = translate_formulas detected_trans in
-    Model.make
-      ~elo
-      ~init:inits
-      ~invariant:invars
-      ~trans
+    Model.make ~elo ~init:inits ~invariant:invars ~trans
       ~property:(spec_fml_str, prop_ltl)
 end

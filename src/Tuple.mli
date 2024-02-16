@@ -16,8 +16,8 @@ open Containers
 
 (** Tuples of atoms. *)
 
-(** invariant: atoms <> empty *)
 type t
+(** invariant: atoms <> empty *)
 
 val of_list1 : Atom.t list -> t
 (** Builds a tuple out of a non-empty list of atoms. *)
@@ -36,9 +36,7 @@ val concat : t list -> t
 (** Concatenation of a list of tuples. Fails if the list is empty.  *)
 
 val compare : t -> t -> int
-
 val equal : t -> t -> bool
-
 val hash : t -> int
 
 val transpose : t -> t
@@ -73,5 +71,4 @@ val to_list : t -> Atom.t list
 (** [to_list t] produces a list of atoms. *)
 
 include Intf.Print.S with type t := t
-
 module Set : CCSet.S with type elt = t

@@ -1,10 +1,8 @@
-(lang dune 2.7)
+(lang dune 3.14)
 
 (name electrod)
 
 (using menhir 2.1)
-
-(allow_approximate_merlin)
 
 (generate_opam_files true)
 
@@ -17,8 +15,8 @@
 (package
  (name electrod)
  (depends
-  (ocaml (>= 4.11.0))
-  (dune (>= 2.7.0))
+  (ocaml (= 4.14.1))
+  dune 
   dune-build-info
   cmdliner 
   (containers (>= 3.0)) 
@@ -32,10 +30,11 @@
   mtime
   ppx_deriving
   printbox
+  printbox-text
   iter
   stdcompat
   stdlib-shims
-  (visitors (>= 20190513))
+  (visitors (= 20210608))
   ;; Dev dependencies
   (utop :dev)
   (merlin :dev)

@@ -1,0 +1,14 @@
+(lang dune 2.0)
+
+(env
+ (dev
+  (flags
+   (:standard -g -strict-formats -strict-sequence -short-paths -w "-63-67")))
+ ; -63 to handle Menhir/dune problems
+ ; -67 because we use a functorized Menhir grammar whose parameter doesn't appear in the functor return type
+ (release
+  (flags
+   (:standard -w "-63-67"))
+  (ocamlopt_flags
+   (:standard -O3))))
+

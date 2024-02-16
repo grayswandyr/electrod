@@ -30,15 +30,10 @@ type t = private
 (** {1 Constructors} *)
 
 val exact : Tuple_set.t -> t
-
 val plain_relation : Tuple_set.t -> Tuple_set.t -> relation
-
 val partial_function : int -> Tuple_set.t -> relation
-
 val total_function : int -> Tuple_set.t -> relation
-
 val inexact : relation -> t
-
 val equal : t -> t -> bool
 
 val included_in : Tuple_set.t -> t -> bool
@@ -56,7 +51,6 @@ val must : t -> Tuple_set.t
     bounds of the scope. *)
 
 val may : t -> Tuple_set.t
-
 val is_partial : t -> bool
 
 val inferred_arity : t -> int

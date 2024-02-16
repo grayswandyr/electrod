@@ -16,26 +16,26 @@ open Containers
 
 (** Represents a result trace (or the absence thereof).  *)
 
-(** A valuation maps set/relation names to the tuples they contain. *)
 type valuation
+(** A valuation maps set/relation names to the tuples they contain. *)
 
+type state
 (** A state is either a plain state, or the target of a lasso from the last
     state of the trace. *)
-type state
 
-(** Nonempty, ordered sequence of states.  *)
 type states = state list
+(** Nonempty, ordered sequence of states.  *)
 
+type t = private {
+  trace : states option;
+  nbvars : int;  (** number of Booleans used  *)
+  conversion_time : Mtime.span;
+  analysis_time : Mtime.span;
+}
 (** An outcome represents the result of an analysis. It is either [None],
     meaning there is no resulting trace, or it is [Some _] in wihch case it
     carries a nonempty, ordered sequence of states, with at least one being the
     target of a loop ("lasso" step). *)
-type t = private
-  { trace : states option
-  ; nbvars : int  (** number of Booleans used  *)
-  ; conversion_time : Mtime.span
-  ; analysis_time : Mtime.span
-  }
 
 val no_trace : int -> Mtime.span -> Mtime.span -> t
 (** Represents the absence of trace (so usually: UNSAT). *)
@@ -43,18 +43,16 @@ val no_trace : int -> Mtime.span -> Mtime.span -> t
 val some_trace : t -> bool
 
 val trace :
-     (Atom.t, Atom.t) CCList.Assoc.t * (Name.t * Name.t) list
-  -> int
-  -> Mtime.span
-  -> Mtime.span
-  -> state list
-  -> t
+  (Atom.t, Atom.t) CCList.Assoc.t * (Name.t * Name.t) list ->
+  int ->
+  Mtime.span ->
+  Mtime.span ->
+  state list ->
+  t
 (** The list must be nonempty and must contain at least one lasso target. *)
 
 val valuation : (Name.t, Tuple_set.t) List.Assoc.t -> valuation
-
 val plain_state : valuation -> state
-
 val loop_state : valuation -> state
 
 val loop_is_present : states -> bool

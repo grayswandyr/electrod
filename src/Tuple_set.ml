@@ -15,7 +15,6 @@
 open Containers
 
 (*$
-  ;;
   inject
 
   open Test
@@ -30,7 +29,6 @@ let pp out b =
   TS.pp (* ~start:"" ~stop:"" *) ~pp_sep:Fmtc.(const string " ") Tuple.pp out b;
   Fmtc.pf out "}@]"
 
-
 module P = Intf.Print.Mixin (struct
   type nonrec t = t
 
@@ -40,39 +38,26 @@ end)
 include P
 
 let to_list = TS.elements
-
 let to_iter = TS.to_iter
-
 let of_iter = TS.of_iter
-
 let empty = TS.empty
 
 let of_tuples tuples =
   match tuples with
-  | [] ->
-      empty
+  | [] -> empty
   | t :: ts ->
       let ar = Tuple.arity t in
       assert (List.for_all (fun t2 -> Tuple.arity t2 = ar) ts);
       TS.of_list tuples
 
-
 let is_empty = TS.is_empty
-
 let inferred_arity b = if is_empty b then 0 else Tuple.arity @@ TS.choose b
-
 let singleton = TS.singleton
-
 let add = TS.add
-
 let tuples t = t
-
 let inter b1 b2 = TS.inter b1 b2
-
 let size bnd = TS.cardinal bnd
-
 let subset b1 b2 = TS.subset b1 b2
-
 let equal b1 b2 = TS.equal b1 b2
 
 (* |> Fun.tap (fun res -> *)
@@ -91,13 +76,9 @@ let product b1 b2 =
   assert (TS.cardinal prod = TS.cardinal b1 * TS.cardinal b2);
   prod
 
-
 let union b1 b2 = TS.union b1 b2
-
 let diff = TS.diff
-
 let map f ts = TS.to_iter ts |> Iter.map f |> TS.of_iter
-
 let filter = TS.filter
 
 (*$Q transpose
@@ -111,7 +92,6 @@ let transpose b =
   assert (ar = 2 || ar = 0);
   map Tuple.transpose b
 
-
 (* r ++ s (so we need the first column of s) *)
 let override r s =
   let in_r_but_not_in_s1 =
@@ -123,12 +103,9 @@ let override r s =
   in
   TS.union s in_r_but_not_in_s1
 
-
 (* [s <: r] *)
 let lproj s r = filter (fun tr -> TS.mem Tuple.([ ith 0 tr ] |> of_list1) s) r
-
 let rproj r s = lproj s @@ transpose r
-
 let diagonal b = map Tuple.(fun e -> e @@@ e) b
 
 (*$Q join
@@ -147,17 +124,15 @@ let join b1 b2 =
   let s2 = to_iter b2 in
   S.product s1 s2
   |> S.filter_map (fun (t1, t2) ->
-         if Atom.equal (Tuple.ith (ar1 - 1) t1) (Tuple.ith 0 t2)
-         then Some (Tuple.join t1 t2)
+         if Atom.equal (Tuple.ith (ar1 - 1) t1) (Tuple.ith 0 t2) then
+           Some (Tuple.join t1 t2)
          else None)
   |> of_iter
-
 
 let transitive_closure b =
   let ar = inferred_arity b in
   assert (ar = 2 || ar = 0);
-  if ar = 0
-  then b
+  if ar = 0 then b
   else
     let old = ref b in
     let cur = ref (union b (join b b)) in
@@ -174,7 +149,6 @@ let transitive_closure b =
     done;
     !cur
 
-
 (*$Q transitive_closure_is
   any_tupleset2 (fun ts -> \
   equal (transitive_closure_is ts) (transitive_closure ts)\
@@ -184,8 +158,7 @@ let transitive_closure b =
 let transitive_closure_is b =
   let ar = inferred_arity b in
   assert (ar = 2 || ar = 0);
-  if ar = 0
-  then b
+  if ar = 0 then b
   else
     let old = ref b in
     let cur = ref (union b (join b b)) in
@@ -200,7 +173,6 @@ let transitive_closure_is b =
     done;
     !cur
 
-
 (* let mem_aux (t, bnd) = *)
 (*   TS.mem t bnd *)
 
@@ -211,5 +183,4 @@ let transitive_closure_is b =
 (*              mem_aux) (t, bnd) *)
 
 let mem t bnd = TS.mem t bnd
-
 let rename atom_renaming ts = TS.map (Tuple.rename atom_renaming) ts

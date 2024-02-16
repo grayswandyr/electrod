@@ -14,8 +14,8 @@
 
 (** Locations in a file (issued from the parsing phase). *)
 
-(** A location in a file represents an interval from a start position to an end one. *)
 type t
+(** A location in a file represents an interval from a start position to an end one. *)
 
 val from_positions : Lexing.position -> Lexing.position -> t
 (** [from_positions begp endp] takes {!Lexing.position}s [begp] and [endp]
@@ -24,13 +24,9 @@ val from_positions : Lexing.position -> Lexing.position -> t
 (** Accessors: *)
 
 val begl : t -> int
-
 val begc : t -> int
-
 val endl : t -> int
-
 val endc : t -> int
-
 val to_ints : t -> (int * int) * (int * int)
 
 val span : t * t -> t
@@ -39,10 +35,7 @@ val span : t * t -> t
 val dummy : t
 (** Dummy position *)
 
-type 'a located =
-  { data : 'a
-  ; loc : t
-  }
+type 'a located = { data : 'a; loc : t }
 
 val make_located : 'a -> t -> 'a located
 

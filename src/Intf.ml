@@ -19,7 +19,6 @@ module Print = struct
     type t
 
     val pp : t Fmtc.t
-
     val to_string : t -> string
   end
 
@@ -38,6 +37,5 @@ module type COMPARE = sig
   type t
 
   val compare : t -> t -> int
-
   val equal : t -> t -> bool
 end

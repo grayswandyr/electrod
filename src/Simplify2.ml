@@ -45,8 +45,7 @@ class simplify =
             icomp (iexp exp.exp_loc @@ card exp) ieq (iexp exp.exp_loc @@ num 0)
       in
       self#visit_prim_fml env prim_fml
-      |> Fun.tap
-         @@ fun res ->
+      |> Fun.tap @@ fun res ->
          Msg.debug (fun m ->
              m "Simplify2.visit_Qual --> %a" Ast.pp_prim_fml res)
   end
@@ -55,6 +54,5 @@ let run elo =
   let open Ast in
   Msg.debug (fun m -> m "Entering Simplify2.simplify_fml");
   { elo with goal = (new simplify)#visit_t () elo.goal }
-
 
 let transfo = Transfo.make "simplify2" run

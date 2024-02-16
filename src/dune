@@ -1,34 +1,21 @@
-(env
- (dev
-  (flags
-   (:standard -g -strict-formats -strict-sequence -short-paths -w "-63")))
- ; -63 to handle Menhir/dune problems
- (release
-  (flags
-   (:standard -w "-63"))
-  (ocamlopt_flags
-   (:standard -O3))))
-
-(executable
- (public_name electrod)
- (package electrod)
- (promote
-  (until-clean)
-  (into ..))
- (modules
-  ("Main" electrod))
- (libraries electrod.libelectrod dune-build-info cmdliner fmt fmt.cli fmt.tty
-   logs.cli logs.fmt stdlib-shims))
-
 (library
  (name libelectrod)
  (public_name electrod.libelectrod)
- (modules
-  (:standard
-   \
-   ("Main" electrod)))
- (libraries containers containers-data containers.unix fmt fmt.tty gen
-   hashcons logs.fmt mtime.clock.os printbox iter stdcompat stdlib-shims)
+ (libraries
+  containers
+  containers-data
+  containers.unix
+  fmt
+  fmt.tty
+  gen
+  hashcons
+  logs.fmt
+  mtime.clock.os
+  printbox
+  printbox-text
+  iter
+  stdcompat
+  stdlib-shims)
  (preprocess
   (pps visitors.ppx)))
 
