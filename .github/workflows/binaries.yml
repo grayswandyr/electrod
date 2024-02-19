@@ -1,35 +1,43 @@
 name: Electrod
+
 on: push
+
 jobs:
   binaries:
-    name: Binaries
-    runs-on: ${{ matrix.operating-system }}
     strategy:
+      fail-fast: false
       matrix:
-        operating-system: [macos-latest, ubuntu-latest, windows-latest]
-        include:
-          - operating-system: ubuntu-latest
-            ocaml-compiler: 4.11.0
-            artifact-name: electrod-linux-x86_64
-          - operating-system: macos-latest
-            ocaml-compiler: 4.11.0
-            artifact-name: electrod-macos-x86_64
-          - operating-system: windows-latest
-            ocaml-compiler: 4.11.0
-            artifact-name: electrod-win32-x86_64
+        os: 
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+        ocaml-compiler: 
+          - 4.14.1
+
+    runs-on: ${{ matrix.os }}
+
     steps:
-    - uses: actions/checkout@v2
-    - uses: avsm/setup-ocaml@v2
-      with:
-        ocaml-compiler: ${{ matrix.ocaml-compiler }}
-    - run: opam pin add electrod -n .
-    - name: Packages
-      run: opam depext -yt electrod
-    - name: Dependencies
-      run: opam install -t . --deps-only 
-    - name: Build
-      run: opam exec -- dune build @install
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.artifact-name }}
-        path: electrod.exe
+      - name: Checkout tree
+        uses: actions/checkout@v4
+        
+      - name: Set-up OCaml
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          
+    #- run: opam pin add electrod -n .
+    #- name: Packages
+    #  run: opam depext -yt electrod
+
+      - name: Dependencies
+        run: opam install . --deps-only 
+
+      - name: Build
+        run: opam exec -- dune build 
+
+
+      - name: Upload the build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: electrod-${{ matrix.os }}-${{ matrix.ocaml-compiler }}.exe
+          path: electrod.exe

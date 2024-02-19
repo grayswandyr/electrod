@@ -1,7 +1,7 @@
 (*******************************************************************************
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2020 ONERA
+ * Copyright (C) 2016-2024 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -75,7 +75,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
   Logs.app (fun m ->
       m "%a"
         Fmtc.(styled `Bold string)
-        ("electrod (C) 2016-2020 ONERA " ^ version));
+        ("electrod (C) 2016-2024 ONERA " ^ version));
   Msg.debug (fun m -> m "CWD = %s" (Sys.getcwd ()));
   Msg.debug (fun m -> m "PATH = %s" (Sys.getenv "PATH"));
   Logs.info (fun m -> m "Processing file: %s" file);

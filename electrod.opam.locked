@@ -1,0 +1,127 @@
+opam-version: "2.0"
+name: "electrod"
+version: "1.0.0"
+synopsis: "Formal analysis for the Electrod formal pivot language"
+description: """\
+Electrod is a model finder inspired by Kodkod. It takes as input a
+model expressed in a mixture of relational first-order logic (RFOL)
+over bounded domains and linear temporal logic (LTL) over an unbounded
+time horizon. Then it compiles the model to a problem for a solver (currently
+the NuSMV and nuXmv tools) to produce example or counter-example traces.
+Electrod is primarily meant to be used as a backend for the Electrum formal method and tool."""
+maintainer: "David Chemouil <david.chemouil+git@onera.fr>"
+authors: ["David Chemouil" "Julien Brunel"]
+license: "MPL-2.0"
+homepage: "https://github.com/grayswandyr/electrod"
+doc: "https://grayswandyr.github.io/electrod/api"
+bug-reports: "https://github.com/grayswandyr/electrod/issues"
+depends: [
+  "astring" {= "0.8.5"}
+  "base" {= "v0.16.3"}
+  "base-bigarray" {= "base"}
+  "base-bytes" {= "base"}
+  "base-threads" {= "base"}
+  "base-unix" {= "base"}
+  "camlp-streams" {= "5.0.1"}
+  "chrome-trace" {= "3.14.0"}
+  "cmdliner" {= "1.2.0"}
+  "conf-autoconf" {= "0.1"}
+  "conf-which" {= "1"}
+  "containers" {= "3.13.1"}
+  "containers-data" {= "3.13.1"}
+  "cppo" {= "1.6.9"}
+  "crunch" {= "3.3.1" & with-doc}
+  "csexp" {= "1.5.2"}
+  "dot-merlin-reader" {= "4.9"}
+  "dune" {= "3.14.0"}
+  "dune-build-info" {= "3.14.0"}
+  "dune-configurator" {= "3.14.0"}
+  "dune-rpc" {= "3.14.0"}
+  "dyn" {= "3.14.0"}
+  "either" {= "1.0.0"}
+  "fiber" {= "3.7.0"}
+  "fix" {= "20230505"}
+  "fmt" {= "0.9.0"}
+  "fpath" {= "0.7.3"}
+  "gen" {= "1.1"}
+  "hashcons" {= "1.4.0"}
+  "iter" {= "1.8"}
+  "lambda-term" {= "3.3.2"}
+  "logs" {= "0.7.0"}
+  "lwt" {= "5.7.0"}
+  "lwt_react" {= "1.2.0"}
+  "mdx" {= "2.3.1" & with-test}
+  "menhir" {= "20231231"}
+  "menhirCST" {= "20231231"}
+  "menhirLib" {= "20231231"}
+  "menhirSdk" {= "20231231"}
+  "merlin" {= "4.13-414"}
+  "merlin-lib" {= "4.13-414"}
+  "mew" {= "0.1.0"}
+  "mew_vi" {= "0.5.0"}
+  "mtime" {= "2.0.0"}
+  "ocaml" {= "4.14.1"}
+  "ocaml-base-compiler" {= "4.14.1"}
+  "ocaml-compiler-libs" {= "v0.12.4"}
+  "ocaml-config" {= "2"}
+  "ocaml-lsp-server" {= "1.17.0"}
+  "ocaml-options-vanilla" {= "1"}
+  "ocaml-version" {= "3.6.4"}
+  "ocamlbuild" {= "0.14.3"}
+  "ocamlc-loc" {= "3.14.0"}
+  "ocamlfind" {= "1.9.6"}
+  "ocamlformat" {= "0.26.1"}
+  "ocamlformat-lib" {= "0.26.1"}
+  "ocamlformat-rpc-lib" {= "0.26.1"}
+  "ocp-indent" {= "1.8.1"}
+  "ocplib-endian" {= "1.2"}
+  "odoc" {= "2.4.1" & with-doc}
+  "odoc-parser" {= "2.4.1" & with-doc}
+  "ordering" {= "3.14.0"}
+  "pp" {= "1.2.0"}
+  "ppx_derivers" {= "1.2.1"}
+  "ppx_deriving" {= "5.2.1"}
+  "ppx_yojson_conv_lib" {= "v0.16.0"}
+  "ppxlib" {= "0.32.0"}
+  "printbox" {= "0.9"}
+  "printbox-text" {= "0.9"}
+  "ptime" {= "1.1.0" & with-doc}
+  "re" {= "1.11.0"}
+  "react" {= "1.2.2"}
+  "result" {= "1.5"}
+  "seq" {= "base"}
+  "sexplib0" {= "v0.16.0"}
+  "spawn" {= "v0.15.1"}
+  "stdcompat" {= "19"}
+  "stdio" {= "v0.16.0"}
+  "stdlib-shims" {= "0.3.0"}
+  "stdune" {= "3.14.0"}
+  "topkg" {= "1.0.7"}
+  "trie" {= "1.0.0"}
+  "tyxml" {= "4.6.0" & with-doc}
+  "uchar" {= "0.0.2"}
+  "user-setup" {= "0.7"}
+  "utop" {= "2.13.1"}
+  "uucp" {= "15.1.0"}
+  "uuseg" {= "15.1.0"}
+  "uutf" {= "1.0.3"}
+  "visitors" {= "20210608"}
+  "xdg" {= "3.14.0"}
+  "yojson" {= "2.1.2"}
+  "zed" {= "3.2.3"}
+]
+build: [
+  ["dune" "subst"] {dev}
+  [
+    "dune"
+    "build"
+    "-p"
+    name
+    "-j"
+    jobs
+    "@install"
+    "@runtest" {with-test}
+    "@doc" {with-doc}
+  ]
+]
+dev-repo: "git+https://github.com/grayswandyr/electrod.git"

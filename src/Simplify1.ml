@@ -1,7 +1,7 @@
 (*******************************************************************************
  * electrod - a model finder for relational first-order linear temporal logic
  * 
- * Copyright (C) 2016-2020 ONERA
+ * Copyright (C) 2016-2024 ONERA
  * Authors: Julien Brunel (ONERA), David Chemouil (ONERA)
  * 
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -180,10 +180,7 @@ class simplify =
         List.fold_right
           (fun arg r ->
             exp
-              Option.(
-                return
-                @@ get_exn_or __LOC__ arg.arity
-                   + get_exn_or __LOC__ r.arity - 2)
+              (Option.map2 (fun a r -> a + r - 2) arg.arity r.arity)
               L.(span (arg.exp_loc, r.exp_loc))
             @@ rbinary arg join r)
           args call

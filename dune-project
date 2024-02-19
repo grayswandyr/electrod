@@ -36,7 +36,11 @@
   stdlib-shims
   visitors 
   ;; Dev dependencies
-  (ocamlformat :dev)
+  (ocamlformat (= 0.26.1))
+  utop
+  merlin
+  ocaml-lsp-server
+  user-setup
   )
  (synopsis "Formal analysis for the Electrod formal pivot language")
  (description 

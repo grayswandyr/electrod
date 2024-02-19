@@ -35,7 +35,11 @@ depends: [
   "stdcompat"
   "stdlib-shims"
   "visitors"
-  "ocamlformat" {dev}
+  "ocamlformat" {= "0.26.1"}
+  "utop"
+  "merlin"
+  "ocaml-lsp-server"
+  "user-setup"
   "odoc" {with-doc}
 ]
 build: [

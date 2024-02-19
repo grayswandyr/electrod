@@ -1,4 +1,4 @@
-.PHONY: all clean utop test doc show-deps install uninstall regression
+.PHONY: all clean doc fmt install lock opam release show-deps test utop venv watch
 
 TARGET = electrod
 
@@ -7,49 +7,48 @@ arch := $(shell opam var arch)
 
 RELEASE = ./$(TARGET).${os}.${arch}
 
-opam_switch = 4.11.1
+SWITCH = 4.14.1
 
-all: build
+all: $(TARGET).exe
 
-build:
-	dune build src/$(TARGET).exe
+$(TARGET).exe:
+	opam exec -- dune build bin/$(TARGET).exe
+
+release:
+	opam exec -- dune build --release bin/$(TARGET).exe
 
 watch:
-	dune build --watch @check @fmt --auto-promote --diff-command=-
-
-# generate opam file (in particular)
-opam:
-	dune build $(TARGET).opam
+	opam exec -- dune build --watch @check @fmt --auto-promote --diff-command=-
 
 fmt:
-	@dune build @fmt --auto-promote --diff-command=- || true
+	opam exec -- dune build @fmt --auto-promote --diff-command=- || true
 
-regression:
-	dune build @regression
+test:
+	opam exec -- dune build @regression
 
 utop:
-	dune utop --profile release
+	opam exec -- dune utop --profile release
 
 doc:
-	dune build @doc && x-www-browser _build/default/_doc/_html/index.html
+	opam exec -- dune build @doc && x-www-browser _build/default/_doc/_html/index.html
 
-deps: opam
+$(TARGET).opam: dune-project
+	opam exec -- dune build $(TARGET).opam
 
-$(opam_file): dune-project
-	-dune build @install        # Update the $(project_name).opam file
-	-git add $(opam_file)       # opam uses the state of master for it updates
-	-git commit $(opam_file) -m "Updating package dependencies"
-	opam install . --deps-only  # Install the new dependencies
+opam: $(TARGET).opam
 
-switch: deps
-	opam switch create . $(opam_switch) --deps-only
+lock: $(TARGET).opam
+	opam lock ./$(TARGET).opam
+
+dev-setup: 
+	opam switch create --locked --yes --deps-only --with-test --with-doc . 
 	
 show-deps:
-	dune external-lib-deps --missing @install
+	opam exec -- dune external-lib-deps --missing @install
 
 clean:
-	@dune clean
-	@git clean -dfxq -e _opam
-	@rm -f ./$(TARGET) electrod.install
+	opam exec -- dune clean
+	-git clean -dfxq -e _opam
+	-rm -f ./$(TARGET) electrod.install
 
 #include $(shell ocamlfind query visitors)/Makefile.preprocess
