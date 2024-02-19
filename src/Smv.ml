@@ -264,9 +264,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     let tuple_to_string tuple =
       Fmtc.(str "%a" @@ list ~sep:minus Atom.pp) (Tuple.to_list tuple)
     in
-    let atom_name at =
-      Option.get_exn_or "no associated atom" @@ Ltl.Atomic.split at
-    in
+    let atom_name at = Option.get_exn_or __LOC__ @@ Ltl.Atomic.split at in
     let pp_one_decl atom =
       let name, _ = atom_name atom in
       let name_str = Name.to_string name in
