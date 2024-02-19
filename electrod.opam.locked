@@ -100,7 +100,6 @@ depends: [
   "trie" {= "1.0.0"}
   "tyxml" {= "4.6.0" & with-doc}
   "uchar" {= "0.0.2"}
-  "user-setup" {= "0.7"}
   "utop" {= "2.13.1"}
   "uucp" {= "15.1.0"}
   "uuseg" {= "15.1.0"}

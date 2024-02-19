@@ -39,7 +39,6 @@ depends: [
   "utop"
   "merlin"
   "ocaml-lsp-server"
-  "user-setup"
   "odoc" {with-doc}
 ]
 build: [
