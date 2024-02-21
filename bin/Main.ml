@@ -51,7 +51,10 @@ type tool = NuXmv | NuSMV
    Make sure that we are a session leader; that is, our children die if we die *)
 let ensure_session_leader : unit -> unit =
   let thunk =
-    lazy (if (not Sys.win32) && not Sys.cygwin then ignore (Unix.setsid ()))
+    lazy
+      (if (not Sys.win32) && not Sys.cygwin then
+         try ignore (Unix.setsid ())
+         with Unix.Unix_error (Unix.EPERM, "setsid", _) -> ())
   in
   fun () -> Lazy.force thunk
 

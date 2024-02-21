@@ -9,9 +9,9 @@ RELEASE = ./$(TARGET).${os}.${arch}
 
 SWITCH = 4.14.1
 
-all: $(TARGET).exe
+all: build
 
-$(TARGET).exe:
+build:
 	opam exec -- dune build bin/$(TARGET).exe
 
 release:
