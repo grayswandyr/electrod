@@ -48,15 +48,11 @@ let pp_header ppf (l, h) =
 type tool = NuXmv | NuSMV
 
 (* Taken from nunchaku-inria/logitest/src/Misc.ml (BSD licence).
-   Make sure that we are a session leader; that is, our children die if we die *)
-let ensure_session_leader : unit -> unit =
-  let thunk =
-    lazy
-      (if (not Sys.win32) && not Sys.cygwin then
-         try ignore (Unix.setsid ())
-         with Unix.Unix_error (Unix.EPERM, "setsid", _) -> ())
-  in
-  fun () -> Lazy.force thunk
+   Make sure that we are a session leader; that is, our children die if we die.Raises if the process is already a session leader, so we ignore the exception. *)
+let ensure_session_leader () =
+  try CCUnix.ensure_session_leader ()
+  with Unix.Unix_error (EPERM, "setsid", _) ->
+    Msg.debug (fun m -> m "`setsid` failed, continuing.")
 
 let main style_renderer verbosity tool file scriptfile keep_files no_analysis
     print_generated outcome_format long_names bmc temporal_symmetry
