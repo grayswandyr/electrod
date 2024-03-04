@@ -62,7 +62,7 @@ let sup name domain =
 
 let musts ?(with_univ_and_ident = true) domain =
   (if with_univ_and_ident then domain
-   else domain |> Map.remove Name.univ |> Map.remove Name.iden)
+  else domain |> Map.remove Name.univ |> Map.remove Name.iden)
   |> Map.map Relation.must |> to_list
 
 let arities = Fun.(Map.map Relation.arity %> to_list)

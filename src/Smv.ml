@@ -334,8 +334,8 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
                 pf out "%s __%s-%s : %a;@\n" vartype name_str dom_str
                   (braces_ @@ box @@ list ~sep:(sp **> comma) string)
                   (if Ltl.Atomic.is_partial atom then
-                     List.rev ("__NONE__" :: List.rev_map snd pairs)
-                   else List.map snd pairs)))
+                   List.rev ("__NONE__" :: List.rev_map snd pairs)
+                  else List.map snd pairs)))
             domains_ranges
     in
     atoms
@@ -448,15 +448,12 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
         let open Format in
         let chan = formatter_of_out_channel out in
         (if not pp_generated then
-           (* no pretty-printing => redefine indentation function to output nothing *)
-           let out_funs = pp_get_formatter_out_functions chan () in
-           let out_funs =
-             {
-               out_funs with
-               out_indent = (fun _ -> out_funs.out_string "" 0 0);
-             }
-           in
-           pp_set_formatter_out_functions chan out_funs);
+         (* no pretty-printing => redefine indentation function to output nothing *)
+         let out_funs = pp_get_formatter_out_functions chan () in
+         let out_funs =
+           { out_funs with out_indent = (fun _ -> out_funs.out_string "" 0 0) }
+         in
+         pp_set_formatter_out_functions chan out_funs);
         nbvars := pp_count_variables chan model);
     (tgt, !nbvars)
 

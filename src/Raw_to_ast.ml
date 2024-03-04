@@ -84,10 +84,10 @@ let compute_tuples infile domain = function
           atoms
       in
       (if not @@ List.is_empty absent then
-         Msg.Fatal.undeclared_atoms @@ fun args ->
-         args infile
-           (Location.span @@ Pair.map_same Raw_ident.location intvl)
-           absent);
+       Msg.Fatal.undeclared_atoms @@ fun args ->
+       args infile
+         (Location.span @@ Pair.map_same Raw_ident.location intvl)
+         absent);
       let dedup = check_duplicate_atoms infile atoms in
       List.map Tuple.tuple1 dedup
   | ETuple [] -> assert false
@@ -108,11 +108,11 @@ let compute_tuples infile domain = function
           atoms
       in
       (if not @@ List.is_empty absent then
-         Msg.Fatal.undeclared_atoms @@ fun args ->
-         args infile
-           (Location.span
-           @@ Pair.map_same Raw_ident.location List.(hd ids, hd @@ last 1 ids))
-           absent);
+       Msg.Fatal.undeclared_atoms @@ fun args ->
+       args infile
+         (Location.span
+         @@ Pair.map_same Raw_ident.location List.(hd ids, hd @@ last 1 ids))
+         absent);
       [ Tuple.of_list1 atoms ]
 
 let check_tuples_arities_and_duplicates infile id = function

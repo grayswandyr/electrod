@@ -455,10 +455,10 @@ module Make (Ltl : Solver.LTL) = struct
           |> cartesian_product
           (* remove lines where there are tuples in common if [disj = true] *)
           |> (if disj then
-                filter (fun l ->
-                    let sorted = sort_uniq ~cmp:Tuple.compare l in
-                    length l = length sorted)
-              else Fun.id)
+              filter (fun l ->
+                  let sorted = sort_uniq ~cmp:Tuple.compare l in
+                  length l = length sorted)
+             else Fun.id)
           |> to_iter
         in
         (* [pos_or_neg] tells whether the quantifier was a [no ...], in
