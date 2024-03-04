@@ -4,8 +4,6 @@
  (promote
   (until-clean)
   (into ..))
- (modules
-  ("Main" electrod))
  (libraries
   electrod.libelectrod
   dune-build-info

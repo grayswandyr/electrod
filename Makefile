@@ -43,7 +43,10 @@ lock: $(TARGET).opam
 	opam lock ./$(TARGET).opam
 
 dev-setup: 
-	opam switch create --locked --yes --deps-only --with-test --with-doc . 
+	opam switch create --locked --yes --deps-only --with-test . 
+
+setup: 
+	opam switch create --yes --deps-only --with-test . 
 	
 show-deps:
 	$(DUNE) external-lib-deps --missing @install
@@ -53,4 +56,3 @@ clean:
 	-git clean -dfxq -e _opam -e .envrc
 	-rm -f ./$(TARGET) electrod.install
 
-#include $(shell ocamlfind query visitors)/Makefile.preprocess

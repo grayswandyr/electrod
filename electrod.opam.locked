@@ -48,6 +48,7 @@ depends: [
   "logs" {= "0.7.0"}
   "lwt" {= "5.7.0"}
   "lwt_react" {= "1.2.0"}
+  "mdx" {= "2.3.1" & with-test}
   "menhir" {= "20220210"}
   "menhirLib" {= "20220210"}
   "menhirSdk" {= "20220210"}
