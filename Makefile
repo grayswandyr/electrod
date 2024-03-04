@@ -2,6 +2,8 @@
 
 TARGET = electrod
 
+DUNE = opam exec -- dune
+
 os := $(shell opam var os)
 arch := $(shell opam var arch)
 
@@ -12,28 +14,28 @@ SWITCH = 4.14.1
 all: build
 
 build:
-	opam exec -- dune build bin/$(TARGET).exe
+	$(DUNE) build bin/$(TARGET).exe
 
 release:
-	opam exec -- dune build --release bin/$(TARGET).exe
+	$(DUNE) build --release bin/$(TARGET).exe
 
 watch:
-	opam exec -- dune build --watch @check @fmt --auto-promote --diff-command=-
+	$(DUNE) build --watch @check @fmt --auto-promote --diff-command=-
 
 fmt:
-	opam exec -- dune build @fmt --auto-promote --diff-command=- || true
+	$(DUNE) build @fmt --auto-promote --diff-command=- || true
 
 test:
-	opam exec -- dune build @regression
+	$(DUNE) build @regression
 
 utop:
-	opam exec -- dune utop --profile release
+	$(DUNE) utop --profile release
 
 doc:
-	opam exec -- dune build @doc && x-www-browser _build/default/_doc/_html/index.html
+	$(DUNE) build @doc && x-www-browser _build/default/_doc/_html/index.html
 
 $(TARGET).opam: dune-project
-	opam exec -- dune build $(TARGET).opam
+	$(DUNE) build $(TARGET).opam
 
 opam: $(TARGET).opam
 
@@ -44,10 +46,10 @@ dev-setup:
 	opam switch create --locked --yes --deps-only --with-test --with-doc . 
 	
 show-deps:
-	opam exec -- dune external-lib-deps --missing @install
+	$(DUNE) external-lib-deps --missing @install
 
 clean:
-	opam exec -- dune clean
+	$(DUNE) clean
 	-git clean -dfxq -e _opam -e .envrc
 	-rm -f ./$(TARGET) electrod.install
 
