@@ -16,7 +16,7 @@ doc: "https://grayswandyr.github.io/electrod/api"
 bug-reports: "https://github.com/grayswandyr/electrod/issues"
 depends: [
   "ocaml" {= "4.14.1"}
-  "dune" {>= "3.14"}
+  "dune" {>= "3.10" & <= "3.10.0"}
   "dune-build-info"
   "cmdliner"
   "containers"

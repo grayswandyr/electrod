@@ -24,6 +24,9 @@ jobs:
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          opam-local-packages: |
+            electrod.opam.lock
+            !electrod.opam
 
       - name: Dependencies
         run: opam install . --deps-only 

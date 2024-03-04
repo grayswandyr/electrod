@@ -1,4 +1,4 @@
-(lang dune 3.14)
+(lang dune 3.10)
 
 (name electrod)
 
@@ -22,7 +22,7 @@
  (depends
   (ocaml
    (= 4.14.1))
-  dune
+  (dune (<= 3.10.0))
   dune-build-info
   cmdliner
   containers
