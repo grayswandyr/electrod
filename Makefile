@@ -48,7 +48,7 @@ show-deps:
 
 clean:
 	opam exec -- dune clean
-	-git clean -dfxq -e _opam
+	-git clean -dfxq -e _opam -e .envrc
 	-rm -f ./$(TARGET) electrod.install
 
 #include $(shell ocamlfind query visitors)/Makefile.preprocess
