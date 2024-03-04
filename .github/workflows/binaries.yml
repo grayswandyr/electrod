@@ -10,7 +10,7 @@ jobs:
         os: 
           - macos-latest
           - ubuntu-latest
-            #          - windows-latest # setup-ocaml broken IIUC
+          - windows-latest
         ocaml-compiler: 
           - 4.14.1
 
