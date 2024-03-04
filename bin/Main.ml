@@ -50,14 +50,15 @@ type tool = NuXmv | NuSMV
 (* Taken from nunchaku-inria/logitest/src/Misc.ml (BSD licence).
    Make sure that we are a session leader; that is, our children die if we die.Raises if the process is already a session leader, so we ignore the exception. *)
 let ensure_session_leader () =
-  try CCUnix.ensure_session_leader ()
+  try
+    CCUnix.ensure_session_leader ();
+    Msg.debug (fun m -> m "`setsid` succeeded.")
   with Unix.Unix_error (EPERM, "setsid", _) ->
     Msg.debug (fun m -> m "`setsid` failed, continuing.")
 
 let main style_renderer verbosity tool file scriptfile keep_files no_analysis
     print_generated outcome_format long_names bmc temporal_symmetry
     symmetry_offset =
-  ensure_session_leader ();
   let long_names =
     (* Debug ==> long names *)
     match verbosity with Some Logs.Debug -> true | None | Some _ -> long_names
@@ -75,6 +76,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
       m "%a"
         Fmtc.(styled `Bold string)
         ("electrod (C) 2016-2024 ONERA " ^ version));
+  ensure_session_leader ();
   Msg.debug (fun m -> m "CWD = %s" (Sys.getcwd ()));
   Msg.debug (fun m -> m "PATH = %s" (Sys.getenv "PATH"));
   Logs.info (fun m -> m "Processing file: %s" file);
