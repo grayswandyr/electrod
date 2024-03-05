@@ -31,9 +31,6 @@ test:
 utop:
 	$(DUNE) utop --profile release
 
-doc:
-	$(DUNE) build @doc && x-www-browser _build/default/_doc/_html/index.html
-
 $(TARGET).opam: dune-project
 	$(DUNE) build $(TARGET).opam
 

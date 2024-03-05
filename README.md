@@ -19,7 +19,7 @@ manager.
 Once Opam is installed and initialized, clone this directory, `cd` into it and issue the following commands:
 ```
 make setup
-make build
+make release
 ```
 which produces a self-contained executable `electrod.exe` in the directory.
 
@@ -28,8 +28,15 @@ which produces a self-contained executable `electrod.exe` in the directory.
 To get a working developement setup, issue the following command rather than those above:
 ```
 make dev-setup
-eval $(opam env)
 ```
+This will create an Opam local switch that provides you with a development environment 
+known to be working. As usual with Opam, you must always ensure that the local switch 
+is taken into account when developing (e.g. by typing `eval $(opam env)`).
+
+To build Electrod in development mode, just type `make`.
+
+To work in development mode, using `make watch` is suggested: it watches the source and, each time it's updated, 
+checks it quickly and reformats it using `ocamlformat`.
 
 ## External dependencies
 
