@@ -37,8 +37,8 @@ jobs:
       - name: Upload the build artifact
         uses: actions/upload-artifact@v4
         with:
-          path: electrod-${{ matrix.os }}-${{ matrix.ocaml-compiler }}.exe
-          name: electrod-${{ matrix.os }}-${{ matrix.ocaml-compiler }}.exe
+          path: electrod.exe
+          name: electrod-${{ matrix.os }}.exe
 
       - name: Release (if tagged)
         uses: softprops/action-gh-release@v1
