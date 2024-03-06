@@ -9,6 +9,7 @@ jobs:
       matrix:
         os: 
           - macos-latest
+          - macos-14
           - ubuntu-latest
           - windows-latest
         ocaml-compiler: 
