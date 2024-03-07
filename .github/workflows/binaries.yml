@@ -35,6 +35,9 @@ jobs:
       - name: Build
         run: opam exec -- dune build --profile release
 
+      - name: Strip binaries
+        run: strip electrod.exe
+
       - name: Upload the build artifact
         uses: actions/upload-artifact@v4
         with:
