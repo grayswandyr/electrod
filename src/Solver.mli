@@ -77,10 +77,11 @@ module type LTL = sig
 
   and term = private
     | Num of int
-    | Plus of term * term
-    | Minus of term * term
     | Neg of term
     | Count of t list
+    | Bin of term * binop * term
+
+  and binop = Plus | Minus | Mul | Div | Rem | Lshift | Zershift | Sershift
 
   val true_ : t
   val false_ : t

@@ -43,7 +43,7 @@ let exp_no_arity = G.exp (Some 0)
 %token INTER OVERRIDE LPROJ RPROJ MINUS DOT PRIME
 %token THEN NOT_IN RUN EXPECT SAT UNSAT
 // for integer expressions
-%token NEG ADD SUB HASH //INT
+%token UMINUS ADD SUB MUL DIV REM LSHIFT SERSHIFT ZERSHIFT HASH SMALLINT BIGINT SUM
 
 
 %token SYM INST
@@ -69,7 +69,9 @@ let exp_no_arity = G.exp (Some 0)
 %nonassoc NOT AFTER ALWAYS EVENTUALLY BEFORE HISTORICALLY ONCE
 %nonassoc /*LT LTE GT GTE*/ EQ NEQ IN NOT_IN
 //%nonassoc NO SOME LONE ONE      (* for formulas as 'some E' (= E != none) *)
+%left LSHIFT ZERSHIFT SERSHIFT
 %left MINUS PLUS
+%left MUL DIV REM
 %nonassoc HASH
 %left OVERRIDE
 %left INTER
@@ -494,26 +496,14 @@ iexpr:
   | HASH e = expr
   { G.iexp (Location.from_positions $startpos $endpos)
     @@ G.card e  }
-  | NEG e = brackets(iexpr)
+  | UMINUS e = brackets(iexpr)
   { G.iexp (Location.from_positions $startpos $endpos)
     @@ G.(iunary neg e) }
-  | ADD e = brackets(two_iexprs)
-      {
-        let (e1, e2) = e in
-        G.iexp (Location.from_positions $startpos $endpos)
-    @@ G.(ibinary e1 add e2)  }
-  | SUB e = brackets(two_iexprs)
-  {
-    let (e1, e2) = e in
-    G.iexp (Location.from_positions $startpos $endpos)
-    @@ G.(ibinary e1 sub e2)  }
-
+  | e1 = iexpr ADD e2 = iexpr
+  { G.iexp (Location.from_positions $startpos $endpos)
+    @@ G.(ibinary e1 add e2) }
 	| e = parens(iexpr)
 	        { e }
-
-%inline two_iexprs:
-  e1 = iexpr COMMA e2 = iexpr
-  { (e1, e2) }
 
 icomp_op:
   | LT

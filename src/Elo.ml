@@ -78,6 +78,7 @@ and ('fml, 'exp, 'iexp) prim_oexp =
   | RIte of 'fml * 'exp * 'exp
   | Compr of ((bool[@opaque]) * (int[@opaque]) * 'exp) list * 'fml list
   | Prime of 'exp
+  | Big_int of 'iexp
 
 and runop = Transpose | TClos | RTClos
 and rbinop = Union | Inter | Over | LProj | RProj | Prod | Diff | Join
@@ -87,10 +88,12 @@ and ('fml, 'exp, 'iexp) oiexp =
   | Card of 'exp
   | IUn of iunop * 'iexp
   | IBin of 'iexp * ibinop * 'iexp
+  | Small_int of 'exp
+  | Sum of int * 'iexp
 
 and iunop = Neg
 
-and ibinop = Add | Sub
+and ibinop = Add | Sub | Mul | Div | Rem | Lshift | Zershift | Sershift
 [@@deriving
   visitors { variety = "map"; name = "omap" },
     visitors

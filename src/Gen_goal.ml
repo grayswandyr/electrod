@@ -98,6 +98,7 @@ and ('v, 'i) prim_exp =
   | BoxJoin of ('v, 'i) exp * ('v, 'i) exp list  (** <> []  *)
   | Compr of ('v, 'i) sim_binding list * ('v, 'i) block
   | Prime of ('v, 'i) exp
+  | Big_int of ('v, 'i) iexp
 
 and rqualify = ROne | RLone | RSome | RNo
 and runop = Transpose | TClos | RTClos
@@ -113,10 +114,12 @@ and ('v, 'i) prim_iexp =
   | Card of ('v, 'i) exp
   | IUn of iunop * ('v, 'i) iexp
   | IBin of ('v, 'i) iexp * ibinop * ('v, 'i) iexp
+  | Small_int of ('v, 'i) exp
+  | Sum of ('v, 'i) binding list * ('v, 'i) iexp
 
 and iunop = Neg
 
-and ibinop = Add | Sub
+and ibinop = Add | Sub | Mul | Div | Rem | Lshift | Zershift | Sershift
 [@@deriving
   visitors { variety = "map" },
     visitors { variety = "fold"; ancestors = [ "VisitorsRuntime.map" ] }]

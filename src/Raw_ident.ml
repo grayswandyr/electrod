@@ -20,5 +20,5 @@ let ident ident begp endp =
 
 let basename { ident; _ } = ident
 let location { loc; _ } = loc
-let eq_name i1 i2 = i1.ident = i2.ident
+let eq_name i1 i2 = String.equal i1.ident i2.ident
 let pp out { ident; _ } = Fmtc.string out ident

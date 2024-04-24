@@ -67,10 +67,11 @@ module type LTL = sig
 
   and term = private
     | Num of int
-    | Plus of term * term
-    | Minus of term * term
     | Neg of term
     | Count of t list
+    | Bin of term * binop * term
+
+  and binop = Plus | Minus | Mul | Div | Rem | Lshift | Zershift | Sershift
 
   val true_ : t
   val false_ : t
@@ -168,10 +169,11 @@ struct
 
   and term =
     | Num of int
-    | Plus of term * term
-    | Minus of term * term
     | Neg of term
     | Count of t list
+    | Bin of term * binop * term
+
+  and binop = Plus | Minus | Mul | Div | Rem | Lshift | Zershift | Sershift
 
   let pp _ _ =
     (* default impl. for pp; to override later *)
@@ -288,15 +290,18 @@ struct
   let num n = Num n
 
   let plus t1 t2 =
-    match (t1, t2) with Num 0, _ -> t2 | _, Num 0 -> t1 | _ -> Plus (t1, t2)
+    match (t1, t2) with
+    | Num 0, _ -> t2
+    | _, Num 0 -> t1
+    | _ -> Bin (t1, Plus, t2)
 
-  let minus t1 t2 = match t2 with Num 0 -> t1 | _ -> Minus (t1, t2)
+  let minus t1 t2 = match t2 with Num 0 -> t1 | _ -> Bin (t1, Minus, t2)
   let neg t = match t with Neg _ -> t | _ -> Neg t
 
   let count ps =
     match List.filter (function False -> false | _ -> true) ps with
     | [] -> num 0
-    | props -> Count props
+    | props -> failwith "TODO SMV's count: handle card overflow"
 
   (* END term hashconsing *)
 

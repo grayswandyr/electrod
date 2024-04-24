@@ -43,12 +43,22 @@ let pragma = "##" plain_id
 
 let comment_line = ("--")
 
-let reserved_symbol = [ '$' '%' '\\' '`' '@' ]
-
-let builtin_iop = ( "add" | "neg" | "minus" | "card" )
-                  
+let reserved_symbol = [ '$' '%' '\\' '`' '@' ]                
                  
 rule main infile = parse
+(* NEG ADD SUB MUL DIV REM LSHIFT SERSHIFT ZERSHIFT HASH SMALLINT BIGINT SUM *)
+| "@~-" { UMINUS }
+| "@+" { ADD }
+| "@-" { SUB }
+| "@*" { MUL }
+| "@/" { DIV }
+| "@% " { REM }
+| "<<" { LSHIFT }
+| ">>>" { ZERSHIFT }
+| ">>" { SERSHIFT }
+| "int" { SMALLINT }
+| "Int" { BIGINT }
+| "sum" { SUM }
 | reserved_symbol as c
   { Msg.Fatal.lexical
     @@ fun args -> args infile lexbuf (Printf.sprintf "reserved character: '%c'" c)}

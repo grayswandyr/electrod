@@ -191,9 +191,9 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
       and pp_term upper out (t : term) =
         match t with
         | Num n -> pf out "%d" n
-        | Plus (t1, t2) ->
+        | Bin (t1, Plus, t2) ->
             infixl ~paren:true upper 7 string pp_term pp_term out ("+", t1, t2)
-        | Minus (t1, t2) ->
+        | Bin (t1, Minus, t2) ->
             infixl ~paren:true upper 7 string pp_term pp_term out ("-", t1, t2)
         | Neg t -> prefix upper 8 string pp_term out ("- ", t)
         | Count ts ->
