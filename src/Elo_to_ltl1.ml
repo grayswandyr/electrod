@@ -211,6 +211,10 @@ module Make (Ltl : Solver.LTL) = struct
       method build_Add (_ : stack) (a : term) (b : term) : term = plus a b
       method build_All (_ : stack) = G.all
       method build_And (_ : stack) (a : ltl) (b : ltl) : ltl = and_ a (lazy b)
+
+      method build_Big_int (_ : stack) (_a : G.iexp) (a : term) tuple : ltl =
+        failwith (__LOC__ ^ " TODO")
+
       method build_Block (_ : stack) = conj
 
       method build_Card subst r r' =

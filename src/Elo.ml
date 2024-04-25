@@ -256,6 +256,7 @@ let compr ~ar decls block =
   hexp @@ exp ~ar @@ Compr (decls, block)
 
 let prime ~ar e = hexp @@ exp ~ar @@ Prime e
+let big_int ie = hexp @@ exp ~ar:1 @@ Big_int ie
 let in_ = In
 let not_in = NotIn
 let req = REq
@@ -284,6 +285,12 @@ let ibinary exp1 op exp2 = hiexp @@ IBin (exp1, op, exp2)
 let neg = Neg
 let add = Add
 let sub = Sub
+let mul = Mul
+let div = Div
+let rem = Rem
+let lshift = Lshift
+let sershift = Sershift
+let zershift = Zershift
 
 (*
     let%test _ =
@@ -435,7 +442,7 @@ let pp_ofml stacked pp_fml pp_exp pp_iexp out =
         (kwd_styled string) "else" (pp_fml stacked) e
   | Block fmls -> pp_oblock stacked pp_fml out fmls
 
-let pp_prim_oexp stacked pp_fml pp_exp out =
+let pp_prim_oexp stacked pp_fml pp_exp pp_iexp out =
   let open Fmtc in
   function
   | None_ -> (styled Name.style pf) out "none"
@@ -465,6 +472,7 @@ let pp_prim_oexp stacked pp_fml pp_exp out =
              (pp_oblock (stacked + nbvars) pp_fml))
         (decls, blk)
   | Prime e -> pf out "%a'" (pp_exp stacked) e
+  | Big_int ie -> pf out "Int[%a]" (pp_iexp stacked) ie
 
 let pp_oiexp stacked pp_exp pp_iexp out =
   let open Fmtc in
@@ -484,7 +492,8 @@ and pp_block stacked out fmls = pp_oblock stacked pp_fml out fmls
 and pp_iexp stacked out (Iexp { node; _ }) =
   pp_oiexp stacked pp_exp pp_iexp out node
 
-and pp_prim_exp stacked out pe = pp_prim_oexp stacked pp_fml pp_exp out pe
+and pp_prim_exp stacked out pe =
+  pp_prim_oexp stacked pp_fml pp_exp pp_iexp out pe
 
 and pp_exp stacked out (Exp { node = e; _ }) =
   pp_prim_exp stacked out e.prim_exp

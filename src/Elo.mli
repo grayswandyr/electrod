@@ -145,6 +145,7 @@ val rbinary : ar:int -> exp -> rbinop -> exp -> exp
 val rite : ar:int -> fml -> exp -> exp -> exp
 val compr : ar:int -> (bool * int * exp) list -> fml list -> exp
 val prime : ar:int -> exp -> exp
+val big_int : iexp -> exp
 val in_ : comp_op
 val not_in : comp_op
 val req : comp_op
@@ -173,6 +174,12 @@ val ibinary : iexp -> ibinop -> iexp -> iexp
 val neg : iunop
 val add : ibinop
 val sub : ibinop
+val mul : ibinop
+val div : ibinop
+val rem : ibinop
+val lshift : ibinop
+val sershift : ibinop
+val zershift : ibinop
 val kwd_styled : 'a Fmtc.t -> 'a Fmtc.t
 val pp_comp_op : Format.formatter -> comp_op -> unit
 val pp_icomp_op : Format.formatter -> icomp_op -> unit
@@ -201,6 +208,7 @@ val pp_prim_oexp :
   int ->
   (int -> 'a Fmtc.t) ->
   (int -> Format.formatter -> 'b -> unit) ->
+  (int -> Format.formatter -> 'c -> unit) ->
   Format.formatter ->
   ('a, 'b, 'c) prim_oexp ->
   unit

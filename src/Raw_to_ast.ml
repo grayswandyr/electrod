@@ -449,6 +449,7 @@ let refine_identifiers raw_pb =
         let ctx2, sim_bindings2 = walk_sim_bindings ctx sim_bindings in
         let _, blk2 = walk_block ctx2 blk in
         compr sim_bindings2 blk2
+    | Big_int ie -> big_int @@ walk_iexp ctx ie
   and walk_iexp ctx iexp =
     { iexp with prim_iexp = walk_prim_iexp ctx iexp.prim_iexp }
   and walk_prim_iexp ctx = function
@@ -687,6 +688,9 @@ let compute_arities elo =
     | Prime e ->
         let e' = walk_exp ctx e in
         return_exp exp e'.arity @@ prime e'
+    | Big_int e ->
+        let e' = walk_iexp ctx e in
+        return_exp exp (Some 1) @@ big_int e'
   and walk_iexp ctx iexp =
     { iexp with prim_iexp = walk_prim_iexp ctx iexp.prim_iexp }
   and walk_prim_iexp ctx = function

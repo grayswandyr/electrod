@@ -46,19 +46,6 @@ let comment_line = ("--")
 let reserved_symbol = [ '$' '%' '\\' '`' '@' ]                
                  
 rule main infile = parse
-(* NEG ADD SUB MUL DIV REM LSHIFT SERSHIFT ZERSHIFT HASH SMALLINT BIGINT SUM *)
-| "@~-" { UMINUS }
-| "@+" { ADD }
-| "@-" { SUB }
-| "@*" { MUL }
-| "@/" { DIV }
-| "@% " { REM }
-| "<<" { LSHIFT }
-| ">>>" { ZERSHIFT }
-| ">>" { SERSHIFT }
-| "int" { SMALLINT }
-| "Int" { BIGINT }
-| "sum" { SUM }
 | reserved_symbol as c
   { Msg.Fatal.lexical
     @@ fun args -> args infile lexbuf (Printf.sprintf "reserved character: '%c'" c)}
@@ -74,6 +61,19 @@ rule main infile = parse
         Msg.Fatal.lexical
         @@ fun args -> args infile lexbuf ("invalid integer constant '" ^ i ^ "'")
     }   
+(* NEG ADD SUB MUL DIV REM LSHIFT SERSHIFT ZERSHIFT HASH SMALLINT BIGINT SUM *)
+| "fun/neg" { UMINUS }
+| "fun/add" { ADD }
+| "fun/sub" { SUB }
+| "fun/mul" { MUL }
+| "fun/div" { DIV }
+| "fun/rem" { REM }
+| "fun/lshift" { LSHIFT }
+| "fun/zershift" { ZERSHIFT }
+| "fun/sershift" { SERSHIFT }
+| "int" { SMALLINT }
+| "Int" { BIGINT }
+| "sum" { SUM }
 | "run"
     { RUN }
 | "expect"

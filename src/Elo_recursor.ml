@@ -23,6 +23,7 @@ class virtual ['self] recursor =
     method virtual build_Add : _
     method virtual build_All : _
     method virtual build_And : _
+    method virtual build_Big_int : _
     method virtual build_Block : _
     method virtual build_Card : _
     method virtual build_Compr : _
@@ -303,6 +304,10 @@ class virtual ['self] recursor =
       let _visitors_r0 = self#visit_'exp env _visitors_c0 in
       self#build_Prime env _visitors_c0 _visitors_r0
 
+    method visit_Big_int env _visitors_c0 =
+      let _visitors_r0 = self#visit_'iexp env _visitors_c0 in
+      self#build_Big_int env _visitors_c0 _visitors_r0
+
     method visit_prim_oexp env _visitors_this =
       match _visitors_this with
       | None_ -> self#visit_None_ env
@@ -319,6 +324,7 @@ class virtual ['self] recursor =
       | Compr (_visitors_c0, _visitors_c1) ->
           self#visit_Compr env _visitors_c0 _visitors_c1
       | Prime _visitors_c0 -> self#visit_Prime env _visitors_c0
+      | Big_int _visitors_c0 -> self#visit_Big_int env _visitors_c0
 
     method visit_Transpose env = self#build_Transpose env
     method visit_TClos env = self#build_TClos env

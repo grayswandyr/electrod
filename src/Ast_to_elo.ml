@@ -145,6 +145,7 @@ and convert_exp stack
              Msg.debug (fun m ->
                  m "Ast_to_elo.convert_Compr@ @[<hov2>%a@]@ --> @[<hov2>%a@]"
                    Ast.pp_prim_exp prim_exp (E.pp_exp 0) e))
+  | Big_int ie -> E.big_int @@ convert_iexp stack ie
 
 and convert_sim_bindings stack
     (decls : (Ast.var, Ast.ident) Gen_goal.sim_binding list) =

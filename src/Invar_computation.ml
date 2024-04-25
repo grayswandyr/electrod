@@ -215,7 +215,7 @@ class ['self] computer (elo : Elo.t) =
     method build_Mul = failwith "TODO"
     method build_Lshift = failwith "TODO"
     method build_Div = failwith "TODO"
-    method build_Big_int = failwith "TODO"
+    method build_Big_int () = failwith "TODO"
   end
 
 (* Computes the color (Invar, Static_prop, Init or Temporal) of an

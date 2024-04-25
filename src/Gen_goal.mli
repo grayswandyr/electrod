@@ -922,6 +922,7 @@ val rite : ('a, 'b) fml -> ('a, 'b) exp -> ('a, 'b) exp -> ('a, 'b) prim_exp
 val boxjoin : ('a, 'b) exp -> ('a, 'b) exp list -> ('a, 'b) prim_exp
 val compr : ('a, 'b) sim_binding list -> ('a, 'b) block -> ('a, 'b) prim_exp
 val prime : ('a, 'b) exp -> ('a, 'b) prim_exp
+val big_int : ('a, 'b) iexp -> ('a, 'b) prim_exp
 val in_ : comp_op
 val not_in : comp_op
 val req : comp_op
@@ -953,6 +954,14 @@ val ibinary : ('a, 'b) iexp -> ibinop -> ('a, 'b) iexp -> ('a, 'b) prim_iexp
 val neg : iunop
 val add : ibinop
 val sub : ibinop
+val mul : ibinop
+val div : ibinop
+val rem : ibinop
+val lshift : ibinop
+val zershift : ibinop
+val sershift : ibinop
+val small_int : ('a, 'b) exp -> ('a, 'b) prim_iexp
+val sum : ('a, 'b) binding list -> ('a, 'b) iexp -> ('a, 'b) prim_iexp
 val fml : Location.t -> ('a, 'b) prim_fml -> ('a, 'b) fml
 val exp : int option -> Location.t -> ('a, 'b) prim_exp -> ('a, 'b) exp
 val iexp : Location.t -> ('a, 'b) prim_iexp -> ('a, 'b) iexp

@@ -194,6 +194,7 @@ let compr decls block =
   Compr (decls, block)
 
 let prime exp = Prime exp
+let big_int iexp = Big_int iexp
 let in_ = In
 let not_in = NotIn
 let req = REq
@@ -225,6 +226,14 @@ let ibinary exp1 op exp2 = IBin (exp1, op, exp2)
 let neg = Neg
 let add = Add
 let sub = Sub
+let mul = Mul
+let div = Div
+let rem = Rem
+let lshift = Lshift
+let zershift = Zershift
+let sershift = Sershift
+let small_int exp = Small_int exp
+let sum bs iexp = Sum (bs, iexp)
 let fml fml_loc prim_fml = { prim_fml; fml_loc }
 let exp arity exp_loc prim_exp = { prim_exp; exp_loc; arity }
 let iexp iexp_loc prim_iexp = { prim_iexp; iexp_loc }
