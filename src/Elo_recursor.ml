@@ -75,8 +75,10 @@ class virtual ['self] recursor =
     method virtual build_RTClos : _
     method virtual build_RUn : _
     method virtual build_S : _
+    method virtual build_Small_int : _
     method virtual build_Some_ : _
     method virtual build_Sub : _
+    method virtual build_Sum : _
     method virtual build_T : _
     method virtual build_TClos : _
     method virtual build_Transpose : _
@@ -87,6 +89,14 @@ class virtual ['self] recursor =
     method virtual build_Var : _
     method virtual build_X : _
     method virtual build_oexp : _
+    method virtual build_Zershift : _
+    method virtual build_Sum : _
+    method virtual build_Small_int : _
+    method virtual build_Sershift : _
+    method virtual build_Rem : _
+    method virtual build_Mul : _
+    method virtual build_Lshift : _
+    method virtual build_Div : _
     method visit_exp env exp = self#visit_'exp env exp
     method visit_iexp env iexp = self#visit_'iexp env iexp
     method visit_fml env fml = self#visit_'fml env fml
@@ -376,6 +386,15 @@ class virtual ['self] recursor =
       self#build_IBin env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0
         _visitors_r1 _visitors_r2
 
+    method visit_Small_int env _visitors_c0 =
+      let _visitors_r0 = self#visit_'exp env _visitors_c0 in
+      self#build_Small_int _visitors_c0 _visitors_r0
+
+    method visit_Sum env _visitors_c0 _visitors_c1 =
+      let _visitors_r0 = self#visit_list self#visit_'exp env _visitors_c0 in
+      let _visitors_r1 = self#visit_'iexp env _visitors_c1 in
+      self#build_Sum env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
+
     method visit_oiexp env _visitors_this =
       match _visitors_this with
       | Num _visitors_c0 -> self#visit_Num env _visitors_c0
@@ -384,6 +403,9 @@ class virtual ['self] recursor =
           self#visit_IUn env _visitors_c0 _visitors_c1
       | IBin (_visitors_c0, _visitors_c1, _visitors_c2) ->
           self#visit_IBin env _visitors_c0 _visitors_c1 _visitors_c2
+      | Small_int _visitors_c0 -> self#visit_Small_int env _visitors_c0
+      | Sum (_visitors_c0, _visitors_c1) ->
+          self#visit_Sum env _visitors_c0 _visitors_c1
 
     method visit_Neg env = self#build_Neg env
 
@@ -392,9 +414,21 @@ class virtual ['self] recursor =
 
     method visit_Add env = self#build_Add env
     method visit_Sub env = self#build_Sub env
+    method visit_Mul env = self#build_Mul env
+    method visit_Div env = self#build_Div env
+    method visit_Rem env = self#build_Rem env
+    method visit_Lshift env = self#build_Lshift env
+    method visit_Zershift env = self#build_Zershift env
+    method visit_Sershift env = self#build_Sershift env
 
     method visit_ibinop env _visitors_this =
       match _visitors_this with
       | Add -> self#visit_Add env
       | Sub -> self#visit_Sub env
+      | Mul -> self#visit_Mul env
+      | Div -> self#visit_Div env
+      | Rem -> self#visit_Rem env
+      | Lshift -> self#visit_Lshift env
+      | Zershift -> self#visit_Zershift env
+      | Sershift -> self#visit_Sershift env
   end

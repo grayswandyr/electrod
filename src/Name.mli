@@ -30,6 +30,9 @@ val univ : t
 
 val iden : t
 
+val integers : t
+(** Reserved name for 'Int'. *)
+
 val equal : t -> t -> bool
 (** Tells whether two names are the same *)
 

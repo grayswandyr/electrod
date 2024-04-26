@@ -301,7 +301,7 @@ struct
   let count ps =
     match List.filter (function False -> false | _ -> true) ps with
     | [] -> num 0
-    | props -> failwith "TODO SMV's count: handle card overflow"
+    | _ -> Count (failwith "TODO SMV's count: handle card overflow")
 
   (* END term hashconsing *)
 

@@ -212,7 +212,7 @@ module Make (Ltl : Solver.LTL) = struct
       method build_All (_ : stack) = G.all
       method build_And (_ : stack) (a : ltl) (b : ltl) : ltl = and_ a (lazy b)
 
-      method build_Big_int (_ : stack) (_a : G.iexp) (a : term) tuple : ltl =
+      method build_Big_int (_ : stack) (_a : G.iexp) (_ : term) _tuple : ltl =
         failwith (__LOC__ ^ " TODO")
 
       method build_Block (_ : stack) = conj
@@ -588,6 +588,14 @@ module Make (Ltl : Solver.LTL) = struct
       method build_U (_ : stack) (a : ltl) (b : ltl) : ltl = until a b
       method build_Union (_ : stack) _ _ e1 e2 x = e1 x +|| lazy (e2 x)
       method build_Univ (_ : stack) __tuple = true_
+      method build_Zershift = failwith "TODO"
+      method build_Sum = failwith "TODO"
+      method build_Small_int = failwith "TODO"
+      method build_Sershift = failwith "TODO"
+      method build_Rem = failwith "TODO"
+      method build_Mul = failwith "TODO"
+      method build_Lshift = failwith "TODO"
+      method build_Div = failwith "TODO"
 
       (* FIXME *)
       method build_Var (subst : stack) idx _ tuple =

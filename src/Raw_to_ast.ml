@@ -457,6 +457,11 @@ let refine_identifiers raw_pb =
     | Card e -> card @@ walk_exp ctx e
     | IUn (op, e) -> iunary op @@ walk_iexp ctx e
     | IBin (e1, op, e2) -> ibinary (walk_iexp ctx e1) op (walk_iexp ctx e2)
+    | Small_int e -> small_int @@ walk_exp ctx e
+    | Sum (bs, ie) ->
+        let ctx', bs' = walk_bindings ctx bs in
+        let ie' = walk_iexp ctx' ie in
+        sum bs' ie'
   in
   (* initial context is made of relation names declared in the domain (+ univ) *)
   let init_ctx =
@@ -699,6 +704,23 @@ let compute_arities elo =
     | IUn (op, iexp) -> iunary op @@ walk_iexp ctx iexp
     | IBin (iexp1, op, iexp2) ->
         ibinary (walk_iexp ctx iexp1) op (walk_iexp ctx iexp2)
+    | Small_int e ->
+        let e' = walk_exp ctx e in
+        if Option.equal ( = ) e'.arity (Some 1) then small_int e'
+        else
+          Msg.Fatal.arity_error (fun args ->
+              args elo.Ast.file e "argument to `int[]` must be of arity 1")
+    | Sum (bs, ie) ->
+        let bs', ctx' = walk_bindings ctx bs in
+        List.iter
+          (fun (_, e) ->
+            if not @@ Option.equal ( = ) e.arity (Some 1) then
+              Msg.Fatal.arity_error (fun args ->
+                  args elo.Ast.file e
+                    "under `sum`, every bound must be a unary set"))
+          bs';
+        let ie' = walk_iexp ctx' ie in
+        sum bs' ie'
   in
   let init =
     object

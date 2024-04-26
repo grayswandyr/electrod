@@ -89,7 +89,7 @@ and ('fml, 'exp, 'iexp) oiexp =
   | IUn of iunop * 'iexp
   | IBin of 'iexp * ibinop * 'iexp
   | Small_int of 'exp
-  | Sum of int * 'iexp
+  | Sum of 'exp list * 'iexp
 
 and iunop = Neg
 
@@ -291,6 +291,8 @@ let rem = Rem
 let lshift = Lshift
 let sershift = Sershift
 let zershift = Zershift
+let small_int e = hiexp @@ Small_int e
+let sum bs ie = hiexp @@ Sum (bs, ie)
 
 (*
     let%test _ =
@@ -387,9 +389,26 @@ let pp_iunop out =
 
 let pp_ibinop out =
   let open Fmtc in
-  function Add -> pf out "+" | Sub -> pf out "-"
+  function
+  | Add -> pf out "fun/add"
+  | Sub -> pf out "fun/sub"
+  | Mul -> pf out "fun/mul"
+  | Div -> pf out "fun/div"
+  | Rem -> pf out "fun/subrem"
+  | Lshift -> pf out "fun/lshift"
+  | Zershift -> pf out "fun/zershift"
+  | Sershift -> pf out "fun/sershift"
 
 let pp_var out v = Fmtc.pf out "v/%d" v
+
+let rec pp_obindings stacked pp_exp out bindings =
+  let open Fmtc in
+  match bindings with
+  | [] -> ()
+  | hd :: tl ->
+      pf out "%a :@ %a" pp_var (stacked + 1) (pp_exp stacked) hd;
+      (sp **> comma) out ();
+      pp_obindings (stacked + 1) pp_exp out tl
 
 let pp_osim_binding stacked pp_exp out (disj, vars, e) =
   let open Fmtc in
@@ -481,8 +500,16 @@ let pp_oiexp stacked pp_exp pp_iexp out =
   | Card e -> pf out "@[<2>(# %a)@]" (pp_exp stacked) e
   | IUn (op, iexp) -> pf out "@[<2>(%a%a)@]" pp_iunop op (pp_iexp stacked) iexp
   | IBin (e1, op, e2) ->
-      pf out "@[<2>(%a@ %a@ %a)@]" (pp_iexp stacked) e1 pp_ibinop op
+      pf out "@[<2>%a[%a,@ %a])@" pp_ibinop op (pp_iexp stacked) e1
         (pp_iexp stacked) e2
+  | Small_int exp -> pf out "@[<2>int[%a]@]" (pp_exp stacked) exp
+  | Sum (bs, ie) ->
+      let nbvars = List.length bs in
+      pf out "@[<2>(sum %a@ |@ %a)@]"
+        (pp_obindings stacked pp_exp)
+        bs
+        (pp_iexp (stacked + nbvars))
+        ie
 
 let rec pp_fml stacked out (Fml { node; _ }) =
   pp_ofml stacked pp_fml pp_exp pp_iexp out node

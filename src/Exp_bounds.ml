@@ -289,8 +289,8 @@ let make_bounds_exp =
             let must_diff =
               TS.filter (fun tup -> not (TS.mem tup b2.sup)) b1.must
             in
+            (* b2.MUST! *)
             return_bounds args must_diff (TS.diff b1.sup b2.must)
-        (* b2.MUST! *)
         | RBin (e1, Join, e2) ->
             let b1 = fbounds_exp (e1, subst) in
             let b2 = fbounds_exp (e2, subst) in
@@ -303,4 +303,7 @@ let make_bounds_exp =
         | Prime e -> fbounds_exp (e, subst)
         | Compr (sim_bindings, _) ->
             let sup_list = sup_sim_bindings fbounds_exp subst sim_bindings in
-            return_bounds args TS.empty (TS.of_tuples sup_list))
+            return_bounds args TS.empty (TS.of_tuples sup_list)
+        | Big_int _ ->
+            let ints = Domain.get_exn Name.integers domain in
+            return_bounds args TS.empty (Relation.sup ints))

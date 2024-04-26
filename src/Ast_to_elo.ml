@@ -147,6 +147,14 @@ and convert_exp stack
                    Ast.pp_prim_exp prim_exp (E.pp_exp 0) e))
   | Big_int ie -> E.big_int @@ convert_iexp stack ie
 
+and convert_bindings stack (decls : (Ast.var, Ast.ident) Gen_goal.binding list)
+    =
+  match decls with
+  | [] -> []
+  | (var, range) :: tl ->
+      let hd' = convert_exp stack range in
+      hd' :: convert_bindings (new_env [ var ] stack) tl
+
 and convert_sim_bindings stack
     (decls : (Ast.var, Ast.ident) Gen_goal.sim_binding list) =
   match decls with
@@ -180,9 +188,23 @@ and convert_iexp stack ({ prim_iexp; _ } : (Ast.var, Ast.ident) Gen_goal.iexp) =
   | IBin (e1, op, e2) ->
       E.ibinary (convert_iexp stack e1) (convert_ibinop op)
         (convert_iexp stack e2)
+  | Small_int e -> E.small_int @@ convert_exp stack e
+  | Sum (ranges, ie) ->
+      let ranges' = convert_bindings stack ranges in
+      let vars = List.map fst ranges in
+      let ie' = convert_iexp (new_env vars stack) ie in
+      E.sum ranges' ie'
 
 and convert_ibinop (op : Gen_goal.ibinop) =
-  match op with Add -> E.add | Sub -> E.sub
+  match op with
+  | Add -> E.add
+  | Sub -> E.sub
+  | Mul -> E.mul
+  | Div -> E.div
+  | Rem -> E.rem
+  | Lshift -> E.lshift
+  | Zershift -> E.zershift
+  | Sershift -> E.sershift
 
 let convert_goal (Gen_goal.Run (fmls, expec)) =
   E.run (convert_block [] fmls) expec

@@ -69,9 +69,7 @@ let exp_no_arity = G.exp (Some 0)
 %nonassoc NOT AFTER ALWAYS EVENTUALLY BEFORE HISTORICALLY ONCE
 %nonassoc /*LT LTE GT GTE*/ EQ NEQ IN NOT_IN
 //%nonassoc NO SOME LONE ONE      (* for formulas as 'some E' (= E != none) *)
-%left LSHIFT ZERSHIFT SERSHIFT
 %left MINUS PLUS
-%left MUL DIV REM
 %nonassoc HASH
 %left OVERRIDE
 %left INTER

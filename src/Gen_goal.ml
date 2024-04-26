@@ -397,6 +397,7 @@ and pp_prim_exp pp_v pp_i out =
              (pp_block pp_v pp_i))
         (sim_bindings, blk)
   | Prime e -> pf out "%a'" (pp_exp pp_v pp_i) e
+  | Big_int ie -> pf out "Int[%a]" (pp_iexp pp_v pp_i) ie
 
 and pp_runop out =
   let open Fmtc in
@@ -427,8 +428,13 @@ and pp_prim_iexp pp_v pp_i out =
   | IUn (op, iexp) ->
       pf out "@[<2>(%a%a)@]" pp_iunop op (pp_iexp pp_v pp_i) iexp
   | IBin (e1, op, e2) ->
-      pf out "@[<2>(%a@ %a@ %a)@]" (pp_iexp pp_v pp_i) e1 pp_ibinop op
+      pf out "@[<2>%a[%a,@ %a]@]" pp_ibinop op (pp_iexp pp_v pp_i) e1
         (pp_iexp pp_v pp_i) e2
+  | Small_int exp -> pf out "@[<2>int[%a]@]" (pp_exp pp_v pp_i) exp
+  | Sum (bs, ie) ->
+      pf out "@[<2>(sum %a@ |@ %a)@]"
+        (list ~sep:(sp **> comma) @@ pp_binding ~sep:colon pp_v pp_i)
+        bs (pp_iexp pp_v pp_i) ie
 
 and pp_iunop out =
   let open Fmtc in
@@ -436,4 +442,12 @@ and pp_iunop out =
 
 and pp_ibinop out =
   let open Fmtc in
-  function Add -> pf out "+" | Sub -> pf out "-"
+  function
+  | Add -> pf out "fun/add"
+  | Sub -> pf out "fun/sub"
+  | Mul -> pf out "fun/mul"
+  | Div -> pf out "fun/div"
+  | Rem -> pf out "fun/subrem"
+  | Lshift -> pf out "fun/lshift"
+  | Zershift -> pf out "fun/zershift"
+  | Sershift -> pf out "fun/sershift"

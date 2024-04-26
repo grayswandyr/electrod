@@ -127,7 +127,11 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
 
        - (unary minus)
 
+       * / mod
+
        + -
+
+       << >>
 
        = != < > <= >=
 
@@ -195,7 +199,20 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
             infixl ~paren:true upper 7 string pp_term pp_term out ("+", t1, t2)
         | Bin (t1, Minus, t2) ->
             infixl ~paren:true upper 7 string pp_term pp_term out ("-", t1, t2)
-        | Neg t -> prefix upper 8 string pp_term out ("- ", t)
+        | Bin (t1, Mul, t2) ->
+            infixl ~paren:true upper 8 string pp_term pp_term out ("*", t1, t2)
+        | Bin (t1, Div, t2) ->
+            infixl ~paren:true upper 8 string pp_term pp_term out
+              ("DIVIDE", t1, t2)
+        | Bin (t1, Rem, t2) ->
+            infixl ~paren:true upper 8 string pp_term pp_term out ("REM", t1, t2)
+        | Bin (t1, Lshift, t2) ->
+            infixl ~paren:true upper 6 string pp_term pp_term out ("<<", t1, t2)
+        | Bin (t1, Zershift, t2) ->
+            infixl ~paren:true upper 6 string pp_term pp_term out (">>>", t1, t2)
+        | Bin (t1, Sershift, t2) ->
+            infixl ~paren:true upper 6 string pp_term pp_term out (">>", t1, t2)
+        | Neg t -> prefix upper 9 string pp_term out ("- ", t)
         | Count ts ->
             styled `Bold string out "count";
             pf out "@[(%a@])" (list ~sep:(const string ", ") (pp 0)) ts
