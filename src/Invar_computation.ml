@@ -207,15 +207,15 @@ class ['self] computer (elo : Elo.t) =
     method build_Neg () = max_color_wiwt Static_prop
     method build_Sub () = max_color_wiwt
     method build_Card () r' = r'
-    method build_Zershift = failwith "TODO"
-    method build_Sum = failwith "TODO"
-    method build_Small_int = failwith "TODO"
-    method build_Sershift = failwith "TODO"
-    method build_Rem = failwith "TODO"
-    method build_Mul = failwith "TODO"
-    method build_Lshift = failwith "TODO"
-    method build_Div = failwith "TODO"
-    method build_Big_int () = failwith "TODO"
+    method build_Zershift () = max_color_wiwt
+    method build_Sum () _=  Fun.id (* JB: TO CHECK  what is the int parameter ?*)
+    method build_Small_int () = Fun.id
+    method build_Sershift () = max_color_wiwt    
+    method build_Rem () = max_color_wiwt
+    method build_Mul () = max_color_wiwt
+    method build_Lshift () = max_color_wiwt
+    method build_Div () = max_color_wiwt
+    method build_Big_int () = Fun.id
   end
 
 (* Computes the color (Invar, Static_prop, Init or Temporal) of an
