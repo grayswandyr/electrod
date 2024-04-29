@@ -44,7 +44,8 @@ val univ_atoms : t -> Tuple_set.t
 val to_list : t -> (Name.t * Relation.t) list
 (** Returns the map as an association list *)
 
-val of_list : (Name.t * Relation.t) list -> t
+val of_list : int -> (Name.t * Relation.t) list -> t
+
 val equal : t -> t -> bool
 
 val must : Name.t -> t -> Tuple_set.t
