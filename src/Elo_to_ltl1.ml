@@ -179,6 +179,10 @@ module Make (Ltl : Solver.LTL) = struct
         | None -> pairs)
       empty r_sup_seq
 
+  (* Produces the LTL formula corresponding to [SUM_(t \in on) f(t)]  *)
+  let summation ~(on : TS.t) (f : Tuple.t -> term) : term =
+    on |> TS.to_iter |> Iter.fold (fun t1 t2 -> plus t1 (f t2)) (num 0)
+
   class environment (elo : Elo.t) =
     (* Atomic.make is a cached function for its last two arguments (out of 3), so we compute it for its first argument to avoid unnecessary recomputations *)
     let make_atom_aux = Atomic.make elo.Elo.domain in
@@ -213,7 +217,7 @@ module Make (Ltl : Solver.LTL) = struct
       method build_And (_ : stack) (a : ltl) (b : ltl) : ltl = and_ a (lazy b)
 
       method build_Big_int (_ : stack) (_a : G.iexp) (_ : term) _tuple : ltl =
-        failwith (__LOC__ ^ " TODO")
+        failwith __LOC__
 
       method build_Block (_ : stack) = conj
 
@@ -321,9 +325,29 @@ module Make (Ltl : Solver.LTL) = struct
               (split_tuples, subst) sbs
           in
           conj (b' :: ranges')
-        else (
-          Msg.debug (fun m -> m "build_Compr --> false (disj case)");
-          false_)
+        else false_
+
+      (* same reasoning as for visit_Compr *)
+      method! visit_Sum env _visitors_c0 _visitors_c1 =
+        let _visitors_r0 = self#visit_'exp env _visitors_c0 in
+        (* min_int as a dummy default value to ignore later on *)
+        let _visitors_r1 = num @@ Int.min_int in
+        self#build_Sum env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
+
+      (* [| sum x : r | ie |]_sigma =
+         Sum_{t in must(r)} [|ie|]_sigma[x |-> t]
+         + Sum_{t in may(r)} ([|r|]_sigma(t) => [|ie|]_sigma[x |-> t] else 0)
+      *)
+      method build_Sum (subst : stack) (r : G.exp) ie _range' _dummy_to_ignore =
+        let { must; may; _ } = env#must_may_sup subst r in
+        let ie' t = self#visit_iexp (t :: subst) ie in
+        let must_part = summation ~on:must ie' in
+        let may_part =
+          summation ~on:may (fun t ->
+              ifthenelse_arith (self#visit_exp subst r t) (ie' t) (num 0))
+        in
+
+        plus must_part may_part
 
       method build_Diff (_ : stack) (_ : G.exp) (_ : G.exp) e' f'
           (tuple : Tuple.t) =
@@ -439,14 +463,9 @@ module Make (Ltl : Solver.LTL) = struct
             let t1, t2 = Tuple.split tuple ar_r in
             r' t1 +&& lazy (s' t2)
 
-      method! visit_Quant subst q sb block =
+      method! visit_Quant subst q ((disj, nbvars, range) as sb) block =
         let q' = self#visit_quant subst q in
-        let sb' =
-          (fun (disj, nbvars, range) ->
-            let range' = self#visit_'exp subst range in
-            (disj, nbvars, range'))
-            sb
-        in
+        let sb' = (disj, nbvars, self#visit_'exp subst range) in
         let range' = [ true_ ] in
         self#build_Quant subst q sb block q' sb' range'
 
@@ -588,14 +607,13 @@ module Make (Ltl : Solver.LTL) = struct
       method build_U (_ : stack) (a : ltl) (b : ltl) : ltl = until a b
       method build_Union (_ : stack) _ _ e1 e2 x = e1 x +|| lazy (e2 x)
       method build_Univ (_ : stack) __tuple = true_
-      method build_Zershift = failwith "TODO"
-      method build_Sum = failwith "TODO"
-      method build_Small_int = failwith "TODO"
-      method build_Sershift = failwith "TODO"
-      method build_Rem = failwith "TODO"
-      method build_Mul = failwith "TODO"
-      method build_Lshift = failwith "TODO"
-      method build_Div = failwith "TODO"
+      method build_Zershift = failwith __LOC__
+      method build_Small_int = failwith __LOC__
+      method build_Sershift = failwith __LOC__
+      method build_Rem = failwith __LOC__
+      method build_Mul = failwith __LOC__
+      method build_Lshift = failwith __LOC__
+      method build_Div = failwith __LOC__
 
       (* FIXME *)
       method build_Var (subst : stack) idx _ tuple =

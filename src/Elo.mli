@@ -56,7 +56,7 @@ and ('fml, 'exp, 'iexp) oiexp = private
   | IUn of iunop * 'iexp
   | IBin of 'iexp * ibinop * 'iexp
   | Small_int of 'exp
-  | Sum of 'exp list * 'iexp
+  | Sum of 'exp * 'iexp
 
 and iunop = private Neg
 
@@ -181,7 +181,7 @@ val lshift : ibinop
 val sershift : ibinop
 val zershift : ibinop
 val small_int : exp -> iexp
-val sum : exp list -> iexp -> iexp
+val sum : exp -> iexp -> iexp
 val kwd_styled : 'a Fmtc.t -> 'a Fmtc.t
 val pp_comp_op : Format.formatter -> comp_op -> unit
 val pp_icomp_op : Format.formatter -> icomp_op -> unit
@@ -313,7 +313,7 @@ class ['c] map :
          ; visit_Small_int : 'd -> exp -> (fml, exp, iexp) oiexp
          ; visit_Some_ : 'd -> quant
          ; visit_Sub : 'd -> ibinop
-         ; visit_Sum : 'd -> exp list -> iexp -> (fml, exp, iexp) oiexp
+         ; visit_Sum : 'd -> exp -> iexp -> (fml, exp, iexp) oiexp
          ; visit_T : 'd -> lbinop
          ; visit_TClos : 'd -> runop
          ; visit_Transpose : 'd -> runop
@@ -415,7 +415,7 @@ class ['c] map :
     method visit_Small_int : 'd -> exp -> (fml, exp, iexp) oiexp
     method visit_Some_ : 'd -> quant
     method visit_Sub : 'd -> ibinop
-    method visit_Sum : 'd -> exp list -> iexp -> (fml, exp, iexp) oiexp
+    method visit_Sum : 'd -> exp -> iexp -> (fml, exp, iexp) oiexp
     method visit_T : 'd -> lbinop
     method visit_TClos : 'd -> runop
     method visit_Transpose : 'd -> runop
@@ -550,7 +550,7 @@ class virtual ['c] fold :
          ; build_Small_int : 'd -> 'm -> 'j
          ; build_Some_ : 'd -> 'h
          ; build_Sub : 'd -> 'g
-         ; build_Sum : 'd -> 'm list -> 'j -> 'j
+         ; build_Sum : 'd -> 'm -> 'j -> 'j
          ; build_T : 'd -> 'i
          ; build_TClos : 'd -> 's
          ; build_Transpose : 'd -> 's
@@ -628,7 +628,7 @@ class virtual ['c] fold :
          ; visit_Small_int : 'd -> exp -> 'j
          ; visit_Some_ : 'd -> 'h
          ; visit_Sub : 'd -> 'g
-         ; visit_Sum : 'd -> exp list -> iexp -> 'j
+         ; visit_Sum : 'd -> exp -> iexp -> 'j
          ; visit_T : 'd -> 'i
          ; visit_TClos : 'd -> 's
          ; visit_Transpose : 'd -> 's
@@ -720,7 +720,7 @@ class virtual ['c] fold :
     method virtual build_Small_int : 'd -> 'm -> 'j
     method virtual build_Some_ : 'd -> 'h
     method virtual build_Sub : 'd -> 'g
-    method virtual build_Sum : 'd -> 'm list -> 'j -> 'j
+    method virtual build_Sum : 'd -> 'm -> 'j -> 'j
     method virtual build_T : 'd -> 'i
     method virtual build_TClos : 'd -> 's
     method virtual build_Transpose : 'd -> 's
@@ -798,7 +798,7 @@ class virtual ['c] fold :
     method visit_Small_int : 'd -> exp -> 'j
     method visit_Some_ : 'd -> 'h
     method visit_Sub : 'd -> 'g
-    method visit_Sum : 'd -> exp list -> iexp -> 'j
+    method visit_Sum : 'd -> exp -> iexp -> 'j
     method visit_T : 'd -> 'i
     method visit_TClos : 'd -> 's
     method visit_Transpose : 'd -> 's

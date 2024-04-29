@@ -124,6 +124,19 @@ class simplify =
               m "Simplify1.visit_Quant --> %a" Ast.pp_prim_fml res);
           res
 
+    (* split sum into many sums *)
+    method! visit_Sum env bindings ie =
+      Msg.debug (fun m ->
+          m "Simplify1.visit_Sum <-- %a" Ast.pp_prim_iexp @@ sum bindings ie);
+      match bindings with
+      | [] -> assert false
+      | [ (v, e) ] ->
+          let ie' = self#visit_iexp env ie in
+          sum [ (v, self#visit_exp env e) ] ie'
+      | (v, e) :: bs ->
+          let e' = self#visit_exp env e in
+          sum [ (v, e') ] @@ iexp e.exp_loc @@ self#visit_Sum env bs ie
+
     (* substitute let bindings *)
     method! visit_Let env bindings fmls =
       (* substitute from right to left as a binding on the left may apply in the

@@ -91,7 +91,6 @@ class virtual ['self] recursor =
     method virtual build_oexp : _
     method virtual build_Zershift : _
     method virtual build_Sum : _
-    method virtual build_Small_int : _
     method virtual build_Sershift : _
     method virtual build_Rem : _
     method virtual build_Mul : _
@@ -391,7 +390,7 @@ class virtual ['self] recursor =
       self#build_Small_int _visitors_c0 _visitors_r0
 
     method visit_Sum env _visitors_c0 _visitors_c1 =
-      let _visitors_r0 = self#visit_list self#visit_'exp env _visitors_c0 in
+      let _visitors_r0 = self#visit_'exp env _visitors_c0 in
       let _visitors_r1 = self#visit_'iexp env _visitors_c1 in
       self#build_Sum env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
 

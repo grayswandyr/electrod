@@ -75,7 +75,7 @@ let equal x1 x2 = Stdlib.(x1 == x2)
 let of_raw_ident id = name @@ Raw_ident.basename id
 let univ = name "univ"
 let iden = name "iden"
-let integers = name "integers"
+let integers = name "ints"
 let style = `Cyan
 let pp out name = Fmtc.(styled style string) out name.H.node
 

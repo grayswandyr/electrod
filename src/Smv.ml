@@ -165,7 +165,7 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
         | Ite (c, t, e) ->
             (* SMV's ...?...:... or case...esac expression cannot be
                  used as nuXmv does not accept these when subexpressions
-                 are temporal (seen invarious tests). So we rewrite the formula into more basic terms. *)
+                 are temporal (seen in various tests). So we rewrite the formula into more basic terms. *)
             pp upper out
             @@ I.Infix.((c @=> lazy t) +&& lazy (I.not_ c @=> lazy e))
         | Or (p, q) -> infixl ~paren:true upper 4 string pp pp out ("|", p, q)
@@ -216,6 +216,9 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
         | Count ts ->
             styled `Bold string out "count";
             pf out "@[(%a@])" (list ~sep:(const string ", ") (pp 0)) ts
+        | AIte (c, t, e) ->
+            pf out "@[((%a) ?@ (%a) :@ (%a)@])" (pp 0) c (pp_term 0) t
+              (pp_term 0) e
       in
       pp upper out f
   end
@@ -380,18 +383,24 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     Format.pp_open_vbox out 0;
     S.iter
       (fun (elo_str, fml) ->
-        pf out "%s@\nINIT@\n@[<hv2>%a@];@\n@\n" elo_str
-          (Ltl.pp_gather_variables variables)
-          fml)
+        match fml with
+        | Ltl.True -> ()
+        | _ ->
+            pf out "%s@\nINIT@\n@[<hv2>%a@];@\n@\n" elo_str
+              (Ltl.pp_gather_variables variables)
+              fml)
       init;
     Format.pp_close_box out ();
     (* INVAR *)
     Format.pp_open_vbox out 0;
     S.iter
       (fun (elo_str, fml) ->
-        pf out "%s@\nINVAR@\n@[<hv2>%a@];@\n@\n" elo_str
-          (Ltl.pp_gather_variables variables)
-          fml)
+        match fml with
+        | Ltl.True -> ()
+        | _ ->
+            pf out "%s@\nINVAR@\n@[<hv2>%a@];@\n@\n" elo_str
+              (Ltl.pp_gather_variables variables)
+              fml)
       invariant;
     Format.pp_close_box out ();
     (* TRANS *)

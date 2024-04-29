@@ -304,6 +304,14 @@ let make_bounds_exp =
         | Compr (sim_bindings, _) ->
             let sup_list = sup_sim_bindings fbounds_exp subst sim_bindings in
             return_bounds args TS.empty (TS.of_tuples sup_list)
+        | Big_int (Iexp { node = Num n; _ }) ->
+            (* In general, the upper bound of Big_int could be all integers; but if its argument is fully known, the bound is an exact singleton. For this reason, we create a special case for when the argument is a constant. *)
+            let singleton =
+              TS.singleton @@ Tuple.tuple1 @@ Atom.of_raw_ident
+              @@ Raw_ident.ident (string_of_int n) Lexing.dummy_pos
+                   Lexing.dummy_pos
+            in
+            return_bounds args singleton singleton
         | Big_int _ ->
             let ints = Domain.get_exn Name.integers domain in
             return_bounds args TS.empty (Relation.sup ints))

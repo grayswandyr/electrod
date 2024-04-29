@@ -189,11 +189,11 @@ and convert_iexp stack ({ prim_iexp; _ } : (Ast.var, Ast.ident) Gen_goal.iexp) =
       E.ibinary (convert_iexp stack e1) (convert_ibinop op)
         (convert_iexp stack e2)
   | Small_int e -> E.small_int @@ convert_exp stack e
-  | Sum (ranges, ie) ->
-      let ranges' = convert_bindings stack ranges in
-      let vars = List.map fst ranges in
-      let ie' = convert_iexp (new_env vars stack) ie in
-      E.sum ranges' ie'
+  | Sum ([ (var, range) ], ie) ->
+      let range' = convert_exp stack range in
+      let ie' = convert_iexp (new_env [ var ] stack) ie in
+      E.sum range' ie'
+  | Sum _ -> (* impossible case due to previous simplification*) assert false
 
 and convert_ibinop (op : Gen_goal.ibinop) =
   match op with

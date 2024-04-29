@@ -70,6 +70,7 @@ module type LTL = sig
     | Neg of term
     | Count of t list
     | Bin of term * binop * term
+    | AIte of t * term * term
 
   and binop = Plus | Minus | Mul | Div | Rem | Lshift | Zershift | Sershift
 
@@ -102,6 +103,7 @@ module type LTL = sig
   val minus : term -> term -> term
   val neg : term -> term
   val count : t list -> term
+  val ifthenelse_arith : t -> term -> term -> term
   val comp : tcomp -> term -> term -> t
   val lt : tcomp
   val lte : tcomp
@@ -172,6 +174,7 @@ struct
     | Neg of term
     | Count of t list
     | Bin of term * binop * term
+    | AIte of t * term * term
 
   and binop = Plus | Minus | Mul | Div | Rem | Lshift | Zershift | Sershift
 
@@ -301,7 +304,10 @@ struct
   let count ps =
     match List.filter (function False -> false | _ -> true) ps with
     | [] -> num 0
-    | _ -> Count (failwith "TODO SMV's count: handle card overflow")
+    | props -> Count props
+
+  let ifthenelse_arith c t e =
+    match c with True -> t | False -> e | _ -> AIte (c, t, e)
 
   (* END term hashconsing *)
 
