@@ -136,10 +136,15 @@ module type LTL = sig
     val ( @<=> ) : t -> t -> t
   end
 
-  val pp : Format.formatter -> t -> unit
+  val pp : Format.formatter -> int -> t -> unit
 
   val pp_gather_variables :
-    ?next_is_X:bool -> Atomic.t Iter.t ref -> Format.formatter -> t -> unit
+    ?next_is_X:bool ->
+    int ->
+    Atomic.t Iter.t ref ->
+    Format.formatter ->
+    t ->
+    unit
 end
 
 (** Builds an LTL implementation out of an implementation of atomicic

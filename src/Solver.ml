@@ -126,10 +126,15 @@ module type LTL = sig
     val ( @<=> ) : t -> t -> t
   end
 
-  val pp : Format.formatter -> t -> unit
+  val pp : Format.formatter -> int -> t -> unit
 
   val pp_gather_variables :
-    ?next_is_X:bool -> Atomic.t Iter.t ref -> Format.formatter -> t -> unit
+    ?next_is_X:bool ->
+    int ->
+    Atomic.t Iter.t ref ->
+    Format.formatter ->
+    t ->
+    unit
 end
 
 module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
@@ -182,7 +187,7 @@ struct
     (* default impl. for pp; to override later *)
     failwith "Solver.LTL_from_Atomic.pp not implemented (on purpose)"
 
-  let pp_gather_variables ?(next_is_X = true) _ =
+  let pp_gather_variables ?(next_is_X = true) _ _ =
     let _ = next_is_X in
     pp
 

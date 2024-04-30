@@ -597,7 +597,6 @@ module Make (Ltl : Solver.LTL) = struct
            let fml_tc_ioannidis = self#visit_exp subst tc_ioannidis tuple in *)
         let term, fml = (tc_square, fml_tc_square) in
         Msg.debug (fun m -> m "TC term: %a" G.(pp_exp (arity term)) term);
-        Msg.debug (fun m -> m "TC formula: @[<h2> %a@]" (Fmtc.hbox2 Ltl.pp) fml);
         fml
 
       method build_Transpose (_ : stack) _ r' tuple =
