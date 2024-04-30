@@ -294,7 +294,7 @@ let compute_domain (pb : Raw.raw_problem) =
     (*   (fun m -> m "Raw_to_ast.compute_domain:update add %a ⇒ %a" *)
     (*               Name.pp name (Fmtc.hbox @@ Domain.pp) newdom) *)
   in
-  List.fold_left update init pb.raw_decls
+  List.fold_left update init pb.raw_decls |> Domain.compute_bitwidth
 
 (*******************************************************************************
  *  Compute instances and check they comply with the respective relations.

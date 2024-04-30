@@ -397,6 +397,13 @@ module Fatal = struct
       "%a%a: the lower bound of %S must be empty as it is enumerable"
       (option @@ (colon **> string))
       infile Location.pp loc (Raw_ident.basename id)
+
+  let incorrect_int_set () =
+    err @@ fun m ->
+    m ~header:(code 27)
+      "the set `%a` is absent or not a constant set of shape (-2^(bitwidth - \
+       1) .. 2^(bitwidth - 1) -1)"
+      Name.pp Name.integers
 end
 
 (** {2 Warnings (the program does not fail)} *)

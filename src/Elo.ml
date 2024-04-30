@@ -294,6 +294,12 @@ let zershift = Zershift
 let small_int e = hiexp @@ Small_int e
 let sum bs ie = hiexp @@ Sum (bs, ie)
 
+(* let small_int e =
+   hiexp
+   @@
+   let x = var ~ar:1 0 in
+   sum e @@ *)
+
 (*
     let%test _ =
     let e1 =

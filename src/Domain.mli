@@ -12,7 +12,7 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-(** The domain represents the set of relation declarations. *)
+(** The domain represents the set of relation declarations. It also contains the bitwidth representing integers. *)
 
 open Containers
 
@@ -30,6 +30,12 @@ val add : Name.t -> Relation.t -> t -> t
 val mem : Name.t -> t -> bool
 (** Checks whether a name is already bound in the map. *)
 
+val compute_bitwidth : t -> t
+(** Pre: the Name for the integer set must be present in the domain. Raises otherwise. Also raises if the size of the integer set isn't a power of 2 or doesn't contain all integers between -2^bitwidth and +2^bitwidth-1. *)
+
+val bitwidth : t -> int
+(** Returns the bitwidth (a non-negative power of 2).  *)
+
 (** {1 Accessors}*)
 
 val get_exn : Name.t -> t -> Relation.t
@@ -45,7 +51,6 @@ val to_list : t -> (Name.t * Relation.t) list
 (** Returns the map as an association list *)
 
 val of_list : int -> (Name.t * Relation.t) list -> t
-
 val equal : t -> t -> bool
 
 val must : Name.t -> t -> Tuple_set.t

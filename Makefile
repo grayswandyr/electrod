@@ -50,6 +50,5 @@ show-deps:
 
 clean:
 	$(DUNE) clean
-	-git clean -dfxq -e _opam -e .envrc
 	-rm -f ./$(TARGET) electrod.install
 

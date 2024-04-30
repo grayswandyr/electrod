@@ -15,31 +15,23 @@
 open Containers
 module Map = Name.Map
 
-type t = {
-  decl : Relation.t Map.t;
-  bitwidth : int;
-}
+type t = { decls : Relation.t Map.t; bitwidth : int }
 
-let equal dom1 dom2 = (Map.equal Relation.equal dom1.decl dom2.decl) && dom1.bitwidth = dom2.bitwidth
-let empty = {decl = Map.empty; bitwidth = 0;}
+let equal dom1 dom2 =
+  Map.equal Relation.equal dom1.decls dom2.decls
+  && dom1.bitwidth = dom2.bitwidth
 
-let mem name dom = Map.mem name dom.decl
+let empty = { decls = Map.empty; bitwidth = 0 }
+let mem name dom = Map.mem name dom.decls
 
 let add name rel domain =
-  assert (not @@ Map.mem name domain.decl);
-  {
-    decl = Map.add name rel domain.decl;
-    bitwidth = domain.bitwidth;
-  }
+  assert (not @@ Map.mem name domain.decls);
+  { decls = Map.add name rel domain.decls; bitwidth = domain.bitwidth }
 
-let get_exn name domain = Map.find name domain.decl
-let get name domain = Map.get name domain.decl
-let to_list domain= Map.to_list domain.decl
-let of_list bw list= 
-  {
-    decl = Map.of_list list;
-    bitwidth = bw;
-  } 
+let get_exn name domain = Map.find name domain.decls
+let get name domain = Map.get name domain.decls
+let to_list domain = Map.to_list domain.decls
+let of_list bw list = { decls = Map.of_list list; bitwidth = bw }
 
 let univ_atoms domain =
   let open Relation in
@@ -72,12 +64,12 @@ let sup name domain =
   get_exn name domain |> Relation.scope |> Scope.sup
 
 let musts ?(with_univ_and_ident = true) domain =
-  (if with_univ_and_ident then domain.decl
-  else domain.decl |> Map.remove Name.univ |> Map.remove Name.iden)
+  (if with_univ_and_ident then domain.decls
+  else domain.decls |> Map.remove Name.univ |> Map.remove Name.iden)
   |> Map.map Relation.must |> Map.to_list
 
-let arities domain = 
-  let arities = Map.map Relation.arity domain.decl in
+let arities domain =
+  let arities = Map.map Relation.arity domain.decls in
   Map.to_list arities
 
 let update_domain_with_instance domain instance =
@@ -98,10 +90,10 @@ let update_domain_with_instance domain instance =
         assert false
   in
   {
-    decl = Map.merge_safe ~f:keep_instance domain.decl (Instance.to_map instance);
+    decls =
+      Map.merge_safe ~f:keep_instance domain.decls (Instance.to_map instance);
     bitwidth = bw;
   }
-
 
 let rename atom_renaming name_renaming domain =
   let bitwidth = domain.bitwidth in
@@ -109,12 +101,48 @@ let rename atom_renaming name_renaming domain =
   |> List.map (fun (name, rel) ->
          ( List.assoc ~eq:Name.equal name name_renaming,
            Relation.rename atom_renaming name_renaming rel ))
-  |> (of_list bitwidth)
+  |> of_list bitwidth
+
+let bitwidth { bitwidth; _ } = bitwidth
+
+let log2 n =
+  if n < 0 then invalid_arg "log2: argument must be non-negative"
+  else
+    let rec loop n = if n <= 1 then 0 else 1 + loop (n asr 1) in
+    loop n
+
+let compute_bitwidth =
+  let exception Int_problem in
+  let check_int_set ints =
+    let bitwidth = log2 (Tuple_set.size ints) in
+    if
+      bitwidth = 0
+      || Iter.(
+           for_all
+             (fun nb ->
+               Tuple_set.mem
+                 (Tuple.tuple1 @@ Atom.of_raw_ident
+                 @@ Raw_ident.ident (string_of_int nb) Lexing.dummy_pos
+                      Lexing.dummy_pos)
+                 ints)
+             (~-(Int.pow 2 (bitwidth - 1)) -- (Int.pow 2 (bitwidth - 1) - 1)))
+    then bitwidth
+    else raise Int_problem
+  in
+  fun domain ->
+    try
+      match get Name.integers domain with
+      | Some Relation.(Const { arity = 1; scope = Scope.Exact ints; _ }) ->
+          { domain with bitwidth = check_int_set ints }
+          |> Fun.tap (fun { bitwidth; _ } ->
+                 Msg.info (fun m -> m "bitwidth = %d" bitwidth))
+      | _ -> raise Int_problem
+    with Int_problem -> Msg.Fatal.incorrect_int_set ()
 
 module P = Intf.Print.Mixin (struct
   type nonrec t = t
 
-  let pp out {decl; _;}= pp out decl
+  let pp out { decls; _ } = pp out decls
 end)
 
 include P
