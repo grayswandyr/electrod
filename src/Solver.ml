@@ -114,6 +114,12 @@ module type LTL = sig
   val plus : term -> term -> term
   val minus : term -> term -> term
   val neg : term -> term
+  val mul : term -> term -> term
+  val div : term -> term -> term
+  val rem : term -> term -> term
+  val lshift : term -> term -> term
+  val zershift : term -> term -> term
+  val sershift : term -> term -> term
   val count : t list -> term
   val ifthenelse_arith : t -> term -> term -> term
   val comp : tcomp -> term -> term -> t
@@ -316,8 +322,42 @@ struct
     | _ -> Bin (t1, Plus, t2)
 
   let minus t1 t2 = match t2 with Num 0 -> t1 | _ -> Bin (t1, Minus, t2)
-  let neg t = match t with Neg _ -> t | _ -> Neg t
+  let neg t = match t with Neg u -> u | _ -> Neg t
+  let mul t1 t2 = 
+    match t1, t2 with 
+    | Num 0, _ -> Num 0
+    | _, Num 0 -> Num 0
+    | _, _ -> Bin (t1, Mul, t2)  
 
+  let div t1 t2 = 
+    match t1, t2 with
+    | _, Num 0 -> failwith "Division by zero"
+    | Num 0, _ -> Num 0
+    | _, _ -> Bin(t1, Div, t2)
+
+  let rem t1 t2 =
+    match t1, t2 with
+    | _, Num 0 -> failwith "Remainder of division by zero"
+    | Num 0, _ -> Num 0
+    | _, _ -> Bin(t1, Rem, t2)
+let lshift t1 t2 =
+  match t1, t2 with
+  | Num 0, _ -> Num 0
+  | _, Num 0 -> t1
+  | _, _ -> Bin (t1, Lshift, t2)
+
+let zershift t1 t2 =
+    match t1, t2 with
+    | Num 0, _ -> Num 0
+    | _, Num 0 -> t1
+    | _, _ -> Bin (t1, Zershift, t2)
+
+let sershift t1 t2 =
+      match t1, t2 with
+      | Num 0, _ -> Num 0
+      | _, Num 0 -> t1
+      | _, _ -> Bin (t1, Sershift, t2)
+        
   let count ps =
     match List.filter (function False -> false | _ -> true) ps with
     | [] -> Num 0

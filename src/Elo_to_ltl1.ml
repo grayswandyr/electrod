@@ -417,7 +417,6 @@ module Make (Ltl : Solver.LTL) = struct
         else if TS.mem tuple may then env#make_atom rel tuple
         else false_
 
-      method build_Neg (_ : stack) (a : term) : term = neg a
       method build_No (_ : stack) = G.no_
       method build_None_ (_ : stack) __tuple = false_
       method build_Not (_ : stack) (a : ltl) : ltl = not_ a
@@ -426,6 +425,8 @@ module Make (Ltl : Solver.LTL) = struct
         not_ @@ self#build_In subst r s r' s'
 
       method build_Num (_ : stack) n _ = num env#bitwidth n
+      method build_Neg (_ : stack) (a : term) : term = neg a
+
       method build_O (_ : stack) (a : ltl) : ltl = once a
       method build_Or (_ : stack) (a : ltl) (b : ltl) : ltl = or_ a (lazy b)
 
@@ -607,13 +608,13 @@ module Make (Ltl : Solver.LTL) = struct
       method build_U (_ : stack) (a : ltl) (b : ltl) : ltl = until a b
       method build_Union (_ : stack) _ _ e1 e2 x = e1 x +|| lazy (e2 x)
       method build_Univ (_ : stack) __tuple = true_
-      method build_Zershift = failwith __LOC__
+      method build_Zershift (_ : stack) t1 t2= zershift t1 t2
       method build_Small_int = failwith __LOC__
-      method build_Sershift = failwith __LOC__
-      method build_Rem = failwith __LOC__
-      method build_Mul = failwith __LOC__
-      method build_Lshift = failwith __LOC__
-      method build_Div = failwith __LOC__
+      method build_Sershift (_ : stack) t1 t2 = zershift t1 t2
+      method build_Rem (_ : stack) t1 t2 = rem t1 t2
+      method build_Mul (_ : stack) t1 t2 = mul t1 t2
+      method build_Lshift (_ : stack) t1 t2 = lshift t1 t2
+      method build_Div (_ : stack) t1 t2 = div t1 t2
 
       (* FIXME *)
       method build_Var (subst : stack) idx _ tuple =
