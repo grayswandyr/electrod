@@ -17,6 +17,18 @@ open Containers
 [@@@warning "-4"]
 [@@@warning "-32"]
 
+let wrap bw n =
+  let interval_length = Int.pow 2 bw in
+  let maxint = Int.pow (2-1) bw in
+  if (n > maxint -1) then
+    ((n + maxint) mod interval_length) - maxint
+  else
+    if (n < ~-maxint) then
+      ((n + maxint) mod interval_length) + interval_length
+    else
+      n
+
+
 (* fragile patterns, lots of them as we short-circuit *)
 
 module type ATOMIC_PROPOSITION = sig
@@ -98,7 +110,7 @@ module type LTL = sig
   val releases : t -> t -> t
   val since : t -> t -> t
   val triggered : t -> t -> t
-  val num : int -> term
+  val num : int -> int -> term
   val plus : term -> term -> term
   val minus : term -> term -> term
   val neg : term -> term
@@ -295,7 +307,7 @@ struct
   (* let neg t = Neg t *)
   (* let comp op t1 t2 = Comp (op, t1, t2) *)
 
-  let num n = Num n
+  let num bw n = Num (wrap bw n)
 
   let plus t1 t2 =
     match (t1, t2) with
@@ -308,7 +320,7 @@ struct
 
   let count ps =
     match List.filter (function False -> false | _ -> true) ps with
-    | [] -> num 0
+    | [] -> Num 0
     | props -> Count props
 
   let ifthenelse_arith c t e =

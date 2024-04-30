@@ -179,9 +179,9 @@ module Make (Ltl : Solver.LTL) = struct
         | None -> pairs)
       empty r_sup_seq
 
-  (* Produces the LTL formula corresponding to [SUM_(t \in on) f(t)]  *)
+  (* Produces the integer term corresponding to [SUM_(t \in on) f(t)]  *)
   let summation ~(on : TS.t) (f : Tuple.t -> term) : term =
-    on |> TS.to_iter |> Iter.fold (fun t1 t2 -> plus t1 (f t2)) (num 0)
+    on |> TS.to_iter |> Iter.fold (fun t1 t2 -> plus t1 (f t2)) (num 2 0)
 
   class environment (elo : Elo.t) =
     (* Atomic.make is a cached function for its last two arguments (out of 3), so we compute it for its first argument to avoid unnecessary recomputations *)
@@ -225,7 +225,7 @@ module Make (Ltl : Solver.LTL) = struct
 
       method build_Card subst r r' =
         let { must; may; _ } = env#must_may_sup subst r in
-        let must_card = num @@ TS.size must in
+        let must_card = num env#bitwidth (TS.size must) in
         let may_card = count @@ List.map r' @@ TS.to_list may in
         plus must_card may_card
 
@@ -330,11 +330,11 @@ module Make (Ltl : Solver.LTL) = struct
         else false_
 
       (* same reasoning as for visit_Compr *)
-      method! visit_Sum env _visitors_c0 _visitors_c1 =
-        let _visitors_r0 = self#visit_'exp env _visitors_c0 in
+      method! visit_Sum env2 _visitors_c0 _visitors_c1 =
+        let _visitors_r0 = self#visit_'exp env2 _visitors_c0 in
         (* min_int as a dummy default value to ignore later on *)
-        let _visitors_r1 = num @@ Int.min_int in
-        self#build_Sum env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
+        let _visitors_r1 = num env#bitwidth Int.min_int in
+        self#build_Sum env2 _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
 
       (* [| sum x : r | ie |]_sigma =
          Sum_{t in must(r)} [|ie|]_sigma[x |-> t]
@@ -346,7 +346,7 @@ module Make (Ltl : Solver.LTL) = struct
         let must_part = summation ~on:must ie' in
         let may_part =
           summation ~on:may (fun t ->
-              ifthenelse_arith (self#visit_exp subst r t) (ie' t) (num 0))
+              ifthenelse_arith (self#visit_exp subst r t) (ie' t) (num env#bitwidth 0))
         in
         plus must_part may_part
 
@@ -425,7 +425,7 @@ module Make (Ltl : Solver.LTL) = struct
       method build_NotIn (subst : stack) r s r' s' =
         not_ @@ self#build_In subst r s r' s'
 
-      method build_Num (_ : stack) n _ = num n
+      method build_Num (_ : stack) n _ = num env#bitwidth n
       method build_O (_ : stack) (a : ltl) : ltl = once a
       method build_Or (_ : stack) (a : ltl) (b : ltl) : ltl = or_ a (lazy b)
 

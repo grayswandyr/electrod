@@ -108,7 +108,7 @@ module type LTL = sig
   val releases : t -> t -> t
   val since : t -> t -> t
   val triggered : t -> t -> t
-  val num : int -> term
+  val num : int -> int -> term
   val plus : term -> term -> term
   val minus : term -> term -> term
   val neg : term -> term
