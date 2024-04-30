@@ -198,12 +198,14 @@ module Make (Ltl : Solver.LTL) = struct
         | Some rel -> Relation.arity rel
 
       method make_atom (name : Name.t) (t : Tuple.t) =
-        assert (Domain.mem name elo.Elo.domain);
+        assert (Domain.mem name elo.domain);
         Ltl.atomic @@ make_atom_aux name t
 
       method is_const (name : Name.t) =
         assert (Domain.mem name elo.Elo.domain);
         Domain.get_exn name elo.Elo.domain |> Relation.is_const
+
+      method bitwidth = Domain.bitwidth elo.domain
     end
 
   class ['subst] converter (env : environment) =
@@ -346,7 +348,6 @@ module Make (Ltl : Solver.LTL) = struct
           summation ~on:may (fun t ->
               ifthenelse_arith (self#visit_exp subst r t) (ie' t) (num 0))
         in
-
         plus must_part may_part
 
       method build_Diff (_ : stack) (_ : G.exp) (_ : G.exp) e' f'

@@ -195,7 +195,7 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
       and pp_term upper out (t : term) =
         match t with
         | Num n ->
-            if n < 0 then pf out "-0sd%d_%d" bitwidth n
+            if n < 0 then pf out "-0sd%d_%d" bitwidth (-n)
             else pf out "0sd%d_%d" bitwidth n
         | Bin (t1, Plus, t2) ->
             infixl ~paren:true upper 7 string pp_term pp_term out ("+", t1, t2)

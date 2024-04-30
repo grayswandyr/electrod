@@ -113,19 +113,19 @@ let log2 n =
 
 let compute_bitwidth =
   let exception Int_problem in
+  let tuple_of_int nb =
+    Tuple.tuple1 @@ Atom.of_raw_ident
+    @@ Raw_ident.ident (string_of_int nb) Lexing.dummy_pos Lexing.dummy_pos
+  in
   let check_int_set ints =
     let bitwidth = log2 (Tuple_set.size ints) in
     if
       bitwidth = 0
-      || Iter.(
-           for_all
-             (fun nb ->
-               Tuple_set.mem
-                 (Tuple.tuple1 @@ Atom.of_raw_ident
-                 @@ Raw_ident.ident (string_of_int nb) Lexing.dummy_pos
-                      Lexing.dummy_pos)
-                 ints)
-             (~-(Int.pow 2 (bitwidth - 1)) -- (Int.pow 2 (bitwidth - 1) - 1)))
+      || bitwidth > 0
+         && Iter.(
+              for_all
+                (fun nb -> Tuple_set.mem (tuple_of_int nb) ints)
+                (~-(Int.pow 2 (bitwidth - 1)) -- (Int.pow 2 (bitwidth - 1) - 1)))
     then bitwidth
     else raise Int_problem
   in
