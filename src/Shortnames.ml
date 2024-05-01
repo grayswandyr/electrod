@@ -38,17 +38,18 @@ let encode_atom = make_encode 'a'
 
 (* uppercase letters for relations *)
 let encode_relation = make_encode 'A'
-let is_univ_or_iden n = List.mem ~eq:Name.equal n [ Name.iden; Name.univ ]
+
+let not_renamed n =
+  List.mem ~eq:Name.equal n [ Name.iden; Name.univ; Name.integers ]
 
 let compute_relation_renaming elo =
   Domain.to_list elo.Ast.domain
   |> List.mapi (fun i (name, _) ->
-         if is_univ_or_iden name then (name, name)
-           (* do not rename univ and iden *)
+         if not_renamed name then (name, name) (* do not rename univ and iden *)
          else
            let new_string = encode_relation i in
            let new_name = Name.name new_string in
-           if is_univ_or_iden new_name then
+           if not_renamed new_name then
              (* it may happen that new_string happens to fall on "univ" or
                 "iden", which may induce errors in the translation process, so we
                 append a symbol (1) not used in the encoding set *)

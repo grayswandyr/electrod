@@ -45,7 +45,7 @@ let univ_atoms domain =
 let pp out rels =
   Fmtc.(
     vbox
-    @@ Map.pp ~pp_sep:(const string " ") ~pp_arrow:(const string " : ")
+    @@ Map.pp ~pp_sep:Fmtc.hardline ~pp_arrow:(const string " : ")
          ~pp_start:(const string "") ~pp_stop:(const string "")
          (styled `Cyan Name.pp)
          (Relation.pp ~print_name:false))
@@ -135,14 +135,17 @@ let compute_bitwidth =
       | Some Relation.(Const { arity = 1; scope = Scope.Exact ints; _ }) ->
           { domain with bitwidth = check_int_set ints }
           |> Fun.tap (fun { bitwidth; _ } ->
-                 Msg.info (fun m -> m "bitwidth = %d" bitwidth))
+                 Msg.info (fun m ->
+                     m "%a = %a found --> bitwidth = %d" Name.pp Name.integers
+                       Tuple_set.pp ints bitwidth))
       | _ -> raise Int_problem
     with Int_problem -> Msg.Fatal.incorrect_int_set ()
 
 let ints domain =
   match get Name.integers domain with
   | Some Relation.(Const { arity = 1; scope = Scope.Exact ints; _ }) -> ints
-  | _ -> Msg.Fatal.incorrect_int_set ()
+  | None -> failwith __LOC__
+  | _ -> failwith __LOC__
 
 module P = Intf.Print.Mixin (struct
   type nonrec t = t

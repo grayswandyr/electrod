@@ -188,17 +188,21 @@ module Make (Ltl : Solver.LTL) = struct
   class environment (elo : Elo.t) =
     (* Atomic.make is a cached function for its last two arguments (out of 3), so we compute it for its first argument to avoid unnecessary recomputations *)
     let make_atom_aux = Atomic.make elo.Elo.domain in
-    let int_tuples_as_ints : int TupleHashtbl.t =
-      Domain.ints elo.domain |> Tuple_set.to_iter
-      |> Iter.map (fun t ->
-             ( t,
-               t |> Tuple.to_list |> List.hd |> Atom.to_string |> int_of_string
-             ))
-      |> TupleHashtbl.of_iter
+    let int_set = Domain.ints elo.domain in
+    let int_of_tuple =
+      let int_tuples_as_ints : int TupleHashtbl.t =
+        (* converts the set of ints into a hashtable where the key is a 1-tuple containing an int and the data is the corresponding int*)
+        int_set |> Tuple_set.to_iter
+        |> Iter.map (fun t ->
+               ( t,
+                 t |> Tuple.to_list |> List.hd |> Atom.to_string
+                 |> int_of_string ))
+        |> TupleHashtbl.of_iter
+      in
+      fun t -> TupleHashtbl.find_opt int_tuples_as_ints t
     in
     object (_ : 'self)
       val bounds_exp_aux = Exp_bounds.make_bounds_exp elo.Elo.domain
-      val int_set = Domain.ints elo.domain
       val bitwidth = Domain.bitwidth elo.domain
 
       method must_may_sup (subst : stack) (exp : G.exp) =
@@ -219,9 +223,7 @@ module Make (Ltl : Solver.LTL) = struct
 
       method bitwidth = bitwidth
       method int_set = int_set
-
-      method int_of_tuple (t : Tuple.t) =
-        TupleHashtbl.find_opt int_tuples_as_ints t
+      method int_of_tuple (t : Tuple.t) = int_of_tuple t
     end
 
   class ['subst] converter (env : environment) =
@@ -690,6 +692,7 @@ module Make (Ltl : Solver.LTL) = struct
            %s"
           comment);
     let before_conversion = Mtime_clock.now () in
+    Msg.info (fun m -> m "DOMAIN@\n%a@." Domain.pp elo.Elo.domain);
     let env = new environment elo in
     let ltl_fml = (new converter env)#visit_fml [] elo_fml in
     let conversion_time = Mtime.span before_conversion @@ Mtime_clock.now () in
