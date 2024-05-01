@@ -324,16 +324,10 @@ struct
     | _, _ -> Bin (t1, Mul, t2)
 
   let div t1 t2 =
-    match (t1, t2) with
-    | _, Num 0 -> failwith "Division by zero"
-    | Num 0, _ -> Num 0
-    | _, _ -> Bin (t1, Div, t2)
+    match (t1, t2) with Num 0, _ -> Num 0 | _, _ -> Bin (t1, Div, t2)
 
   let rem t1 t2 =
-    match (t1, t2) with
-    | _, Num 0 -> failwith "Remainder of division by zero"
-    | Num 0, _ -> Num 0
-    | _, _ -> Bin (t1, Rem, t2)
+    match (t1, t2) with Num 0, _ -> Num 0 | _, _ -> Bin (t1, Rem, t2)
 
   let lshift t1 t2 =
     match (t1, t2) with
