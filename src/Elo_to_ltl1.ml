@@ -276,7 +276,7 @@ module Make (Ltl : Solver.LTL) = struct
           | (true, nbvars, _) :: tl ->
               let xs, ys = List.take_drop nbvars tuples in
               let alldiff = all_different ~eq:Tuple.equal xs in
-              Msg.info (fun m ->
+              Msg.debug (fun m ->
                   m "check_compr_disj (true, %d, _) tuples = %a alldiff = %B"
                     nbvars
                     Fmtc.(brackets @@ list ~sep:sp @@ Tuple.pp)

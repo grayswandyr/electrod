@@ -1,4 +1,5 @@
 univ : { a$1 .. a$5 }
+const ints:1 {};
 
 const r : {} univ->univ
 

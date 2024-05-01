@@ -18,12 +18,15 @@ open Containers
 [@@@warning "-32"]
 
 let wrap bw n =
-  (* maxint = 2 ^ (bw - 1) => wraps at *this* number *)
-  let maxint = if bw <= 0 then 0 else Int.(pow 2 (bw - 1)) in
-  let interval_length = 2 * maxint in
-  if n >= maxint then ((n + maxint) mod interval_length) - maxint
-  else if n < ~-maxint then ((n + maxint) mod interval_length) + interval_length
-  else n
+  if bw <= 0 then n
+  else
+    (* maxint = 2 ^ (bw - 1) => wraps at *this* number *)
+    let maxint = Int.(pow 2 (bw - 1)) in
+    let interval_length = 2 * maxint in
+    if n >= maxint then ((n + maxint) mod interval_length) - maxint
+    else if n < ~-maxint then
+      ((n + maxint) mod interval_length) + interval_length
+    else n
 
 (* fragile patterns, lots of them as we short-circuit *)
 

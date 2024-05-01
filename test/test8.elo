@@ -1,5 +1,6 @@
-
 univ : { a b c  e$2 .. e$4 };
+
+const ints:1 {};
 
 const r1 :1 {} ;
 const r2 :1 {} {} ;

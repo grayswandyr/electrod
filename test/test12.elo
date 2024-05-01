@@ -1,4 +1,5 @@
 univ : { a b c d e f g };
+const ints:1 {};
 
 const r : {} { (a a) (a b) (a c) };
 
