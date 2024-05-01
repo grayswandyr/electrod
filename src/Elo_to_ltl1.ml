@@ -180,8 +180,8 @@ module Make (Ltl : Solver.LTL) = struct
       empty r_sup_seq
 
   (* Produces the integer term corresponding to [SUM_(t \in on) f(t)]  *)
-  let summation ~(on : TS.t) (f : Tuple.t -> term) : term =
-    on |> TS.to_iter |> Iter.fold (fun t1 t2 -> plus t1 (f t2)) (num 2 0)
+  let summation ~bw ~(on : TS.t) (f : Tuple.t -> term) : term =
+    on |> TS.to_iter |> Iter.fold (fun t1 t2 -> plus t1 (f t2)) (num bw 0)
 
   module TupleHashtbl = CCHashtbl.Make (Tuple)
 
@@ -616,9 +616,9 @@ module Make (Ltl : Solver.LTL) = struct
       method build_Sum (subst : stack) (r : G.exp) ie _range' _dummy_to_ignore =
         let { must; may; _ } = env#must_may_sup subst r in
         let ie' t = self#visit_iexp (t :: subst) ie in
-        let must_part = summation ~on:must ie' in
+        let must_part = summation ~bw:env#bitwidth ~on:must ie' in
         let may_part =
-          summation ~on:may (fun t ->
+          summation ~bw:env#bitwidth ~on:may (fun t ->
               ifthenelse_arith (self#visit_exp subst r t) (ie' t)
                 (num env#bitwidth 0))
         in
@@ -629,7 +629,7 @@ module Make (Ltl : Solver.LTL) = struct
         let { must; may; _ } = env#must_may_sup subst r in
         let must_card = num env#bitwidth @@ TS.size must in
         let may_part =
-          summation ~on:may (fun t ->
+          summation ~bw:env#bitwidth ~on:may (fun t ->
               ifthenelse_arith (r' t) (num env#bitwidth 1) (num env#bitwidth 0))
         in
         plus must_card may_part
