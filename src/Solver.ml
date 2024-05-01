@@ -17,6 +17,14 @@ open Containers
 [@@@warning "-4"]
 [@@@warning "-32"]
 
+let wrap bw n =
+  (* maxint = 2 ^ (bw - 1) => wraps at *this* number *)
+  let maxint = Int.pow 2 (bw - 1) in
+  let interval_length = 2 * maxint in
+  if n >= maxint then ((n + maxint) mod interval_length) - maxint
+  else if n < ~-maxint then ((n + maxint) mod interval_length) + interval_length
+  else n
+
 (* fragile patterns, lots of them as we short-circuit *)
 
 module type ATOMIC_PROPOSITION = sig
@@ -97,10 +105,16 @@ module type LTL = sig
   val releases : t -> t -> t
   val since : t -> t -> t
   val triggered : t -> t -> t
-  val num : int -> term
+  val num : int -> int -> term
   val plus : term -> term -> term
   val minus : term -> term -> term
   val neg : term -> term
+  val mul : term -> term -> term
+  val div : term -> term -> term
+  val rem : term -> term -> term
+  val lshift : term -> term -> term
+  val zershift : term -> term -> term
+  val sershift : term -> term -> term
   val ifthenelse_arith : t -> term -> term -> term
   val comp : tcomp -> term -> term -> t
   val lt : tcomp
@@ -292,7 +306,7 @@ struct
   (* let neg t = Neg t *)
   (* let comp op t1 t2 = Comp (op, t1, t2) *)
 
-  let num n = Num n
+  let num bw n = Num (wrap bw n)
 
   let plus t1 t2 =
     match (t1, t2) with
@@ -301,7 +315,43 @@ struct
     | _ -> Bin (t1, Plus, t2)
 
   let minus t1 t2 = match t2 with Num 0 -> t1 | _ -> Bin (t1, Minus, t2)
-  let neg t = match t with Neg _ -> t | _ -> Neg t
+  let neg t = match t with Neg u -> u | _ -> Neg t
+
+  let mul t1 t2 =
+    match (t1, t2) with
+    | Num 0, _ -> Num 0
+    | _, Num 0 -> Num 0
+    | _, _ -> Bin (t1, Mul, t2)
+
+  let div t1 t2 =
+    match (t1, t2) with
+    | _, Num 0 -> failwith "Division by zero"
+    | Num 0, _ -> Num 0
+    | _, _ -> Bin (t1, Div, t2)
+
+  let rem t1 t2 =
+    match (t1, t2) with
+    | _, Num 0 -> failwith "Remainder of division by zero"
+    | Num 0, _ -> Num 0
+    | _, _ -> Bin (t1, Rem, t2)
+
+  let lshift t1 t2 =
+    match (t1, t2) with
+    | Num 0, _ -> Num 0
+    | _, Num 0 -> t1
+    | _, _ -> Bin (t1, Lshift, t2)
+
+  let zershift t1 t2 =
+    match (t1, t2) with
+    | Num 0, _ -> Num 0
+    | _, Num 0 -> t1
+    | _, _ -> Bin (t1, Zershift, t2)
+
+  let sershift t1 t2 =
+    match (t1, t2) with
+    | Num 0, _ -> Num 0
+    | _, Num 0 -> t1
+    | _, _ -> Bin (t1, Sershift, t2)
 
   let ifthenelse_arith c t e =
     match c with True -> t | False -> e | _ -> AIte (c, t, e)

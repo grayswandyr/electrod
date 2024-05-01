@@ -107,10 +107,16 @@ module type LTL = sig
   val releases : t -> t -> t
   val since : t -> t -> t
   val triggered : t -> t -> t
-  val num : int -> term
+  val num : int -> int -> term
   val plus : term -> term -> term
   val minus : term -> term -> term
   val neg : term -> term
+  val mul : term -> term -> term
+  val div : term -> term -> term
+  val rem : term -> term -> term
+  val lshift : term -> term -> term
+  val zershift : term -> term -> term
+  val sershift : term -> term -> term
   val ifthenelse_arith : t -> term -> term -> term
   val comp : tcomp -> term -> term -> t
   val lt : tcomp

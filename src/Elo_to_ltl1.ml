@@ -179,9 +179,9 @@ module Make (Ltl : Solver.LTL) = struct
         | None -> pairs)
       empty r_sup_seq
 
-  (* Produces the LTL formula corresponding to [SUM_(t \in on) f(t)]  *)
+  (* Produces the integer term corresponding to [SUM_(t \in on) f(t)]  *)
   let summation ~(on : TS.t) (f : Tuple.t -> term) : term =
-    on |> TS.to_iter |> Iter.fold (fun t1 t2 -> plus t1 (f t2)) (num 0)
+    on |> TS.to_iter |> Iter.fold (fun t1 t2 -> plus t1 (f t2)) (num 2 0)
 
   module TupleHashtbl = CCHashtbl.Make (Tuple)
 
@@ -402,7 +402,6 @@ module Make (Ltl : Solver.LTL) = struct
         else if TS.mem tuple may then env#make_atom rel tuple
         else false_
 
-      method build_Neg (_ : stack) (a : term) : term = neg a
       method build_No (_ : stack) = G.no_
       method build_None_ (_ : stack) __tuple = false_
       method build_Not (_ : stack) (a : ltl) : ltl = not_ a
@@ -410,7 +409,8 @@ module Make (Ltl : Solver.LTL) = struct
       method build_NotIn (subst : stack) r s r' s' =
         not_ @@ self#build_In subst r s r' s'
 
-      method build_Num (_ : stack) n _ = num n
+      method build_Num (_ : stack) n _ = num env#bitwidth n
+      method build_Neg (_ : stack) (a : term) : term = neg a
       method build_O (_ : stack) (a : ltl) : ltl = once a
       method build_Or (_ : stack) (a : ltl) (b : ltl) : ltl = or_ a (lazy b)
 
@@ -595,19 +595,19 @@ module Make (Ltl : Solver.LTL) = struct
       method build_U (_ : stack) (a : ltl) (b : ltl) : ltl = until a b
       method build_Union (_ : stack) _ _ e1 e2 x = e1 x +|| lazy (e2 x)
       method build_Univ (_ : stack) __tuple = true_
-      method build_Zershift = failwith __LOC__
-      method build_Sershift = failwith __LOC__
-      method build_Rem = failwith __LOC__
-      method build_Mul = failwith __LOC__
-      method build_Lshift = failwith __LOC__
-      method build_Div = failwith __LOC__
+      method build_Zershift (_ : stack) t1 t2 = zershift t1 t2
+      method build_Sershift (_ : stack) t1 t2 = sershift t1 t2
+      method build_Rem (_ : stack) t1 t2 = rem t1 t2
+      method build_Mul (_ : stack) t1 t2 = mul t1 t2
+      method build_Lshift (_ : stack) t1 t2 = lshift t1 t2
+      method build_Div (_ : stack) t1 t2 = div t1 t2
 
-      (* due to the presence of a bound variable, the recursion over the body  done by the visiotr is "wrong"*)
-      method! visit_Sum env _visitors_c0 _visitors_c1 =
-        let _visitors_r0 = self#visit_'exp env _visitors_c0 in
+      (* due to the presence of a bound variable, the recursion over the body  done by the visitor is "wrong"*)
+      method! visit_Sum subst _visitors_c0 _visitors_c1 =
+        let _visitors_r0 = self#visit_'exp subst _visitors_c0 in
         (* min_int as a dummy default value to ignore later on *)
-        let _visitors_r1 = num @@ Int.min_int in
-        self#build_Sum env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
+        let _visitors_r1 = num env#bitwidth Int.min_int in
+        self#build_Sum subst _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
 
       (* [| sum x : r | ie |]_sigma =
          Sum_{t in must(r)} [|ie|]_sigma[x |-> t]
@@ -619,16 +619,18 @@ module Make (Ltl : Solver.LTL) = struct
         let must_part = summation ~on:must ie' in
         let may_part =
           summation ~on:may (fun t ->
-              ifthenelse_arith (self#visit_exp subst r t) (ie' t) (num 0))
+              ifthenelse_arith (self#visit_exp subst r t) (ie' t)
+                (num env#bitwidth 0))
         in
         plus must_part may_part
 
       (* [|#e|]_sigma = size(must(e)) + Sum_{t in may(e)} ([|e|]_sigma(t) => 1 else 0) *)
       method build_Card subst r r' =
         let { must; may; _ } = env#must_may_sup subst r in
-        let must_card = num @@ TS.size must in
+        let must_card = num env#bitwidth @@ TS.size must in
         let may_part =
-          summation ~on:may (fun t -> ifthenelse_arith (r' t) (num 1) (num 0))
+          summation ~on:may (fun t ->
+              ifthenelse_arith (r' t) (num env#bitwidth 1) (num env#bitwidth 0))
         in
         plus must_card may_part
 
@@ -637,7 +639,7 @@ module Make (Ltl : Solver.LTL) = struct
       method build_Big_int (_ : stack) (_a : G.iexp) (ie' : term) t : ltl =
         match env#int_of_tuple t with
         | None -> false_
-        | Some n -> comp eq (num n) ie'
+        | Some n -> comp eq (num env#bitwidth n) ie'
 
       (* [|int[e]|] = [|sum x : e | (if x = Int[-4] then -4 else .. else 0)|] *)
       method! visit_Small_int subst e =
