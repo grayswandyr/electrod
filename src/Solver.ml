@@ -68,7 +68,6 @@ module type LTL = sig
   and term = private
     | Num of int
     | Neg of term
-    | Count of t list
     | Bin of term * binop * term
     | AIte of t * term * term
 
@@ -102,7 +101,6 @@ module type LTL = sig
   val plus : term -> term -> term
   val minus : term -> term -> term
   val neg : term -> term
-  val count : t list -> term
   val ifthenelse_arith : t -> term -> term -> term
   val comp : tcomp -> term -> term -> t
   val lt : tcomp
@@ -177,7 +175,6 @@ struct
   and term =
     | Num of int
     | Neg of term
-    | Count of t list
     | Bin of term * binop * term
     | AIte of t * term * term
 
@@ -305,11 +302,6 @@ struct
 
   let minus t1 t2 = match t2 with Num 0 -> t1 | _ -> Bin (t1, Minus, t2)
   let neg t = match t with Neg _ -> t | _ -> Neg t
-
-  let count ps =
-    match List.filter (function False -> false | _ -> true) ps with
-    | [] -> num 0
-    | props -> Count props
 
   let ifthenelse_arith c t e =
     match c with True -> t | False -> e | _ -> AIte (c, t, e)

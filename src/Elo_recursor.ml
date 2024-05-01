@@ -21,6 +21,7 @@ class virtual ['self] recursor =
     inherit [_] VisitorsRuntime.fold
     inherit [_] VisitorsRuntime.map
     method virtual build_Add : _
+    method virtual build_AIte : _
     method virtual build_All : _
     method virtual build_And : _
     method virtual build_Big_int : _
@@ -394,6 +395,13 @@ class virtual ['self] recursor =
       let _visitors_r1 = self#visit_'iexp env _visitors_c1 in
       self#build_Sum env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
 
+    method visit_AIte env _visitors_c0 _visitors_c1 _visitors_c2 =
+      let _visitors_r0 = self#visit_'fml env _visitors_c0 in
+      let _visitors_r1 = self#visit_'iexp env _visitors_c1 in
+      let _visitors_r2 = self#visit_'iexp env _visitors_c2 in
+      self#build_AIte env _visitors_c0 _visitors_c1 _visitors_c2 _visitors_r0
+        _visitors_r1 _visitors_r2
+
     method visit_oiexp env _visitors_this =
       match _visitors_this with
       | Num _visitors_c0 -> self#visit_Num env _visitors_c0
@@ -405,6 +413,8 @@ class virtual ['self] recursor =
       | Small_int _visitors_c0 -> self#visit_Small_int env _visitors_c0
       | Sum (_visitors_c0, _visitors_c1) ->
           self#visit_Sum env _visitors_c0 _visitors_c1
+      | AIte (_visitors_c0, _visitors_c1, _visitors_c2) ->
+          self#visit_AIte env _visitors_c0 _visitors_c1 _visitors_c2
 
     method visit_Neg env = self#build_Neg env
 

@@ -139,6 +139,11 @@ let compute_bitwidth =
       | _ -> raise Int_problem
     with Int_problem -> Msg.Fatal.incorrect_int_set ()
 
+let ints domain =
+  match get Name.integers domain with
+  | Some Relation.(Const { arity = 1; scope = Scope.Exact ints; _ }) -> ints
+  | _ -> Msg.Fatal.incorrect_int_set ()
+
 module P = Intf.Print.Mixin (struct
   type nonrec t = t
 

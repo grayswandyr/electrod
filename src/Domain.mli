@@ -73,4 +73,7 @@ val update_domain_with_instance : t -> Instance.t -> t
 (** For every entry in [inst], [update_domain_with_instance dom inst] replaces
     the corresponding relation in [dom] with the exact scope given by [inst]. *)
 
+val ints : t -> Tuple_set.t
+(** Returns the set of ints as 1-tuples  *)
+
 include Intf.Print.S with type t := t

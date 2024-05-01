@@ -90,6 +90,7 @@ and ('fml, 'exp, 'iexp) oiexp =
   | IBin of 'iexp * ibinop * 'iexp
   | Small_int of 'exp
   | Sum of 'exp * 'iexp
+  | AIte of 'fml * 'iexp * 'iexp
 
 and iunop = Neg
 
@@ -282,6 +283,7 @@ let num n = hiexp @@ Num n
 let card e = hiexp @@ Card e
 let iunary op e = hiexp @@ IUn (op, e)
 let ibinary exp1 op exp2 = hiexp @@ IBin (exp1, op, exp2)
+let ifthenelse_arith cdt then_ else_ = hiexp @@ AIte (cdt, then_, else_)
 let neg = Neg
 let add = Add
 let sub = Sub
@@ -494,7 +496,7 @@ let pp_prim_oexp stacked pp_fml pp_exp pp_iexp out =
   | Prime e -> pf out "%a'" (pp_exp stacked) e
   | Big_int ie -> pf out "Int[%a]" (pp_iexp stacked) ie
 
-let pp_oiexp stacked pp_exp pp_iexp out =
+let pp_oiexp stacked pp_fml pp_exp pp_iexp out =
   let open Fmtc in
   function
   | Num n -> pf out "%d" n
@@ -510,6 +512,9 @@ let pp_oiexp stacked pp_exp pp_iexp out =
         b
         (pp_iexp (stacked + 1))
         ie
+  | AIte (c, t, e) ->
+      pf out "@[<2>(%a ?@ %a :@ %a)@]" (pp_fml stacked) c (pp_iexp stacked) t
+        (pp_iexp stacked) e
 
 let rec pp_fml stacked out (Fml { node; _ }) =
   pp_ofml stacked pp_fml pp_exp pp_iexp out node
@@ -517,7 +522,7 @@ let rec pp_fml stacked out (Fml { node; _ }) =
 and pp_block stacked out fmls = pp_oblock stacked pp_fml out fmls
 
 and pp_iexp stacked out (Iexp { node; _ }) =
-  pp_oiexp stacked pp_exp pp_iexp out node
+  pp_oiexp stacked pp_fml pp_exp pp_iexp out node
 
 and pp_prim_exp stacked out pe =
   pp_prim_oexp stacked pp_fml pp_exp pp_iexp out pe

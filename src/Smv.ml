@@ -215,9 +215,6 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
         | Bin (t1, Sershift, t2) ->
             infixl ~paren:true upper 6 string pp_term pp_term out (">>", t1, t2)
         | Neg t -> prefix upper 9 string pp_term out ("- ", t)
-        | Count ts ->
-            styled `Bold string out "count";
-            pf out "@[(%a@])" (list ~sep:(const string ", ") (pp 0)) ts
         | AIte (c, t, e) ->
             pf out "@[((%a) ?@ (%a) :@ (%a)@])" (pp 0) c (pp_term 0) t
               (pp_term 0) e

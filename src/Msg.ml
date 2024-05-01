@@ -402,7 +402,7 @@ module Fatal = struct
     err @@ fun m ->
     m ~header:(code 27)
       "the set `%a` is absent or not a constant set of shape (-2^(bitwidth - \
-       1) .. 2^(bitwidth - 1) -1)"
+       1) .. 2^(bitwidth - 1) - 1)"
       Name.pp Name.integers
 end
 

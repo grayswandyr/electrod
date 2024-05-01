@@ -183,11 +183,23 @@ module Make (Ltl : Solver.LTL) = struct
   let summation ~(on : TS.t) (f : Tuple.t -> term) : term =
     on |> TS.to_iter |> Iter.fold (fun t1 t2 -> plus t1 (f t2)) (num 0)
 
+  module TupleHashtbl = CCHashtbl.Make (Tuple)
+
   class environment (elo : Elo.t) =
     (* Atomic.make is a cached function for its last two arguments (out of 3), so we compute it for its first argument to avoid unnecessary recomputations *)
     let make_atom_aux = Atomic.make elo.Elo.domain in
+    let int_tuples_as_ints : int TupleHashtbl.t =
+      Domain.ints elo.domain |> Tuple_set.to_iter
+      |> Iter.map (fun t ->
+             ( t,
+               t |> Tuple.to_list |> List.hd |> Atom.to_string |> int_of_string
+             ))
+      |> TupleHashtbl.of_iter
+    in
     object (_ : 'self)
       val bounds_exp_aux = Exp_bounds.make_bounds_exp elo.Elo.domain
+      val int_set = Domain.ints elo.domain
+      val bitwidth = Domain.bitwidth elo.domain
 
       method must_may_sup (subst : stack) (exp : G.exp) =
         bounds_exp_aux (exp, subst)
@@ -205,7 +217,11 @@ module Make (Ltl : Solver.LTL) = struct
         assert (Domain.mem name elo.Elo.domain);
         Domain.get_exn name elo.Elo.domain |> Relation.is_const
 
-      method bitwidth = Domain.bitwidth elo.domain
+      method bitwidth = bitwidth
+      method int_set = int_set
+
+      method int_of_tuple (t : Tuple.t) =
+        TupleHashtbl.find_opt int_tuples_as_ints t
     end
 
   class ['subst] converter (env : environment) =
@@ -217,17 +233,7 @@ module Make (Ltl : Solver.LTL) = struct
       method build_Add (_ : stack) (a : term) (b : term) : term = plus a b
       method build_All (_ : stack) = G.all
       method build_And (_ : stack) (a : ltl) (b : ltl) : ltl = and_ a (lazy b)
-
-      method build_Big_int (_ : stack) (_a : G.iexp) (_ : term) _tuple : ltl =
-        failwith __LOC__
-
       method build_Block (_ : stack) = conj
-
-      method build_Card subst r r' =
-        let { must; may; _ } = env#must_may_sup subst r in
-        let must_card = num @@ TS.size must in
-        let may_card = count @@ List.map r' @@ TS.to_list may in
-        plus must_card may_card
 
       (* re-defining this method to avoid going down in the block as a
          substitution must be made first *)
@@ -328,27 +334,6 @@ module Make (Ltl : Solver.LTL) = struct
           in
           conj (b' :: ranges')
         else false_
-
-      (* same reasoning as for visit_Compr *)
-      method! visit_Sum env _visitors_c0 _visitors_c1 =
-        let _visitors_r0 = self#visit_'exp env _visitors_c0 in
-        (* min_int as a dummy default value to ignore later on *)
-        let _visitors_r1 = num @@ Int.min_int in
-        self#build_Sum env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
-
-      (* [| sum x : r | ie |]_sigma =
-         Sum_{t in must(r)} [|ie|]_sigma[x |-> t]
-         + Sum_{t in may(r)} ([|r|]_sigma(t) => [|ie|]_sigma[x |-> t] else 0)
-      *)
-      method build_Sum (subst : stack) (r : G.exp) ie _range' _dummy_to_ignore =
-        let { must; may; _ } = env#must_may_sup subst r in
-        let ie' t = self#visit_iexp (t :: subst) ie in
-        let must_part = summation ~on:must ie' in
-        let may_part =
-          summation ~on:may (fun t ->
-              ifthenelse_arith (self#visit_exp subst r t) (ie' t) (num 0))
-        in
-        plus must_part may_part
 
       method build_Diff (_ : stack) (_ : G.exp) (_ : G.exp) e' f'
           (tuple : Tuple.t) =
@@ -564,6 +549,9 @@ module Make (Ltl : Solver.LTL) = struct
           tuple =
         (c' @=> lazy (t' tuple)) +&& lazy (not_ c' @=> lazy (e' tuple))
 
+      method build_AIte (_ : stack) (__c : G.fml) (__t : G.iexp) __e c' t' e' =
+        ifthenelse_arith c' t' e'
+
       method build_RNEq (subst : stack) r s r' s' =
         not_ @@ self#build_REq subst r s r' s'
 
@@ -608,12 +596,69 @@ module Make (Ltl : Solver.LTL) = struct
       method build_Union (_ : stack) _ _ e1 e2 x = e1 x +|| lazy (e2 x)
       method build_Univ (_ : stack) __tuple = true_
       method build_Zershift = failwith __LOC__
-      method build_Small_int = failwith __LOC__
       method build_Sershift = failwith __LOC__
       method build_Rem = failwith __LOC__
       method build_Mul = failwith __LOC__
       method build_Lshift = failwith __LOC__
       method build_Div = failwith __LOC__
+
+      (* due to the presence of a bound variable, the recursion over the body  done by the visiotr is "wrong"*)
+      method! visit_Sum env _visitors_c0 _visitors_c1 =
+        let _visitors_r0 = self#visit_'exp env _visitors_c0 in
+        (* min_int as a dummy default value to ignore later on *)
+        let _visitors_r1 = num @@ Int.min_int in
+        self#build_Sum env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
+
+      (* [| sum x : r | ie |]_sigma =
+         Sum_{t in must(r)} [|ie|]_sigma[x |-> t]
+         + Sum_{t in may(r)} ([|r|]_sigma(t) => [|ie|]_sigma[x |-> t] else 0)
+      *)
+      method build_Sum (subst : stack) (r : G.exp) ie _range' _dummy_to_ignore =
+        let { must; may; _ } = env#must_may_sup subst r in
+        let ie' t = self#visit_iexp (t :: subst) ie in
+        let must_part = summation ~on:must ie' in
+        let may_part =
+          summation ~on:may (fun t ->
+              ifthenelse_arith (self#visit_exp subst r t) (ie' t) (num 0))
+        in
+        plus must_part may_part
+
+      (* [|#e|]_sigma = size(must(e)) + Sum_{t in may(e)} ([|e|]_sigma(t) => 1 else 0) *)
+      method build_Card subst r r' =
+        let { must; may; _ } = env#must_may_sup subst r in
+        let must_card = num @@ TS.size must in
+        let may_part =
+          summation ~on:may (fun t -> ifthenelse_arith (r' t) (num 1) (num 0))
+        in
+        plus must_card may_part
+
+      (* [| Int[ie] |]_s(t) = [|ie|]_s = to_int(t) if t in Int
+         [| Int[ie] |]_s(t) = false otherwise *)
+      method build_Big_int (_ : stack) (_a : G.iexp) (ie' : term) t : ltl =
+        match env#int_of_tuple t with
+        | None -> false_
+        | Some n -> comp eq (num n) ie'
+
+      (* [|int[e]|] = [|sum x : e | (if x = Int[-4] then -4 else .. else 0)|] *)
+      method! visit_Small_int subst e =
+        let all_ints =
+          env#int_set |> Tuple_set.to_list
+          |> List.map (fun t -> Option.get_exn_or __LOC__ @@ env#int_of_tuple t)
+        in
+        let body =
+          List.fold_right
+            (fun n r ->
+              G.(
+                ifthenelse_arith
+                  (rcomp (var ~ar:1 0) req (big_int @@ num n))
+                  (num n) r))
+            all_ints (G.num 0)
+        in
+        let sum = G.sum e body in
+        self#visit_iexp subst sum
+
+      (* impossible due to visit_Small_int *)
+      method build_Small_int _ _ = assert false
 
       (* FIXME *)
       method build_Var (subst : stack) idx _ tuple =
