@@ -294,7 +294,18 @@ let compute_domain (pb : Raw.raw_problem) =
     (*   (fun m -> m "Raw_to_ast.compute_domain:update add %a ⇒ %a" *)
     (*               Name.pp name (Fmtc.hbox @@ Domain.pp) newdom) *)
   in
-  List.fold_left update init pb.raw_decls |> Domain.compute_bitwidth
+  let domain = List.fold_left update init pb.raw_decls in
+  (* add Int = {} if Int is absent *)
+  let domain =
+    match Domain.get Name.integers domain with
+    | Some Relation.(Const { arity = 1; scope = Scope.Exact _; _ }) -> domain
+    | None ->
+        Domain.add Name.integers
+          Relation.(const Name.integers 1 Scope.(exact TS.empty))
+          domain
+    | _ -> assert false
+  in
+  Domain.compute_bitwidth univ_ts domain
 
 (*******************************************************************************
  *  Compute instances and check they comply with the respective relations.

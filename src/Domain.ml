@@ -104,48 +104,48 @@ let rename atom_renaming name_renaming domain =
   |> of_list bitwidth
 
 let bitwidth { bitwidth; _ } = bitwidth
+let rec log2 n = if n < 2 then 0 else 1 + log2 (n asr 1)
 
-let log2 n =
-  if n < 0 then invalid_arg "log2: argument must be non-negative"
-  else
-    let rec loop n = if n <= 1 then 0 else 1 + loop (n asr 1) in
-    loop n
+let compute_necessary_bitwidth nb =
+  assert (nb >= 0);
+  (* need nb + 1 values because 0 must also be representable *)
+  let nb_values = nb + 1 in
+  let log = log2 nb_values in
+  (* computed log may be too small as there may be a non-null mantissa in a float representation *)
+  let log = if Int.(2 ** log < nb_values) then log + 1 else log in
+  (* increase the bitwidth for negative numbers *)
+  log + 1
 
-let compute_bitwidth =
-  let exception Int_problem in
-  let tuple_of_int nb =
-    Tuple.tuple1 @@ Atom.of_raw_ident
-    @@ Raw_ident.ident (string_of_int nb) Lexing.dummy_pos Lexing.dummy_pos
-  in
-  let check_int_set ints =
-    let bitwidth = log2 (Tuple_set.size ints) in
-    if
-      bitwidth = 0
-      || bitwidth > 0
-         && Iter.(
-              for_all
-                (fun nb -> Tuple_set.mem (tuple_of_int nb) ints)
-                (~-(Int.pow 2 (bitwidth - 1)) -- (Int.pow 2 (bitwidth - 1) - 1)))
-    then bitwidth
-    else raise Int_problem
-  in
-  fun domain ->
-    try
-      match get Name.integers domain with
-      | Some Relation.(Const { arity = 1; scope = Scope.Exact ints; _ }) ->
-          { domain with bitwidth = check_int_set ints }
-          |> Fun.tap (fun { bitwidth; _ } ->
-                 Msg.info (fun m ->
-                     m "%a = %a found --> bitwidth = %d" Name.pp Name.integers
-                       Tuple_set.pp ints bitwidth))
-      | _ -> raise Int_problem
-    with Int_problem -> Msg.Fatal.incorrect_int_set ()
+let check_int_set univ_ts ints =
+  let int_size = Tuple_set.size ints in
+  let univ_size = Tuple_set.size univ_ts in
+  let size_to_consider = if int_size <= 0 then univ_size else int_size in
+  let bitwidth = compute_necessary_bitwidth size_to_consider in
+  if
+    int_size > 0
+    && not
+       @@ Iter.(
+            for_all
+              (fun nb -> Tuple_set.mem (Tuple.of_int nb) ints)
+              (~-(Int.pow 2 (bitwidth - 1)) -- (Int.pow 2 (bitwidth - 1) - 1)))
+  then Msg.Fatal.incorrect_int_set (fun args -> args ints);
+  bitwidth
+
+let compute_bitwidth univ_ts domain =
+  match get Name.integers domain with
+  | Some Relation.(Const { arity = 1; scope = Scope.Exact ints; _ }) ->
+      { domain with bitwidth = check_int_set univ_ts ints }
+      |> Fun.tap (fun { bitwidth; _ } ->
+             Msg.info (fun m ->
+                 m "%a = %a, %a = %a --> bitwidth = %d" Name.pp Name.integers
+                   Tuple_set.pp ints Name.pp Name.univ Tuple_set.pp univ_ts
+                   bitwidth))
+  | _ -> assert false
 
 let ints domain =
   match get Name.integers domain with
   | Some Relation.(Const { arity = 1; scope = Scope.Exact ints; _ }) -> ints
-  | None -> failwith __LOC__
-  | _ -> failwith __LOC__
+  | _ -> assert false
 
 module P = Intf.Print.Mixin (struct
   type nonrec t = t

@@ -34,6 +34,10 @@ let of_list1 xs =
 
 let tuple1 at = of_list1 [ at ]
 
+let of_int nb : t =
+  tuple1 @@ Atom.of_raw_ident
+  @@ Raw_ident.ident (string_of_int nb) Lexing.dummy_pos Lexing.dummy_pos
+
 (* accessor *)
 let arity tuple =
   let ar = Array.length tuple in

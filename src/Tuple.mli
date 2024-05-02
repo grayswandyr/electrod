@@ -22,6 +22,9 @@ type t
 val of_list1 : Atom.t list -> t
 (** Builds a tuple out of a non-empty list of atoms. *)
 
+val of_int : int -> t
+(** Builds a "big int" `Int` from a "small int" `int`. *)
+
 val tuple1 : Atom.t -> t
 (** Builds a 1-tuple out of an atom.  *)
 

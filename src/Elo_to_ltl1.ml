@@ -187,7 +187,7 @@ module Make (Ltl : Solver.LTL) = struct
 
   class environment (elo : Elo.t) =
     (* Atomic.make is a cached function for its last two arguments (out of 3), so we compute it for its first argument to avoid unnecessary recomputations *)
-    let make_atom_aux = Atomic.make elo.Elo.domain in
+    let make_atom_aux = Atomic.make elo.domain in
     let int_set = Domain.ints elo.domain in
     let int_of_tuple =
       let int_tuples_as_ints : int TupleHashtbl.t =
@@ -209,7 +209,7 @@ module Make (Ltl : Solver.LTL) = struct
         bounds_exp_aux (exp, subst)
 
       method relation_arity name =
-        match Domain.get name elo.Elo.domain with
+        match Domain.get name elo.domain with
         | None -> assert false
         | Some rel -> Relation.arity rel
 

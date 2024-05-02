@@ -30,8 +30,10 @@ val add : Name.t -> Relation.t -> t -> t
 val mem : Name.t -> t -> bool
 (** Checks whether a name is already bound in the map. *)
 
-val compute_bitwidth : t -> t
-(** Pre: the Name for the integer set must be present in the domain. Raises otherwise. Also raises if the size of the integer set isn't a power of 2 or doesn't contain all integers between -2^bitwidth and +2^bitwidth-1. *)
+val compute_bitwidth : Tuple_set.t -> t -> t
+(** The tuple set is the value of `univ`. 
+    
+Pre: the Name for the integer set must be present in the domain. Raises otherwise. Also raises if the size of the integer set isn't a power of 2 or doesn't contain all integers between -2^bitwidth and +2^bitwidth-1. *)
 
 val bitwidth : t -> int
 (** Returns the bitwidth (a non-negative power of 2).  *)

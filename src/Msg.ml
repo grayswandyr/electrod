@@ -398,12 +398,14 @@ module Fatal = struct
       (option @@ (colon **> string))
       infile Location.pp loc (Raw_ident.basename id)
 
-  let incorrect_int_set () =
+  let incorrect_int_set args =
     err @@ fun m ->
+    args @@ fun ts ->
     m ~header:(code 27)
-      "the set `%a` is absent or not a constant set of shape (-2^(bitwidth - \
-       1) .. 2^(bitwidth - 1) - 1)"
-      Name.pp Name.integers
+      "the set `%s` is not a constant set of shape (-2^(bitwidth - 1) .. \
+       2^(bitwidth - 1) - 1):@ %a"
+      Name.(to_string integers)
+      Tuple_set.pp ts
 end
 
 (** {2 Warnings (the program does not fail)} *)
