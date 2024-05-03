@@ -30,6 +30,15 @@ val univ : t
 
 val iden : t
 
+val shl : t
+(** Reserved name for 'left shift'. *)
+
+val shr : t
+(** Reserved name for 'right shift'. *)
+
+val sha : t
+(** Reserved name for 'arithmetic right shift'. *)
+
 val integers : t
 (** Reserved name for 'Int'. *)
 

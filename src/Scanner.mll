@@ -62,15 +62,15 @@ rule main infile = parse
         @@ fun args -> args infile lexbuf ("invalid integer constant '" ^ i ^ "'")
     }   
 (* NEG ADD SUB MUL DIV REM LSHIFT SERSHIFT ZERSHIFT HASH SMALLINT BIGINT SUM *)
-| "fun/neg" { UMINUS }
-| "fun/add" { ADD }
-| "fun/sub" { SUB }
-| "fun/mul" { MUL }
-| "fun/div" { DIV }
-| "fun/rem" { REM }
-| "fun/lshift" { LSHIFT }
-| "fun/zershift" { ZERSHIFT }
-| "fun/sershift" { SERSHIFT }
+| "fun/NEG" { UMINUS }
+| "fun/PLUS" { ADD }
+| "fun/MINUS" { SUB }
+| "fun/MULTIPLY" { MUL }
+| "fun/DIVIDE" { DIV }
+| "fun/MODULO" { REM }
+| "fun/SHL" { LSHIFT }
+| "fun/SHR" { ZERSHIFT }
+| "fun/SHA" { SERSHIFT }
 | "int" { SMALLINT }
 | "Int" { BIGINT }
 | "sum" { SUM }

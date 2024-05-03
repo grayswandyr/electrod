@@ -76,6 +76,9 @@ let of_raw_ident id = name @@ Raw_ident.basename id
 let univ = name "univ"
 let iden = name "iden"
 let integers = name "ints"
+let shl = name "Int##SHL"
+let shr = name "Int##SHR"
+let sha = name "Int##SHA"
 let style = `Cyan
 let pp out name = Fmtc.(styled style string) out name.H.node
 
