@@ -147,6 +147,16 @@ let ints domain =
   | Some Relation.(Const { arity = 1; scope = Scope.Exact ints; _ }) -> ints
   | _ -> assert false
 
+let get_shift domain name =
+  match get name domain with
+  | Some Relation.(Const { arity = 3; scope = Scope.Exact triples; _ }) ->
+      triples
+  | _ -> assert false
+
+let shl domain = get_shift domain Name.shl
+let sha domain = get_shift domain Name.sha
+let shr domain = get_shift domain Name.shr
+
 module P = Intf.Print.Mixin (struct
   type nonrec t = t
 

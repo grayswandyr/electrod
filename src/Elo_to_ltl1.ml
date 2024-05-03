@@ -185,25 +185,58 @@ module Make (Ltl : Solver.LTL) = struct
 
   module TupleHashtbl = CCHashtbl.Make (Tuple)
 
+  let int_tuples_as_ints int_set : int TupleHashtbl.t =
+    (* converts the set of ints into a hashtable where the key is a 1-tuple containing an int and the data is the corresponding int*)
+    int_set |> Tuple_set.to_iter
+    |> Iter.map (fun t ->
+           (t, t |> Tuple.to_list |> List.hd |> Atom.to_string |> int_of_string))
+    |> TupleHashtbl.of_iter
+
+  let convert_triple bitwidth tuple =
+    let int_list =
+      tuple |> Tuple.to_1tuples
+      |> List.map Fun.(Tuple.to_string %> int_of_string %> num bitwidth)
+    in
+    match int_list with [ a; b; c ] -> (a, b, c) | _ -> assert false
+
+  (* converts a 3-column relation (for shifts) into a list Ltl-term triples with the correct bitwidth *)
+  let convert_relation_to_int_triples bitwidth triples =
+    triples |> Tuple_set.to_list |> List.map (convert_triple bitwidth)
+
+  let rec create_shift_formula l r triples =
+    match triples with
+    | [] -> failwith "create_shift_formula: the shift relation is empty"
+    | [ (_, _, sh) ] -> sh
+    | (a, b, sh) :: tl ->
+        ifthenelse_arith
+          (and_ (comp eq l a) @@ lazy (comp eq r b))
+          sh
+          (create_shift_formula l r tl)
+
   class environment (elo : Elo.t) =
     (* Atomic.make is a cached function for its last two arguments (out of 3), so we compute it for its first argument to avoid unnecessary recomputations *)
+    let computed_bitwidth = Domain.bitwidth elo.domain in
     let make_atom_aux = Atomic.make elo.domain in
     let int_set = Domain.ints elo.domain in
     let int_of_tuple =
-      let int_tuples_as_ints : int TupleHashtbl.t =
-        (* converts the set of ints into a hashtable where the key is a 1-tuple containing an int and the data is the corresponding int*)
-        int_set |> Tuple_set.to_iter
-        |> Iter.map (fun t ->
-               ( t,
-                 t |> Tuple.to_list |> List.hd |> Atom.to_string
-                 |> int_of_string ))
-        |> TupleHashtbl.of_iter
-      in
-      fun t -> TupleHashtbl.find_opt int_tuples_as_ints t
+      let tbl = int_tuples_as_ints int_set in
+      fun t -> TupleHashtbl.find_opt tbl t
     in
     object (_ : 'self)
       val bounds_exp_aux = Exp_bounds.make_bounds_exp elo.Elo.domain
-      val bitwidth = Domain.bitwidth elo.domain
+      val bitwidth = computed_bitwidth
+
+      val shl_term_triples =
+        convert_relation_to_int_triples computed_bitwidth
+          (Domain.shl elo.domain)
+
+      val shr_term_triples =
+        convert_relation_to_int_triples computed_bitwidth
+          (Domain.shr elo.domain)
+
+      val sha_term_triples =
+        convert_relation_to_int_triples computed_bitwidth
+          (Domain.sha elo.domain)
 
       method must_may_sup (subst : stack) (exp : E.exp) =
         bounds_exp_aux (exp, subst)
@@ -224,6 +257,9 @@ module Make (Ltl : Solver.LTL) = struct
       method bitwidth = bitwidth
       method int_set = int_set
       method int_of_tuple (t : Tuple.t) = int_of_tuple t
+      method shl_list = shl_term_triples
+      method shr_list = shr_term_triples
+      method sha_list = sha_term_triples
     end
 
   class ['subst] converter (env : environment) =
@@ -597,11 +633,19 @@ module Make (Ltl : Solver.LTL) = struct
       method build_U (_ : stack) (a : ltl) (b : ltl) : ltl = until a b
       method build_Union (_ : stack) _ _ e1 e2 x = e1 x +|| lazy (e2 x)
       method build_Univ (_ : stack) __tuple = true_
-      method build_Zershift (_ : stack) t1 t2 = zershift t1 t2
-      method build_Sershift (_ : stack) t1 t2 = sershift t1 t2
+
+      method build_Zershift (_ : stack) t1 t2 =
+        create_shift_formula t1 t2 env#shr_list
+
+      method build_Sershift (_ : stack) t1 t2 =
+        create_shift_formula t1 t2 env#sha_list
+
       method build_Rem (_ : stack) t1 t2 = rem t1 t2
       method build_Mul (_ : stack) t1 t2 = mul t1 t2
-      method build_Lshift (_ : stack) t1 t2 = lshift t1 t2
+
+      method build_Lshift (_ : stack) t1 t2 =
+        create_shift_formula t1 t2 env#shl_list
+
       method build_Div (_ : stack) t1 t2 = div t1 t2
 
       (* due to the presence of a bound variable, the recursion over the body  done by the visitor is "wrong"*)

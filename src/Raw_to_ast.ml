@@ -69,7 +69,7 @@ let compute_univ infile raw_univ =
 (* 1 = arity *)
 
 (* returns a list of tuples (possibly 1-tuples corresponding to plain atoms) *)
-let compute_tuples infile domain = function
+let compute_tuples infile domain (rel_name : Raw_ident.t) = function
   (* a list of  1-tuples (coming from indexed id's) *)
   | EIntvl intvl ->
       (* Msg.debug (fun m -> m "Raw_to_ast.compute_tuples:EIntvl"); *)
@@ -96,14 +96,23 @@ let compute_tuples infile domain = function
   | ETuple ids ->
       (* Msg.debug (fun m -> m "Raw_to_ast.compute_tuples:ETuple"); *)
       let atoms = List.map (fun id -> Raw_ident.basename id |> Atom.atom) ids in
+      (* the absence test below must not be done if we consider special shift relations as they may rightfully contain small ints that don't exist in univ (e.g. if we have `for 0 Int`) *)
+      let to_ignore =
+        List.map
+          (fun s ->
+            Raw_ident.ident Name.(to_string s) Lexing.dummy_pos Lexing.dummy_pos)
+          Name.[ shl; shr; sha ]
+      in
       (* to check if all atoms in the tuple are in univ, we do as if every atom
          was a 1-tuple and then check whether this 1-tuple is indeed in univ *)
       let absent =
         (* compute 1-tuples/atoms absent from univ, if there are *)
         List.flat_map
           (fun t ->
-            if not @@ TS.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain then
-              [ t ]
+            if
+              (not @@ TS.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain)
+              && not (List.mem ~eq:Raw_ident.eq_name rel_name to_ignore)
+            then [ t ]
             else [])
           atoms
       in
@@ -177,7 +186,7 @@ let compute_bound infile domain (which : [ `Inf | `Sup | `Exact ]) id raw_bound
         else Msg.Fatal.incompatible_arities @@ fun args -> args infile id
     | BElts elts ->
         (* Msg.debug (fun m -> m "Raw_to_ast.compute_bound:BElts"); *)
-        let tuples = List.flat_map (compute_tuples infile domain) elts in
+        let tuples = List.flat_map (compute_tuples infile domain id) elts in
         let bnd = check_tuples_arities_and_duplicates infile id tuples in
         if TS.size bnd <> List.length tuples then
           Msg.Warn.duplicate_elements (fun args ->
