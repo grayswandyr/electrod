@@ -179,7 +179,18 @@ let to_ntuples n t =
   Array.to_list t |> List.sublists_of_len n |> List.map of_list1
 
 let rename atom_renaming t =
-  Array.map (fun at -> List.assoc ~eq:Atom.equal at atom_renaming) t
+  (* do not rename atoms corresponding to integers (due to integers existing without being in univ, e.g. for `for 0 Int`) *)
+  let rename_at atom =
+    match int_of_string_opt (Atom.to_string atom) with
+    | Some _ -> atom
+    | None -> (
+        match List.assoc_opt ~eq:Atom.equal atom atom_renaming with
+        | Some at -> at
+        | None ->
+            failwith Format.(sprintf "unknown atom to rename:@ %a" Atom.pp atom)
+        )
+  in
+  Array.map rename_at t
 
 module Set = CCSet.Make (struct
   type nonrec t = t

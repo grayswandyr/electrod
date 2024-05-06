@@ -40,7 +40,7 @@ let encode_atom = make_encode 'a'
 let encode_relation = make_encode 'A'
 
 let not_renamed n =
-  List.mem ~eq:Name.equal n [ Name.iden; Name.univ; Name.integers ]
+  List.mem ~eq:Name.equal n Name.[ iden; univ; integers; sha; shr; shl ]
 
 let compute_relation_renaming elo =
   Domain.to_list elo.Ast.domain
@@ -84,12 +84,12 @@ let rename_elo long_names elo =
     let name_renaming = compute_relation_renaming elo in
     let open Fmtc in
     Msg.debug (fun m ->
-        m "Atom renaming:@ %a"
+        m "Atom renaming:@ %a@."
           (brackets @@ list ~sep:semi @@ parens
           @@ pair ~sep:comma Atom.pp Atom.pp)
           atom_renaming);
     Msg.debug (fun m ->
-        m "Name renaming:@ %a"
+        m "Name renaming:@ %a@."
           (brackets @@ list ~sep:semi @@ parens
           @@ pair ~sep:comma Name.pp Name.pp)
           name_renaming);

@@ -48,8 +48,16 @@ let no_trace nbvars conversion_time analysis_time =
   { trace = None; analysis_time; nbvars; conversion_time }
 
 let sort_states (atom_renaming, name_renaming) states =
+  Msg.debug (fun m ->
+      m "sort_states: atom renaming:@\n%a@\nname renaming:@\n%a@."
+        Fmtc.(list ~sep:Fmt.sp @@ parens @@ pair ~sep:Fmt.sp Atom.pp Atom.pp)
+        atom_renaming
+        Fmtc.(list ~sep:Fmt.sp @@ parens @@ pair ~sep:Fmt.sp Name.pp Name.pp)
+        name_renaming);
   let sort = List.sort (fun (n1, _) (n2, _) -> Name.compare n1 n2) in
   let rename (name, ts) =
+    Msg.debug (fun m ->
+        m "sort_states.rename (%a, %a)@." Name.pp name Tuple_set.pp ts);
     ( List.assoc ~eq:Name.equal name name_renaming,
       Tuple_set.rename atom_renaming ts )
   in

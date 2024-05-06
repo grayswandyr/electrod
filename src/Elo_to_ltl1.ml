@@ -726,17 +726,17 @@ module Make (Ltl : Solver.LTL) = struct
      rigid and flexible variables having appeared during the walk. *)
   let convert elo elo_fml =
     let comment = formula_as_comment elo_fml in
-    Msg.debug (fun m ->
+    (* Msg.debug (fun m ->
         m
           "----------------------------------------------------------------------\n\
            %s"
-          comment);
-    let before_conversion = Mtime_clock.now () in
+          comment); *)
+    (* let before_conversion = Mtime_clock.now () in *)
     (* Msg.info (fun m -> m "DOMAIN@\n%a@." Domain.pp elo.Elo.domain); *)
     let env = new environment elo in
     let ltl_fml = (new converter env)#visit_fml [] elo_fml in
-    let conversion_time = Mtime.span before_conversion @@ Mtime_clock.now () in
-    Msg.debug (fun m ->
-        m "Conversion done in %a@." Mtime.Span.pp conversion_time);
+    (* let conversion_time = Mtime.span before_conversion @@ Mtime_clock.now () in *)
+    (* Msg.debug (fun m ->
+        m "Conversion done in %a@." Mtime.Span.pp conversion_time); *)
     (comment, ltl_fml)
 end
