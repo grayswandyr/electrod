@@ -28,6 +28,8 @@ let wrap bw n =
       ((n + maxint) mod interval_length) + interval_length
     else n
 
+let%test _ = wrap 1 0 = 3
+
 (* fragile patterns, lots of them as we short-circuit *)
 
 module type ATOMIC_PROPOSITION = sig

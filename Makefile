@@ -26,6 +26,9 @@ fmt:
 	$(DUNE) build @fmt --auto-promote --diff-command=- || true
 
 test:
+	$(DUNE) test src
+
+regression:
 	$(DUNE) build @regression
 
 utop:

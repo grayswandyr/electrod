@@ -16,8 +16,9 @@
   iter
   stdcompat
   stdlib-shims)
+ (inline_tests)
  (preprocess
-  (pps visitors.ppx)))
+  (pps ppx_inline_test visitors.ppx)))
 
 ; Generate Scripts.ml file
 
