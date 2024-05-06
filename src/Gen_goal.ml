@@ -223,7 +223,20 @@ let join = Join
 let card exp = Card exp
 let iunary op exp = IUn (op, exp)
 let ibinary exp1 op exp2 = IBin (exp1, op, exp2)
-let is_shift = function Lshift | Zershift | Sershift -> true | _ -> false
+
+let equal_ibinop o1 o2 =
+  match (o1, o2) with
+  | Add, Add
+  | Sub, Sub
+  | Mul, Mul
+  | Div, Div
+  | Rem, Rem
+  | Lshift, Lshift
+  | Zershift, Zershift
+  | Sershift, Sershift ->
+      true
+  | _, _ -> false
+
 let neg = Neg
 let add = Add
 let sub = Sub

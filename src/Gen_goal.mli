@@ -951,7 +951,7 @@ val join : rbinop
 val card : ('a, 'b) exp -> ('a, 'b) prim_iexp
 val iunary : iunop -> ('a, 'b) iexp -> ('a, 'b) prim_iexp
 val ibinary : ('a, 'b) iexp -> ibinop -> ('a, 'b) iexp -> ('a, 'b) prim_iexp
-val is_shift : ibinop -> bool
+val equal_ibinop : ibinop -> ibinop -> bool
 val neg : iunop
 val add : ibinop
 val sub : ibinop

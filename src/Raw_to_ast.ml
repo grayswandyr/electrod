@@ -386,10 +386,10 @@ let compute_symmetries (pb : Raw.raw_problem) =
 
 (*******************************************************************************
  *  Walking along raw goals to get variables and relation names out of raw_idents. 
- Also sets the ref saw_a_shift to true is sha/shr/shl was seen.
+ Also sets the ref unseen_shifts to shifts that were not present.
  *******************************************************************************)
 
-let refine_identifiers saw_a_shift raw_pb =
+let refine_identifiers unseen_shifts raw_pb =
   let open Gen_goal in
   let rec walk_fml ctx fml =
     let ctx2, f = walk_prim_fml ctx fml.prim_fml in
@@ -480,7 +480,11 @@ let refine_identifiers saw_a_shift raw_pb =
     | Card e -> card @@ walk_exp ctx e
     | IUn (op, e) -> iunary op @@ walk_iexp ctx e
     | IBin (e1, op, e2) ->
-        saw_a_shift := !saw_a_shift || Gen_goal.is_shift op;
+        (match op with
+        | Lshift | Sershift | Zershift ->
+            unseen_shifts :=
+              List.remove ~eq:Gen_goal.equal_ibinop ~key:op !unseen_shifts
+        | _ -> ());
         ibinary (walk_iexp ctx e1) op (walk_iexp ctx e2)
     | Small_int e -> small_int @@ walk_exp ctx e
     | Sum (bs, ie) ->
@@ -789,12 +793,17 @@ let compute_arities elo =
 (*******************************************************************************
  *  Removes all shifts from the domain.
  ******************************************************************************)
+let shift_of_ibinop op =
+  match op with
+  | Gen_goal.Lshift -> Name.shl
+  | Gen_goal.Sershift -> Name.sha
+  | Gen_goal.Zershift -> Name.shr
+  | _ -> assert false
 
-let remove_shifts domain =
+let remove_shifts domain to_remove =
   List.fold_left
-    (fun dom name -> Domain.remove name dom)
-    domain
-    Name.[ sha; shl; shr ]
+    (fun dom op -> Domain.remove (shift_of_ibinop op) dom)
+    domain to_remove
 
 (*******************************************************************************
  *  Declaration of the whole transformation
@@ -804,9 +813,9 @@ let whole raw_pb =
   let domain = compute_domain raw_pb in
   let syms = compute_symmetries raw_pb in
   let instance = compute_instances domain raw_pb in
-  let saw_a_shift = ref false in
-  let invars, goal = refine_identifiers saw_a_shift raw_pb in
-  let domain = if !saw_a_shift then domain else remove_shifts domain in
+  let unseen_shifts = ref Gen_goal.[ lshift; sershift; zershift ] in
+  let invars, goal = refine_identifiers unseen_shifts raw_pb in
+  let domain = remove_shifts domain !unseen_shifts in
   Ast.make raw_pb.file domain instance syms invars goal |> compute_arities
 
 let transfo = Transfo.make "raw_to_elo" whole
