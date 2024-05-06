@@ -17,18 +17,19 @@ open Containers
 [@@@warning "-4"]
 [@@@warning "-32"]
 
+
+(* Computes the value of n according to the wrap around semantics *)
+(* the result is betwwen -(2 ^ (bw-1)) and (2 ^ (bw-1) - 1) *)
 let wrap bw n =
   if bw <= 0 then n
   else
     (* maxint = 2 ^ (bw - 1) => wraps at *this* number *)
-    let maxint = Int.(pow 2 (bw - 1)) in
+    let maxint = Int.pow 2 (bw - 1)  in
     let interval_length = 2 * maxint in
     if n >= maxint then ((n + maxint) mod interval_length) - maxint
     else if n < ~-maxint then
-      ((n + maxint) mod interval_length) + interval_length
+      ((n - maxint + 1) mod interval_length) + maxint -1
     else n
-
-let%test _ = wrap 1 0 = 3
 
 (* fragile patterns, lots of them as we short-circuit *)
 
