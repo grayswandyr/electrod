@@ -78,13 +78,13 @@ val update_domain_with_instance : t -> Instance.t -> t
 val ints : t -> Tuple_set.t
 (** Returns the set of ints as 1-tuples  *)
 
-val shl : t -> Tuple_set.t
-(** Returns this shift as a set of triples  *)
+val shl : t -> Tuple_set.t option
+(** Returns this shift as a set of triples (None if it doesn't exist). *)
 
-val shr : t -> Tuple_set.t
-(** Returns this shift as a set of triples  *)
+val shr : t -> Tuple_set.t option
+(** Returns this shift as a set of triples (None if it doesn't exist). *)
 
-val sha : t -> Tuple_set.t
-(** Returns this shift as a set of triples  *)
+val sha : t -> Tuple_set.t option
+(** Returns this shift as a set of triples (None if it doesn't exist). *)
 
 include Intf.Print.S with type t := t

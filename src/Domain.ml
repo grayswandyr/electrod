@@ -150,8 +150,8 @@ let ints domain =
 let get_shift domain name =
   match get name domain with
   | Some Relation.(Const { arity = 3; scope = Scope.Exact triples; _ }) ->
-      triples
-  | _ -> assert false
+      Some triples
+  | _ -> None
 
 let shl domain = get_shift domain Name.shl
 let sha domain = get_shift domain Name.sha

@@ -201,7 +201,9 @@ module Make (Ltl : Solver.LTL) = struct
 
   (* converts a 3-column relation (for shifts) into a list Ltl-term triples with the correct bitwidth *)
   let convert_relation_to_int_triples bitwidth triples =
-    triples |> Tuple_set.to_list |> List.map (convert_triple bitwidth)
+    match triples with
+    | None -> []
+    | Some ts -> ts |> Tuple_set.to_list |> List.map (convert_triple bitwidth)
 
   let rec create_shift_formula l r triples =
     match triples with
