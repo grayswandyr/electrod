@@ -1,0 +1,29 @@
+univ : { xskolem#0 xskolem#1 xskolem#2 yskolem#0 yskolem#1 yskolem#2 zskolem#0 zskolem#1 zskolem#2 };
+
+const Int##next :2 { };
+const seq##Int :1 { };
+const String :1 { };
+const this##x :1 { } { ( xskolem#0 ) ( xskolem#1 ) ( xskolem#2 ) };
+const this##y :1 { } { ( yskolem#0 ) ( yskolem#1 ) ( yskolem#2 ) };
+const this##z :1 { } { ( zskolem#0 ) ( zskolem#1 ) ( zskolem#2 ) };
+const ints :1 { };
+
+
+sym
+[ ( this##z zskolem#0 )  <=  ( this##z zskolem#1 ) ];
+[ ( this##z zskolem#1 )  <=  ( this##z zskolem#2 ) ];
+[ ( this##y yskolem#0 )  <=  ( this##y yskolem#1 ) ];
+[ ( this##y yskolem#1 )  <=  ( this##y yskolem#2 ) ];
+[ ( this##x xskolem#0 )  <=  ( this##x xskolem#1 ) ];
+[ ( this##x xskolem#1 )  <=  ( this##x xskolem#2 ) ];
+
+run
+(fun/DIVIDE[#(this##x),#(this##y)]) = (#(this##z));
+Int##next = Int##next;
+seq##Int = seq##Int;
+String = String;
+this##x = this##x;
+this##y = this##y;
+this##z = this##z;
+true;
+

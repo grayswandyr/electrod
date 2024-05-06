@@ -1,0 +1,22 @@
+univ : { v1skolem#0 v1skolem#1 v1skolem#2 v3skolem#0 };
+
+const Int##next :2 { };
+const seq##Int :1 { };
+const String :1 { };
+const this##v1 :1 { } { ( v1skolem#0 ) ( v1skolem#1 ) ( v1skolem#2 ) };
+const this##v3 :1 { ( v3skolem#0 ) };
+const ints :1 { };
+
+sym
+[ ( this##v1 v1skolem#0 )  <=  ( this##v1 v1skolem#1 ) ];
+[ ( this##v1 v1skolem#1 )  <=  ( this##v1 v1skolem#2 ) ];
+
+run
+(#(this##v1 + this##v3)) = (fun/PLUS[#(this##v1),#(this##v3)]);
+Int##next = Int##next;
+seq##Int = seq##Int;
+String = String;
+this##v1 = this##v1;
+this##v3 = this##v3;
+true;
+
