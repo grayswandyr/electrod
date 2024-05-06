@@ -635,18 +635,23 @@ module Make (Ltl : Solver.LTL) = struct
       method build_U (_ : stack) (a : ltl) (b : ltl) : ltl = until a b
       method build_Union (_ : stack) _ _ e1 e2 x = e1 x +|| lazy (e2 x)
       method build_Univ (_ : stack) __tuple = true_
-
-      method build_Zershift (_ : stack) t1 t2 =
-        create_shift_formula t1 t2 env#shr_list
-
-      method build_Sershift (_ : stack) t1 t2 =
-        create_shift_formula t1 t2 env#sha_list
-
       method build_Rem (_ : stack) t1 t2 = rem t1 t2
       method build_Mul (_ : stack) t1 t2 = mul t1 t2
 
       method build_Lshift (_ : stack) t1 t2 =
-        create_shift_formula t1 t2 env#shl_list
+        match env#shl_list with
+        | [] -> assert false
+        | triples -> create_shift_formula t1 t2 triples
+
+      method build_Zershift (_ : stack) t1 t2 =
+        match env#shr_list with
+        | [] -> assert false
+        | triples -> create_shift_formula t1 t2 triples
+
+      method build_Sershift (_ : stack) t1 t2 =
+        match env#sha_list with
+        | [] -> assert false
+        | triples -> create_shift_formula t1 t2 triples
 
       method build_Div (_ : stack) t1 t2 = div t1 t2
 
