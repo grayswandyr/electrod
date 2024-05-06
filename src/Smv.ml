@@ -123,6 +123,15 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
       | Eq -> "="
       | Neq -> "!="
 
+  (* Generates an SMV signed word consisting of *length_0* 0 on the left and *bw - length_0* 0 after.*)
+  (*let generate_mask length_0 bw =
+    let beg_mask = List.init length_0 (fun _ -> 0) in
+    let end_mask = List.init (bw - length_0) (fun _ -> 1) in
+    let mask_list = List.append beg_mask end_mask in
+    let prefix =  "0sb" ^ (string_of_int bw) ^ "_" in
+    prefix ^ (List.fold_left (fun s i -> s ^ (string_of_int i) ) "" mask_list)
+  *)
+
     (* From NuXmv documentation, from high to low (excerpt, some precedences are ignored because they are not used)
 
        !
