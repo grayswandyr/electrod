@@ -24,8 +24,11 @@ val empty : t
 (** Constructor. *)
 
 val add : Name.t -> Relation.t -> t -> t
-(** Adds an asociation to the domain. 
+(** Adds an association to the domain. 
     The name must not be in the domain already. *)
+
+val remove : Name.t -> t -> t
+(** Removes a name from the domain, if it is present.  *)
 
 val mem : Name.t -> t -> bool
 (** Checks whether a name is already bound in the map. *)

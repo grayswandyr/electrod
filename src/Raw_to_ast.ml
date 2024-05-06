@@ -385,10 +385,11 @@ let compute_symmetries (pb : Raw.raw_problem) =
   List.map compute_single_sym pb.raw_syms
 
 (*******************************************************************************
- *  Walking along raw goals to get variables and relation names out of raw_idents
+ *  Walking along raw goals to get variables and relation names out of raw_idents. 
+ Also sets the ref saw_a_shift to true is sha/shr/shl was seen.
  *******************************************************************************)
 
-let refine_identifiers raw_pb =
+let refine_identifiers saw_a_shift raw_pb =
   let open Gen_goal in
   let rec walk_fml ctx fml =
     let ctx2, f = walk_prim_fml ctx fml.prim_fml in
@@ -452,7 +453,9 @@ let refine_identifiers raw_pb =
   and walk_exp ctx exp = { exp with prim_exp = walk_prim_exp ctx exp.prim_exp }
   and walk_prim_exp ctx = function
     | Ident id -> (
-        try ident @@ CCList.Assoc.get_exn ~eq:Raw_ident.eq_name id ctx
+        try
+          let ast_ident = CCList.Assoc.get_exn ~eq:Raw_ident.eq_name id ctx in
+          ident ast_ident
         with Not_found ->
           Msg.Fatal.undeclared_id @@ fun args -> args raw_pb.file id)
     | None_ -> none
@@ -476,7 +479,9 @@ let refine_identifiers raw_pb =
     | Num n -> num n
     | Card e -> card @@ walk_exp ctx e
     | IUn (op, e) -> iunary op @@ walk_iexp ctx e
-    | IBin (e1, op, e2) -> ibinary (walk_iexp ctx e1) op (walk_iexp ctx e2)
+    | IBin (e1, op, e2) ->
+        saw_a_shift := !saw_a_shift || Gen_goal.is_shift op;
+        ibinary (walk_iexp ctx e1) op (walk_iexp ctx e2)
     | Small_int e -> small_int @@ walk_exp ctx e
     | Sum (bs, ie) ->
         let ctx', bs' = walk_bindings ctx bs in
@@ -782,14 +787,26 @@ let compute_arities elo =
     }
 
 (*******************************************************************************
+ *  Removes all shifts from the domain.
+ ******************************************************************************)
+
+let remove_shifts domain =
+  List.fold_left
+    (fun dom name -> Domain.remove name dom)
+    domain
+    Name.[ sha; shl; shr ]
+
+(*******************************************************************************
  *  Declaration of the whole transformation
- *******************************************************************************)
+ ******************************************************************************)
 
 let whole raw_pb =
   let domain = compute_domain raw_pb in
   let syms = compute_symmetries raw_pb in
   let instance = compute_instances domain raw_pb in
-  let invars, goal = refine_identifiers raw_pb in
+  let saw_a_shift = ref false in
+  let invars, goal = refine_identifiers saw_a_shift raw_pb in
+  let domain = if !saw_a_shift then domain else remove_shifts domain in
   Ast.make raw_pb.file domain instance syms invars goal |> compute_arities
 
 let transfo = Transfo.make "raw_to_elo" whole

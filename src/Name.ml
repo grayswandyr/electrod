@@ -73,12 +73,12 @@ let hash sym = sym.H.hkey
 let compare s1 s2 = s1.H.tag - s2.H.tag
 let equal x1 x2 = Stdlib.(x1 == x2)
 let of_raw_ident id = name @@ Raw_ident.basename id
-let univ = name "univ"
-let iden = name "iden"
-let integers = name "ints"
-let shl = name "Int##SHL"
-let shr = name "Int##SHR"
-let sha = name "Int##SHA"
+let univ = name Raw_ident.Strings.univ
+let iden = name Raw_ident.Strings.iden
+let integers = name Raw_ident.Strings.integers
+let shl = name Raw_ident.Strings.shl
+let shr = name Raw_ident.Strings.shr
+let sha = name Raw_ident.Strings.sha
 let style = `Cyan
 let pp out name = Fmtc.(styled style string) out name.H.node
 

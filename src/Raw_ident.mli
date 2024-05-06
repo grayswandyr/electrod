@@ -18,6 +18,15 @@ type t = { ident : string; loc : Location.t }
 (** Any form of identifier for constants (atoms, relations) in the source
     code. *)
 
+module Strings : sig
+  val univ : string
+  val iden : string
+  val integers : string
+  val shl : string
+  val shr : string
+  val sha : string
+end
+
 (** {1 Constructor}  *)
 
 val ident : string -> Lexing.position -> Lexing.position -> t
