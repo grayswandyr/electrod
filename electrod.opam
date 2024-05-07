@@ -26,6 +26,7 @@ depends: [
   "ocamlformat" {= "0.24.1"}
   "ocaml-lsp-server" {<= "1.14.2"}
   "ppx_deriving" {<= "5.2.1"}
+  "ppx_inline_test" {<= "v0.16.1"}
   "printbox" {<= "0.6.1"}
   "printbox-text" {<= "0.6.1"}
   "stdcompat" {<= "19"}
