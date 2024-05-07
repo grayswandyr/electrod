@@ -635,7 +635,6 @@ module Make (Ltl : Solver.LTL) = struct
       method build_U (_ : stack) (a : ltl) (b : ltl) : ltl = until a b
       method build_Union (_ : stack) _ _ e1 e2 x = e1 x +|| lazy (e2 x)
       method build_Univ (_ : stack) __tuple = true_
-      method build_Rem (_ : stack) t1 t2 = rem t1 t2
       method build_Mul (_ : stack) t1 t2 = mul t1 t2
 
       method build_Lshift (_ : stack) t1 t2 =
@@ -653,7 +652,39 @@ module Make (Ltl : Solver.LTL) = struct
         | [] -> assert false
         | triples -> create_shift_formula t1 t2 triples
 
-      method build_Div (_ : stack) t1 t2 = div t1 t2
+      (* FROM Alloy util/integer:
+         *
+         * Performs the division with "round to zero" semantics, except the following 3 cases
+         * 1) if a is 0, then it returns 0
+         * 2) else if b is 0, then it returns 1 if a is negative and -1 if a is positive
+         * 3) else if a is the smallest negative integer, and b is -1, then it returns a
+      *)
+      method build_Div (_ : stack) a b =
+        let zero = num env#bitwidth 0 in
+        let one = num env#bitwidth 1 in
+        let minus_one = num env#bitwidth ~-1 in
+        let min_int = num env#bitwidth Int.(~-2 ** (env#bitwidth - 1)) in
+        let eq_ = comp eq in
+        ifthenelse_arith (eq_ a zero) zero
+        @@ ifthenelse_arith
+             (and_ (eq_ b zero) @@ lazy (comp lt a zero))
+             minus_one
+        @@ ifthenelse_arith (and_ (eq_ b zero) @@ lazy (comp gt a zero)) one
+        @@ ifthenelse_arith (and_ (eq_ a min_int) @@ lazy (eq_ b minus_one)) a
+        @@ div a b
+
+      (* like build_Div *)
+      method build_Rem (_ : stack) a b =
+        let zero = num env#bitwidth 0 in
+        let minus_one = num env#bitwidth ~-1 in
+        let min_int = num env#bitwidth Int.(~-2 ** (env#bitwidth - 1)) in
+        let eq_ = comp eq in
+        ifthenelse_arith (eq_ a zero) zero
+        @@ ifthenelse_arith (eq_ b zero) a
+        @@ ifthenelse_arith
+             (and_ (eq_ a min_int) @@ lazy (eq_ b minus_one))
+             zero
+        @@ rem a b
 
       (* due to the presence of a bound variable, the recursion over the body  done by the visitor is "wrong"*)
       method! visit_Sum subst _visitors_c0 _visitors_c1 =

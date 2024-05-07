@@ -81,7 +81,7 @@ module type LTL = sig
     | Bin of term * binop * term
     | AIte of t * term * term
 
-  and binop = Plus | Minus | Mul | Div | Rem | Lshift | Zershift | Sershift
+  and binop = Plus | Minus | Mul | Div | Rem
 
   val true_ : t
   val false_ : t
@@ -114,9 +114,6 @@ module type LTL = sig
   val mul : term -> term -> term
   val div : term -> term -> term
   val rem : term -> term -> term
-  val lshift : term -> term -> term
-  val zershift : term -> term -> term
-  val sershift : term -> term -> term
   val ifthenelse_arith : t -> term -> term -> term
   val comp : tcomp -> term -> term -> t
   val lt : tcomp

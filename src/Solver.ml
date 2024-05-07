@@ -84,7 +84,7 @@ module type LTL = sig
     | Bin of term * binop * term
     | AIte of t * term * term
 
-  and binop = Plus | Minus | Mul | Div | Rem | Lshift | Zershift | Sershift
+  and binop = Plus | Minus | Mul | Div | Rem
 
   val true_ : t
   val false_ : t
@@ -117,9 +117,6 @@ module type LTL = sig
   val mul : term -> term -> term
   val div : term -> term -> term
   val rem : term -> term -> term
-  val lshift : term -> term -> term
-  val zershift : term -> term -> term
-  val sershift : term -> term -> term
   val ifthenelse_arith : t -> term -> term -> term
   val comp : tcomp -> term -> term -> t
   val lt : tcomp
@@ -197,7 +194,7 @@ struct
     | Bin of term * binop * term
     | AIte of t * term * term
 
-  and binop = Plus | Minus | Mul | Div | Rem | Lshift | Zershift | Sershift
+  and binop = Plus | Minus | Mul | Div | Rem
 
   let pp _ _ =
     (* default impl. for pp; to override later *)
@@ -333,24 +330,6 @@ struct
 
   let rem t1 t2 =
     match (t1, t2) with Num 0, _ -> Num 0 | _, _ -> Bin (t1, Rem, t2)
-
-  let lshift t1 t2 =
-    match (t1, t2) with
-    | Num 0, _ -> Num 0
-    | _, Num 0 -> t1
-    | _, _ -> Bin (t1, Lshift, t2)
-
-  let zershift t1 t2 =
-    match (t1, t2) with
-    | Num 0, _ -> Num 0
-    | _, Num 0 -> t1
-    | _, _ -> Bin (t1, Zershift, t2)
-
-  let sershift t1 t2 =
-    match (t1, t2) with
-    | Num 0, _ -> Num 0
-    | _, Num 0 -> t1
-    | _, _ -> Bin (t1, Sershift, t2)
 
   let ifthenelse_arith c t e =
     match c with True -> t | False -> e | _ -> AIte (c, t, e)
