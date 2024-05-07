@@ -55,13 +55,21 @@ let sort_states (atom_renaming, name_renaming) states =
         Fmtc.(list ~sep:Fmt.sp @@ parens @@ pair ~sep:Fmt.sp Name.pp Name.pp)
         name_renaming);
   let sort = List.sort (fun (n1, _) (n2, _) -> Name.compare n1 n2) in
+  let remove_shifts valuations =
+    List.fold_left
+      (fun acc valu -> List.Assoc.remove ~eq:Name.equal valu acc)
+      valuations
+      Name.[ shl; shr; sha ]
+  in
   let rename (name, ts) =
     Msg.debug (fun m ->
         m "sort_states.rename (%a, %a)@." Name.pp name Tuple_set.pp ts);
     ( List.assoc ~eq:Name.equal name name_renaming,
       Tuple_set.rename atom_renaming ts )
   in
-  List.map (fun (typ, v) -> (typ, sort (List.map rename v))) states
+  List.map
+    (fun (st_type, v) -> (st_type, sort @@ remove_shifts @@ List.map rename v))
+    states
 
 let trace back_renamings nbvars conversion_time analysis_time states =
   assert (
