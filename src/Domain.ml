@@ -107,29 +107,36 @@ let rename atom_renaming name_renaming domain =
 let bitwidth { bitwidth; _ } = bitwidth
 let rec log2 n = if n < 2 then 0 else 1 + log2 (n asr 1)
 
-let compute_necessary_bitwidth nb =
+let ceil_log2 nb =
   assert (nb >= 0);
-  (* need nb + 1 values because 0 must also be representable *)
-  let nb_values = nb + 1 in
-  let log = log2 nb_values in
-  (* computed log may be too small as there may be a non-null mantissa in a float representation *)
-  let log = if Int.(2 ** log < nb_values) then log + 1 else log in
-  (* increase the bitwidth for negative numbers *)
-  log + 1
+  let log = log2 nb in
+  (* computed log may be too small as there could be a non-null mantissa in a float representation *)
+  if Int.(2 ** log < nb) then log + 1 else log
+
+let%test _ = ceil_log2 0 = 0
+let%test _ = ceil_log2 1 = 1
+let%test _ = ceil_log2 8 = 3
+let%test _ = ceil_log2 9 = 4
 
 let check_int_set univ_ts ints =
   let int_size = Tuple_set.size ints in
   let univ_size = Tuple_set.size univ_ts in
-  let size_to_consider = if int_size <= 0 then univ_size else int_size in
-  let bitwidth = compute_necessary_bitwidth size_to_consider in
+  let size_to_consider =
+    if int_size <= 0 then
+      (* in case the command if `for 0 Int`, the bitwidth must be large enough for the size of univ to be <= the max int. This would correspond to an interval large enough to represent the set [min_int .. 0 .. univ_size .. max_int]. So this at least 1 (for 0) + #univ (for positive values) + (#univ) (for negative values). *)
+      (2 * univ_size) + 1
+    else int_size
+  in
+  let bitwidth = ceil_log2 size_to_consider in
+  let bitwidth_minus_1 = bitwidth - 1 in
   if
     int_size > 0
     && not
        @@ Iter.(
             for_all
               (fun nb -> Tuple_set.mem (Tuple.of_int nb) ints)
-              (~-(Int.pow 2 (bitwidth - 1)) -- (Int.pow 2 (bitwidth - 1) - 1)))
-  then Msg.Fatal.incorrect_int_set (fun args -> args ints);
+              Int.(~-(2 ** bitwidth_minus_1) -- ((2 ** bitwidth_minus_1) - 1)))
+  then Msg.Fatal.incorrect_int_set (fun args -> args bitwidth ints);
   bitwidth
 
 let compute_bitwidth univ_ts domain =

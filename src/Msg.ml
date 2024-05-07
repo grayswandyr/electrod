@@ -400,12 +400,12 @@ module Fatal = struct
 
   let incorrect_int_set args =
     err @@ fun m ->
-    args @@ fun ts ->
+    args @@ fun bitwidth ts ->
     m ~header:(code 27)
       "the set `%s` is not a constant set of shape (-2^(bitwidth - 1) .. \
-       2^(bitwidth - 1) - 1):@ %a"
+       2^(bitwidth - 1) - 1) (bitwidth = %d):@ %a"
       Name.(to_string integers)
-      Tuple_set.pp ts
+      bitwidth Tuple_set.pp ts
 end
 
 (** {2 Warnings (the program does not fail)} *)
