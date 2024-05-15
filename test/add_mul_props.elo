@@ -1,0 +1,72 @@
+univ : { Univskolem#0 Univskolem#1 Univskolem#2 -4 -3 -2 -1 0 1 2 3 };
+
+const Int##min :1 { ( -4 ) };
+const Int##zero :1 { ( 0 ) };
+const Int##max :1 { ( 3 ) };
+const Int##next :2 { ( -4 -3 ) ( -3 -2 ) ( -2 -1 ) ( -1 0 ) ( 0 1 ) ( 1 2 ) ( 2 3 ) };
+const seq##Int :1 { ( 0 ) ( 1 ) ( 2 ) };
+const String :1 { };
+const this##Univ :1 { } { ( Univskolem#0 ) ( Univskolem#1 ) ( Univskolem#2 ) };
+const ints :1 { ( -4 ) ( -3 ) ( -2 ) ( -1 ) ( 0 ) ( 1 ) ( 2 ) ( 3 ) };
+
+const Int##SHL :3 { ( -4 -4 -4 ) ( -4 -3 0 ) ( -4 -2 0 ) ( -4 -1 0 ) ( -4 0 -4 ) ( -4 1 0 ) ( -4 2 0 ) ( -4 3 0 ) ( -3 -4 -3 ) ( -3 -3 2 ) ( -3 -2 -4 ) ( -3 -1 0 ) ( -3 0 -3 ) ( -3 1 2 ) ( -3 2 -4 ) ( -3 3 0 ) ( -2 -4 -2 ) ( -2 -3 -4 ) ( -2 -2 0 ) ( -2 -1 0 ) ( -2 0 -2 ) ( -2 1 -4 ) ( -2 2 0 ) ( -2 3 0 ) ( -1 -4 -1 ) ( -1 -3 -2 ) ( -1 -2 -4 ) ( -1 -1 0 ) ( -1 0 -1 ) ( -1 1 -2 ) ( -1 2 -4 ) ( -1 3 0 ) ( 0 -4 0 ) ( 0 -3 0 ) ( 0 -2 0 ) ( 0 -1 0 ) ( 0 0 0 ) ( 0 1 0 ) ( 0 2 0 ) ( 0 3 0 ) ( 1 -4 1 ) ( 1 -3 2 ) ( 1 -2 -4 ) ( 1 -1 0 ) ( 1 0 1 ) ( 1 1 2 ) ( 1 2 -4 ) ( 1 3 0 ) ( 2 -4 2 ) ( 2 -3 -4 ) ( 2 -2 0 ) ( 2 -1 0 ) ( 2 0 2 ) ( 2 1 -4 ) ( 2 2 0 ) ( 2 3 0 ) ( 3 -4 3 ) ( 3 -3 -2 ) ( 3 -2 -4 ) ( 3 -1 0 ) ( 3 0 3 ) ( 3 1 -2 ) ( 3 2 -4 ) ( 3 3 0 ) }
+const Int##SHR :3 { ( -4 -4 -4 ) ( -4 -3 2 ) ( -4 -2 1 ) ( -4 -1 0 ) ( -4 0 -4 ) ( -4 1 2 ) ( -4 2 1 ) ( -4 3 0 ) ( -3 -4 -3 ) ( -3 -3 2 ) ( -3 -2 1 ) ( -3 -1 0 ) ( -3 0 -3 ) ( -3 1 2 ) ( -3 2 1 ) ( -3 3 0 ) ( -2 -4 -2 ) ( -2 -3 3 ) ( -2 -2 1 ) ( -2 -1 0 ) ( -2 0 -2 ) ( -2 1 3 ) ( -2 2 1 ) ( -2 3 0 ) ( -1 -4 -1 ) ( -1 -3 3 ) ( -1 -2 1 ) ( -1 -1 0 ) ( -1 0 -1 ) ( -1 1 3 ) ( -1 2 1 ) ( -1 3 0 ) ( 0 -4 0 ) ( 0 -3 0 ) ( 0 -2 0 ) ( 0 -1 0 ) ( 0 0 0 ) ( 0 1 0 ) ( 0 2 0 ) ( 0 3 0 ) ( 1 -4 1 ) ( 1 -3 0 ) ( 1 -2 0 ) ( 1 -1 0 ) ( 1 0 1 ) ( 1 1 0 ) ( 1 2 0 ) ( 1 3 0 ) ( 2 -4 2 ) ( 2 -3 1 ) ( 2 -2 0 ) ( 2 -1 0 ) ( 2 0 2 ) ( 2 1 1 ) ( 2 2 0 ) ( 2 3 0 ) ( 3 -4 3 ) ( 3 -3 1 ) ( 3 -2 0 ) ( 3 -1 0 ) ( 3 0 3 ) ( 3 1 1 ) ( 3 2 0 ) ( 3 3 0 ) }
+const Int##SHA :3 { ( -4 -4 -4 ) ( -4 -3 -2 ) ( -4 -2 -1 ) ( -4 -1 -1 ) ( -4 0 -4 ) ( -4 1 -2 ) ( -4 2 -1 ) ( -4 3 -1 ) ( -3 -4 -3 ) ( -3 -3 -2 ) ( -3 -2 -1 ) ( -3 -1 -1 ) ( -3 0 -3 ) ( -3 1 -2 ) ( -3 2 -1 ) ( -3 3 -1 ) ( -2 -4 -2 ) ( -2 -3 -1 ) ( -2 -2 -1 ) ( -2 -1 -1 ) ( -2 0 -2 ) ( -2 1 -1 ) ( -2 2 -1 ) ( -2 3 -1 ) ( -1 -4 -1 ) ( -1 -3 -1 ) ( -1 -2 -1 ) ( -1 -1 -1 ) ( -1 0 -1 ) ( -1 1 -1 ) ( -1 2 -1 ) ( -1 3 -1 ) ( 0 -4 0 ) ( 0 -3 0 ) ( 0 -2 0 ) ( 0 -1 0 ) ( 0 0 0 ) ( 0 1 0 ) ( 0 2 0 ) ( 0 3 0 ) ( 1 -4 1 ) ( 1 -3 0 ) ( 1 -2 0 ) ( 1 -1 0 ) ( 1 0 1 ) ( 1 1 0 ) ( 1 2 0 ) ( 1 3 0 ) ( 2 -4 2 ) ( 2 -3 1 ) ( 2 -2 0 ) ( 2 -1 0 ) ( 2 0 2 ) ( 2 1 1 ) ( 2 2 0 ) ( 2 3 0 ) ( 3 -4 3 ) ( 3 -3 1 ) ( 3 -2 0 ) ( 3 -1 0 ) ( 3 0 3 ) ( 3 1 1 ) ( 3 2 0 ) ( 3 3 0 ) }
+
+sym
+[ ( this##Univ Univskolem#0 )  <=  ( this##Univ Univskolem#1 ) ];
+[ ( this##Univ Univskolem#1 )  <=  ( this##Univ Univskolem#2 ) ];
+
+run
+!((all m: ints, n: ints {
+    (fun/PLUS[int[m],int[n]]) = (fun/PLUS[int[n],int[m]])
+    }) and
+  (all m: ints, n: ints {
+    (fun/PLUS[fun/MINUS[0,int[m]],fun/MINUS[0,int[n]]]) = (fun/MINUS[0,fun/PLUS[
+    int[n],int[m]]])
+    }) and
+  (all m: ints, n: ints {
+    (fun/MULTIPLY[int[m],int[n]]) = (fun/MULTIPLY[int[n],int[m]])
+    }) and
+  (all m: ints {
+    (fun/MULTIPLY[int[m],0]) = (0)
+    }) and
+  (all m: ints {
+    (Int[fun/MULTIPLY[int[m],1]]) = m
+    }) and
+  (all m: ints, n: ints {
+    (fun/MULTIPLY[int[m],int[n]]) = (fun/MULTIPLY[fun/MINUS[0,int[m]],fun/MINUS[
+    0,int[n]]])
+    }) and
+  (all m: ints, n: ints, p: ints {
+    (fun/MULTIPLY[int[m],fun/PLUS[int[n],int[p]]]) = (fun/PLUS[fun/MULTIPLY[int[
+    m],int[n]],fun/MULTIPLY[int[m],int[p]]])
+    }) and
+  (all m: ints, n: ints {
+    (fun/PLUS[int[m],fun/MINUS[0,int[n]]]) = (fun/MINUS[int[m],int[n]])
+    }) and
+  (all m: ints, n: ints, p: ints {
+    (fun/PLUS[int[m],fun/PLUS[int[n],int[p]]]) = (fun/PLUS[fun/PLUS[int[m],int[n
+    ]],int[p]])
+    }) and
+  (all m: ints, n: ints, p: ints {
+    (fun/MULTIPLY[int[m],fun/MULTIPLY[int[n],int[p]]]) = (fun/MULTIPLY[
+    fun/MULTIPLY[int[m],int[n]],int[p]])
+    }) and
+  (all m: ints {
+    (Int[fun/MULTIPLY[fun/MINUS[0,int[m]],fun/MINUS[0,1]]]) = m
+    }) and
+  (int[Int[1] + Int[2] + Int[3]]) = (6) and
+  (all m: ints {
+    (Int[fun/PLUS[int[m],0]]) = m
+    }) and
+  (sum i: Int[1] + Int[2] + Int[3] | int[i]) = (6));
+Int##min = Int##min;
+Int##zero = Int##zero;
+Int##max = Int##max;
+Int##next = Int##next;
+seq##Int = seq##Int;
+String = String;
+this##Univ = this##Univ;
+true;
+

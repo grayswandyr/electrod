@@ -491,6 +491,10 @@ let refine_identifiers unseen_shifts raw_pb =
         let ctx', bs' = walk_bindings ctx bs in
         let ie' = walk_iexp ctx' ie in
         sum bs' ie'
+    | AIte (c, t, e) ->
+        ifthenelse_arith
+          (snd @@ walk_fml ctx c)
+          (walk_iexp ctx t) (walk_iexp ctx e)
   in
   (* initial context is made of relation names declared in the domain (+ univ) *)
   let init_ctx =
@@ -750,6 +754,11 @@ let compute_arities elo =
           bs';
         let ie' = walk_iexp ctx' ie in
         sum bs' ie'
+    | AIte (c, t, e) ->
+        let c' = walk_fml ctx c in
+        let t' = walk_iexp ctx t in
+        let e' = walk_iexp ctx e in
+        ifthenelse_arith c' t' e'
   in
   let init =
     object

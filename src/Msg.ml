@@ -152,7 +152,7 @@ module Fatal = struct
         (Lexing.lexeme_start_p lexbuf)
         (Lexing.lexeme_end_p lexbuf)
     in
-    m ~header:(code 2) "%s:%a: syntax error %a%a" file Location.pp loc
+    m ~header:(code 2) "%s:%a: syntax error: %a%a" file Location.pp loc
       (* (print_extract ~color:error_color) (file, loc); *)
       string (Lexing.lexeme lexbuf) (hardline **< Extract.pp)
       (Extract.extract (Some file) loc)

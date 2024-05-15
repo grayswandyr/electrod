@@ -194,6 +194,9 @@ and convert_iexp stack ({ prim_iexp; _ } : (Ast.var, Ast.ident) Gen_goal.iexp) =
       let ie' = convert_iexp (new_env [ var ] stack) ie in
       E.sum range' ie'
   | Sum _ -> (* impossible case due to previous simplification*) assert false
+  | AIte (c, t, e) ->
+      E.ifthenelse_arith (convert_fml stack c) (convert_iexp stack t)
+        (convert_iexp stack e)
 
 and convert_ibinop (op : Gen_goal.ibinop) =
   match op with

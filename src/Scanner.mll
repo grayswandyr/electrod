@@ -35,7 +35,7 @@ let letter = [ 'A'-'Z' 'a'-'z' ]
 
 let dollar = '$'
 
-let plain_id = (dollar | '_')? letter (letter | digit | '_' | '#')*
+let plain_id = (dollar | '_')? letter (letter | digit | '_' | '#' | '$')*
 
 let idx_id = plain_id dollar number
 
@@ -74,6 +74,8 @@ rule main infile = parse
 | "int" { SMALLINT }
 | "Int" { BIGINT }
 | "sum" { SUM }
+| "iimplies" { IIMPLIES }
+| "ielse" { IELSE }
 | "run"
     { RUN }
 | "expect"

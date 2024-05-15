@@ -553,7 +553,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
       in
       let previous_handler = Sys.signal Sys.sigterm sigterm_handler in
       (* TODO make things s.t. it's possible to set a time-out *)
-      let to_call = Fmt.str "%s -cpp -source %s %s" cmd scr smv in
+      let to_call = Fmt.str "%s -source %s %s" cmd scr smv in
       Logs.info (fun m -> m "Starting analysis:@[<h2>@ %s@]" to_call);
       let before_run = Mtime_clock.now () in
       let okout, errout, errcode = CCUnix.call "%s" to_call in

@@ -43,7 +43,7 @@ let exp_no_arity = G.exp (Some 0)
 %token INTER OVERRIDE LPROJ RPROJ MINUS DOT PRIME
 %token THEN NOT_IN RUN EXPECT SAT UNSAT
 // for integer expressions
-%token UMINUS ADD SUB MUL DIV REM LSHIFT SERSHIFT ZERSHIFT HASH SMALLINT BIGINT SUM
+%token UMINUS ADD SUB MUL DIV REM LSHIFT SERSHIFT ZERSHIFT HASH SMALLINT BIGINT SUM IIMPLIES IELSE
 
 
 %token SYM INST
@@ -66,9 +66,11 @@ let exp_no_arity = G.exp (Some 0)
 %right IMPLIES ELSE
 %left AND
 %nonassoc RELEASES SINCE UNTIL TRIGGERED
-%nonassoc NOT AFTER ALWAYS EVENTUALLY BEFORE HISTORICALLY ONCE
-%nonassoc /*LT LTE GT GTE*/ EQ NEQ IN NOT_IN
+%nonassoc AFTER ALWAYS EVENTUALLY BEFORE HISTORICALLY ONCE
+%nonassoc LT LTE GT GTE EQ NEQ IN NOT_IN
+%nonassoc NOT
 //%nonassoc NO SOME LONE ONE      (* for formulas as 'some E' (= E != none) *)
+%right IIMPLIES IELSE
 %left MINUS PLUS
 %nonassoc HASH
 %left OVERRIDE
@@ -494,7 +496,8 @@ iexpr:
   | HASH e = expr
   { G.iexp (Location.from_positions $startpos $endpos)
     @@ G.card e  }
-
+| formula IIMPLIES iexpr IELSE iexpr { G.iexp (Location.from_positions $startpos $endpos)
+    @@ G.num 0 }
   | SMALLINT e = brackets(expr)
 	{ G.iexp (Location.from_positions $startpos $endpos)
 	@@ G.small_int e }
@@ -508,7 +511,11 @@ iexpr:
 	| e = parens(iexpr)
 	        { e }
 
-  | SUM bs = comma_sep1(sum_decl) BAR e = iexpr
+  | SUM bs = comma_sep1(sum_decl) e = braces(iexpr)
+	{ G.iexp (Location.from_positions $startpos $endpos)
+	@@ G.sum bs e }
+
+  | SUM bs = comma_sep1(sum_decl) BAR  e = iexpr
 	{ G.iexp (Location.from_positions $startpos $endpos)
 	@@ G.sum bs e }
 
