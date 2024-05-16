@@ -141,10 +141,6 @@ and convert_exp stack
       let vars = List.flat_map (fun (_, vars, _) -> vars) decls in
       let block' = convert_block (new_env vars stack) block in
       E.compr ~ar decls' block'
-      |> Fun.tap (fun e ->
-             Msg.debug (fun m ->
-                 m "Ast_to_elo.convert_Compr@ @[<hov2>%a@]@ --> @[<hov2>%a@]"
-                   Ast.pp_prim_exp prim_exp (E.pp_exp 0) e))
   | Big_int ie -> E.big_int @@ convert_iexp stack ie
 
 and convert_bindings stack (decls : (Ast.var, Ast.ident) Gen_goal.binding list)

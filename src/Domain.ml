@@ -144,7 +144,7 @@ let compute_bitwidth univ_ts domain =
   | Some Relation.(Const { arity = 1; scope = Scope.Exact ints; _ }) ->
       { domain with bitwidth = check_int_set univ_ts ints }
       |> Fun.tap (fun { bitwidth; _ } ->
-             Msg.info (fun m ->
+             Msg.debug (fun m ->
                  m "%a = %a, %a = %a --> bitwidth = %d" Name.pp Name.integers
                    Tuple_set.pp ints Name.pp Name.univ Tuple_set.pp univ_ts
                    bitwidth))
