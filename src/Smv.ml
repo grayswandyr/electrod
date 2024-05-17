@@ -552,6 +552,16 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
             exit 1)
       in
       let previous_handler = Sys.signal Sys.sigterm sigterm_handler in
+      (* escape shell-interpreted characters when calling n*smv *)
+      let smv =
+        String.flat_map
+          (function
+            | '\'' -> "\\'"
+            | '\"' -> "\\\""
+            | '$' -> "\\$"
+            | c -> String.of_char c)
+          smv
+      in
       (* TODO make things s.t. it's possible to set a time-out *)
       let to_call = Fmt.str "%s -source %s %s" cmd scr smv in
       Logs.info (fun m -> m "Starting analysis:@[<h2>@ %s@]" to_call);
