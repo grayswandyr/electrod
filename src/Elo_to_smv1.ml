@@ -113,22 +113,27 @@ let transfo = Transfo.make "to_smv1" run
 
 let%expect_test _ =
   let open SMV_LTL in
-  let test_formula =
+  let f_test_formula, trans_test_formula =
     let a = auxiliary @@ Symbol.make "a" in
+    let f_a = eventually a in
     let c = auxiliary @@ Symbol.make "c" in
     let f1 = ifthenelse_arith (next c) (num 4 0) (num 4 1) in
-    let f2 = eventually @@ next @@ comp eq f1 (num 4 1) in
+    let f2 = next @@ comp eq f1 (num 4 1) in
+    let f_f2 = eventually f2 in
     let f3 = ifthenelse_arith f2 (num 4 2) (num 4 3) in
-    let g = ifthenelse_arith (eventually a) (num 4 4) (num 4 5) in
-    comp eq f3 g
+    let f_f3 = ifthenelse_arith f_f2 (num 4 2) (num 4 3) in
+    let g = ifthenelse_arith a (num 4 4) (num 4 5) in
+    let f_g = ifthenelse_arith f_a (num 4 4) (num 4 5) in
+    (always @@ comp eq f_f3 f_g, comp eq f3 g)
   in
-  pp Fmt.stdout 2 test_formula;
+  pp Fmt.stdout 2 f_test_formula;
   [%expect
     {|
-    (((F (X (((X c)) ? (0sd2_0) : (0sd2_1)) = 0sd2_1))) ? (0sd2_2) : (0sd2_3)) =
-      (((F a)) ? (0sd2_4) : (0sd2_5)) |}];
+    (G (((F (X (((X c)) ? (0sd2_0) : (0sd2_1)) = 0sd2_1))) ? (0sd2_2) : (0sd2_3))
+       = (((F a)) ? (0sd2_4) : (0sd2_5))
+    ) |}];
   Fmt.(pf stdout) "LTLSPEC@\n";
-  stratify ~smv_section:`Ltlspec (always @@ test_formula)
+  stratify ~smv_section:`Ltlspec f_test_formula
   |> List.iter (fun f ->
          pp Fmt.stdout 2 f;
          Fmtc.(hardline stdout ()));
@@ -139,15 +144,19 @@ let%expect_test _ =
     (G (__aux2 <-> (X c)))
     (G (__aux1 <-> (F (X ((__aux2) ? (0sd2_0) : (0sd2_1)) = 0sd2_1))))
     (G ((__aux1) ? (0sd2_2) : (0sd2_3)) = ((__aux0) ? (0sd2_4) : (0sd2_5))) |}];
+  pp Fmt.stdout 2 trans_test_formula;
+  [%expect
+    {|
+    (((X (((X c)) ? (0sd2_0) : (0sd2_1)) = 0sd2_1)) ? (0sd2_2) : (0sd2_3)) =
+      ((a) ? (0sd2_4) : (0sd2_5)) |}];
   Fmt.(pf stdout) "TRANS@\n";
-  stratify ~smv_section:`Trans test_formula
+  stratify ~smv_section:`Trans trans_test_formula
   |> List.iter (fun f ->
          pp Fmt.stdout 2 f;
          Fmtc.(hardline stdout ()));
   [%expect
     {|
       TRANS
-      (__aux3 <-> (F a))
-      (__aux5 <-> (X c))
-      (__aux4 <-> (F (X ((__aux5) ? (0sd2_0) : (0sd2_1)) = 0sd2_1)))
-      ((__aux4) ? (0sd2_2) : (0sd2_3)) = ((__aux3) ? (0sd2_4) : (0sd2_5)) |}]
+      (__aux4 <-> (X c))
+      (__aux3 <-> (X ((__aux4) ? (0sd2_0) : (0sd2_1)) = 0sd2_1))
+      ((__aux3) ? (0sd2_2) : (0sd2_3)) = ((a) ? (0sd2_4) : (0sd2_5)) |}]
