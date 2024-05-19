@@ -60,6 +60,7 @@ module type LTL = sig
     | True
     | False
     | Atomic of Atomic.t
+    | Auxiliary of Symbol.t
     | Not of t
     | And of t * t
     | Or of t * t
@@ -89,6 +90,7 @@ module type LTL = sig
   val true_ : t
   val false_ : t
   val atomic : Atomic.t -> t
+  val auxiliary : Symbol.t -> t
   val not_ : t -> t
   val and_ : t -> t Lazy.t -> t
   val or_ : t -> t Lazy.t -> t
@@ -111,6 +113,7 @@ module type LTL = sig
   val since : t -> t -> t
   val triggered : t -> t -> t
   val num : int -> int -> term
+  val binary : term -> binop -> term -> term
   val plus : term -> term -> term
   val minus : term -> term -> term
   val neg : term -> term
@@ -140,11 +143,13 @@ module type LTL = sig
     val ( @<=> ) : t -> t -> t
   end
 
+  val stratify : smv_section:[ `Ltlspec | `Trans ] -> t -> t list
   val pp : Format.formatter -> int -> t -> unit
 
   val pp_gather_variables :
     ?next_is_X:bool ->
     int ->
+    Symbol.t Iter.t ref ->
     Atomic.t Iter.t ref ->
     Format.formatter ->
     t ->
@@ -170,6 +175,7 @@ struct
     | True
     | False
     | Atomic of Atomic.t
+    | Auxiliary of Symbol.t
     | Not of t
     | And of t * t
     | Or of t * t
@@ -195,6 +201,9 @@ struct
     | AIte of t * term * term
 
   and binop = Plus | Minus | Mul | Div | Rem
+
+  (* default impl. for pp; to override later *)
+  let stratify ~smv_section:_ f = [ f ]
 
   let pp _ _ =
     (* default impl. for pp; to override later *)
@@ -222,6 +231,7 @@ struct
   let eq = Eq
   let neq = Neq
   let atomic at = Atomic at
+  let auxiliary sym = Auxiliary sym
   let true_ = True
   let false_ = False
 
@@ -309,6 +319,7 @@ struct
   (* let comp op t1 t2 = Comp (op, t1, t2) *)
 
   let num bw n = Num (wrap bw n)
+  let binary t1 op t2 = Bin (t1, op, t2)
 
   let plus t1 t2 =
     match (t1, t2) with
