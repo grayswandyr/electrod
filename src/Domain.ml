@@ -114,7 +114,10 @@ let ceil_log2 nb =
   if Int.(2 ** log < nb) then log + 1 else log
 
 let%test _ = ceil_log2 0 = 0
-let%test _ = ceil_log2 1 = 1
+let%test _ = ceil_log2 1 = 0
+let%test _ = ceil_log2 2 = 1
+let%test _ = ceil_log2 3 = 2
+let%test _ = ceil_log2 4 = 2
 let%test _ = ceil_log2 8 = 3
 let%test _ = ceil_log2 9 = 4
 
@@ -128,14 +131,14 @@ let check_int_set univ_ts ints =
     else int_size
   in
   let bitwidth = ceil_log2 size_to_consider in
-  let bitwidth_minus_1 = bitwidth - 1 in
+  let two_to_bitwidth_minus_1 = Int.(2 ** (bitwidth - 1)) in
   if
     int_size > 0
     && not
        @@ Iter.(
             for_all
               (fun nb -> Tuple_set.mem (Tuple.of_int nb) ints)
-              Int.(~-(2 ** bitwidth_minus_1) -- ((2 ** bitwidth_minus_1) - 1)))
+              Int.(~-two_to_bitwidth_minus_1 -- (two_to_bitwidth_minus_1 - 1)))
   then Msg.Fatal.incorrect_int_set (fun args -> args bitwidth ints);
   bitwidth
 
