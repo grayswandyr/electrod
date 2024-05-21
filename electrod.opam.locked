@@ -76,6 +76,7 @@ depends: [
   "ppx_derivers" {= "1.2.1"}
   "ppx_deriving" {= "5.2.1"}
   "ppx_enumerate" {= "v0.16.0"}
+  "ppx_expect" {= "v0.16.0"}
   "ppx_globalize" {= "v0.16.0"}
   "ppx_hash" {= "v0.16.0"}
   "ppx_here" {= "v0.16.0"}
