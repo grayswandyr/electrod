@@ -121,13 +121,26 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
       | Eq -> "="
       | Neq -> "!="
 
+    (* Generates an SMV signed word consisting of *length_0* 0 on the left and *bw - length_0* 0 after.*)
+    (*let generate_mask length_0 bw =
+      let beg_mask = List.init length_0 (fun _ -> 0) in
+      let end_mask = List.init (bw - length_0) (fun _ -> 1) in
+      let mask_list = List.append beg_mask end_mask in
+      let prefix =  "0sb" ^ (string_of_int bw) ^ "_" in
+      prefix ^ (List.fold_left (fun s i -> s ^ (string_of_int i) ) "" mask_list)
+    *)
+
     (* From NuXmv documentation, from high to low (excerpt, some precedences are ignored because they are not used)
 
        !
 
        - (unary minus)
 
+       * / mod
+
        + -
+
+       << >>
 
        = != < > <= >=
 
@@ -145,12 +158,15 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
        NOTE: precedences for LTL connectives are not specified, hence we force parenthesising of these.
     *)
 
-    let pp ?(next_is_X = true) variables upper out f =
+    let pp ?(next_is_X = true) bitwidth auxiliaries variables upper out f =
       let rec pp upper out f =
         assert (upper >= 0);
         match f with
         | True -> pf out "TRUE"
         | False -> pf out "FALSE"
+        | Auxiliary v ->
+            auxiliaries := Iter.cons v !auxiliaries;
+            pf out "%a" Symbol.pp v
         | Atomic at ->
             variables := Iter.cons at !variables;
             pf out "%a" pp_atomic at
@@ -161,7 +177,7 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
         | Ite (c, t, e) ->
             (* SMV's ...?...:... or case...esac expression cannot be
                  used as nuXmv does not accept these when subexpressions
-                 are temporal (seen invarious tests). So we rewrite the formula into more basic terms. *)
+                 are temporal (seen in various tests). So we rewrite the formula into more basic terms. *)
             pp upper out
             @@ I.Infix.((c @=> lazy t) +&& lazy (I.not_ c @=> lazy e))
         | Or (p, q) -> infixl ~paren:true upper 4 string pp pp out ("|", p, q)
@@ -190,48 +206,115 @@ module Make_SMV_LTL (At : Solver.ATOMIC_PROPOSITION) :
         | H p -> prefix ~paren:true upper upper string pp out ("H ", p)
       and pp_term upper out (t : term) =
         match t with
-        | Num n -> pf out "%d" n
-        | Plus (t1, t2) ->
+        | Num n ->
+            if n < 0 then pf out "-0sd%d_%d" bitwidth (-n)
+            else pf out "0sd%d_%d" bitwidth n
+        | Bin (t1, Plus, t2) ->
             infixl ~paren:true upper 7 string pp_term pp_term out ("+", t1, t2)
-        | Minus (t1, t2) ->
+        | Bin (t1, Minus, t2) ->
             infixl ~paren:true upper 7 string pp_term pp_term out ("-", t1, t2)
-        | Neg t -> prefix upper 8 string pp_term out ("- ", t)
-        | Count ts ->
-            styled `Bold string out "count";
-            pf out "@[(%a@])" (list ~sep:(const string ", ") (pp 0)) ts
+        | Bin (t1, Mul, t2) ->
+            infixl ~paren:true upper 8 string pp_term pp_term out ("*", t1, t2)
+        | Bin (t1, Div, t2) ->
+            infixl ~paren:true upper 8 string pp_term pp_term out ("/", t1, t2)
+        | Bin (t1, Rem, t2) ->
+            infixl ~paren:true upper 8 string pp_term pp_term out ("mod", t1, t2)
+        | Neg t -> prefix upper 9 string pp_term out ("- ", t)
+        | AIte (c, t, e) ->
+            pf out "@[((%a) ?@ (%a) :@ (%a)@])" (pp 0) c (pp_term 0) t
+              (pp_term 0) e
       in
       pp upper out f
   end
 
-  let pp_gather_variables ?(next_is_X = true) variables out f =
-    Fmtc.pf out "@[<hov2>%a@]" (PP.pp ~next_is_X variables 0) f
+  let pp_gather_variables ?(next_is_X = true) bitwidth auxiliaries variables out
+      f =
+    Fmtc.pf out "@[<hov2>%a@]"
+      (PP.pp ~next_is_X bitwidth auxiliaries variables 0)
+      f
 
-  let pp out f = pp_gather_variables (ref Iter.empty) out f
+  let pp out bitwidth f =
+    pp_gather_variables bitwidth (ref Iter.empty) (ref Iter.empty) out f
 
-  (* let () =  *)
-  (*   begin *)
-  (*     let p = atomic @@ make_atomic (Name.name "P") (Tuple.of_list1 [Atom.atom "p"]) in *)
-  (*     let q = atomic @@ make_atomic (Name.name "Q") (Tuple.of_list1 [Atom.atom "q"]) in *)
-  (*     let r = atomic @@ make_atomic (Name.name "R") (Tuple.of_list1 [Atom.atom "r"]) in *)
-  (*     let s = atomic @@ make_atomic (Name.name "S") (Tuple.of_list1 [Atom.atom "s"]) in *)
-  (*     let f1 = and_ (and_ p @@ lazy q) (lazy r) in *)
-  (*     let f2 = implies (and_ p @@ lazy q) (lazy r) in *)
-  (*     let f3 = implies r (lazy (and_ p @@ lazy q)) in *)
-  (*     let f4 = implies (and_ p @@ lazy q) (lazy (and_ r (lazy s))) in *)
-  (*     let f5 = and_ (implies p @@ lazy q) (lazy (implies r @@ lazy s)) in *)
-  (*     let f6 = implies p (lazy (and_ (implies q @@ lazy r) (lazy (implies r @@ lazy s)))) in *)
-  (*     let f7 = implies p (lazy (and_ (implies (and_ q (lazy p)) @@ lazy r) (lazy (implies r @@ lazy s)))) in *)
-  (*     Fmt.epr "TEST PP@\n"; *)
-  (*     Fmt.epr "and_ (and_ p @@ lazy q) (lazy r) -->@  %a@\n" pp f1; *)
-  (*     Fmt.epr "implies (and_ p @@ lazy q) (lazy r) -->@  %a@\n" pp f2; *)
-  (*     Fmt.epr "implies r (lazy (and_ p @@ lazy q)) -->@  %a@\n" pp f3; *)
-  (*     Fmt.epr "implies (and_ p @@ lazy q) (lazy (and_ r (lazy s))) -->@  %a@\n" pp f4; *)
-  (*     Fmt.epr "and_ (implies_ p @@ lazy q) (implies_ r @@ lazy s) -->@  %a@\n" pp f5; *)
-  (*     Fmt.epr "implies p (lazy (and_ (implies q @@ lazy r) (lazy (implies r @@ lazy s)))) -->@  %a@\n" pp f6; *)
-  (*     Fmt.epr "implies p (lazy (and_ (implies (and_ q (lazy p)) @@ lazy r) (lazy (implies r @@ lazy s)))) -->@  %a@\n" pp f7; *)
+  (* The syntax of SMV forbids temporal connectives in "basic expressions" (other logical connectives are not a problem). On the other hand, Alloy/Electrod allows any combination of terms and formulas. The following function converts such an arbitrary formula into a "stratified" one, that is one where no temporal connective occurs inside a basic term or formula. This is done by replacing any temporal subformula with a fresh variable the value of which is made equivalent to the original subformula. E.g. G ((F (X c)) ? 0 : 1) = 1) is replaced by G((__fxc ? 0 : 1) = 1) & G(__fxc <-> F (X c)). The function works top-down: it loops along formulas and terms and, each time it meets a temporal subformula in a term, it replaces it with a fresh variable and adds the subformula to an accumulated list of subformulas to handle next (as there may be several sibling temporal subformulas, we need a list). Once the list is empty, we're done and we return of all the created formulas (which were also accumulated in another `res` list). The created formulas are NOT prefixed with `always` because the stratification function can be called in the context of TRANS or LTLSPEC. In the latter case, the returned formulas must be prepended a `G`, but in the former, the formula should be put in a TRANS. *)
 
-  (*     flush_all () *)
-  (*   end *)
+  let make_auxiliary =
+    let r = ref ~-1 in
+    fun () ->
+      incr r;
+      (* the double underscore ensures that these variables won't be displayed in the resulting counter-example yielded by SMV *)
+      auxiliary @@ Symbol.make Printf.(sprintf "__aux%d" !r)
+
+  let stratify ~(smv_section : [ `Trans | `Ltlspec ]) (fml : t) : t list =
+    let to_process = ref [ fml ] in
+    let rec loop res =
+      match !to_process with
+      | [] -> res
+      | f :: tl ->
+          to_process := tl;
+          let f' = loop_fml ~in_a_term:false f in
+          (* CAUTION: the first input formula is expected (at the end of this function) to appear (possibly modified) as the last in `res`. *)
+          loop (f' :: res)
+    and loop_fml ~in_a_term (f : t) : t =
+      match f with
+      | X _ | F _ | G _ | Y _ | O _ | H _
+      | U (_, _)
+      | R (_, _)
+      | S (_, _)
+      | T (_, _)
+        when in_a_term ->
+          let v = make_auxiliary () in
+          to_process := iff v f :: !to_process;
+          v
+      | True | False | Atomic _ | Auxiliary _ -> f
+      | Not f1 -> not_ (loop_fml ~in_a_term f1)
+      | And (f1, f2) ->
+          let f2' = loop_fml ~in_a_term f2 in
+          and_ (loop_fml ~in_a_term f1) (lazy f2')
+      | Or (f1, f2) ->
+          let f2' = loop_fml ~in_a_term f2 in
+          or_ (loop_fml ~in_a_term f1) (lazy f2')
+      | Imp (f1, f2) ->
+          let f2' = loop_fml ~in_a_term f2 in
+          implies (loop_fml ~in_a_term f1) (lazy f2')
+      | Iff (f1, f2) -> iff (loop_fml ~in_a_term f1) (loop_fml ~in_a_term f2)
+      | Xor (f1, f2) -> xor (loop_fml ~in_a_term f1) (loop_fml ~in_a_term f2)
+      | Ite (fc, ft, fe) ->
+          ifthenelse (loop_fml ~in_a_term fc) (loop_fml ~in_a_term ft)
+            (loop_fml ~in_a_term fe)
+      | Comp (op, t1, t2) -> comp op (loop_term t1) (loop_term t2)
+      | X f1 -> next (loop_fml ~in_a_term f1)
+      | F f1 -> eventually (loop_fml ~in_a_term f1)
+      | G f1 -> always (loop_fml ~in_a_term f1)
+      | Y f1 -> yesterday (loop_fml ~in_a_term f1)
+      | O f1 -> once (loop_fml ~in_a_term f1)
+      | H f1 -> historically (loop_fml ~in_a_term f1)
+      | U (f1, f2) -> until (loop_fml ~in_a_term f1) (loop_fml ~in_a_term f2)
+      | R (f1, f2) -> releases (loop_fml ~in_a_term f1) (loop_fml ~in_a_term f2)
+      | S (f1, f2) -> since (loop_fml ~in_a_term f1) (loop_fml ~in_a_term f2)
+      | T (f1, f2) ->
+          triggered (loop_fml ~in_a_term f1) (loop_fml ~in_a_term f2)
+    and loop_term (t : term) =
+      match t with
+      | Num _ -> t
+      | Neg t1 -> neg (loop_term t1)
+      | Bin (t1, op, t2) -> binary (loop_term t1) op (loop_term t2)
+      | AIte (fc, tt, te) ->
+          ifthenelse_arith
+            (loop_fml ~in_a_term:true fc)
+            (loop_term tt) (loop_term te)
+    in
+    let formulas = loop [] in
+    match smv_section with
+    | `Trans -> formulas
+    | `Ltlspec ->
+        (* As explained above, we rely on the fact that the original input formula is the last in the `formulas` list. In case of an LTLSPEC, we must preprend all created formulas, EXCEPT this one, with a `G`. *)
+        let rec prepend_always_but_last = function
+          | [] -> []
+          | [ f ] -> [ f ]
+          | f :: fs -> always f :: prepend_always_but_last fs
+        in
+        prepend_always_but_last formulas
 end
 
 module Make_SMV_file_format (Ltl : Solver.LTL) :
@@ -352,46 +435,63 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     let module S = Iter in
     (* to gather the variables along printing in the buffer *)
     let variables = ref S.empty in
+    (* needed but unused until LTLSPEC *)
+    let auxiliaries = ref S.empty in
     let old_margin = Format.pp_get_margin out () in
+    let bitwidth = Domain.bitwidth elo.Elo.domain in
     Format.pp_set_margin out margin;
     pf out
       "-- Generated by electrod (C) ONERA 2016-2024@\n\
        MODULE main@\n\
-       JUSTICE TRUE;@\n\
-       @\n";
+       JUSTICE TRUE;@\n";
     (* INIT *)
     Format.pp_open_vbox out 0;
     S.iter
       (fun (elo_str, fml) ->
-        pf out "%s@\nINIT@\n@[<hv2>%a@];@\n@\n" elo_str
-          (Ltl.pp_gather_variables variables)
-          fml)
+        match fml with
+        | Ltl.True -> ()
+        | _ ->
+            pf out "%s@\nINIT@\n@[<hv2>%a@];@\n@\n" elo_str
+              (Ltl.pp_gather_variables bitwidth auxiliaries variables)
+              fml)
       init;
     Format.pp_close_box out ();
     (* INVAR *)
     Format.pp_open_vbox out 0;
     S.iter
       (fun (elo_str, fml) ->
-        pf out "%s@\nINVAR@\n@[<hv2>%a@];@\n@\n" elo_str
-          (Ltl.pp_gather_variables variables)
-          fml)
+        match fml with
+        | Ltl.True -> ()
+        | _ ->
+            pf out "%s@\nINVAR@\n@[<hv2>%a@];@\n@\n" elo_str
+              (Ltl.pp_gather_variables bitwidth auxiliaries variables)
+              fml)
       invariant;
     Format.pp_close_box out ();
     (* TRANS *)
     Format.pp_open_vbox out 0;
     S.iter
       (fun (elo_str, fml) ->
-        pf out "%s@\nTRANS@\n@[<hv2>%a@];@\n@\n" elo_str
-          (Ltl.pp_gather_variables ~next_is_X:false variables)
-          fml)
+        let stratified_fml = Ltl.stratify ~smv_section:`Trans fml in
+        pf out "%s@\n" elo_str;
+        stratified_fml
+        |> List.iter
+             (pf out "TRANS@\n[<hv2>%a@];@\n@\n"
+                (Ltl.pp_gather_variables ~next_is_X:false bitwidth auxiliaries
+                   variables)))
       trans;
     Format.pp_close_box out ();
-    (* SPEC *)
+    (* LTLSPEC *)
     Format.pp_open_vbox out 0;
     let prop_str, ltlspec = property in
+    let stratified_ltlspec =
+      Ltl.conj @@ Ltl.stratify ~smv_section:`Ltlspec ltlspec
+    in
+    (* used only in LTLSPEC; so recreated to be safer *)
+    let auxiliaries = ref S.empty in
     pf out "%s@\nLTLSPEC@\n@[<hv2>%a@];@\n@\n" prop_str
-      (Ltl.pp_gather_variables variables)
-      ltlspec;
+      (Ltl.pp_gather_variables bitwidth auxiliaries variables)
+      stratified_ltlspec;
     Format.pp_close_box out ();
     (* HANDLING VARIABLES *)
     (* sorting before filtering (even when sorting after again) is more
@@ -429,6 +529,9 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     S.iter (fun at -> pf out "%a@\n" (pp_plain_decl "VAR") at) f_plain;
     (* VAR / ENUM *)
     pp_enum_decl elo "VAR" out f_enum;
+    (* VAR / AUXILIARY *)
+    Iter.iter (fun at -> pf out "VAR %a : boolean;@\n" Symbol.pp at)
+    @@ Iter.sort_uniq ~cmp:Symbol.compare !auxiliaries;
     (* close printing *)
     Format.pp_print_flush out ();
     Format.pp_set_margin out old_margin;
@@ -525,6 +628,16 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
             exit 1)
       in
       let previous_handler = Sys.signal Sys.sigterm sigterm_handler in
+      (* escape shell-interpreted characters when calling n*smv *)
+      let smv =
+        String.flat_map
+          (function
+            | '\'' -> "\\'"
+            | '\"' -> "\\\""
+            | '$' -> "\\$"
+            | c -> String.of_char c)
+          smv
+      in
       (* TODO make things s.t. it's possible to set a time-out *)
       let to_call = Fmt.str "%s -source %s %s" cmd scr smv in
       Logs.info (fun m -> m "Starting analysis:@[<h2>@ %s@]" to_call);

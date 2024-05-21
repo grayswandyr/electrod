@@ -57,6 +57,7 @@ module type LTL = sig
     | True
     | False
     | Atomic of Atomic.t
+    | Auxiliary of Symbol.t (* auxiliary var. not coming from the translation *)
     | Not of t
     | And of t * t
     | Or of t * t
@@ -77,14 +78,16 @@ module type LTL = sig
 
   and term = private
     | Num of int
-    | Plus of term * term
-    | Minus of term * term
     | Neg of term
-    | Count of t list
+    | Bin of term * binop * term
+    | AIte of t * term * term
+
+  and binop = Plus | Minus | Mul | Div | Rem
 
   val true_ : t
   val false_ : t
   val atomic : Atomic.t -> t
+  val auxiliary : Symbol.t -> t
   val not_ : t -> t
   val and_ : t -> t Lazy.t -> t
   val or_ : t -> t Lazy.t -> t
@@ -106,11 +109,15 @@ module type LTL = sig
   val releases : t -> t -> t
   val since : t -> t -> t
   val triggered : t -> t -> t
-  val num : int -> term
+  val num : int -> int -> term
+  val binary : term -> binop -> term -> term
   val plus : term -> term -> term
   val minus : term -> term -> term
   val neg : term -> term
-  val count : t list -> term
+  val mul : term -> term -> term
+  val div : term -> term -> term
+  val rem : term -> term -> term
+  val ifthenelse_arith : t -> term -> term -> term
   val comp : tcomp -> term -> term -> t
   val lt : tcomp
   val lte : tcomp
@@ -133,10 +140,17 @@ module type LTL = sig
     val ( @<=> ) : t -> t -> t
   end
 
-  val pp : Format.formatter -> t -> unit
+  val stratify : smv_section:[ `Ltlspec | `Trans ] -> t -> t list
+  val pp : Format.formatter -> int -> t -> unit
 
   val pp_gather_variables :
-    ?next_is_X:bool -> Atomic.t Iter.t ref -> Format.formatter -> t -> unit
+    ?next_is_X:bool ->
+    int ->
+    Symbol.t Iter.t ref ->
+    Atomic.t Iter.t ref ->
+    Format.formatter ->
+    t ->
+    unit
 end
 
 (** Builds an LTL implementation out of an implementation of atomicic

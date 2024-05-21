@@ -43,7 +43,7 @@ let exp_no_arity = G.exp (Some 0)
 %token INTER OVERRIDE LPROJ RPROJ MINUS DOT PRIME
 %token THEN NOT_IN RUN EXPECT SAT UNSAT
 // for integer expressions
-%token NEG ADD SUB HASH //INT
+%token UMINUS ADD SUB MUL DIV REM LSHIFT SERSHIFT ZERSHIFT HASH SMALLINT BIGINT SUM IIMPLIES IELSE
 
 
 %token SYM INST
@@ -66,9 +66,11 @@ let exp_no_arity = G.exp (Some 0)
 %right IMPLIES ELSE
 %left AND
 %nonassoc RELEASES SINCE UNTIL TRIGGERED
-%nonassoc NOT AFTER ALWAYS EVENTUALLY BEFORE HISTORICALLY ONCE
-%nonassoc /*LT LTE GT GTE*/ EQ NEQ IN NOT_IN
+%nonassoc AFTER ALWAYS EVENTUALLY BEFORE HISTORICALLY ONCE
+%nonassoc LT LTE GT GTE EQ NEQ IN NOT_IN
+%nonassoc NOT
 //%nonassoc NO SOME LONE ONE      (* for formulas as 'some E' (= E != none) *)
+%right IIMPLIES IELSE
 %left MINUS PLUS
 %nonassoc HASH
 %left OVERRIDE
@@ -391,9 +393,9 @@ expr:
 	{ exp_no_arity (Location.from_positions $startpos $endpos)
     @@ G.iden }
 
-/*	| INT
+	| BIGINT e = brackets(iexpr)
 	{ exp_no_arity (Location.from_positions $startpos $endpos)
-    @@ G.int }*/
+    @@ G.big_int e }
 
   | id = PLAIN_ID
 	{ exp_no_arity (Location.from_positions $startpos $endpos)
@@ -494,26 +496,43 @@ iexpr:
   | HASH e = expr
   { G.iexp (Location.from_positions $startpos $endpos)
     @@ G.card e  }
-  | NEG e = brackets(iexpr)
+| formula IIMPLIES iexpr IELSE iexpr { G.iexp (Location.from_positions $startpos $endpos)
+    @@ G.num 0 }
+  | SMALLINT e = brackets(expr)
+	{ G.iexp (Location.from_positions $startpos $endpos)
+	@@ G.small_int e }
+  | UMINUS e = brackets(iexpr)
   { G.iexp (Location.from_positions $startpos $endpos)
     @@ G.(iunary neg e) }
-  | ADD e = brackets(two_iexprs)
-      {
-        let (e1, e2) = e in
-        G.iexp (Location.from_positions $startpos $endpos)
-    @@ G.(ibinary e1 add e2)  }
-  | SUB e = brackets(two_iexprs)
-  {
-    let (e1, e2) = e in
-    G.iexp (Location.from_positions $startpos $endpos)
-    @@ G.(ibinary e1 sub e2)  }
+  | op = arith_op LBRACKET e1 = iexpr COMMA e2 = iexpr RBRACKET
+  { G.iexp (Location.from_positions $startpos $endpos)
+    @@ G.(ibinary e1 op e2) }
 
 	| e = parens(iexpr)
 	        { e }
 
-%inline two_iexprs:
-  e1 = iexpr COMMA e2 = iexpr
-  { (e1, e2) }
+  | SUM bs = comma_sep1(sum_decl) e = braces(iexpr)
+	{ G.iexp (Location.from_positions $startpos $endpos)
+	@@ G.sum bs e }
+
+  | SUM bs = comma_sep1(sum_decl) BAR  e = iexpr
+	{ G.iexp (Location.from_positions $startpos $endpos)
+	@@ G.sum bs e }
+
+
+%inline sum_decl: 
+	id = PLAIN_ID COLON e = expr
+	{ (Raw_ident.ident id $startpos(id) $endpos(id), e) }
+
+arith_op:
+  | ADD { G.add }
+  | SUB { G.sub }
+  | MUL { G.mul }
+  | DIV { G.div }
+  | REM { G.rem }
+  | LSHIFT { G.lshift }
+  | SERSHIFT { G.sershift }
+  | ZERSHIFT { G.zershift }
 
 icomp_op:
   | LT

@@ -79,7 +79,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
   ensure_session_leader ();
   Msg.debug (fun m -> m "CWD = %s" (Sys.getcwd ()));
   Msg.debug (fun m -> m "PATH = %s" (Sys.getenv "PATH"));
-  Logs.info (fun m -> m "Processing file: %s" file);
+  Logs.app (fun m -> m "Processing file: %s" file);
   (* begin work *)
   try
     let raw_to_ast_t = Transfo.tlist [ Raw_to_ast.transfo ] in

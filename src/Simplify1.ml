@@ -24,8 +24,8 @@ module L = Location
 let fresh_var base exp = Var.fresh ~loc:exp.exp_loc base
 
 (* from the var list [x1, x2, ...]
-   create [x1', x2', ...] and the assoc list [(x1, x1'), (x2, x2') ...]
-   and the formula x1!=x1' or x2!=x2' or ... *)
+   creates [x1', x2', ...] and the assoc list [(x1, x1'), (x2, x2') ...]
+   and the formula [x1=x1' /\ x2=x2' /\ ...] *)
 let create_new_vars_and_assoc_list_and_comp_fml vs ar =
   List.fold_right
     (fun (Ast.BVar var) (new_vars, assoc, prim_fml) ->
@@ -52,9 +52,9 @@ class simplify =
     method visit_'v () = Fun.id
     method visit_'i _ = Fun.id
 
+    (*re-write one x1,y1:r1, x2,y2:r2 | phi (+ possible disjs) into
+      some x1,y1:r1, x2,y2:r2 | (phi and all x1',x2':r1, x2',y2';r2 | phi[x1'/x1...] => (x1=x1' && x2=2' ...))*)
     method visit_Quant_One env __q sim_bindings blk =
-      (*re-write one x1,y1:r1, x2,y2:r2 | phi into
-        some x1,y1:r1, x2,y2:r2 | (phi and all x1',x2':r1, x2',y2';r2 | ...)*)
       let new_sim_bindings, assoc_new_vars, cmp_fml =
         List.fold_right
           (fun (disj, vars, e) (sim_bindings, acc_assoc, acc_fml) ->
@@ -66,29 +66,26 @@ class simplify =
               lbinary (fml L.dummy prim_fml) and_ (fml L.dummy acc_fml) ))
           sim_bindings ([], [], true_)
       in
-      (* subst_blk = phi [x1'\x1, x2'\x2, ...] *)
+      (* subst_blk = phi [x1'/x1, x2'/x2, ...] *)
       let subst_blk = Ast.substitute#visit_block assoc_new_vars blk in
-      (* conversion of the block in a formula *)
+      (* conversion of the block in a single formula *)
       let fml_subst_blk =
         List.fold_right
           (fun curfml acc_fml -> fml L.dummy @@ lbinary curfml and_ acc_fml)
           subst_blk (fml L.dummy true_)
       in
-      let temp_forall_fml =
+      let lone_part =
         quant all new_sim_bindings
           [ fml L.dummy @@ lbinary fml_subst_blk impl (fml L.dummy cmp_fml) ]
       in
-      let temporary_fml =
+      let res =
         quant some sim_bindings
           [
             fml L.dummy
-            @@ lbinary
-                 (fml L.dummy (block blk))
-                 and_
-                 (fml L.dummy temp_forall_fml);
+            @@ lbinary (fml L.dummy (block blk)) and_ (fml L.dummy lone_part);
           ]
       in
-      self#visit_prim_fml env temporary_fml
+      self#visit_prim_fml env res
 
     (* translate lone x:t|phi into one x:t|phi or no x:t|phi *)
     method visit_Quant_Lone env __q sim_bindings blk =
@@ -123,6 +120,19 @@ class simplify =
           Msg.debug (fun m ->
               m "Simplify1.visit_Quant --> %a" Ast.pp_prim_fml res);
           res
+
+    (* split sum into many sums *)
+    method! visit_Sum env bindings ie =
+      Msg.debug (fun m ->
+          m "Simplify1.visit_Sum <-- %a" Ast.pp_prim_iexp @@ sum bindings ie);
+      match bindings with
+      | [] -> assert false
+      | [ (v, e) ] ->
+          let ie' = self#visit_iexp env ie in
+          sum [ (v, self#visit_exp env e) ] ie'
+      | (v, e) :: bs ->
+          let e' = self#visit_exp env e in
+          sum [ (v, e') ] @@ iexp e.exp_loc @@ self#visit_Sum env bs ie
 
     (* substitute let bindings *)
     method! visit_Let env bindings fmls =

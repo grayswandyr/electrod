@@ -40,7 +40,11 @@ struct
         (fun (name1, tuple1) (name2, tuple2) (fml_acc : Ltl.t) ->
           (*We assume that a symmetry is well-formed: each pair of
                name and tuple (name, tuple) share the same name *)
-          if not (Name.equal name1 name2) then assert false
+          if not (Name.equal name1 name2) then
+            failwith
+              Format.(
+                sprintf "Badly-formed symmetry: %a != %a" Name.pp name1 Name.pp
+                  name2)
           else
             let at1 = Ltl.Atomic.make elo.domain name1 tuple1 in
             let at_fml1 = atomic at1 in

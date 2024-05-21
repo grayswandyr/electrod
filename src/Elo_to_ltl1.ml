@@ -17,7 +17,7 @@
 
 open Containers
 open Exp_bounds
-module G = Elo
+module E = Elo
 module TS = Tuple_set
 
 type stack = Tuple.t list
@@ -41,7 +41,7 @@ module Make (Ltl : Solver.LTL) = struct
 
   type atomic = Ltl.Atomic.t
   type ltl = Ltl.t
-  type goal = G.t
+  type goal = E.t
 
   (***************************************************************** 
    * Semantic function
@@ -118,43 +118,43 @@ module Make (Ltl : Solver.LTL) = struct
   (* computes the transitive closure of the term acc_term by k iterative
      squares (t+t.t)+(t+t.t)(t+t.t) + ... *)
 
-  let rec iter_squares (acc_term : G.exp) k =
+  let rec iter_squares (acc_term : E.exp) k =
     match k with
-    | 0 -> G.none
+    | 0 -> E.none
     | 1 -> acc_term
     | _ ->
-        let ar = G.arity acc_term in
+        let ar = E.arity acc_term in
         let new_exp =
-          G.(rbinary ~ar acc_term union @@ rbinary ~ar acc_term join acc_term)
+          E.(rbinary ~ar acc_term union @@ rbinary ~ar acc_term join acc_term)
         in
         iter_squares new_exp (max (k lsr 1) ((k + 1) lsr 1))
 
   (* computes the transitive closure of the term t by k joins
      (alternative to iter_squares) t + t.t + t.t.t + ... *)
 
-  (* let iter_tc (t : G.exp) k =
-     if k = 0 then G.none
+  (* let iter_tc (t : E.exp) k =
+     if k = 0 then E.none
      else
-     let ar = G.arity t in
+     let ar = E.arity t in
      let t_to_the_k = ref t in
      let tc = ref t in
      for _ = 2 to k do
-     t_to_the_k := G.(rbinary ~ar !t_to_the_k join t);
-     tc := G.(rbinary ~ar !tc union !t_to_the_k);
+     t_to_the_k := E.(rbinary ~ar !t_to_the_k join t);
+     tc := E.(rbinary ~ar !tc union !t_to_the_k);
      done;
      !tc *)
 
   (* computes the transitive closure of the term t by t.(iden + t).(iden.t^2).(iden+(t^2)^2)... *)
 
-  (* let ioannidis_tc (t : G.exp) k =
-     let ar = G.arity t in
+  (* let ioannidis_tc (t : E.exp) k =
+     let ar = E.arity t in
      let prev_t = ref t in
-     let term = ref G.(rbinary ~ar t join (rbinary ~ar iden union t)) in
+     let term = ref E.(rbinary ~ar t join (rbinary ~ar iden union t)) in
      let i = ref 1 in (* 0 for (iden + t) *)
      let max_pow = ref 2 in (* 1 for t^1 + 1 for first 't.'*)
      while !max_pow <= k do
-     prev_t := G.(rbinary ~ar !prev_t join !prev_t);
-     term := G.(rbinary ~ar !term join (rbinary ~ar iden union !prev_t));
+     prev_t := E.(rbinary ~ar !prev_t join !prev_t);
+     term := E.(rbinary ~ar !term join (rbinary ~ar iden union !prev_t));
      i := 2 * !i;
      max_pow := !max_pow + !i
      done;
@@ -179,27 +179,89 @@ module Make (Ltl : Solver.LTL) = struct
         | None -> pairs)
       empty r_sup_seq
 
+  (* Produces the integer term corresponding to [SUM_(t \in on) f(t)]  *)
+  let summation ~bw ~(on : TS.t) (f : Tuple.t -> term) : term =
+    on |> TS.to_iter |> Iter.fold (fun t1 t2 -> plus t1 (f t2)) (num bw 0)
+
+  module TupleHashtbl = CCHashtbl.Make (Tuple)
+
+  let int_tuples_as_ints int_set : int TupleHashtbl.t =
+    (* converts the set of ints into a hashtable where the key is a 1-tuple containing an int and the data is the corresponding int*)
+    int_set |> Tuple_set.to_iter
+    |> Iter.map (fun t ->
+           (t, t |> Tuple.to_list |> List.hd |> Atom.to_string |> int_of_string))
+    |> TupleHashtbl.of_iter
+
+  let convert_triple bitwidth tuple =
+    let int_list =
+      tuple |> Tuple.to_1tuples
+      |> List.map Fun.(Tuple.to_string %> int_of_string %> num bitwidth)
+    in
+    match int_list with [ a; b; c ] -> (a, b, c) | _ -> assert false
+
+  (* converts a 3-column relation (for shifts) into a list Ltl-term triples with the correct bitwidth *)
+  let convert_relation_to_int_triples bitwidth triples =
+    match triples with
+    | None -> []
+    | Some ts -> ts |> Tuple_set.to_list |> List.map (convert_triple bitwidth)
+
+  let rec create_shift_formula l r triples =
+    match triples with
+    | [] -> failwith "create_shift_formula: the shift relation is empty"
+    | [ (_, _, sh) ] -> sh
+    | (a, b, sh) :: tl ->
+        ifthenelse_arith
+          (and_ (comp eq l a) @@ lazy (comp eq r b))
+          sh
+          (create_shift_formula l r tl)
+
   class environment (elo : Elo.t) =
     (* Atomic.make is a cached function for its last two arguments (out of 3), so we compute it for its first argument to avoid unnecessary recomputations *)
-    let make_atom_aux = Atomic.make elo.Elo.domain in
+    let computed_bitwidth = Domain.bitwidth elo.domain in
+    let make_atom_aux = Atomic.make elo.domain in
+    let int_set = Domain.ints elo.domain in
+    let int_of_tuple =
+      let tbl = int_tuples_as_ints int_set in
+      fun t -> TupleHashtbl.find_opt tbl t
+    in
     object (_ : 'self)
       val bounds_exp_aux = Exp_bounds.make_bounds_exp elo.Elo.domain
+      val bitwidth = computed_bitwidth
 
-      method must_may_sup (subst : stack) (exp : G.exp) =
+      val shl_term_triples =
+        convert_relation_to_int_triples computed_bitwidth
+          (Domain.shl elo.domain)
+
+      val shr_term_triples =
+        convert_relation_to_int_triples computed_bitwidth
+          (Domain.shr elo.domain)
+
+      val sha_term_triples =
+        convert_relation_to_int_triples computed_bitwidth
+          (Domain.sha elo.domain)
+
+      method must_may_sup (subst : stack) (exp : E.exp) =
         bounds_exp_aux (exp, subst)
 
       method relation_arity name =
-        match Domain.get name elo.Elo.domain with
+        match Domain.get name elo.domain with
         | None -> assert false
         | Some rel -> Relation.arity rel
 
       method make_atom (name : Name.t) (t : Tuple.t) =
-        assert (Domain.mem name elo.Elo.domain);
+        assert (Domain.mem name elo.domain);
         Ltl.atomic @@ make_atom_aux name t
 
       method is_const (name : Name.t) =
         assert (Domain.mem name elo.Elo.domain);
         Domain.get_exn name elo.Elo.domain |> Relation.is_const
+
+      method bitwidth = bitwidth
+      method int_set = int_set
+      method int_of_tuple (t : Tuple.t) = int_of_tuple t
+      method shl_list = shl_term_triples
+      method shr_list = shr_term_triples
+      method sha_list = sha_term_triples
     end
 
   class ['subst] converter (env : environment) =
@@ -209,15 +271,9 @@ module Make (Ltl : Solver.LTL) = struct
       (* a stack *)
       inherit ['self] Elo_recursor.recursor
       method build_Add (_ : stack) (a : term) (b : term) : term = plus a b
-      method build_All (_ : stack) = G.all
+      method build_All (_ : stack) = E.all
       method build_And (_ : stack) (a : ltl) (b : ltl) : ltl = and_ a (lazy b)
       method build_Block (_ : stack) = conj
-
-      method build_Card subst r r' =
-        let { must; may; _ } = env#must_may_sup subst r in
-        let must_card = num @@ TS.size must in
-        let may_card = count @@ List.map r' @@ TS.to_list may in
-        plus must_card may_card
 
       (* re-defining this method to avoid going down in the block as a
          substitution must be made first *)
@@ -238,19 +294,19 @@ module Make (Ltl : Solver.LTL) = struct
         let _visitors_r1 = [ true_ ] in
         self#build_Compr env _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
 
-      method private allocate_sbs_to_tuples (ranges : G.exp list)
+      method private allocate_sbs_to_tuples (ranges : E.exp list)
           (tuple : Tuple.t) : Tuple.t list =
         let rec walk ranges atoms =
           match ranges with
           | [] -> []
           | hd :: tl ->
-              let xs, ys = List.take_drop (G.arity hd) atoms in
+              let xs, ys = List.take_drop (E.arity hd) atoms in
               Tuple.of_list1 xs :: walk tl ys
         in
         walk ranges @@ Tuple.to_list tuple
 
       (* check if the disj's in the comprehension sim_bindings are respected *)
-      method private check_compr_disj (sbs : (bool * int * G.exp) list)
+      method private check_compr_disj (sbs : (bool * int * E.exp) list)
           (split_tuples : Tuple.t list) : bool =
         let rec walk sbs tuples =
           match sbs with
@@ -258,7 +314,7 @@ module Make (Ltl : Solver.LTL) = struct
           | (true, nbvars, _) :: tl ->
               let xs, ys = List.take_drop nbvars tuples in
               let alldiff = all_different ~eq:Tuple.equal xs in
-              Msg.info (fun m ->
+              Msg.debug (fun m ->
                   m "check_compr_disj (true, %d, _) tuples = %a alldiff = %B"
                     nbvars
                     Fmtc.(brackets @@ list ~sep:sp @@ Tuple.pp)
@@ -277,10 +333,10 @@ module Make (Ltl : Solver.LTL) = struct
          substitutions and then compute separately the semantics of every binding,
          before computing the whole resulting formula.
       *)
-      method build_Compr (subst : stack) (sbs : (bool * int * G.exp) list)
-          (body : G.fml list) __sbs' __body' tuple =
+      method build_Compr (subst : stack) (sbs : (bool * int * E.exp) list)
+          (body : E.fml list) __sbs' __body' tuple =
         let compr_ar =
-          List.fold_left (fun acc (_, n, r) -> acc + (n * G.arity r)) 0 sbs
+          List.fold_left (fun acc (_, n, r) -> acc + (n * E.arity r)) 0 sbs
         in
         let depth = List.length subst in
         if Tuple.arity tuple <> compr_ar then
@@ -288,7 +344,7 @@ module Make (Ltl : Solver.LTL) = struct
               m
                 "%s.build_Compr [[{%a@ |@ %a}]]_%a(%a): tuple arity (%d) \
                  incompatible with expression arity (%d)"
-                __MODULE__ (G.pp_sim_bindings depth) sbs (G.pp_block depth) body
+                __MODULE__ (E.pp_sim_bindings depth) sbs (E.pp_block depth) body
                 pp_subst subst Tuple.pp tuple (Tuple.arity tuple) compr_ar);
         (* the tuple is (in principle) of arity equal to the sum of arities of ranges of bound variables. To build the corresponding substitutions, we must first split this tuple into as many tuples as variables, each one with the adequate arity *)
         let ranges =
@@ -300,7 +356,7 @@ module Make (Ltl : Solver.LTL) = struct
         if self#check_compr_disj sbs split_tuples then
           (* semantics of [b] is [[ b [tuples / variables] ]] *)
           let b' =
-            self#visit_fml (List.rev split_tuples @ subst) @@ G.block body
+            self#visit_fml (List.rev split_tuples @ subst) @@ E.block body
           in
           (* every single sim_binding contains possibly many variables and they may depend over previous bindings of the same comprehension. Because of the many variables, we use [fold_flat_map] which is like a fold returning a pair of an accumulator and a list, the latter undergoing flattening *)
           let _, ranges' =
@@ -317,11 +373,9 @@ module Make (Ltl : Solver.LTL) = struct
               (split_tuples, subst) sbs
           in
           conj (b' :: ranges')
-        else (
-          Msg.debug (fun m -> m "build_Compr --> false (disj case)");
-          false_)
+        else false_
 
-      method build_Diff (_ : stack) (_ : G.exp) (_ : G.exp) e' f'
+      method build_Diff (_ : stack) (_ : E.exp) (_ : E.exp) e' f'
           (tuple : Tuple.t) =
         e' tuple +&& lazy (not_ (f' tuple))
 
@@ -355,7 +409,7 @@ module Make (Ltl : Solver.LTL) = struct
       method build_Imp (_ : stack) (a : ltl) (b : ltl) : ltl =
         implies a (lazy b)
 
-      method build_In subst r (__s : G.exp) r' s' =
+      method build_In subst r (__s : E.exp) r' s' =
         let { must; may; _ } = env#must_may_sup subst r in
         wedge ~range:(TS.to_iter must) (fun t -> lazy (s' t))
         +&& lazy
@@ -382,21 +436,21 @@ module Make (Ltl : Solver.LTL) = struct
 
       method build_Name (subst : stack) rel _ tuple =
         let { must; may; _ } =
-          env#must_may_sup subst @@ G.name ~ar:(env#relation_arity rel) rel
+          env#must_may_sup subst @@ E.name ~ar:(env#relation_arity rel) rel
         in
         if TS.mem tuple must then true_
         else if TS.mem tuple may then env#make_atom rel tuple
         else false_
 
-      method build_Neg (_ : stack) (a : term) : term = neg a
-      method build_No (_ : stack) = G.no_
+      method build_No (_ : stack) = E.no_
       method build_None_ (_ : stack) __tuple = false_
       method build_Not (_ : stack) (a : ltl) : ltl = not_ a
 
       method build_NotIn (subst : stack) r s r' s' =
         not_ @@ self#build_In subst r s r' s'
 
-      method build_Num (_ : stack) n _ = num n
+      method build_Num (_ : stack) n _ = num env#bitwidth n
+      method build_Neg (_ : stack) (a : term) : term = neg a
       method build_O (_ : stack) (a : ltl) : ltl = once a
       method build_Or (_ : stack) (a : ltl) (b : ltl) : ltl = or_ a (lazy b)
 
@@ -429,20 +483,15 @@ module Make (Ltl : Solver.LTL) = struct
         (* we need to split [tuple] so we need the arity of [r]. If the
            arity is [None] (for 'none'), then we must just return
            false. Otherwise the tuple is split. *)
-        match (G.arity r, G.arity s) with
+        match (E.arity r, E.arity s) with
         | 0, _ | _, 0 -> false_
         | ar_r, _ ->
             let t1, t2 = Tuple.split tuple ar_r in
             r' t1 +&& lazy (s' t2)
 
-      method! visit_Quant subst q sb block =
+      method! visit_Quant subst q ((disj, nbvars, range) as sb) block =
         let q' = self#visit_quant subst q in
-        let sb' =
-          (fun (disj, nbvars, range) ->
-            let range' = self#visit_'exp subst range in
-            (disj, nbvars, range'))
-            sb
-        in
+        let sb' = (disj, nbvars, self#visit_'exp subst range) in
         let range' = [ true_ ] in
         self#build_Quant subst q sb block q' sb' range'
 
@@ -467,16 +516,16 @@ module Make (Ltl : Solver.LTL) = struct
            formula. *)
         let bigop, smallop, link, pos_or_neg =
           match quant with
-          | G.All -> (wedge, and_, implies, Fun.id)
-          | G.Some_ -> (vee, or_, and_, Fun.id)
-          | G.No -> (wedge, and_, implies, not_)
+          | E.All -> (wedge, and_, implies, Fun.id)
+          | E.Some_ -> (vee, or_, and_, Fun.id)
+          | E.No -> (wedge, and_, implies, not_)
         in
         let sem_of_substituted_blk tuples =
           lazy
             (pos_or_neg
             @@ (self#visit_fml @@ List.rev tuples @ subst)
             (* [[...]] *)
-            @@ G.block blk)
+            @@ E.block blk)
         in
         let { must; may; _ } = env#must_may_sup subst s in
         let mustpart =
@@ -511,7 +560,7 @@ module Make (Ltl : Solver.LTL) = struct
 
       method build_R (_ : stack) (a : ltl) (b : ltl) : ltl = releases a b
 
-      method build_RBin (_ : stack) (a : G.exp) (_ : G.rbinop) (b : G.exp) a'
+      method build_RBin (_ : stack) (a : E.exp) (_ : E.rbinop) (b : E.exp) a'
           op' b' tuple =
         op' a b a' b' tuple
 
@@ -536,9 +585,12 @@ module Make (Ltl : Solver.LTL) = struct
                  ~range:(TS.to_iter @@ TS.diff s_bounds.may inter)
                  (fun bs -> lazy (s' bs @=> lazy (r' bs))))
 
-      method build_RIte (_ : stack) (__c : G.fml) (__t : G.exp) __e c' t' e'
+      method build_RIte (_ : stack) (__c : E.fml) (__t : E.exp) __e c' t' e'
           tuple =
         (c' @=> lazy (t' tuple)) +&& lazy (not_ c' @=> lazy (e' tuple))
+
+      method build_AIte (_ : stack) (__c : E.fml) (__t : E.iexp) __e c' t' e' =
+        ifthenelse_arith c' t' e'
 
       method build_RNEq (subst : stack) r s r' s' =
         not_ @@ self#build_REq subst r s r' s'
@@ -551,18 +603,18 @@ module Make (Ltl : Solver.LTL) = struct
         (* FIXME *)
         assert (Tuple.arity tuple = 2);
         self#visit_Iden subst tuple
-        +|| lazy (self#visit_RUn subst G.tclos r tuple)
+        +|| lazy (self#visit_RUn subst E.tclos r tuple)
 
-      method build_RUn (_ : stack) (_ : G.runop) (e : G.exp) op' e' = op' e e'
+      method build_RUn (_ : stack) (_ : E.runop) (e : E.exp) op' e' = op' e e'
       method build_S (_ : stack) (a : ltl) (b : ltl) : ltl = since a b
-      method build_Some_ (_ : stack) = G.some
+      method build_Some_ (_ : stack) = E.some
       method build_Sub (_ : stack) (a : term) (b : term) : term = minus a b
       method build_T (_ : stack) (a : ltl) (b : ltl) : ltl = triggered a b
 
       method build_TClos subst r __r' tuple =
         assert (Tuple.arity tuple = 2);
         Msg.debug (fun m ->
-            m "%s.build_TClos <-- %a" __MODULE__ G.(pp_exp (arity r)) r);
+            m "%s.build_TClos <-- %a" __MODULE__ E.(pp_exp (arity r)) r);
         let { sup; _ } = env#must_may_sup subst r in
         let k = compute_tc_length sup in
         Msg.debug (fun m -> m "TC bound: %d" k);
@@ -573,8 +625,7 @@ module Make (Ltl : Solver.LTL) = struct
         (* let tc_ioannidis = ioannidis_tc r k in
            let fml_tc_ioannidis = self#visit_exp subst tc_ioannidis tuple in *)
         let term, fml = (tc_square, fml_tc_square) in
-        Msg.debug (fun m -> m "TC term: %a" G.(pp_exp (arity term)) term);
-        Msg.debug (fun m -> m "TC formula: @[<h2> %a@]" (Fmtc.hbox2 Ltl.pp) fml);
+        Msg.debug (fun m -> m "TC term: %a" E.(pp_exp (arity term)) term);
         fml
 
       method build_Transpose (_ : stack) _ r' tuple =
@@ -584,6 +635,105 @@ module Make (Ltl : Solver.LTL) = struct
       method build_U (_ : stack) (a : ltl) (b : ltl) : ltl = until a b
       method build_Union (_ : stack) _ _ e1 e2 x = e1 x +|| lazy (e2 x)
       method build_Univ (_ : stack) __tuple = true_
+      method build_Mul (_ : stack) t1 t2 = mul t1 t2
+
+      method build_Lshift (_ : stack) t1 t2 =
+        match env#shl_list with
+        | [] -> assert false
+        | triples -> create_shift_formula t1 t2 triples
+
+      method build_Zershift (_ : stack) t1 t2 =
+        match env#shr_list with
+        | [] -> assert false
+        | triples -> create_shift_formula t1 t2 triples
+
+      method build_Sershift (_ : stack) t1 t2 =
+        match env#sha_list with
+        | [] -> assert false
+        | triples -> create_shift_formula t1 t2 triples
+
+      (* FROM Alloy util/integer:
+         *
+         * Performs the division with "round to zero" semantics, except the following 3 cases
+         * 1) if a is 0, then it returns 0
+         * 2) else if b is 0, then it returns 1 if a is negative and -1 if a is positive
+         * 3) else if a is the smallest negative integer, and b is -1, then it returns a
+      *)
+      method build_Div (_ : stack) a b =
+        let zero = num env#bitwidth 0 in
+        let one = num env#bitwidth 1 in
+        let minus_one = num env#bitwidth ~-1 in
+        let min_int = num env#bitwidth Int.(~-2 ** (env#bitwidth - 1)) in
+        let eq_ = comp eq in
+        ifthenelse_arith (eq_ a zero) zero
+        @@ ifthenelse_arith
+             (and_ (eq_ b zero) @@ lazy (comp lt a zero))
+             minus_one
+        @@ ifthenelse_arith (and_ (eq_ b zero) @@ lazy (comp gt a zero)) one
+        @@ ifthenelse_arith (and_ (eq_ a min_int) @@ lazy (eq_ b minus_one)) a
+        @@ div a b
+
+      (* like build_Div *)
+      method build_Rem (_ : stack) a b =
+        let zero = num env#bitwidth 0 in
+        let minus_one = num env#bitwidth ~-1 in
+        let min_int = num env#bitwidth Int.(~-2 ** (env#bitwidth - 1)) in
+        let eq_ = comp eq in
+        ifthenelse_arith (eq_ a zero) zero
+        @@ ifthenelse_arith (eq_ b zero) a
+        @@ ifthenelse_arith
+             (and_ (eq_ a min_int) @@ lazy (eq_ b minus_one))
+             zero
+        @@ rem a b
+
+      (* due to the presence of a bound variable, the recursion over the body  done by the visitor is "wrong"*)
+      method! visit_Sum subst _visitors_c0 _visitors_c1 =
+        let _visitors_r0 = self#visit_'exp subst _visitors_c0 in
+        (* min_int as a dummy default value to ignore later on *)
+        let _visitors_r1 = num env#bitwidth 0 in
+        self#build_Sum subst _visitors_c0 _visitors_c1 _visitors_r0 _visitors_r1
+
+      (* [| sum x : r | ie |]_sigma =
+         Sum_{t in must(r)} [|ie|]_sigma[x |-> t]
+         + Sum_{t in may(r)} ([|r|]_sigma(t) => [|ie|]_sigma[x |-> t] else 0)
+
+         (due to the presence of a bound variable, the recursion over the body  done by the visitor is "wrong" => last argument ignored)
+      *)
+      method build_Sum (subst : stack) (r : E.exp) ie _ _ =
+        let { must; may; _ } = env#must_may_sup subst r in
+        let ie' t = self#visit_iexp (t :: subst) ie in
+        let must_part = summation ~bw:env#bitwidth ~on:must ie' in
+        let may_part =
+          summation ~bw:env#bitwidth ~on:may (fun t ->
+              ifthenelse_arith (self#visit_exp subst r t) (ie' t)
+                (num env#bitwidth 0))
+        in
+        plus must_part may_part
+
+      (* [|#e|]_sigma = size(must(e)) + Sum_{t in may(e)} ([|e|]_sigma(t) => 1 else 0) *)
+      method build_Card subst r r' =
+        let { must; may; _ } = env#must_may_sup subst r in
+        let must_card = num env#bitwidth @@ TS.size must in
+        let may_part =
+          summation ~bw:env#bitwidth ~on:may (fun t ->
+              ifthenelse_arith (r' t) (num env#bitwidth 1) (num env#bitwidth 0))
+        in
+        plus must_card may_part
+
+      (* [| Int[ie] |]_s(t) = [|ie|]_s = to_int(t) if t in Int
+         [| Int[ie] |]_s(t) = false otherwise *)
+      method build_Big_int (_ : stack) (_a : E.iexp) (ie' : term) t : ltl =
+        match env#int_of_tuple t with
+        | None -> false_
+        | Some n -> comp eq ie' (num env#bitwidth n)
+
+      (* [|int[e]|] = SUM_{t \in up(Int)}([|e|](t) => extract_int(t) else 0)  *)
+      method build_Small_int _e e' =
+        summation ~bw:env#bitwidth ~on:env#int_set @@ fun int_tuple ->
+        ifthenelse_arith (e' int_tuple)
+          (num env#bitwidth @@ Option.get_exn_or __LOC__
+         @@ env#int_of_tuple int_tuple)
+          (num env#bitwidth 0)
 
       (* FIXME *)
       method build_Var (subst : stack) idx _ tuple =
@@ -607,16 +757,17 @@ module Make (Ltl : Solver.LTL) = struct
      rigid and flexible variables having appeared during the walk. *)
   let convert elo elo_fml =
     let comment = formula_as_comment elo_fml in
-    Msg.debug (fun m ->
+    (* Msg.debug (fun m ->
         m
           "----------------------------------------------------------------------\n\
            %s"
-          comment);
-    let before_conversion = Mtime_clock.now () in
+          comment); *)
+    (* let before_conversion = Mtime_clock.now () in *)
+    (* Msg.info (fun m -> m "DOMAIN@\n%a@." Domain.pp elo.Elo.domain); *)
     let env = new environment elo in
     let ltl_fml = (new converter env)#visit_fml [] elo_fml in
-    let conversion_time = Mtime.span before_conversion @@ Mtime_clock.now () in
-    Msg.debug (fun m ->
-        m "Conversion done in %a@." Mtime.Span.pp conversion_time);
+    (* let conversion_time = Mtime.span before_conversion @@ Mtime_clock.now () in *)
+    (* Msg.debug (fun m ->
+        m "Conversion done in %a@." Mtime.Span.pp conversion_time); *)
     (comment, ltl_fml)
 end

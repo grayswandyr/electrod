@@ -110,3 +110,53 @@ let run (elo, temporal_symmetry, symmetry_offset) =
   Elo_to_SMV_model.run (elo, temporal_symmetry, symmetry_offset)
 
 let transfo = Transfo.make "to_smv1" run
+
+let%expect_test _ =
+  let open SMV_LTL in
+  let f_test_formula, trans_test_formula =
+    let a = auxiliary @@ Symbol.make "a" in
+    let f_a = eventually a in
+    let c = auxiliary @@ Symbol.make "c" in
+    let f1 = ifthenelse_arith (next c) (num 4 0) (num 4 1) in
+    let f2 = next @@ comp eq f1 (num 4 1) in
+    let f_f2 = eventually f2 in
+    let f3 = ifthenelse_arith f2 (num 4 2) (num 4 3) in
+    let f_f3 = ifthenelse_arith f_f2 (num 4 2) (num 4 3) in
+    let g = ifthenelse_arith a (num 4 4) (num 4 5) in
+    let f_g = ifthenelse_arith f_a (num 4 4) (num 4 5) in
+    (always @@ comp eq f_f3 f_g, comp eq f3 g)
+  in
+  pp Fmt.stdout 2 f_test_formula;
+  [%expect
+    {|
+    (G (((F (X (((X c)) ? (0sd2_0) : (0sd2_1)) = 0sd2_1))) ? (0sd2_2) : (0sd2_3))
+       = (((F a)) ? (0sd2_4) : (0sd2_5))
+    ) |}];
+  Fmt.(pf stdout) "LTLSPEC@\n";
+  stratify ~smv_section:`Ltlspec f_test_formula
+  |> List.iter (fun f ->
+         pp Fmt.stdout 2 f;
+         Fmtc.(hardline stdout ()));
+  [%expect
+    {|
+    LTLSPEC
+    (G (__aux0 <-> (F a)))
+    (G (__aux2 <-> (X c)))
+    (G (__aux1 <-> (F (X ((__aux2) ? (0sd2_0) : (0sd2_1)) = 0sd2_1))))
+    (G ((__aux1) ? (0sd2_2) : (0sd2_3)) = ((__aux0) ? (0sd2_4) : (0sd2_5))) |}];
+  pp Fmt.stdout 2 trans_test_formula;
+  [%expect
+    {|
+    (((X (((X c)) ? (0sd2_0) : (0sd2_1)) = 0sd2_1)) ? (0sd2_2) : (0sd2_3)) =
+      ((a) ? (0sd2_4) : (0sd2_5)) |}];
+  Fmt.(pf stdout) "TRANS@\n";
+  stratify ~smv_section:`Trans trans_test_formula
+  |> List.iter (fun f ->
+         pp Fmt.stdout 2 f;
+         Fmtc.(hardline stdout ()));
+  [%expect
+    {|
+      TRANS
+      (__aux4 <-> (X c))
+      (__aux3 <-> (X ((__aux4) ? (0sd2_0) : (0sd2_1)) = 0sd2_1))
+      ((__aux3) ? (0sd2_2) : (0sd2_3)) = ((a) ? (0sd2_4) : (0sd2_5)) |}]

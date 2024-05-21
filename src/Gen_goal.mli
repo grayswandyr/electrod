@@ -57,6 +57,7 @@ and ('v, 'i) prim_exp = private
   | BoxJoin of ('v, 'i) exp * ('v, 'i) exp list
   | Compr of ('v, 'i) sim_binding list * ('v, 'i) block
   | Prime of ('v, 'i) exp
+  | Big_int of ('v, 'i) iexp
 
 and rqualify = private ROne | RLone | RSome | RNo
 and runop = private Transpose | TClos | RTClos
@@ -68,18 +69,37 @@ and ('v, 'i) prim_iexp = private
   | Card of ('v, 'i) exp
   | IUn of iunop * ('v, 'i) iexp
   | IBin of ('v, 'i) iexp * ibinop * ('v, 'i) iexp
+  | Small_int of ('v, 'i) exp
+  | Sum of ('v, 'i) binding list * ('v, 'i) iexp
+  | AIte of ('v, 'i) fml * ('v, 'i) iexp * ('v, 'i) iexp
 
 and iunop = private Neg
-and ibinop = private Add | Sub
+
+and ibinop = private
+  | Add
+  | Sub
+  | Mul
+  | Div
+  | Rem
+  | Lshift
+  | Zershift
+  | Sershift
 
 class virtual ['c] map :
   object ('c)
     constraint
     'c = < visit_'i : 'd -> 'g -> 'h
          ; visit_'v : 'd -> 'i -> 'j
+         ; visit_AIte :
+             'd ->
+             ('i, 'g) fml ->
+             ('i, 'g) iexp ->
+             ('i, 'g) iexp ->
+             ('j, 'h) prim_iexp
          ; visit_Add : 'd -> ibinop
          ; visit_All : 'd -> quant
          ; visit_And : 'd -> lbinop
+         ; visit_Big_int : 'd -> ('i, 'g) iexp -> ('j, 'h) prim_exp
          ; visit_Block : 'd -> ('i, 'g) block -> ('j, 'h) prim_fml
          ; visit_BoxJoin :
              'd -> ('i, 'g) exp -> ('i, 'g) exp list -> ('j, 'h) prim_exp
@@ -90,6 +110,7 @@ class virtual ['c] map :
              ('i, 'g) block ->
              ('j, 'h) prim_exp
          ; visit_Diff : 'd -> rbinop
+         ; visit_Div : 'd -> ibinop
          ; visit_F : 'd -> lunop
          ; visit_FIte :
              'd ->
@@ -131,8 +152,10 @@ class virtual ['c] map :
          ; visit_Let :
              'd -> ('i, 'g) binding list -> ('i, 'g) block -> ('j, 'h) prim_fml
          ; visit_Lone : 'd -> quant
+         ; visit_Lshift : 'd -> ibinop
          ; visit_Lt : 'd -> icomp_op
          ; visit_Lte : 'd -> icomp_op
+         ; visit_Mul : 'd -> ibinop
          ; visit_Neg : 'd -> iunop
          ; visit_No : 'd -> quant
          ; visit_None_ : 'd -> ('j, 'h) prim_exp
@@ -173,10 +196,15 @@ class virtual ['c] map :
          ; visit_RSome : 'd -> rqualify
          ; visit_RTClos : 'd -> runop
          ; visit_RUn : 'd -> runop -> ('i, 'g) exp -> ('j, 'h) prim_exp
-         ; visit_Run : 'd -> ('i, 'g) block * bool option -> ('j, 'h) t
+         ; visit_Rem : 'd -> ibinop
+         ; visit_Run : 'd -> ('i, 'g) block * disj option -> ('j, 'h) t
          ; visit_S : 'd -> lbinop
+         ; visit_Sershift : 'd -> ibinop
+         ; visit_Small_int : 'd -> ('i, 'g) exp -> ('j, 'h) prim_iexp
          ; visit_Some_ : 'd -> quant
          ; visit_Sub : 'd -> ibinop
+         ; visit_Sum :
+             'd -> ('i, 'g) binding list -> ('i, 'g) iexp -> ('j, 'h) prim_iexp
          ; visit_T : 'd -> lbinop
          ; visit_TClos : 'd -> runop
          ; visit_Transpose : 'd -> runop
@@ -185,6 +213,7 @@ class virtual ['c] map :
          ; visit_Union : 'd -> rbinop
          ; visit_Univ : 'd -> ('j, 'h) prim_exp
          ; visit_X : 'd -> lunop
+         ; visit_Zershift : 'd -> ibinop
          ; visit_binding : 'd -> ('i, 'g) binding -> 'j * ('j, 'h) exp
          ; visit_block : 'd -> ('i, 'g) block -> ('j, 'h) block
          ; visit_comp_op : 'd -> comp_op -> comp_op
@@ -211,9 +240,14 @@ class virtual ['c] map :
 
     method virtual visit_'i : 'd -> 'g -> 'h
     method virtual visit_'v : 'd -> 'i -> 'j
+
+    method visit_AIte :
+      'd -> ('i, 'g) fml -> ('i, 'g) iexp -> ('i, 'g) iexp -> ('j, 'h) prim_iexp
+
     method visit_Add : 'd -> ibinop
     method visit_All : 'd -> quant
     method visit_And : 'd -> lbinop
+    method visit_Big_int : 'd -> ('i, 'g) iexp -> ('j, 'h) prim_exp
     method visit_Block : 'd -> ('i, 'g) block -> ('j, 'h) prim_fml
 
     method visit_BoxJoin :
@@ -225,6 +259,7 @@ class virtual ['c] map :
       'd -> ('i, 'g) sim_binding list -> ('i, 'g) block -> ('j, 'h) prim_exp
 
     method visit_Diff : 'd -> rbinop
+    method visit_Div : 'd -> ibinop
     method visit_F : 'd -> lunop
 
     method visit_FIte :
@@ -263,8 +298,10 @@ class virtual ['c] map :
       'd -> ('i, 'g) binding list -> ('i, 'g) block -> ('j, 'h) prim_fml
 
     method visit_Lone : 'd -> quant
+    method visit_Lshift : 'd -> ibinop
     method visit_Lt : 'd -> icomp_op
     method visit_Lte : 'd -> icomp_op
+    method visit_Mul : 'd -> ibinop
     method visit_Neg : 'd -> iunop
     method visit_No : 'd -> quant
     method visit_None_ : 'd -> ('j, 'h) prim_exp
@@ -308,10 +345,17 @@ class virtual ['c] map :
     method visit_RSome : 'd -> rqualify
     method visit_RTClos : 'd -> runop
     method visit_RUn : 'd -> runop -> ('i, 'g) exp -> ('j, 'h) prim_exp
-    method visit_Run : 'd -> ('i, 'g) block * bool option -> ('j, 'h) t
+    method visit_Rem : 'd -> ibinop
+    method visit_Run : 'd -> ('i, 'g) block * disj option -> ('j, 'h) t
     method visit_S : 'd -> lbinop
+    method visit_Sershift : 'd -> ibinop
+    method visit_Small_int : 'd -> ('i, 'g) exp -> ('j, 'h) prim_iexp
     method visit_Some_ : 'd -> quant
     method visit_Sub : 'd -> ibinop
+
+    method visit_Sum :
+      'd -> ('i, 'g) binding list -> ('i, 'g) iexp -> ('j, 'h) prim_iexp
+
     method visit_T : 'd -> lbinop
     method visit_TClos : 'd -> runop
     method visit_Transpose : 'd -> runop
@@ -320,6 +364,7 @@ class virtual ['c] map :
     method visit_Union : 'd -> rbinop
     method visit_Univ : 'd -> ('j, 'h) prim_exp
     method visit_X : 'd -> lunop
+    method visit_Zershift : 'd -> ibinop
 
     method private visit_array :
       'env 'a 'b. ('env -> 'a -> 'b) -> 'env -> 'a array -> 'b array
@@ -343,7 +388,7 @@ class virtual ['c] map :
     method visit_iunop : 'd -> iunop -> iunop
 
     method private visit_lazy_t :
-      'env 'a 'b. ('env -> 'a -> 'b) -> 'env -> 'a lazy_t -> 'b lazy_t
+      'env 'a 'b. ('env -> 'a -> 'b) -> 'env -> 'a Lazy.t -> 'b Lazy.t
 
     method visit_lbinop : 'd -> lbinop -> lbinop
 
@@ -370,8 +415,8 @@ class virtual ['c] map :
       ('env -> 'a -> 'b) ->
       ('env -> 'e -> 'f) ->
       'env ->
-      ('a, 'e) result ->
-      ('b, 'f) result
+      ('a, 'e) Result.result ->
+      ('b, 'f) Result.result
 
     method visit_rqualify : 'd -> rqualify -> rqualify
     method visit_runop : 'd -> runop -> runop
@@ -387,141 +432,157 @@ class virtual ['c] map :
 class virtual ['c] fold :
   object ('c)
     constraint
-    'c = < build_Add : 'd -> 'g
-         ; build_All : 'd -> 'h
-         ; build_And : 'd -> 'i
-         ; build_Block : 'd -> 'j list -> 'k
-         ; build_BoxJoin : 'd -> 'l -> 'l list -> 'm
-         ; build_Card : 'd -> 'l -> 'n
-         ; build_Compr : 'd -> (disj * 'o list * 'l) list -> 'j list -> 'm
-         ; build_Diff : 'd -> 'p
-         ; build_F : 'd -> 'q
-         ; build_FIte : 'd -> 'j -> 'j -> 'j -> 'k
-         ; build_False : 'd -> 'k
-         ; build_G : 'd -> 'q
-         ; build_Gt : 'd -> 'r
-         ; build_Gte : 'd -> 'r
-         ; build_H : 'd -> 'q
-         ; build_IBin : 'd -> 's -> 'g -> 's -> 'n
-         ; build_IComp : 'd -> 's -> 'r -> 's -> 'k
-         ; build_IEq : 'd -> 'r
-         ; build_INEq : 'd -> 'r
-         ; build_IUn : 'd -> 't -> 's -> 'n
+    'c = < build_AIte : 'd -> 'g -> 'h -> 'h -> 'i
+         ; build_Add : 'd -> 'j
+         ; build_All : 'd -> 'k
+         ; build_And : 'd -> 'l
+         ; build_Big_int : 'd -> 'h -> 'm
+         ; build_Block : 'd -> 'g list -> 'n
+         ; build_BoxJoin : 'd -> 'o -> 'o list -> 'm
+         ; build_Card : 'd -> 'o -> 'i
+         ; build_Compr : 'd -> (disj * 'p list * 'o) list -> 'g list -> 'm
+         ; build_Diff : 'd -> 'q
+         ; build_Div : 'd -> 'j
+         ; build_F : 'd -> 'r
+         ; build_FIte : 'd -> 'g -> 'g -> 'g -> 'n
+         ; build_False : 'd -> 'n
+         ; build_G : 'd -> 'r
+         ; build_Gt : 'd -> 's
+         ; build_Gte : 'd -> 's
+         ; build_H : 'd -> 'r
+         ; build_IBin : 'd -> 'h -> 'j -> 'h -> 'i
+         ; build_IComp : 'd -> 'h -> 's -> 'h -> 'n
+         ; build_IEq : 'd -> 's
+         ; build_INEq : 'd -> 's
+         ; build_IUn : 'd -> 't -> 'h -> 'i
          ; build_Iden : 'd -> 'm
          ; build_Ident : 'd -> 'u -> 'm
-         ; build_Iff : 'd -> 'i
-         ; build_Imp : 'd -> 'i
+         ; build_Iff : 'd -> 'l
+         ; build_Imp : 'd -> 'l
          ; build_In : 'd -> 'v
-         ; build_Inter : 'd -> 'p
-         ; build_Join : 'd -> 'p
-         ; build_LBin : 'd -> 'j -> 'i -> 'j -> 'k
-         ; build_LProj : 'd -> 'p
-         ; build_LUn : 'd -> 'q -> 'j -> 'k
-         ; build_Let : 'd -> ('o * 'l) list -> 'j list -> 'k
-         ; build_Lone : 'd -> 'h
-         ; build_Lt : 'd -> 'r
-         ; build_Lte : 'd -> 'r
+         ; build_Inter : 'd -> 'q
+         ; build_Join : 'd -> 'q
+         ; build_LBin : 'd -> 'g -> 'l -> 'g -> 'n
+         ; build_LProj : 'd -> 'q
+         ; build_LUn : 'd -> 'r -> 'g -> 'n
+         ; build_Let : 'd -> ('p * 'o) list -> 'g list -> 'n
+         ; build_Lone : 'd -> 'k
+         ; build_Lshift : 'd -> 'j
+         ; build_Lt : 'd -> 's
+         ; build_Lte : 'd -> 's
+         ; build_Mul : 'd -> 'j
          ; build_Neg : 'd -> 't
-         ; build_No : 'd -> 'h
+         ; build_No : 'd -> 'k
          ; build_None_ : 'd -> 'm
-         ; build_Not : 'd -> 'q
+         ; build_Not : 'd -> 'r
          ; build_NotIn : 'd -> 'v
-         ; build_Num : 'd -> int -> 'n
-         ; build_O : 'd -> 'q
-         ; build_One : 'd -> 'h
-         ; build_Or : 'd -> 'i
-         ; build_Over : 'd -> 'p
-         ; build_P : 'd -> 'q
-         ; build_Prime : 'd -> 'l -> 'm
-         ; build_Prod : 'd -> 'p
-         ; build_Qual : 'd -> 'w -> 'l -> 'k
-         ; build_Quant : 'd -> 'h -> (disj * 'o list * 'l) list -> 'j list -> 'k
-         ; build_R : 'd -> 'i
-         ; build_RBin : 'd -> 'l -> 'p -> 'l -> 'm
-         ; build_RComp : 'd -> 'l -> 'v -> 'l -> 'k
+         ; build_Num : 'd -> int -> 'i
+         ; build_O : 'd -> 'r
+         ; build_One : 'd -> 'k
+         ; build_Or : 'd -> 'l
+         ; build_Over : 'd -> 'q
+         ; build_P : 'd -> 'r
+         ; build_Prime : 'd -> 'o -> 'm
+         ; build_Prod : 'd -> 'q
+         ; build_Qual : 'd -> 'w -> 'o -> 'n
+         ; build_Quant : 'd -> 'k -> (disj * 'p list * 'o) list -> 'g list -> 'n
+         ; build_R : 'd -> 'l
+         ; build_RBin : 'd -> 'o -> 'q -> 'o -> 'm
+         ; build_RComp : 'd -> 'o -> 'v -> 'o -> 'n
          ; build_REq : 'd -> 'v
-         ; build_RIte : 'd -> 'j -> 'l -> 'l -> 'm
+         ; build_RIte : 'd -> 'g -> 'o -> 'o -> 'm
          ; build_RLone : 'd -> 'w
          ; build_RNEq : 'd -> 'v
          ; build_RNo : 'd -> 'w
          ; build_ROne : 'd -> 'w
-         ; build_RProj : 'd -> 'p
+         ; build_RProj : 'd -> 'q
          ; build_RSome : 'd -> 'w
          ; build_RTClos : 'd -> 'x
-         ; build_RUn : 'd -> 'x -> 'l -> 'm
-         ; build_Run : 'd -> 'j list * bool option -> 'y
-         ; build_S : 'd -> 'i
-         ; build_Some_ : 'd -> 'h
-         ; build_Sub : 'd -> 'g
-         ; build_T : 'd -> 'i
+         ; build_RUn : 'd -> 'x -> 'o -> 'm
+         ; build_Rem : 'd -> 'j
+         ; build_Run : 'd -> 'g list * disj option -> 'y
+         ; build_S : 'd -> 'l
+         ; build_Sershift : 'd -> 'j
+         ; build_Small_int : 'd -> 'o -> 'i
+         ; build_Some_ : 'd -> 'k
+         ; build_Sub : 'd -> 'j
+         ; build_Sum : 'd -> ('p * 'o) list -> 'h -> 'i
+         ; build_T : 'd -> 'l
          ; build_TClos : 'd -> 'x
          ; build_Transpose : 'd -> 'x
-         ; build_True : 'd -> 'k
-         ; build_U : 'd -> 'i
-         ; build_Union : 'd -> 'p
+         ; build_True : 'd -> 'n
+         ; build_U : 'd -> 'l
+         ; build_Union : 'd -> 'q
          ; build_Univ : 'd -> 'm
-         ; build_X : 'd -> 'q
-         ; build_exp : 'd -> 'm -> Location.t -> int option -> 'l
-         ; build_fml : 'd -> 'k -> Location.t -> 'j
-         ; build_iexp : 'd -> 'n -> Location.t -> 's
+         ; build_X : 'd -> 'r
+         ; build_Zershift : 'd -> 'j
+         ; build_exp : 'd -> 'm -> Location.t -> int option -> 'o
+         ; build_fml : 'd -> 'n -> Location.t -> 'g
+         ; build_iexp : 'd -> 'i -> Location.t -> 'h
          ; visit_'i : 'd -> 'z -> 'u
-         ; visit_'v : 'd -> 'a1 -> 'o
-         ; visit_Add : 'd -> 'g
-         ; visit_All : 'd -> 'h
-         ; visit_And : 'd -> 'i
-         ; visit_Block : 'd -> ('a1, 'z) block -> 'k
+         ; visit_'v : 'd -> 'a1 -> 'p
+         ; visit_AIte :
+             'd -> ('a1, 'z) fml -> ('a1, 'z) iexp -> ('a1, 'z) iexp -> 'i
+         ; visit_Add : 'd -> 'j
+         ; visit_All : 'd -> 'k
+         ; visit_And : 'd -> 'l
+         ; visit_Big_int : 'd -> ('a1, 'z) iexp -> 'm
+         ; visit_Block : 'd -> ('a1, 'z) block -> 'n
          ; visit_BoxJoin : 'd -> ('a1, 'z) exp -> ('a1, 'z) exp list -> 'm
-         ; visit_Card : 'd -> ('a1, 'z) exp -> 'n
+         ; visit_Card : 'd -> ('a1, 'z) exp -> 'i
          ; visit_Compr :
              'd -> ('a1, 'z) sim_binding list -> ('a1, 'z) block -> 'm
-         ; visit_Diff : 'd -> 'p
-         ; visit_F : 'd -> 'q
+         ; visit_Diff : 'd -> 'q
+         ; visit_Div : 'd -> 'j
+         ; visit_F : 'd -> 'r
          ; visit_FIte :
-             'd -> ('a1, 'z) fml -> ('a1, 'z) fml -> ('a1, 'z) fml -> 'k
-         ; visit_False : 'd -> 'k
-         ; visit_G : 'd -> 'q
-         ; visit_Gt : 'd -> 'r
-         ; visit_Gte : 'd -> 'r
-         ; visit_H : 'd -> 'q
-         ; visit_IBin : 'd -> ('a1, 'z) iexp -> ibinop -> ('a1, 'z) iexp -> 'n
+             'd -> ('a1, 'z) fml -> ('a1, 'z) fml -> ('a1, 'z) fml -> 'n
+         ; visit_False : 'd -> 'n
+         ; visit_G : 'd -> 'r
+         ; visit_Gt : 'd -> 's
+         ; visit_Gte : 'd -> 's
+         ; visit_H : 'd -> 'r
+         ; visit_IBin : 'd -> ('a1, 'z) iexp -> ibinop -> ('a1, 'z) iexp -> 'i
          ; visit_IComp :
-             'd -> ('a1, 'z) iexp -> icomp_op -> ('a1, 'z) iexp -> 'k
-         ; visit_IEq : 'd -> 'r
-         ; visit_INEq : 'd -> 'r
-         ; visit_IUn : 'd -> iunop -> ('a1, 'z) iexp -> 'n
+             'd -> ('a1, 'z) iexp -> icomp_op -> ('a1, 'z) iexp -> 'n
+         ; visit_IEq : 'd -> 's
+         ; visit_INEq : 'd -> 's
+         ; visit_IUn : 'd -> iunop -> ('a1, 'z) iexp -> 'i
          ; visit_Iden : 'd -> 'm
          ; visit_Ident : 'd -> 'z -> 'm
-         ; visit_Iff : 'd -> 'i
-         ; visit_Imp : 'd -> 'i
+         ; visit_Iff : 'd -> 'l
+         ; visit_Imp : 'd -> 'l
          ; visit_In : 'd -> 'v
-         ; visit_Inter : 'd -> 'p
-         ; visit_Join : 'd -> 'p
-         ; visit_LBin : 'd -> ('a1, 'z) fml -> lbinop -> ('a1, 'z) fml -> 'k
-         ; visit_LProj : 'd -> 'p
-         ; visit_LUn : 'd -> lunop -> ('a1, 'z) fml -> 'k
-         ; visit_Let : 'd -> ('a1, 'z) binding list -> ('a1, 'z) block -> 'k
-         ; visit_Lone : 'd -> 'h
-         ; visit_Lt : 'd -> 'r
-         ; visit_Lte : 'd -> 'r
+         ; visit_Inter : 'd -> 'q
+         ; visit_Join : 'd -> 'q
+         ; visit_LBin : 'd -> ('a1, 'z) fml -> lbinop -> ('a1, 'z) fml -> 'n
+         ; visit_LProj : 'd -> 'q
+         ; visit_LUn : 'd -> lunop -> ('a1, 'z) fml -> 'n
+         ; visit_Let : 'd -> ('a1, 'z) binding list -> ('a1, 'z) block -> 'n
+         ; visit_Lone : 'd -> 'k
+         ; visit_Lshift : 'd -> 'j
+         ; visit_Lt : 'd -> 's
+         ; visit_Lte : 'd -> 's
+         ; visit_Mul : 'd -> 'j
          ; visit_Neg : 'd -> 't
-         ; visit_No : 'd -> 'h
+         ; visit_No : 'd -> 'k
          ; visit_None_ : 'd -> 'm
-         ; visit_Not : 'd -> 'q
+         ; visit_Not : 'd -> 'r
          ; visit_NotIn : 'd -> 'v
-         ; visit_Num : 'd -> int -> 'n
-         ; visit_O : 'd -> 'q
-         ; visit_One : 'd -> 'h
-         ; visit_Or : 'd -> 'i
-         ; visit_Over : 'd -> 'p
-         ; visit_P : 'd -> 'q
+         ; visit_Num : 'd -> int -> 'i
+         ; visit_O : 'd -> 'r
+         ; visit_One : 'd -> 'k
+         ; visit_Or : 'd -> 'l
+         ; visit_Over : 'd -> 'q
+         ; visit_P : 'd -> 'r
          ; visit_Prime : 'd -> ('a1, 'z) exp -> 'm
-         ; visit_Prod : 'd -> 'p
-         ; visit_Qual : 'd -> rqualify -> ('a1, 'z) exp -> 'k
+         ; visit_Prod : 'd -> 'q
+         ; visit_Qual : 'd -> rqualify -> ('a1, 'z) exp -> 'n
          ; visit_Quant :
-             'd -> quant -> ('a1, 'z) sim_binding list -> ('a1, 'z) block -> 'k
-         ; visit_R : 'd -> 'i
+             'd -> quant -> ('a1, 'z) sim_binding list -> ('a1, 'z) block -> 'n
+         ; visit_R : 'd -> 'l
          ; visit_RBin : 'd -> ('a1, 'z) exp -> rbinop -> ('a1, 'z) exp -> 'm
-         ; visit_RComp : 'd -> ('a1, 'z) exp -> comp_op -> ('a1, 'z) exp -> 'k
+         ; visit_RComp : 'd -> ('a1, 'z) exp -> comp_op -> ('a1, 'z) exp -> 'n
          ; visit_REq : 'd -> 'v
          ; visit_RIte :
              'd -> ('a1, 'z) fml -> ('a1, 'z) exp -> ('a1, 'z) exp -> 'm
@@ -529,195 +590,218 @@ class virtual ['c] fold :
          ; visit_RNEq : 'd -> 'v
          ; visit_RNo : 'd -> 'w
          ; visit_ROne : 'd -> 'w
-         ; visit_RProj : 'd -> 'p
+         ; visit_RProj : 'd -> 'q
          ; visit_RSome : 'd -> 'w
          ; visit_RTClos : 'd -> 'x
          ; visit_RUn : 'd -> runop -> ('a1, 'z) exp -> 'm
-         ; visit_Run : 'd -> ('a1, 'z) block * bool option -> 'y
-         ; visit_S : 'd -> 'i
-         ; visit_Some_ : 'd -> 'h
-         ; visit_Sub : 'd -> 'g
-         ; visit_T : 'd -> 'i
+         ; visit_Rem : 'd -> 'j
+         ; visit_Run : 'd -> ('a1, 'z) block * disj option -> 'y
+         ; visit_S : 'd -> 'l
+         ; visit_Sershift : 'd -> 'j
+         ; visit_Small_int : 'd -> ('a1, 'z) exp -> 'i
+         ; visit_Some_ : 'd -> 'k
+         ; visit_Sub : 'd -> 'j
+         ; visit_Sum : 'd -> ('a1, 'z) binding list -> ('a1, 'z) iexp -> 'i
+         ; visit_T : 'd -> 'l
          ; visit_TClos : 'd -> 'x
          ; visit_Transpose : 'd -> 'x
-         ; visit_True : 'd -> 'k
-         ; visit_U : 'd -> 'i
-         ; visit_Union : 'd -> 'p
+         ; visit_True : 'd -> 'n
+         ; visit_U : 'd -> 'l
+         ; visit_Union : 'd -> 'q
          ; visit_Univ : 'd -> 'm
-         ; visit_X : 'd -> 'q
-         ; visit_binding : 'd -> ('a1, 'z) binding -> 'o * 'l
-         ; visit_block : 'd -> ('a1, 'z) block -> 'j list
+         ; visit_X : 'd -> 'r
+         ; visit_Zershift : 'd -> 'j
+         ; visit_binding : 'd -> ('a1, 'z) binding -> 'p * 'o
+         ; visit_block : 'd -> ('a1, 'z) block -> 'g list
          ; visit_comp_op : 'd -> comp_op -> 'v
          ; visit_disj : 'd -> disj -> disj
-         ; visit_exp : 'd -> ('a1, 'z) exp -> 'l
-         ; visit_fml : 'd -> ('a1, 'z) fml -> 'j
-         ; visit_ibinop : 'd -> ibinop -> 'g
-         ; visit_icomp_op : 'd -> icomp_op -> 'r
-         ; visit_iexp : 'd -> ('a1, 'z) iexp -> 's
+         ; visit_exp : 'd -> ('a1, 'z) exp -> 'o
+         ; visit_fml : 'd -> ('a1, 'z) fml -> 'g
+         ; visit_ibinop : 'd -> ibinop -> 'j
+         ; visit_icomp_op : 'd -> icomp_op -> 's
+         ; visit_iexp : 'd -> ('a1, 'z) iexp -> 'h
          ; visit_iunop : 'd -> iunop -> 't
-         ; visit_lbinop : 'd -> lbinop -> 'i
-         ; visit_lunop : 'd -> lunop -> 'q
+         ; visit_lbinop : 'd -> lbinop -> 'l
+         ; visit_lunop : 'd -> lunop -> 'r
          ; visit_prim_exp : 'd -> ('a1, 'z) prim_exp -> 'm
-         ; visit_prim_fml : 'd -> ('a1, 'z) prim_fml -> 'k
-         ; visit_prim_iexp : 'd -> ('a1, 'z) prim_iexp -> 'n
-         ; visit_quant : 'd -> quant -> 'h
-         ; visit_rbinop : 'd -> rbinop -> 'p
+         ; visit_prim_fml : 'd -> ('a1, 'z) prim_fml -> 'n
+         ; visit_prim_iexp : 'd -> ('a1, 'z) prim_iexp -> 'i
+         ; visit_quant : 'd -> quant -> 'k
+         ; visit_rbinop : 'd -> rbinop -> 'q
          ; visit_rqualify : 'd -> rqualify -> 'w
          ; visit_runop : 'd -> runop -> 'x
          ; visit_sim_binding :
-             'd -> ('a1, 'z) sim_binding -> disj * 'o list * 'l
+             'd -> ('a1, 'z) sim_binding -> disj * 'p list * 'o
          ; visit_t : 'd -> ('a1, 'z) t -> 'y
          ; .. >
 
-    method virtual build_Add : 'd -> 'g
-    method virtual build_All : 'd -> 'h
-    method virtual build_And : 'd -> 'i
-    method virtual build_Block : 'd -> 'j list -> 'k
-    method virtual build_BoxJoin : 'd -> 'l -> 'l list -> 'm
-    method virtual build_Card : 'd -> 'l -> 'n
+    method virtual build_AIte : 'd -> 'g -> 'h -> 'h -> 'i
+    method virtual build_Add : 'd -> 'j
+    method virtual build_All : 'd -> 'k
+    method virtual build_And : 'd -> 'l
+    method virtual build_Big_int : 'd -> 'h -> 'm
+    method virtual build_Block : 'd -> 'g list -> 'n
+    method virtual build_BoxJoin : 'd -> 'o -> 'o list -> 'm
+    method virtual build_Card : 'd -> 'o -> 'i
 
     method virtual build_Compr :
-      'd -> (disj * 'o list * 'l) list -> 'j list -> 'm
+      'd -> (disj * 'p list * 'o) list -> 'g list -> 'm
 
-    method virtual build_Diff : 'd -> 'p
-    method virtual build_F : 'd -> 'q
-    method virtual build_FIte : 'd -> 'j -> 'j -> 'j -> 'k
-    method virtual build_False : 'd -> 'k
-    method virtual build_G : 'd -> 'q
-    method virtual build_Gt : 'd -> 'r
-    method virtual build_Gte : 'd -> 'r
-    method virtual build_H : 'd -> 'q
-    method virtual build_IBin : 'd -> 's -> 'g -> 's -> 'n
-    method virtual build_IComp : 'd -> 's -> 'r -> 's -> 'k
-    method virtual build_IEq : 'd -> 'r
-    method virtual build_INEq : 'd -> 'r
-    method virtual build_IUn : 'd -> 't -> 's -> 'n
+    method virtual build_Diff : 'd -> 'q
+    method virtual build_Div : 'd -> 'j
+    method virtual build_F : 'd -> 'r
+    method virtual build_FIte : 'd -> 'g -> 'g -> 'g -> 'n
+    method virtual build_False : 'd -> 'n
+    method virtual build_G : 'd -> 'r
+    method virtual build_Gt : 'd -> 's
+    method virtual build_Gte : 'd -> 's
+    method virtual build_H : 'd -> 'r
+    method virtual build_IBin : 'd -> 'h -> 'j -> 'h -> 'i
+    method virtual build_IComp : 'd -> 'h -> 's -> 'h -> 'n
+    method virtual build_IEq : 'd -> 's
+    method virtual build_INEq : 'd -> 's
+    method virtual build_IUn : 'd -> 't -> 'h -> 'i
     method virtual build_Iden : 'd -> 'm
     method virtual build_Ident : 'd -> 'u -> 'm
-    method virtual build_Iff : 'd -> 'i
-    method virtual build_Imp : 'd -> 'i
+    method virtual build_Iff : 'd -> 'l
+    method virtual build_Imp : 'd -> 'l
     method virtual build_In : 'd -> 'v
-    method virtual build_Inter : 'd -> 'p
-    method virtual build_Join : 'd -> 'p
-    method virtual build_LBin : 'd -> 'j -> 'i -> 'j -> 'k
-    method virtual build_LProj : 'd -> 'p
-    method virtual build_LUn : 'd -> 'q -> 'j -> 'k
-    method virtual build_Let : 'd -> ('o * 'l) list -> 'j list -> 'k
-    method virtual build_Lone : 'd -> 'h
-    method virtual build_Lt : 'd -> 'r
-    method virtual build_Lte : 'd -> 'r
+    method virtual build_Inter : 'd -> 'q
+    method virtual build_Join : 'd -> 'q
+    method virtual build_LBin : 'd -> 'g -> 'l -> 'g -> 'n
+    method virtual build_LProj : 'd -> 'q
+    method virtual build_LUn : 'd -> 'r -> 'g -> 'n
+    method virtual build_Let : 'd -> ('p * 'o) list -> 'g list -> 'n
+    method virtual build_Lone : 'd -> 'k
+    method virtual build_Lshift : 'd -> 'j
+    method virtual build_Lt : 'd -> 's
+    method virtual build_Lte : 'd -> 's
+    method virtual build_Mul : 'd -> 'j
     method virtual build_Neg : 'd -> 't
-    method virtual build_No : 'd -> 'h
+    method virtual build_No : 'd -> 'k
     method virtual build_None_ : 'd -> 'm
-    method virtual build_Not : 'd -> 'q
+    method virtual build_Not : 'd -> 'r
     method virtual build_NotIn : 'd -> 'v
-    method virtual build_Num : 'd -> int -> 'n
-    method virtual build_O : 'd -> 'q
-    method virtual build_One : 'd -> 'h
-    method virtual build_Or : 'd -> 'i
-    method virtual build_Over : 'd -> 'p
-    method virtual build_P : 'd -> 'q
-    method virtual build_Prime : 'd -> 'l -> 'm
-    method virtual build_Prod : 'd -> 'p
-    method virtual build_Qual : 'd -> 'w -> 'l -> 'k
+    method virtual build_Num : 'd -> int -> 'i
+    method virtual build_O : 'd -> 'r
+    method virtual build_One : 'd -> 'k
+    method virtual build_Or : 'd -> 'l
+    method virtual build_Over : 'd -> 'q
+    method virtual build_P : 'd -> 'r
+    method virtual build_Prime : 'd -> 'o -> 'm
+    method virtual build_Prod : 'd -> 'q
+    method virtual build_Qual : 'd -> 'w -> 'o -> 'n
 
     method virtual build_Quant :
-      'd -> 'h -> (disj * 'o list * 'l) list -> 'j list -> 'k
+      'd -> 'k -> (disj * 'p list * 'o) list -> 'g list -> 'n
 
-    method virtual build_R : 'd -> 'i
-    method virtual build_RBin : 'd -> 'l -> 'p -> 'l -> 'm
-    method virtual build_RComp : 'd -> 'l -> 'v -> 'l -> 'k
+    method virtual build_R : 'd -> 'l
+    method virtual build_RBin : 'd -> 'o -> 'q -> 'o -> 'm
+    method virtual build_RComp : 'd -> 'o -> 'v -> 'o -> 'n
     method virtual build_REq : 'd -> 'v
-    method virtual build_RIte : 'd -> 'j -> 'l -> 'l -> 'm
+    method virtual build_RIte : 'd -> 'g -> 'o -> 'o -> 'm
     method virtual build_RLone : 'd -> 'w
     method virtual build_RNEq : 'd -> 'v
     method virtual build_RNo : 'd -> 'w
     method virtual build_ROne : 'd -> 'w
-    method virtual build_RProj : 'd -> 'p
+    method virtual build_RProj : 'd -> 'q
     method virtual build_RSome : 'd -> 'w
     method virtual build_RTClos : 'd -> 'x
-    method virtual build_RUn : 'd -> 'x -> 'l -> 'm
-    method virtual build_Run : 'd -> 'j list * bool option -> 'y
-    method virtual build_S : 'd -> 'i
-    method virtual build_Some_ : 'd -> 'h
-    method virtual build_Sub : 'd -> 'g
-    method virtual build_T : 'd -> 'i
+    method virtual build_RUn : 'd -> 'x -> 'o -> 'm
+    method virtual build_Rem : 'd -> 'j
+    method virtual build_Run : 'd -> 'g list * disj option -> 'y
+    method virtual build_S : 'd -> 'l
+    method virtual build_Sershift : 'd -> 'j
+    method virtual build_Small_int : 'd -> 'o -> 'i
+    method virtual build_Some_ : 'd -> 'k
+    method virtual build_Sub : 'd -> 'j
+    method virtual build_Sum : 'd -> ('p * 'o) list -> 'h -> 'i
+    method virtual build_T : 'd -> 'l
     method virtual build_TClos : 'd -> 'x
     method virtual build_Transpose : 'd -> 'x
-    method virtual build_True : 'd -> 'k
-    method virtual build_U : 'd -> 'i
-    method virtual build_Union : 'd -> 'p
+    method virtual build_True : 'd -> 'n
+    method virtual build_U : 'd -> 'l
+    method virtual build_Union : 'd -> 'q
     method virtual build_Univ : 'd -> 'm
-    method virtual build_X : 'd -> 'q
-    method virtual build_exp : 'd -> 'm -> Location.t -> int option -> 'l
-    method virtual build_fml : 'd -> 'k -> Location.t -> 'j
-    method virtual build_iexp : 'd -> 'n -> Location.t -> 's
+    method virtual build_X : 'd -> 'r
+    method virtual build_Zershift : 'd -> 'j
+    method virtual build_exp : 'd -> 'm -> Location.t -> int option -> 'o
+    method virtual build_fml : 'd -> 'n -> Location.t -> 'g
+    method virtual build_iexp : 'd -> 'i -> Location.t -> 'h
     method virtual visit_'i : 'd -> 'z -> 'u
-    method virtual visit_'v : 'd -> 'a1 -> 'o
-    method visit_Add : 'd -> 'g
-    method visit_All : 'd -> 'h
-    method visit_And : 'd -> 'i
-    method visit_Block : 'd -> ('a1, 'z) block -> 'k
+    method virtual visit_'v : 'd -> 'a1 -> 'p
+
+    method visit_AIte :
+      'd -> ('a1, 'z) fml -> ('a1, 'z) iexp -> ('a1, 'z) iexp -> 'i
+
+    method visit_Add : 'd -> 'j
+    method visit_All : 'd -> 'k
+    method visit_And : 'd -> 'l
+    method visit_Big_int : 'd -> ('a1, 'z) iexp -> 'm
+    method visit_Block : 'd -> ('a1, 'z) block -> 'n
     method visit_BoxJoin : 'd -> ('a1, 'z) exp -> ('a1, 'z) exp list -> 'm
-    method visit_Card : 'd -> ('a1, 'z) exp -> 'n
+    method visit_Card : 'd -> ('a1, 'z) exp -> 'i
 
     method visit_Compr :
       'd -> ('a1, 'z) sim_binding list -> ('a1, 'z) block -> 'm
 
-    method visit_Diff : 'd -> 'p
-    method visit_F : 'd -> 'q
+    method visit_Diff : 'd -> 'q
+    method visit_Div : 'd -> 'j
+    method visit_F : 'd -> 'r
 
     method visit_FIte :
-      'd -> ('a1, 'z) fml -> ('a1, 'z) fml -> ('a1, 'z) fml -> 'k
+      'd -> ('a1, 'z) fml -> ('a1, 'z) fml -> ('a1, 'z) fml -> 'n
 
-    method visit_False : 'd -> 'k
-    method visit_G : 'd -> 'q
-    method visit_Gt : 'd -> 'r
-    method visit_Gte : 'd -> 'r
-    method visit_H : 'd -> 'q
-    method visit_IBin : 'd -> ('a1, 'z) iexp -> ibinop -> ('a1, 'z) iexp -> 'n
+    method visit_False : 'd -> 'n
+    method visit_G : 'd -> 'r
+    method visit_Gt : 'd -> 's
+    method visit_Gte : 'd -> 's
+    method visit_H : 'd -> 'r
+    method visit_IBin : 'd -> ('a1, 'z) iexp -> ibinop -> ('a1, 'z) iexp -> 'i
 
     method visit_IComp :
-      'd -> ('a1, 'z) iexp -> icomp_op -> ('a1, 'z) iexp -> 'k
+      'd -> ('a1, 'z) iexp -> icomp_op -> ('a1, 'z) iexp -> 'n
 
-    method visit_IEq : 'd -> 'r
-    method visit_INEq : 'd -> 'r
-    method visit_IUn : 'd -> iunop -> ('a1, 'z) iexp -> 'n
+    method visit_IEq : 'd -> 's
+    method visit_INEq : 'd -> 's
+    method visit_IUn : 'd -> iunop -> ('a1, 'z) iexp -> 'i
     method visit_Iden : 'd -> 'm
     method visit_Ident : 'd -> 'z -> 'm
-    method visit_Iff : 'd -> 'i
-    method visit_Imp : 'd -> 'i
+    method visit_Iff : 'd -> 'l
+    method visit_Imp : 'd -> 'l
     method visit_In : 'd -> 'v
-    method visit_Inter : 'd -> 'p
-    method visit_Join : 'd -> 'p
-    method visit_LBin : 'd -> ('a1, 'z) fml -> lbinop -> ('a1, 'z) fml -> 'k
-    method visit_LProj : 'd -> 'p
-    method visit_LUn : 'd -> lunop -> ('a1, 'z) fml -> 'k
-    method visit_Let : 'd -> ('a1, 'z) binding list -> ('a1, 'z) block -> 'k
-    method visit_Lone : 'd -> 'h
-    method visit_Lt : 'd -> 'r
-    method visit_Lte : 'd -> 'r
+    method visit_Inter : 'd -> 'q
+    method visit_Join : 'd -> 'q
+    method visit_LBin : 'd -> ('a1, 'z) fml -> lbinop -> ('a1, 'z) fml -> 'n
+    method visit_LProj : 'd -> 'q
+    method visit_LUn : 'd -> lunop -> ('a1, 'z) fml -> 'n
+    method visit_Let : 'd -> ('a1, 'z) binding list -> ('a1, 'z) block -> 'n
+    method visit_Lone : 'd -> 'k
+    method visit_Lshift : 'd -> 'j
+    method visit_Lt : 'd -> 's
+    method visit_Lte : 'd -> 's
+    method visit_Mul : 'd -> 'j
     method visit_Neg : 'd -> 't
-    method visit_No : 'd -> 'h
+    method visit_No : 'd -> 'k
     method visit_None_ : 'd -> 'm
-    method visit_Not : 'd -> 'q
+    method visit_Not : 'd -> 'r
     method visit_NotIn : 'd -> 'v
-    method visit_Num : 'd -> int -> 'n
-    method visit_O : 'd -> 'q
-    method visit_One : 'd -> 'h
-    method visit_Or : 'd -> 'i
-    method visit_Over : 'd -> 'p
-    method visit_P : 'd -> 'q
+    method visit_Num : 'd -> int -> 'i
+    method visit_O : 'd -> 'r
+    method visit_One : 'd -> 'k
+    method visit_Or : 'd -> 'l
+    method visit_Over : 'd -> 'q
+    method visit_P : 'd -> 'r
     method visit_Prime : 'd -> ('a1, 'z) exp -> 'm
-    method visit_Prod : 'd -> 'p
-    method visit_Qual : 'd -> rqualify -> ('a1, 'z) exp -> 'k
+    method visit_Prod : 'd -> 'q
+    method visit_Qual : 'd -> rqualify -> ('a1, 'z) exp -> 'n
 
     method visit_Quant :
-      'd -> quant -> ('a1, 'z) sim_binding list -> ('a1, 'z) block -> 'k
+      'd -> quant -> ('a1, 'z) sim_binding list -> ('a1, 'z) block -> 'n
 
-    method visit_R : 'd -> 'i
+    method visit_R : 'd -> 'l
     method visit_RBin : 'd -> ('a1, 'z) exp -> rbinop -> ('a1, 'z) exp -> 'm
-    method visit_RComp : 'd -> ('a1, 'z) exp -> comp_op -> ('a1, 'z) exp -> 'k
+    method visit_RComp : 'd -> ('a1, 'z) exp -> comp_op -> ('a1, 'z) exp -> 'n
     method visit_REq : 'd -> 'v
 
     method visit_RIte :
@@ -727,39 +811,44 @@ class virtual ['c] fold :
     method visit_RNEq : 'd -> 'v
     method visit_RNo : 'd -> 'w
     method visit_ROne : 'd -> 'w
-    method visit_RProj : 'd -> 'p
+    method visit_RProj : 'd -> 'q
     method visit_RSome : 'd -> 'w
     method visit_RTClos : 'd -> 'x
     method visit_RUn : 'd -> runop -> ('a1, 'z) exp -> 'm
-    method visit_Run : 'd -> ('a1, 'z) block * bool option -> 'y
-    method visit_S : 'd -> 'i
-    method visit_Some_ : 'd -> 'h
-    method visit_Sub : 'd -> 'g
-    method visit_T : 'd -> 'i
+    method visit_Rem : 'd -> 'j
+    method visit_Run : 'd -> ('a1, 'z) block * disj option -> 'y
+    method visit_S : 'd -> 'l
+    method visit_Sershift : 'd -> 'j
+    method visit_Small_int : 'd -> ('a1, 'z) exp -> 'i
+    method visit_Some_ : 'd -> 'k
+    method visit_Sub : 'd -> 'j
+    method visit_Sum : 'd -> ('a1, 'z) binding list -> ('a1, 'z) iexp -> 'i
+    method visit_T : 'd -> 'l
     method visit_TClos : 'd -> 'x
     method visit_Transpose : 'd -> 'x
-    method visit_True : 'd -> 'k
-    method visit_U : 'd -> 'i
-    method visit_Union : 'd -> 'p
+    method visit_True : 'd -> 'n
+    method visit_U : 'd -> 'l
+    method visit_Union : 'd -> 'q
     method visit_Univ : 'd -> 'm
-    method visit_X : 'd -> 'q
+    method visit_X : 'd -> 'r
+    method visit_Zershift : 'd -> 'j
 
     method private visit_array :
       'env 'a 'b. ('env -> 'a -> 'b) -> 'env -> 'a array -> 'b array
 
-    method visit_binding : 'd -> ('a1, 'z) binding -> 'o * 'l
-    method visit_block : 'd -> ('a1, 'z) block -> 'j list
+    method visit_binding : 'd -> ('a1, 'z) binding -> 'p * 'o
+    method visit_block : 'd -> ('a1, 'z) block -> 'g list
     method private visit_bool : 'env. 'env -> disj -> disj
     method private visit_bytes : 'env. 'env -> bytes -> bytes
     method private visit_char : 'env. 'env -> char -> char
     method visit_comp_op : 'd -> comp_op -> 'v
     method visit_disj : 'd -> disj -> disj
-    method visit_exp : 'd -> ('a1, 'z) exp -> 'l
+    method visit_exp : 'd -> ('a1, 'z) exp -> 'o
     method private visit_float : 'env. 'env -> float -> float
-    method visit_fml : 'd -> ('a1, 'z) fml -> 'j
-    method visit_ibinop : 'd -> ibinop -> 'g
-    method visit_icomp_op : 'd -> icomp_op -> 'r
-    method visit_iexp : 'd -> ('a1, 'z) iexp -> 's
+    method visit_fml : 'd -> ('a1, 'z) fml -> 'g
+    method visit_ibinop : 'd -> ibinop -> 'j
+    method visit_icomp_op : 'd -> icomp_op -> 's
+    method visit_iexp : 'd -> ('a1, 'z) iexp -> 'h
     method private visit_int : 'env. 'env -> int -> int
     method private visit_int32 : 'env. 'env -> int32 -> int32
     method private visit_int64 : 'env. 'env -> int64 -> int64
@@ -768,22 +857,22 @@ class virtual ['c] fold :
     method private visit_lazy_t :
       'env 'a 'b. ('env -> 'a -> 'b) -> 'env -> 'a lazy_t -> 'b lazy_t
 
-    method visit_lbinop : 'd -> lbinop -> 'i
+    method visit_lbinop : 'd -> lbinop -> 'l
 
     method private visit_list :
       'env 'a 'b. ('env -> 'a -> 'b) -> 'env -> 'a list -> 'b list
 
-    method visit_lunop : 'd -> lunop -> 'q
+    method visit_lunop : 'd -> lunop -> 'r
     method private visit_nativeint : 'env. 'env -> nativeint -> nativeint
 
     method private visit_option :
       'env 'a 'b. ('env -> 'a -> 'b) -> 'env -> 'a option -> 'b option
 
     method visit_prim_exp : 'd -> ('a1, 'z) prim_exp -> 'm
-    method visit_prim_fml : 'd -> ('a1, 'z) prim_fml -> 'k
-    method visit_prim_iexp : 'd -> ('a1, 'z) prim_iexp -> 'n
-    method visit_quant : 'd -> quant -> 'h
-    method visit_rbinop : 'd -> rbinop -> 'p
+    method visit_prim_fml : 'd -> ('a1, 'z) prim_fml -> 'n
+    method visit_prim_iexp : 'd -> ('a1, 'z) prim_iexp -> 'i
+    method visit_quant : 'd -> quant -> 'k
+    method visit_rbinop : 'd -> rbinop -> 'q
 
     method private visit_ref :
       'env 'a 'b. ('env -> 'a -> 'b) -> 'env -> 'a ref -> 'b ref
@@ -800,7 +889,7 @@ class virtual ['c] fold :
     method visit_runop : 'd -> runop -> 'x
 
     method visit_sim_binding :
-      'd -> ('a1, 'z) sim_binding -> disj * 'o list * 'l
+      'd -> ('a1, 'z) sim_binding -> disj * 'p list * 'o
 
     method private visit_string : 'env. 'env -> string -> string
     method visit_t : 'd -> ('a1, 'z) t -> 'y
@@ -852,6 +941,7 @@ val rite : ('a, 'b) fml -> ('a, 'b) exp -> ('a, 'b) exp -> ('a, 'b) prim_exp
 val boxjoin : ('a, 'b) exp -> ('a, 'b) exp list -> ('a, 'b) prim_exp
 val compr : ('a, 'b) sim_binding list -> ('a, 'b) block -> ('a, 'b) prim_exp
 val prime : ('a, 'b) exp -> ('a, 'b) prim_exp
+val big_int : ('a, 'b) iexp -> ('a, 'b) prim_exp
 val in_ : comp_op
 val not_in : comp_op
 val req : comp_op
@@ -880,9 +970,22 @@ val join : rbinop
 val card : ('a, 'b) exp -> ('a, 'b) prim_iexp
 val iunary : iunop -> ('a, 'b) iexp -> ('a, 'b) prim_iexp
 val ibinary : ('a, 'b) iexp -> ibinop -> ('a, 'b) iexp -> ('a, 'b) prim_iexp
+val equal_ibinop : ibinop -> ibinop -> bool
 val neg : iunop
 val add : ibinop
 val sub : ibinop
+val mul : ibinop
+val div : ibinop
+val rem : ibinop
+val lshift : ibinop
+val zershift : ibinop
+val sershift : ibinop
+val small_int : ('a, 'b) exp -> ('a, 'b) prim_iexp
+val sum : ('a, 'b) binding list -> ('a, 'b) iexp -> ('a, 'b) prim_iexp
+
+val ifthenelse_arith :
+  ('a, 'b) fml -> ('a, 'b) iexp -> ('a, 'b) iexp -> ('a, 'b) prim_iexp
+
 val fml : Location.t -> ('a, 'b) prim_fml -> ('a, 'b) fml
 val exp : int option -> Location.t -> ('a, 'b) prim_exp -> ('a, 'b) exp
 val iexp : Location.t -> ('a, 'b) prim_iexp -> ('a, 'b) iexp

@@ -30,6 +30,18 @@ val univ : t
 
 val iden : t
 
+val shl : t
+(** Reserved name for 'left shift'. *)
+
+val shr : t
+(** Reserved name for 'right shift'. *)
+
+val sha : t
+(** Reserved name for 'arithmetic right shift'. *)
+
+val integers : t
+(** Reserved name for 'Int'. *)
+
 val equal : t -> t -> bool
 (** Tells whether two names are the same *)
 

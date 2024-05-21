@@ -69,7 +69,7 @@ let compute_univ infile raw_univ =
 (* 1 = arity *)
 
 (* returns a list of tuples (possibly 1-tuples corresponding to plain atoms) *)
-let compute_tuples infile domain = function
+let compute_tuples infile domain (rel_name : Raw_ident.t) = function
   (* a list of  1-tuples (coming from indexed id's) *)
   | EIntvl intvl ->
       (* Msg.debug (fun m -> m "Raw_to_ast.compute_tuples:EIntvl"); *)
@@ -96,14 +96,23 @@ let compute_tuples infile domain = function
   | ETuple ids ->
       (* Msg.debug (fun m -> m "Raw_to_ast.compute_tuples:ETuple"); *)
       let atoms = List.map (fun id -> Raw_ident.basename id |> Atom.atom) ids in
+      (* the absence test below must not be done if we consider special shift relations as they may rightfully contain small ints that don't exist in univ (e.g. if we have `for 0 Int`) *)
+      let to_ignore =
+        List.map
+          (fun s ->
+            Raw_ident.ident Name.(to_string s) Lexing.dummy_pos Lexing.dummy_pos)
+          Name.[ shl; shr; sha ]
+      in
       (* to check if all atoms in the tuple are in univ, we do as if every atom
          was a 1-tuple and then check whether this 1-tuple is indeed in univ *)
       let absent =
         (* compute 1-tuples/atoms absent from univ, if there are *)
         List.flat_map
           (fun t ->
-            if not @@ TS.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain then
-              [ t ]
+            if
+              (not @@ TS.mem (Tuple.tuple1 t) @@ Domain.univ_atoms domain)
+              && not (List.mem ~eq:Raw_ident.eq_name rel_name to_ignore)
+            then [ t ]
             else [])
           atoms
       in
@@ -177,7 +186,7 @@ let compute_bound infile domain (which : [ `Inf | `Sup | `Exact ]) id raw_bound
         else Msg.Fatal.incompatible_arities @@ fun args -> args infile id
     | BElts elts ->
         (* Msg.debug (fun m -> m "Raw_to_ast.compute_bound:BElts"); *)
-        let tuples = List.flat_map (compute_tuples infile domain) elts in
+        let tuples = List.flat_map (compute_tuples infile domain id) elts in
         let bnd = check_tuples_arities_and_duplicates infile id tuples in
         if TS.size bnd <> List.length tuples then
           Msg.Warn.duplicate_elements (fun args ->
@@ -294,7 +303,18 @@ let compute_domain (pb : Raw.raw_problem) =
     (*   (fun m -> m "Raw_to_ast.compute_domain:update add %a ⇒ %a" *)
     (*               Name.pp name (Fmtc.hbox @@ Domain.pp) newdom) *)
   in
-  List.fold_left update init pb.raw_decls
+  let domain = List.fold_left update init pb.raw_decls in
+  (* add Int = {} if Int is absent *)
+  let domain =
+    match Domain.get Name.integers domain with
+    | Some Relation.(Const { arity = 1; scope = Scope.Exact _; _ }) -> domain
+    | None ->
+        Domain.add Name.integers
+          Relation.(const Name.integers 1 Scope.(exact TS.empty))
+          domain
+    | _ -> assert false
+  in
+  Domain.compute_bitwidth univ_ts domain
 
 (*******************************************************************************
  *  Compute instances and check they comply with the respective relations.
@@ -365,10 +385,11 @@ let compute_symmetries (pb : Raw.raw_problem) =
   List.map compute_single_sym pb.raw_syms
 
 (*******************************************************************************
- *  Walking along raw goals to get variables and relation names out of raw_idents
+ *  Walking along raw goals to get variables and relation names out of raw_idents. 
+ Also sets the ref unseen_shifts to shifts that were not present.
  *******************************************************************************)
 
-let refine_identifiers raw_pb =
+let refine_identifiers unseen_shifts raw_pb =
   let open Gen_goal in
   let rec walk_fml ctx fml =
     let ctx2, f = walk_prim_fml ctx fml.prim_fml in
@@ -432,7 +453,9 @@ let refine_identifiers raw_pb =
   and walk_exp ctx exp = { exp with prim_exp = walk_prim_exp ctx exp.prim_exp }
   and walk_prim_exp ctx = function
     | Ident id -> (
-        try ident @@ CCList.Assoc.get_exn ~eq:Raw_ident.eq_name id ctx
+        try
+          let ast_ident = CCList.Assoc.get_exn ~eq:Raw_ident.eq_name id ctx in
+          ident ast_ident
         with Not_found ->
           Msg.Fatal.undeclared_id @@ fun args -> args raw_pb.file id)
     | None_ -> none
@@ -449,13 +472,29 @@ let refine_identifiers raw_pb =
         let ctx2, sim_bindings2 = walk_sim_bindings ctx sim_bindings in
         let _, blk2 = walk_block ctx2 blk in
         compr sim_bindings2 blk2
+    | Big_int ie -> big_int @@ walk_iexp ctx ie
   and walk_iexp ctx iexp =
     { iexp with prim_iexp = walk_prim_iexp ctx iexp.prim_iexp }
   and walk_prim_iexp ctx = function
     | Num n -> num n
     | Card e -> card @@ walk_exp ctx e
     | IUn (op, e) -> iunary op @@ walk_iexp ctx e
-    | IBin (e1, op, e2) -> ibinary (walk_iexp ctx e1) op (walk_iexp ctx e2)
+    | IBin (e1, op, e2) ->
+        (match op with
+        | Lshift | Sershift | Zershift ->
+            unseen_shifts :=
+              List.remove ~eq:Gen_goal.equal_ibinop ~key:op !unseen_shifts
+        | _ -> ());
+        ibinary (walk_iexp ctx e1) op (walk_iexp ctx e2)
+    | Small_int e -> small_int @@ walk_exp ctx e
+    | Sum (bs, ie) ->
+        let ctx', bs' = walk_bindings ctx bs in
+        let ie' = walk_iexp ctx' ie in
+        sum bs' ie'
+    | AIte (c, t, e) ->
+        ifthenelse_arith
+          (snd @@ walk_fml ctx c)
+          (walk_iexp ctx t) (walk_iexp ctx e)
   in
   (* initial context is made of relation names declared in the domain (+ univ) *)
   let init_ctx =
@@ -687,6 +726,9 @@ let compute_arities elo =
     | Prime e ->
         let e' = walk_exp ctx e in
         return_exp exp e'.arity @@ prime e'
+    | Big_int e ->
+        let e' = walk_iexp ctx e in
+        return_exp exp (Some 1) @@ big_int e'
   and walk_iexp ctx iexp =
     { iexp with prim_iexp = walk_prim_iexp ctx iexp.prim_iexp }
   and walk_prim_iexp ctx = function
@@ -695,6 +737,28 @@ let compute_arities elo =
     | IUn (op, iexp) -> iunary op @@ walk_iexp ctx iexp
     | IBin (iexp1, op, iexp2) ->
         ibinary (walk_iexp ctx iexp1) op (walk_iexp ctx iexp2)
+    | Small_int e ->
+        let e' = walk_exp ctx e in
+        if Option.equal ( = ) e'.arity (Some 1) then small_int e'
+        else
+          Msg.Fatal.arity_error (fun args ->
+              args elo.Ast.file e "argument to `int[]` must be of arity 1")
+    | Sum (bs, ie) ->
+        let bs', ctx' = walk_bindings ctx bs in
+        List.iter
+          (fun (_, e) ->
+            if not @@ Option.equal ( = ) e.arity (Some 1) then
+              Msg.Fatal.arity_error (fun args ->
+                  args elo.Ast.file e
+                    "under `sum`, every bound must be a unary set"))
+          bs';
+        let ie' = walk_iexp ctx' ie in
+        sum bs' ie'
+    | AIte (c, t, e) ->
+        let c' = walk_fml ctx c in
+        let t' = walk_iexp ctx t in
+        let e' = walk_iexp ctx e in
+        ifthenelse_arith c' t' e'
   in
   let init =
     object
@@ -736,14 +800,31 @@ let compute_arities elo =
     }
 
 (*******************************************************************************
+ *  Removes all shifts from the domain.
+ ******************************************************************************)
+let shift_of_ibinop op =
+  match op with
+  | Gen_goal.Lshift -> Name.shl
+  | Gen_goal.Sershift -> Name.sha
+  | Gen_goal.Zershift -> Name.shr
+  | _ -> assert false
+
+let remove_shifts domain to_remove =
+  List.fold_left
+    (fun dom op -> Domain.remove (shift_of_ibinop op) dom)
+    domain to_remove
+
+(*******************************************************************************
  *  Declaration of the whole transformation
- *******************************************************************************)
+ ******************************************************************************)
 
 let whole raw_pb =
   let domain = compute_domain raw_pb in
   let syms = compute_symmetries raw_pb in
   let instance = compute_instances domain raw_pb in
-  let invars, goal = refine_identifiers raw_pb in
+  let unseen_shifts = ref Gen_goal.[ lshift; sershift; zershift ] in
+  let invars, goal = refine_identifiers unseen_shifts raw_pb in
+  let domain = remove_shifts domain !unseen_shifts in
   Ast.make raw_pb.file domain instance syms invars goal |> compute_arities
 
 let transfo = Transfo.make "raw_to_elo" whole

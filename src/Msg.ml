@@ -152,7 +152,7 @@ module Fatal = struct
         (Lexing.lexeme_start_p lexbuf)
         (Lexing.lexeme_end_p lexbuf)
     in
-    m ~header:(code 2) "%s:%a: syntax error %a%a" file Location.pp loc
+    m ~header:(code 2) "%s:%a: syntax error: %a%a" file Location.pp loc
       (* (print_extract ~color:error_color) (file, loc); *)
       string (Lexing.lexeme lexbuf) (hardline **< Extract.pp)
       (Extract.extract (Some file) loc)
@@ -397,6 +397,15 @@ module Fatal = struct
       "%a%a: the lower bound of %S must be empty as it is enumerable"
       (option @@ (colon **> string))
       infile Location.pp loc (Raw_ident.basename id)
+
+  let incorrect_int_set args =
+    err @@ fun m ->
+    args @@ fun bitwidth ts ->
+    m ~header:(code 27)
+      "the set `%s` is not a constant set of shape (-2^(bitwidth - 1) .. \
+       2^(bitwidth - 1) - 1) (bitwidth = %d):@ %a"
+      Name.(to_string integers)
+      bitwidth Tuple_set.pp ts
 end
 
 (** {2 Warnings (the program does not fail)} *)

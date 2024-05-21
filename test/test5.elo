@@ -1,4 +1,5 @@
 univ : {p$1 .. p$3 };
+const ints:1 {};
 run 
 all p : univ | p in univ
 

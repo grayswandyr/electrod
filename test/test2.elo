@@ -1,6 +1,7 @@
-
 (* univ declaration (* nested comment *) *)
 univ : { a b c  e$2 .. e$4 };
+
+const ints:1 {};
 
 -- one line comment
 -- other relations

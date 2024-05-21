@@ -98,6 +98,7 @@ and ('v, 'i) prim_exp =
   | BoxJoin of ('v, 'i) exp * ('v, 'i) exp list  (** <> []  *)
   | Compr of ('v, 'i) sim_binding list * ('v, 'i) block
   | Prime of ('v, 'i) exp
+  | Big_int of ('v, 'i) iexp
 
 and rqualify = ROne | RLone | RSome | RNo
 and runop = Transpose | TClos | RTClos
@@ -113,10 +114,13 @@ and ('v, 'i) prim_iexp =
   | Card of ('v, 'i) exp
   | IUn of iunop * ('v, 'i) iexp
   | IBin of ('v, 'i) iexp * ibinop * ('v, 'i) iexp
+  | Small_int of ('v, 'i) exp
+  | Sum of ('v, 'i) binding list * ('v, 'i) iexp
+  | AIte of ('v, 'i) fml * ('v, 'i) iexp * ('v, 'i) iexp
 
 and iunop = Neg
 
-and ibinop = Add | Sub
+and ibinop = Add | Sub | Mul | Div | Rem | Lshift | Zershift | Sershift
 [@@deriving
   visitors { variety = "map" },
     visitors { variety = "fold"; ancestors = [ "VisitorsRuntime.map" ] }]
@@ -191,6 +195,7 @@ let compr decls block =
   Compr (decls, block)
 
 let prime exp = Prime exp
+let big_int iexp = Big_int iexp
 let in_ = In
 let not_in = NotIn
 let req = REq
@@ -219,9 +224,32 @@ let join = Join
 let card exp = Card exp
 let iunary op exp = IUn (op, exp)
 let ibinary exp1 op exp2 = IBin (exp1, op, exp2)
+
+let equal_ibinop o1 o2 =
+  match (o1, o2) with
+  | Add, Add
+  | Sub, Sub
+  | Mul, Mul
+  | Div, Div
+  | Rem, Rem
+  | Lshift, Lshift
+  | Zershift, Zershift
+  | Sershift, Sershift ->
+      true
+  | _, _ -> false
+
 let neg = Neg
 let add = Add
 let sub = Sub
+let mul = Mul
+let div = Div
+let rem = Rem
+let lshift = Lshift
+let zershift = Zershift
+let sershift = Sershift
+let small_int exp = Small_int exp
+let sum bs iexp = Sum (bs, iexp)
+let ifthenelse_arith c t e = AIte (c, t, e)
 let fml fml_loc prim_fml = { prim_fml; fml_loc }
 let exp arity exp_loc prim_exp = { prim_exp; exp_loc; arity }
 let iexp iexp_loc prim_iexp = { prim_iexp; iexp_loc }
@@ -385,6 +413,7 @@ and pp_prim_exp pp_v pp_i out =
              (pp_block pp_v pp_i))
         (sim_bindings, blk)
   | Prime e -> pf out "%a'" (pp_exp pp_v pp_i) e
+  | Big_int ie -> pf out "Int[%a]" (pp_iexp pp_v pp_i) ie
 
 and pp_runop out =
   let open Fmtc in
@@ -415,8 +444,17 @@ and pp_prim_iexp pp_v pp_i out =
   | IUn (op, iexp) ->
       pf out "@[<2>(%a%a)@]" pp_iunop op (pp_iexp pp_v pp_i) iexp
   | IBin (e1, op, e2) ->
-      pf out "@[<2>(%a@ %a@ %a)@]" (pp_iexp pp_v pp_i) e1 pp_ibinop op
+      pf out "@[<2>%a[%a,@ %a]@]" pp_ibinop op (pp_iexp pp_v pp_i) e1
         (pp_iexp pp_v pp_i) e2
+  | Small_int exp -> pf out "@[<2>int[%a]@]" (pp_exp pp_v pp_i) exp
+  | Sum (bs, ie) ->
+      pf out "@[<2>(sum %a@ |@ %a)@]"
+        (list ~sep:(sp **> comma) @@ pp_binding ~sep:colon pp_v pp_i)
+        bs (pp_iexp pp_v pp_i) ie
+  | AIte (c, t, e) ->
+      pf out "@[<hv>%a %a@;<1 2>@[%a@]@;%a@;<1 2>@[%a@]@]" (pp_fml pp_v pp_i) c
+        (kwd_styled string) "iimplies" (pp_iexp pp_v pp_i) t (kwd_styled string)
+        "ielse" (pp_iexp pp_v pp_i) e
 
 and pp_iunop out =
   let open Fmtc in
@@ -424,4 +462,12 @@ and pp_iunop out =
 
 and pp_ibinop out =
   let open Fmtc in
-  function Add -> pf out "+" | Sub -> pf out "-"
+  function
+  | Add -> pf out "fun/add"
+  | Sub -> pf out "fun/sub"
+  | Mul -> pf out "fun/mul"
+  | Div -> pf out "fun/div"
+  | Rem -> pf out "fun/subrem"
+  | Lshift -> pf out "fun/lshift"
+  | Zershift -> pf out "fun/zershift"
+  | Sershift -> pf out "fun/sershift"

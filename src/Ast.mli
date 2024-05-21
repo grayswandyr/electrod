@@ -64,15 +64,25 @@ val substitute :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> ident -> ident
   ; visit_'v :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> var -> var
+  ; visit_AIte :
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
+      (var, ident) Gen_goal.fml ->
+      (var, ident) Gen_goal.iexp ->
+      (var, ident) Gen_goal.iexp ->
+      (var, ident) Gen_goal.prim_iexp
   ; visit_Add :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.ibinop
   ; visit_All :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.quant
   ; visit_And :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.lbinop
+  ; visit_Big_int :
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
+      (var, ident) Gen_goal.iexp ->
+      (var, ident) Gen_goal.prim_exp
   ; visit_Block :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
-      (var, ident) Libelectrod__Gen_goal.block ->
+      (var, ident) Gen_goal.block ->
       (var, ident) Gen_goal.prim_fml
   ; visit_BoxJoin :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
@@ -86,10 +96,12 @@ val substitute :
   ; visit_Compr :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
       (var, ident) Gen_goal.sim_binding list ->
-      (var, ident) Libelectrod__Gen_goal.block ->
+      (var, ident) Gen_goal.block ->
       (var, ident) Gen_goal.prim_exp
   ; visit_Diff :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.rbinop
+  ; visit_Div :
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.ibinop
   ; visit_F :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.lunop
   ; visit_FIte :
@@ -167,16 +179,20 @@ val substitute :
   ; visit_Let :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
       (var, ident) Gen_goal.binding list ->
-      (var, ident) Libelectrod__Gen_goal.block ->
+      (var, ident) Gen_goal.block ->
       (var, ident) Gen_goal.prim_fml
   ; visit_Lone :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.quant
+  ; visit_Lshift :
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.ibinop
   ; visit_Lt :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
       Gen_goal.icomp_op
   ; visit_Lte :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
       Gen_goal.icomp_op
+  ; visit_Mul :
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.ibinop
   ; visit_Neg :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.iunop
   ; visit_No :
@@ -217,7 +233,7 @@ val substitute :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
       Gen_goal.quant ->
       (var, ident) Gen_goal.sim_binding list ->
-      (var, ident) Libelectrod__Gen_goal.block ->
+      (var, ident) Gen_goal.block ->
       (var, ident) Gen_goal.prim_fml
   ; visit_R :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.lbinop
@@ -264,16 +280,29 @@ val substitute :
       Gen_goal.runop ->
       (var, ident) Gen_goal.exp ->
       (var, ident) Gen_goal.prim_exp
+  ; visit_Rem :
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.ibinop
   ; visit_Run :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
-      (var, ident) Libelectrod__Gen_goal.block * bool option ->
+      (var, ident) Gen_goal.block * bool option ->
       (var, ident) Gen_goal.t
   ; visit_S :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.lbinop
+  ; visit_Sershift :
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.ibinop
+  ; visit_Small_int :
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
+      (var, ident) Gen_goal.exp ->
+      (var, ident) Gen_goal.prim_iexp
   ; visit_Some_ :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.quant
   ; visit_Sub :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.ibinop
+  ; visit_Sum :
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
+      (var, ident) Gen_goal.binding list ->
+      (var, ident) Gen_goal.iexp ->
+      (var, ident) Gen_goal.prim_iexp
   ; visit_T :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.lbinop
   ; visit_TClos :
@@ -292,14 +321,16 @@ val substitute :
       (var, ident) Gen_goal.prim_exp
   ; visit_X :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.lunop
+  ; visit_Zershift :
+      (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t -> Gen_goal.ibinop
   ; visit_binding :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
       (var, ident) Gen_goal.binding ->
       var * (var, ident) Gen_goal.exp
   ; visit_block :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
-      (var, ident) Libelectrod__Gen_goal.block ->
-      (var, ident) Libelectrod__Gen_goal.block
+      (var, ident) Gen_goal.block ->
+      (var, ident) Gen_goal.block
   ; visit_comp_op :
       (Var.t, (var, ident) Gen_goal.prim_exp) CCList.Assoc.t ->
       Gen_goal.comp_op ->
@@ -378,12 +409,22 @@ val substitute :
 val rename :
   < visit_'i : (Name.t, Name.t) CCList.Assoc.t -> ident -> ident
   ; visit_'v : (Name.t, Name.t) CCList.Assoc.t -> var -> var
+  ; visit_AIte :
+      (Name.t, Name.t) CCList.Assoc.t ->
+      (var, ident) Gen_goal.fml ->
+      (var, ident) Gen_goal.iexp ->
+      (var, ident) Gen_goal.iexp ->
+      (var, ident) Gen_goal.prim_iexp
   ; visit_Add : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.ibinop
   ; visit_All : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.quant
   ; visit_And : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.lbinop
+  ; visit_Big_int :
+      (Name.t, Name.t) CCList.Assoc.t ->
+      (var, ident) Gen_goal.iexp ->
+      (var, ident) Gen_goal.prim_exp
   ; visit_Block :
       (Name.t, Name.t) CCList.Assoc.t ->
-      (var, ident) Libelectrod__Gen_goal.block ->
+      (var, ident) Gen_goal.block ->
       (var, ident) Gen_goal.prim_fml
   ; visit_BoxJoin :
       (Name.t, Name.t) CCList.Assoc.t ->
@@ -397,9 +438,10 @@ val rename :
   ; visit_Compr :
       (Name.t, Name.t) CCList.Assoc.t ->
       (var, ident) Gen_goal.sim_binding list ->
-      (var, ident) Libelectrod__Gen_goal.block ->
+      (var, ident) Gen_goal.block ->
       (var, ident) Gen_goal.prim_exp
   ; visit_Diff : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.rbinop
+  ; visit_Div : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.ibinop
   ; visit_F : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.lunop
   ; visit_FIte :
       (Name.t, Name.t) CCList.Assoc.t ->
@@ -456,11 +498,13 @@ val rename :
   ; visit_Let :
       (Name.t, Name.t) CCList.Assoc.t ->
       (var, ident) Gen_goal.binding list ->
-      (var, ident) Libelectrod__Gen_goal.block ->
+      (var, ident) Gen_goal.block ->
       (var, ident) Gen_goal.prim_fml
   ; visit_Lone : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.quant
+  ; visit_Lshift : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.ibinop
   ; visit_Lt : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.icomp_op
   ; visit_Lte : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.icomp_op
+  ; visit_Mul : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.ibinop
   ; visit_Neg : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.iunop
   ; visit_No : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.quant
   ; visit_None_ :
@@ -488,7 +532,7 @@ val rename :
       (Name.t, Name.t) CCList.Assoc.t ->
       Gen_goal.quant ->
       (var, ident) Gen_goal.sim_binding list ->
-      (var, ident) Libelectrod__Gen_goal.block ->
+      (var, ident) Gen_goal.block ->
       (var, ident) Gen_goal.prim_fml
   ; visit_R : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.lbinop
   ; visit_RBin :
@@ -522,13 +566,24 @@ val rename :
       Gen_goal.runop ->
       (var, ident) Gen_goal.exp ->
       (var, ident) Gen_goal.prim_exp
+  ; visit_Rem : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.ibinop
   ; visit_Run :
       (Name.t, Name.t) CCList.Assoc.t ->
-      (var, ident) Libelectrod__Gen_goal.block * bool option ->
+      (var, ident) Gen_goal.block * bool option ->
       (var, ident) Gen_goal.t
   ; visit_S : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.lbinop
+  ; visit_Sershift : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.ibinop
+  ; visit_Small_int :
+      (Name.t, Name.t) CCList.Assoc.t ->
+      (var, ident) Gen_goal.exp ->
+      (var, ident) Gen_goal.prim_iexp
   ; visit_Some_ : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.quant
   ; visit_Sub : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.ibinop
+  ; visit_Sum :
+      (Name.t, Name.t) CCList.Assoc.t ->
+      (var, ident) Gen_goal.binding list ->
+      (var, ident) Gen_goal.iexp ->
+      (var, ident) Gen_goal.prim_iexp
   ; visit_T : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.lbinop
   ; visit_TClos : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.runop
   ; visit_Transpose : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.runop
@@ -539,14 +594,15 @@ val rename :
   ; visit_Univ :
       (Name.t, Name.t) CCList.Assoc.t -> (var, ident) Gen_goal.prim_exp
   ; visit_X : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.lunop
+  ; visit_Zershift : (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.ibinop
   ; visit_binding :
       (Name.t, Name.t) CCList.Assoc.t ->
       (var, ident) Gen_goal.binding ->
       var * (var, ident) Gen_goal.exp
   ; visit_block :
       (Name.t, Name.t) CCList.Assoc.t ->
-      (var, ident) Libelectrod__Gen_goal.block ->
-      (var, ident) Libelectrod__Gen_goal.block
+      (var, ident) Gen_goal.block ->
+      (var, ident) Gen_goal.block
   ; visit_comp_op :
       (Name.t, Name.t) CCList.Assoc.t -> Gen_goal.comp_op -> Gen_goal.comp_op
   ; visit_disj : (Name.t, Name.t) CCList.Assoc.t -> bool -> bool

@@ -26,6 +26,9 @@ fmt:
 	$(DUNE) build @fmt --auto-promote --diff-command=- || true
 
 test:
+	$(DUNE) test src
+
+regression:
 	$(DUNE) build @regression
 
 utop:
@@ -50,6 +53,5 @@ show-deps:
 
 clean:
 	$(DUNE) clean
-	-git clean -dfxq -e _opam -e .envrc
 	-rm -f ./$(TARGET) electrod.install
 

@@ -17,6 +17,19 @@ open Containers
 [@@@warning "-4"]
 [@@@warning "-32"]
 
+(* Computes the value of n according to the wrap around semantics *)
+(* the result is betwwen -(2 ^ (bw-1)) and (2 ^ (bw-1) - 1) *)
+let wrap bw n =
+  if bw <= 0 then n
+  else
+    (* maxint = 2 ^ (bw - 1) => wraps at *this* number *)
+    let maxint = Int.pow 2 (bw - 1) in
+    let interval_length = 2 * maxint in
+    if n >= maxint then ((n + maxint) mod interval_length) - maxint
+    else if n < ~-maxint then
+      ((n - maxint + 1) mod interval_length) + maxint - 1
+    else n
+
 (* fragile patterns, lots of them as we short-circuit *)
 
 module type ATOMIC_PROPOSITION = sig
@@ -47,6 +60,7 @@ module type LTL = sig
     | True
     | False
     | Atomic of Atomic.t
+    | Auxiliary of Symbol.t
     | Not of t
     | And of t * t
     | Or of t * t
@@ -67,14 +81,16 @@ module type LTL = sig
 
   and term = private
     | Num of int
-    | Plus of term * term
-    | Minus of term * term
     | Neg of term
-    | Count of t list
+    | Bin of term * binop * term
+    | AIte of t * term * term
+
+  and binop = Plus | Minus | Mul | Div | Rem
 
   val true_ : t
   val false_ : t
   val atomic : Atomic.t -> t
+  val auxiliary : Symbol.t -> t
   val not_ : t -> t
   val and_ : t -> t Lazy.t -> t
   val or_ : t -> t Lazy.t -> t
@@ -96,11 +112,15 @@ module type LTL = sig
   val releases : t -> t -> t
   val since : t -> t -> t
   val triggered : t -> t -> t
-  val num : int -> term
+  val num : int -> int -> term
+  val binary : term -> binop -> term -> term
   val plus : term -> term -> term
   val minus : term -> term -> term
   val neg : term -> term
-  val count : t list -> term
+  val mul : term -> term -> term
+  val div : term -> term -> term
+  val rem : term -> term -> term
+  val ifthenelse_arith : t -> term -> term -> term
   val comp : tcomp -> term -> term -> t
   val lt : tcomp
   val lte : tcomp
@@ -123,10 +143,17 @@ module type LTL = sig
     val ( @<=> ) : t -> t -> t
   end
 
-  val pp : Format.formatter -> t -> unit
+  val stratify : smv_section:[ `Ltlspec | `Trans ] -> t -> t list
+  val pp : Format.formatter -> int -> t -> unit
 
   val pp_gather_variables :
-    ?next_is_X:bool -> Atomic.t Iter.t ref -> Format.formatter -> t -> unit
+    ?next_is_X:bool ->
+    int ->
+    Symbol.t Iter.t ref ->
+    Atomic.t Iter.t ref ->
+    Format.formatter ->
+    t ->
+    unit
 end
 
 module LTL_from_Atomic (At : ATOMIC_PROPOSITION) : LTL with module Atomic = At =
@@ -148,6 +175,7 @@ struct
     | True
     | False
     | Atomic of Atomic.t
+    | Auxiliary of Symbol.t
     | Not of t
     | And of t * t
     | Or of t * t
@@ -168,16 +196,20 @@ struct
 
   and term =
     | Num of int
-    | Plus of term * term
-    | Minus of term * term
     | Neg of term
-    | Count of t list
+    | Bin of term * binop * term
+    | AIte of t * term * term
+
+  and binop = Plus | Minus | Mul | Div | Rem
+
+  (* default impl. for pp; to override later *)
+  let stratify ~smv_section:_ f = [ f ]
 
   let pp _ _ =
     (* default impl. for pp; to override later *)
     failwith "Solver.LTL_from_Atomic.pp not implemented (on purpose)"
 
-  let pp_gather_variables ?(next_is_X = true) _ =
+  let pp_gather_variables ?(next_is_X = true) _ _ =
     let _ = next_is_X in
     pp
 
@@ -199,6 +231,7 @@ struct
   let eq = Eq
   let neq = Neq
   let atomic at = Atomic at
+  let auxiliary sym = Auxiliary sym
   let true_ = True
   let false_ = False
 
@@ -285,18 +318,32 @@ struct
   (* let neg t = Neg t *)
   (* let comp op t1 t2 = Comp (op, t1, t2) *)
 
-  let num n = Num n
+  let num bw n = Num (wrap bw n)
+  let binary t1 op t2 = Bin (t1, op, t2)
 
   let plus t1 t2 =
-    match (t1, t2) with Num 0, _ -> t2 | _, Num 0 -> t1 | _ -> Plus (t1, t2)
+    match (t1, t2) with
+    | Num 0, _ -> t2
+    | _, Num 0 -> t1
+    | _ -> Bin (t1, Plus, t2)
 
-  let minus t1 t2 = match t2 with Num 0 -> t1 | _ -> Minus (t1, t2)
-  let neg t = match t with Neg _ -> t | _ -> Neg t
+  let minus t1 t2 = match t2 with Num 0 -> t1 | _ -> Bin (t1, Minus, t2)
+  let neg t = match t with Neg u -> u | _ -> Neg t
 
-  let count ps =
-    match List.filter (function False -> false | _ -> true) ps with
-    | [] -> num 0
-    | props -> Count props
+  let mul t1 t2 =
+    match (t1, t2) with
+    | Num 0, _ -> Num 0
+    | _, Num 0 -> Num 0
+    | _, _ -> Bin (t1, Mul, t2)
+
+  let div t1 t2 =
+    match (t1, t2) with Num 0, _ -> Num 0 | _, _ -> Bin (t1, Div, t2)
+
+  let rem t1 t2 =
+    match (t1, t2) with Num 0, _ -> Num 0 | _, _ -> Bin (t1, Rem, t2)
+
+  let ifthenelse_arith c t e =
+    match c with True -> t | False -> e | _ -> AIte (c, t, e)
 
   (* END term hashconsing *)
 

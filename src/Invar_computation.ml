@@ -207,6 +207,19 @@ class ['self] computer (elo : Elo.t) =
     method build_Neg () = max_color_wiwt Static_prop
     method build_Sub () = max_color_wiwt
     method build_Card () r' = r'
+    method build_Zershift () = max_color_wiwt
+
+    method build_Sum () _ =
+      Fun.id (* JB: TO CHECK  what is the int parameter ?*)
+
+    method build_Small_int () = Fun.id
+    method build_Sershift () = max_color_wiwt
+    method build_Rem () = max_color_wiwt
+    method build_Mul () = max_color_wiwt
+    method build_Lshift () = max_color_wiwt
+    method build_Div () = max_color_wiwt
+    method build_Big_int () = Fun.id
+    method build_AIte () = failwith ("TODO" ^ __LOC__)
   end
 
 (* Computes the color (Invar, Static_prop, Init or Temporal) of an

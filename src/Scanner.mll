@@ -35,7 +35,7 @@ let letter = [ 'A'-'Z' 'a'-'z' ]
 
 let dollar = '$'
 
-let plain_id = (dollar | '_')? letter (letter | digit | '_' | '#')*
+let plain_id = (dollar | '_')? letter (letter | digit | '_' | '#' | '$')*
 
 let idx_id = plain_id dollar number
 
@@ -43,10 +43,7 @@ let pragma = "##" plain_id
 
 let comment_line = ("--")
 
-let reserved_symbol = [ '$' '%' '\\' '`' '@' ]
-
-let builtin_iop = ( "add" | "neg" | "minus" | "card" )
-                  
+let reserved_symbol = [ '$' '%' '\\' '`' '@' ]                
                  
 rule main infile = parse
 | reserved_symbol as c
@@ -64,6 +61,21 @@ rule main infile = parse
         Msg.Fatal.lexical
         @@ fun args -> args infile lexbuf ("invalid integer constant '" ^ i ^ "'")
     }   
+(* NEG ADD SUB MUL DIV REM LSHIFT SERSHIFT ZERSHIFT HASH SMALLINT BIGINT SUM *)
+| "fun/NEG" { UMINUS }
+| "fun/PLUS" { ADD }
+| "fun/MINUS" { SUB }
+| "fun/MULTIPLY" { MUL }
+| "fun/DIVIDE" { DIV }
+| "fun/MODULO" { REM }
+| "fun/SHL" { LSHIFT }
+| "fun/SHR" { ZERSHIFT }
+| "fun/SHA" { SERSHIFT }
+| "int" { SMALLINT }
+| "Int" { BIGINT }
+| "sum" { SUM }
+| "iimplies" { IIMPLIES }
+| "ielse" { IELSE }
 | "run"
     { RUN }
 | "expect"

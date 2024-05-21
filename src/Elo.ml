@@ -78,6 +78,7 @@ and ('fml, 'exp, 'iexp) prim_oexp =
   | RIte of 'fml * 'exp * 'exp
   | Compr of ((bool[@opaque]) * (int[@opaque]) * 'exp) list * 'fml list
   | Prime of 'exp
+  | Big_int of 'iexp
 
 and runop = Transpose | TClos | RTClos
 and rbinop = Union | Inter | Over | LProj | RProj | Prod | Diff | Join
@@ -87,10 +88,13 @@ and ('fml, 'exp, 'iexp) oiexp =
   | Card of 'exp
   | IUn of iunop * 'iexp
   | IBin of 'iexp * ibinop * 'iexp
+  | Small_int of 'exp
+  | Sum of 'exp * 'iexp
+  | AIte of 'fml * 'iexp * 'iexp
 
 and iunop = Neg
 
-and ibinop = Add | Sub
+and ibinop = Add | Sub | Mul | Div | Rem | Lshift | Zershift | Sershift
 [@@deriving
   visitors { variety = "map"; name = "omap" },
     visitors
@@ -253,6 +257,7 @@ let compr ~ar decls block =
   hexp @@ exp ~ar @@ Compr (decls, block)
 
 let prime ~ar e = hexp @@ exp ~ar @@ Prime e
+let big_int ie = hexp @@ exp ~ar:1 @@ Big_int ie
 let in_ = In
 let not_in = NotIn
 let req = REq
@@ -278,9 +283,24 @@ let num n = hiexp @@ Num n
 let card e = hiexp @@ Card e
 let iunary op e = hiexp @@ IUn (op, e)
 let ibinary exp1 op exp2 = hiexp @@ IBin (exp1, op, exp2)
+let ifthenelse_arith cdt then_ else_ = hiexp @@ AIte (cdt, then_, else_)
 let neg = Neg
 let add = Add
 let sub = Sub
+let mul = Mul
+let div = Div
+let rem = Rem
+let lshift = Lshift
+let sershift = Sershift
+let zershift = Zershift
+let small_int e = hiexp @@ Small_int e
+let sum bs ie = hiexp @@ Sum (bs, ie)
+
+(* let small_int e =
+   hiexp
+   @@
+   let x = var ~ar:1 0 in
+   sum e @@ *)
 
 (*
     let%test _ =
@@ -377,9 +397,21 @@ let pp_iunop out =
 
 let pp_ibinop out =
   let open Fmtc in
-  function Add -> pf out "+" | Sub -> pf out "-"
+  function
+  | Add -> pf out "fun/add"
+  | Sub -> pf out "fun/sub"
+  | Mul -> pf out "fun/mul"
+  | Div -> pf out "fun/div"
+  | Rem -> pf out "fun/subrem"
+  | Lshift -> pf out "fun/lshift"
+  | Zershift -> pf out "fun/zershift"
+  | Sershift -> pf out "fun/sershift"
 
 let pp_var out v = Fmtc.pf out "v/%d" v
+
+let pp_obinding stacked pp_exp out binding =
+  let open Fmtc in
+  pf out "%a :@ %a" pp_var (stacked + 1) (pp_exp stacked) binding
 
 let pp_osim_binding stacked pp_exp out (disj, vars, e) =
   let open Fmtc in
@@ -432,7 +464,7 @@ let pp_ofml stacked pp_fml pp_exp pp_iexp out =
         (kwd_styled string) "else" (pp_fml stacked) e
   | Block fmls -> pp_oblock stacked pp_fml out fmls
 
-let pp_prim_oexp stacked pp_fml pp_exp out =
+let pp_prim_oexp stacked pp_fml pp_exp pp_iexp out =
   let open Fmtc in
   function
   | None_ -> (styled Name.style pf) out "none"
@@ -462,16 +494,27 @@ let pp_prim_oexp stacked pp_fml pp_exp out =
              (pp_oblock (stacked + nbvars) pp_fml))
         (decls, blk)
   | Prime e -> pf out "%a'" (pp_exp stacked) e
+  | Big_int ie -> pf out "Int[%a]" (pp_iexp stacked) ie
 
-let pp_oiexp stacked pp_exp pp_iexp out =
+let pp_oiexp stacked pp_fml pp_exp pp_iexp out =
   let open Fmtc in
   function
   | Num n -> pf out "%d" n
   | Card e -> pf out "@[<2>(# %a)@]" (pp_exp stacked) e
   | IUn (op, iexp) -> pf out "@[<2>(%a%a)@]" pp_iunop op (pp_iexp stacked) iexp
   | IBin (e1, op, e2) ->
-      pf out "@[<2>(%a@ %a@ %a)@]" (pp_iexp stacked) e1 pp_ibinop op
+      pf out "@[<2>%a[%a,@ %a])@]" pp_ibinop op (pp_iexp stacked) e1
         (pp_iexp stacked) e2
+  | Small_int exp -> pf out "@[<2>int[%a]@]" (pp_exp stacked) exp
+  | Sum (b, ie) ->
+      pf out "@[<2>(sum %a@ |@ %a)@]"
+        (pp_obinding stacked pp_exp)
+        b
+        (pp_iexp (stacked + 1))
+        ie
+  | AIte (c, t, e) ->
+      pf out "@[<2>(%a ?@ %a :@ %a)@]" (pp_fml stacked) c (pp_iexp stacked) t
+        (pp_iexp stacked) e
 
 let rec pp_fml stacked out (Fml { node; _ }) =
   pp_ofml stacked pp_fml pp_exp pp_iexp out node
@@ -479,9 +522,10 @@ let rec pp_fml stacked out (Fml { node; _ }) =
 and pp_block stacked out fmls = pp_oblock stacked pp_fml out fmls
 
 and pp_iexp stacked out (Iexp { node; _ }) =
-  pp_oiexp stacked pp_exp pp_iexp out node
+  pp_oiexp stacked pp_fml pp_exp pp_iexp out node
 
-and pp_prim_exp stacked out pe = pp_prim_oexp stacked pp_fml pp_exp out pe
+and pp_prim_exp stacked out pe =
+  pp_prim_oexp stacked pp_fml pp_exp pp_iexp out pe
 
 and pp_exp stacked out (Exp { node = e; _ }) =
   pp_prim_exp stacked out e.prim_exp

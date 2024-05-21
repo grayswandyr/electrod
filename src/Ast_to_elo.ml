@@ -141,10 +141,15 @@ and convert_exp stack
       let vars = List.flat_map (fun (_, vars, _) -> vars) decls in
       let block' = convert_block (new_env vars stack) block in
       E.compr ~ar decls' block'
-      |> Fun.tap (fun e ->
-             Msg.debug (fun m ->
-                 m "Ast_to_elo.convert_Compr@ @[<hov2>%a@]@ --> @[<hov2>%a@]"
-                   Ast.pp_prim_exp prim_exp (E.pp_exp 0) e))
+  | Big_int ie -> E.big_int @@ convert_iexp stack ie
+
+and convert_bindings stack (decls : (Ast.var, Ast.ident) Gen_goal.binding list)
+    =
+  match decls with
+  | [] -> []
+  | (var, range) :: tl ->
+      let hd' = convert_exp stack range in
+      hd' :: convert_bindings (new_env [ var ] stack) tl
 
 and convert_sim_bindings stack
     (decls : (Ast.var, Ast.ident) Gen_goal.sim_binding list) =
@@ -179,9 +184,26 @@ and convert_iexp stack ({ prim_iexp; _ } : (Ast.var, Ast.ident) Gen_goal.iexp) =
   | IBin (e1, op, e2) ->
       E.ibinary (convert_iexp stack e1) (convert_ibinop op)
         (convert_iexp stack e2)
+  | Small_int e -> E.small_int @@ convert_exp stack e
+  | Sum ([ (var, range) ], ie) ->
+      let range' = convert_exp stack range in
+      let ie' = convert_iexp (new_env [ var ] stack) ie in
+      E.sum range' ie'
+  | Sum _ -> (* impossible case due to previous simplification*) assert false
+  | AIte (c, t, e) ->
+      E.ifthenelse_arith (convert_fml stack c) (convert_iexp stack t)
+        (convert_iexp stack e)
 
 and convert_ibinop (op : Gen_goal.ibinop) =
-  match op with Add -> E.add | Sub -> E.sub
+  match op with
+  | Add -> E.add
+  | Sub -> E.sub
+  | Mul -> E.mul
+  | Div -> E.div
+  | Rem -> E.rem
+  | Lshift -> E.lshift
+  | Zershift -> E.zershift
+  | Sershift -> E.sershift
 
 let convert_goal (Gen_goal.Run (fmls, expec)) =
   E.run (convert_block [] fmls) expec

@@ -12,7 +12,7 @@
  * License-Filename: LICENSE.md
  ******************************************************************************)
 
-(** The domain represents the set of relation declarations. *)
+(** The domain represents the set of relation declarations. It also contains the bitwidth representing integers. *)
 
 open Containers
 
@@ -24,11 +24,22 @@ val empty : t
 (** Constructor. *)
 
 val add : Name.t -> Relation.t -> t -> t
-(** Adds an asociation to the domain. 
+(** Adds an association to the domain. 
     The name must not be in the domain already. *)
+
+val remove : Name.t -> t -> t
+(** Removes a name from the domain, if it is present.  *)
 
 val mem : Name.t -> t -> bool
 (** Checks whether a name is already bound in the map. *)
+
+val compute_bitwidth : Tuple_set.t -> t -> t
+(** The tuple set is the value of `univ`. 
+    
+Pre: the Name for the integer set must be present in the domain. Raises otherwise. Also raises if the size of the integer set isn't a power of 2 or doesn't contain all integers between -2^bitwidth and +2^bitwidth-1. *)
+
+val bitwidth : t -> int
+(** Returns the bitwidth (a non-negative power of 2).  *)
 
 (** {1 Accessors}*)
 
@@ -44,7 +55,7 @@ val univ_atoms : t -> Tuple_set.t
 val to_list : t -> (Name.t * Relation.t) list
 (** Returns the map as an association list *)
 
-val of_list : (Name.t * Relation.t) list -> t
+val of_list : int -> (Name.t * Relation.t) list -> t
 val equal : t -> t -> bool
 
 val must : Name.t -> t -> Tuple_set.t
@@ -66,5 +77,17 @@ val rename :
 val update_domain_with_instance : t -> Instance.t -> t
 (** For every entry in [inst], [update_domain_with_instance dom inst] replaces
     the corresponding relation in [dom] with the exact scope given by [inst]. *)
+
+val ints : t -> Tuple_set.t
+(** Returns the set of ints as 1-tuples  *)
+
+val shl : t -> Tuple_set.t option
+(** Returns this shift as a set of triples (None if it doesn't exist). *)
+
+val shr : t -> Tuple_set.t option
+(** Returns this shift as a set of triples (None if it doesn't exist). *)
+
+val sha : t -> Tuple_set.t option
+(** Returns this shift as a set of triples (None if it doesn't exist). *)
 
 include Intf.Print.S with type t := t
