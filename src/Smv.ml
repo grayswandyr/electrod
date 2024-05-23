@@ -476,7 +476,7 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
         pf out "%s@\n" elo_str;
         stratified_fml
         |> List.iter
-             (pf out "TRANS@\n[<hv2>%a@];@\n@\n"
+             (pf out "TRANS@\n@[<hv2>%a@];@\n@\n"
                 (Ltl.pp_gather_variables ~next_is_X:false bitwidth auxiliaries
                    variables)))
       trans;
