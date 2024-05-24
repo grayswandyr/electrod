@@ -219,7 +219,7 @@ class ['self] computer (elo : Elo.t) =
     method build_Lshift () = max_color_wiwt
     method build_Div () = max_color_wiwt
     method build_Big_int () = Fun.id
-    method build_AIte () = failwith ("TODO" ^ __LOC__)
+    method build_AIte () = fun cond_color _ _ -> cond_color
   end
 
 (* Computes the color (Invar, Static_prop, Init or Temporal) of an
