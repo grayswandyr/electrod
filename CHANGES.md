@@ -1,3 +1,8 @@
+### 1.1.0 (2024-05-24)
+- handle int atoms, Int signature and all Alloy arithmetic operations
+- fix cardinality translation bug
+- stratify LTL formulas for SMV
+
 ### 1.0.0 (2021-01-11)
 - build (using Github Actions) on Windows
 - fix nuXmv/NuSMV output parsing on Windows, which prevented correct behavior
