@@ -519,14 +519,6 @@ let refine_identifiers unseen_shifts raw_pb =
  *  Check arities 
  *******************************************************************************)
 
-(* computes the arity of a join *)
-let join_arity ar1 ar2 =
-  match (ar1, ar2) with
-  | Some a1, Some a2 ->
-      let res = a1 + a2 - 2 in
-      if res > 0 then Some res else None
-  | Some _, None | None, Some _ | None, None -> None
-
 let str_exp = Fmtc.to_to_string (Fmtc.hbox2 Ast.pp_exp)
 
 let compute_arities elo =
@@ -675,13 +667,19 @@ let compute_arities elo =
                 let ar = Some (a1 + a2) in
                 return_exp exp ar @@ rbinary e1' op e2'
             | None, _ | _, None -> return_exp exp None @@ rbinary e1' op e2')
-        | Join ->
-            let ar_join = join_arity ar1 ar2 in
-            if Option.is_none ar_join then
-              Result.fail
-              @@ Fmtc.str "wrong arities for the dot join of %s and %s"
-                   (str_exp e1') (str_exp e2')
-            else return_exp exp ar_join @@ rbinary e1' op e2')
+        | Join -> (
+            match (ar1, ar2) with
+            | Some _, None | None, Some _ | None, None ->
+                return_exp exp None @@ rbinary e1' op e2'
+            | Some a1, Some a2 ->
+                let res = a1 + a2 - 2 in
+                if res < 0 then
+                  Result.fail
+                  @@ Fmtc.str "wrong arities for the dot join of %s and %s"
+                       (str_exp e1') (str_exp e2')
+                else
+                  return_exp exp (if res > 0 then Some res else None)
+                  @@ rbinary e1' op e2'))
     | RIte (c, t, e) -> (
         let c' = walk_fml ctx c in
         let t' = walk_exp ctx t in

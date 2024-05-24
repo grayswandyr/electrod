@@ -496,8 +496,8 @@ iexpr:
   | HASH e = expr
   { G.iexp (Location.from_positions $startpos $endpos)
     @@ G.card e  }
-| formula IIMPLIES iexpr IELSE iexpr { G.iexp (Location.from_positions $startpos $endpos)
-    @@ G.num 0 }
+| c = formula IIMPLIES t = iexpr IELSE e = iexpr { G.iexp (Location.from_positions $startpos $endpos)
+    @@ G.ifthenelse_arith c t e }
   | SMALLINT e = brackets(expr)
 	{ G.iexp (Location.from_positions $startpos $endpos)
 	@@ G.small_int e }
