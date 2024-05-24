@@ -91,7 +91,6 @@ class virtual ['self] recursor =
     method virtual build_X : _
     method virtual build_oexp : _
     method virtual build_Zershift : _
-    method virtual build_Sum : _
     method virtual build_Sershift : _
     method virtual build_Rem : _
     method virtual build_Mul : _
