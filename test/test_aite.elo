@@ -1,0 +1,17 @@
+univ : { A#0 A#1 A#2 -4 -3 -2 -1 0 1 2 3 };
+
+const Int##min :1 { ( -4 ) };
+const Int##zero :1 { ( 0 ) };
+const Int##max :1 { ( 3 ) };
+const Int##next :2 { ( -4 -3 ) ( -3 -2 ) ( -2 -1 ) ( -1 0 ) ( 0 1 ) ( 1 2 ) ( 2 3 ) };
+const seq##Int :1 { ( 0 ) ( 1 ) ( 2 ) };
+const String :1 { };
+const this##A :1 { } { ( A#0 ) ( A#1 ) ( A#2 ) };
+var this##B :1 { } { ( A#0 ) ( A#1 ) ( A#2 ) };
+var this##C :1 { } { ( A#0 ) ( A#1 ) ( A#2 ) };
+const ints :1 { ( -4 ) ( -3 ) ( -2 ) ( -1 ) ( 0 ) ( 1 ) ( 2 ) ( 3 ) };
+
+run
+((this##B = this##C) iimplies
+ (#(this##B)) ielse
+ (#((ints + String) + this##A))) < (2);
