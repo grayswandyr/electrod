@@ -13,6 +13,10 @@ dune build electrod.opam && git add electrod.opam
 
 git commit -am "release VVV"
 
+git flow finish --showcommands --push
+
+//--------------------------------------------------
+// OLD (stop using opam for a non-library)
 git flow finish --showcommands --notag --push
 
 # NOW check https://github.com/grayswandyr/electrod/actions
