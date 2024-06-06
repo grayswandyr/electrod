@@ -105,9 +105,10 @@ module Elo_to_SMV_model =
 let pp = SMV_file_format.pp
 let analyze = SMV_file_format.analyze
 
-(* temporary *)
-let run (elo, temporal_symmetry, symmetry_offset) =
-  Elo_to_SMV_model.run (elo, temporal_symmetry, symmetry_offset)
+let run
+    ((elo, temporal_symmetry, symmetry_offset, single_formula) :
+      Elo.t * bool * int * bool) =
+  Elo_to_SMV_model.run (elo, temporal_symmetry, symmetry_offset, single_formula)
 
 let transfo = Transfo.make "to_smv1" run
 

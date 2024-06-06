@@ -88,16 +88,13 @@ struct
      either deals with the initial state or with the whole temporal trace. *)
   let syms_to_ltl temporal_symmetry symmetry_offset elo =
     let open Elo in
-    let syms = elo.sym in
+    let convert_sym =
+      if temporal_symmetry then temporal_sym_to_ltl elo
+      else single_state_sym_to_ltl symmetry_offset elo
+    in
     List.fold_left
-      (fun fmls_acc sym ->
-        let cur_fml =
-          if temporal_symmetry then temporal_sym_to_ltl elo sym
-          else single_state_sym_to_ltl symmetry_offset elo sym
-        in
-        List.cons cur_fml fmls_acc)
-      (*       S.cons ("-- (symmetry)", cur_fml) fmls_acc )*)
-      List.empty syms
+      (fun fmls_acc sym -> List.cons (convert_sym sym) fmls_acc)
+      List.empty elo.sym
 
   let add_sym_comment_to_ltl_fml_list fml_list =
     List.fold_left
@@ -170,7 +167,7 @@ struct
         in
         lbinary premise impl rhs_fml
 
-  let run (elo, temporal_symmetry, symmetry_offset) =
+  let run (elo, temporal_symmetry, symmetry_offset, single_formula) =
     let open Elo in
     (* #781 Handle instance:
 
@@ -210,12 +207,15 @@ struct
       |> S.rev
     in
     (* handling symmetries *)
-    let syms_fmls = syms_to_ltl temporal_symmetry symmetry_offset elo in
+    let sym_ltls = syms_to_ltl temporal_symmetry symmetry_offset elo in
     (* handling the goal *)
     let goal_blk = match elo.goal with Elo.Run (g, _) -> g in
     (* Partition the goal fmls into invars and non invars *)
     let detected_inits, detected_invars, detected_trans, general_fmls =
-      split_invar_noninvar_fmls elo goal_blk
+      if single_formula then
+        (* the user wants only a single big LTL formula as a goal *)
+        ([], [], [], goal_blk)
+      else split_invar_noninvar_fmls elo goal_blk
     in
 
     (* Msg.debug (fun m ->
@@ -226,24 +226,24 @@ struct
 
     (* Msg.debug (fun m ->
        m "Detected trans : %a" Elo.pp_block detected_trans); *)
-    let spec_fml = dualise_fmls general_fmls in
+    let fml_prop = dualise_fmls general_fmls in
     (* Msg.debug (fun m -> m "Elo property : %a" Elo.pp_fml spec_fml); *)
-    let spec_fml_str, prop_ltl =
-      let s, p = ConvertFormulas.convert elo spec_fml in
-      if temporal_symmetry || symmetry_offset > 0 then
-        ( "-- A temporal symmetry breaking predicate is added at the beginning \
-           of the LTLSPEC formula. This is due to the --temporal-symmetry \
-           option of electrod. \n" ^ s,
-          Ltl.and_ (Ltl.conj syms_fmls) (lazy p) )
-      else (s, p)
+    let fml_prop_comment, ltl_prop =
+      let comment, p = ConvertFormulas.convert elo fml_prop in
+      if temporal_symmetry || symmetry_offset > 0 || single_formula then
+        ( "-- A symmetry breaking predicate is added at the beginning of the \
+           LTLSPEC formula. This is either due to option --temporal-symmetry \
+           or --single-formula.\n" ^ comment,
+          Ltl.and_ (Ltl.conj sym_ltls) (lazy p) )
+      else (comment, p)
     in
     (* handling init, invariants and trans *)
     let inits =
-      if temporal_symmetry || symmetry_offset > 0 then
+      if temporal_symmetry || symmetry_offset > 0 || single_formula then
         translate_formulas detected_inits
       else
         S.append
-          (add_sym_comment_to_ltl_fml_list syms_fmls)
+          (add_sym_comment_to_ltl_fml_list sym_ltls)
           (translate_formulas detected_inits)
     in
     let invars =
@@ -251,5 +251,5 @@ struct
     in
     let trans = translate_formulas detected_trans in
     Model.make ~elo ~init:inits ~invariant:invars ~trans
-      ~property:(spec_fml_str, prop_ltl)
+      ~property:(fml_prop_comment, ltl_prop)
 end

@@ -58,7 +58,7 @@ let ensure_session_leader () =
 
 let main style_renderer verbosity tool file scriptfile keep_files no_analysis
     print_generated outcome_format long_names bmc temporal_symmetry
-    symmetry_offset =
+    symmetry_offset single_formula =
   let long_names =
     (* Debug ==> long names *)
     match verbosity with Some Logs.Debug -> true | None | Some _ -> long_names
@@ -103,7 +103,7 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
     let before_conversion = Mtime_clock.now () in
     let model =
       Transfo.(get_exn elo_to_smv_t "to_smv1" |> run)
-        (elo, temporal_symmetry, symmetry_offset)
+        (elo, temporal_symmetry, symmetry_offset, single_formula)
     in
     let conversion_time = Mtime.span before_conversion @@ Mtime_clock.now () in
     (match verbosity with

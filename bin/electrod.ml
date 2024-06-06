@@ -111,6 +111,12 @@ let symmetry_offset =
     value & opt natural_arg 0
     & info [ "so"; "symmetry-offset" ] ~docv:"SYMMETRY_OFFSET" ~doc)
 
+let single_formula =
+  let doc =
+    {|Generates a single formula as a specification for the underlying solver (no special sections such as initial conditions, imposed invariants or transition predicates).|}
+  in
+  Arg.(value & flag & info [ "sf"; "single-formula" ] ~doc)
+
 (* verbosity options (already def'd in Logs_cli, thx!) *)
 let verb_term = Logs_cli.level ()
 
@@ -121,7 +127,7 @@ let main_term =
   Term.(
     const Main.main $ color_term $ verb_term $ tool $ infile $ script
     $ keep_files $ no_analysis $ print_generated $ outcome_format $ long_names
-    $ bmc_length $ temporal_symmetry $ symmetry_offset)
+    $ bmc_length $ temporal_symmetry $ symmetry_offset $ single_formula)
 
 let main_info =
   let doc = "formal analysis of Electrod models" in
