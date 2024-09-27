@@ -1,3 +1,6 @@
+### 1.1.1 (2024-09-27)
+- fix bug: some arithmetic auxiliaries were absent from the generated SMV file
+
 ### 1.1.0 (2024-05-24)
 - handle int atoms, Int signature and all Alloy arithmetic operations
 - fix cardinality translation bug
