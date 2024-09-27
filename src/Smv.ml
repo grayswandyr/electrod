@@ -435,7 +435,6 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     let module S = Iter in
     (* to gather the variables along printing in the buffer *)
     let variables = ref S.empty in
-    (* needed but unused until LTLSPEC *)
     let auxiliaries = ref S.empty in
     let old_margin = Format.pp_get_margin out () in
     let bitwidth = Domain.bitwidth elo.Elo.domain in
@@ -474,11 +473,11 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
       (fun (elo_str, fml) ->
         let stratified_fml = Ltl.stratify ~smv_section:`Trans fml in
         pf out "%s@\n" elo_str;
-        stratified_fml
-        |> List.iter
-             (pf out "TRANS@\n@[<hv2>%a@];@\n@\n"
-                (Ltl.pp_gather_variables ~next_is_X:false bitwidth auxiliaries
-                   variables)))
+        List.iter
+          (pf out "TRANS@\n@[<hv2>%a@];@\n@\n"
+             (Ltl.pp_gather_variables ~next_is_X:false bitwidth auxiliaries
+                variables))
+          stratified_fml)
       trans;
     Format.pp_close_box out ();
     (* LTLSPEC *)
@@ -487,8 +486,6 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     let stratified_ltlspec =
       Ltl.conj @@ Ltl.stratify ~smv_section:`Ltlspec ltlspec
     in
-    (* used only in LTLSPEC; so recreated to be safer *)
-    let auxiliaries = ref S.empty in
     pf out "%s@\nLTLSPEC@\n@[<hv2>%a@];@\n@\n" prop_str
       (Ltl.pp_gather_variables bitwidth auxiliaries variables)
       stratified_ltlspec;
