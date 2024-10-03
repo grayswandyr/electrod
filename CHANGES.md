@@ -1,3 +1,6 @@
+### 1.2.0 (2024-10-03)
+- fix bug: several lassos in some SMV traces. The BMC algorithm now is now "sbmc_inc" and the complete algorithm is (for nuXmv) "ic3 -i".
+
 ### 1.1.1 (2024-09-27)
 - fix bug: some arithmetic auxiliaries were absent from the generated SMV file
 
