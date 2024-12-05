@@ -33,6 +33,7 @@ type goal_color = private
   | Invar
   | Init
   | Trans
+  | Invar_spec
   | Temporal
 
 val to_string : goal_color -> string

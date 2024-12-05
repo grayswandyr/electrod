@@ -101,11 +101,12 @@ struct
       (fun fmls_acc fml -> S.cons ("--  (symmetry)", fml) fmls_acc)
       S.empty fml_list
 
-  (* Splits a list of formulas lf into four lists (initf, invf,
-     transf, restf): the list of init formulas, invar formulas, the
+  (* Splits a list of formulas lf into four lists and a boolean (initf, invf,
+     transf, restf, isInvarSpec): the list of init formulas, invar formulas, the
      list of trans formulas and the list of the rest of the
-     formulas. In case restf is empty, then the last formula of transf
-     (or invf if transf is also empty) is put in restf.*)
+     formulas and a boolean saying whther restf is to check with LTLSPEC or INVARSPEC. 
+     In case restf is empty, then the last formula of transf
+     is put in restf.*)
   let split_invar_noninvar_fmls elo blk =
     let open Invar_computation in
     let invf, tmp_restf =
@@ -117,7 +118,7 @@ struct
               Elo.pp_fml fml Invar_computation.pp color); *)
           match color with
           | Invar | Static_prop -> `Left (remove_always_from_invar fml)
-          | Init | Primed_prop | Trans | Temporal -> `Right fml)
+          | Init | Primed_prop | Trans | Temporal | Invar_spec -> `Right fml)
         blk
     in
     let transf, tmp_restf2 =
@@ -142,13 +143,24 @@ struct
           match color with Init -> `Left fml | _ -> `Right fml)
         tmp_restf2
     in
+    (*is_invar_spec is true if restf consits of one formula of the shape "F propsitional" or "not G propositional"*)
+    let is_invar_spec =
+      match restf with
+      | [hd] -> 
+        begin
+          match Invar_computation.color elo hd with 
+          | Invar_spec -> true
+          | _ -> false
+        end
+      | _ -> false
+    in
     match (restf, List.rev invf, List.rev transf, List.rev initf) with
-    | _ :: _, _, _, _ -> (initf, invf, transf, restf)
-    | [], _, hd :: tl, _ ->
-        (initf, invf, List.rev tl, [ add_always_to_invar hd ])
+    | _ :: _, _, _, _ -> (initf, invf, transf, restf, is_invar_spec)
     | [], hd :: tl, _, _ ->
-        (initf, List.rev tl, transf, [ add_always_to_invar hd ])
-    | [], _, _, hd :: tl -> (List.rev tl, invf, transf, [ hd ])
+        (initf, List.rev tl, transf, [ add_always_to_invar hd ], false)
+    | [], _, hd :: tl, _ ->
+        (initf, invf, List.rev tl, [ add_always_to_invar hd ], false)
+    | [], _, _, hd :: tl -> (List.rev tl, invf, transf, [ hd ], false)
     | _ -> assert false
 
   (*the goal cannot be empty*)
@@ -211,10 +223,10 @@ struct
     (* handling the goal *)
     let goal_blk = match elo.goal with Elo.Run (g, _) -> g in
     (* Partition the goal fmls into invars and non invars *)
-    let detected_inits, detected_invars, detected_trans, general_fmls =
+    let detected_inits, detected_invars, detected_trans, general_fmls, is_invar_spec =
       if single_formula then
         (* the user wants only a single big LTL formula as a goal *)
-        ([], [], [], goal_blk)
+        ([], [], [], goal_blk, false)
       else split_invar_noninvar_fmls elo goal_blk
     in
 
@@ -251,5 +263,5 @@ struct
     in
     let trans = translate_formulas detected_trans in
     Model.make ~elo ~init:inits ~invariant:invars ~trans
-      ~property:(fml_prop_comment, ltl_prop)
+      ~property:(fml_prop_comment, ltl_prop) ~is_invar_spec
 end

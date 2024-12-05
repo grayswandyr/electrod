@@ -328,10 +328,11 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     invariant : (string * ltl) Iter.t;
     trans : (string * ltl) Iter.t;
     property : string * ltl;
+    is_invar_spec : bool;
   }
 
-  let make ~elo ~init ~invariant ~trans ~property =
-    { elo; init; invariant; trans; property }
+  let make ~elo ~init ~invariant ~trans ~property ~is_invar_spec =
+    { elo; init; invariant; trans; property ; is_invar_spec}
 
   let pp_plain_decl vartype out atomic =
     Fmtc.pf out "%s %a : boolean;" vartype Ltl.Atomic.pp atomic
@@ -430,7 +431,10 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
            pp_one_decl at)
 
   let pp_count_variables ?(margin = 80) out
-      { elo; init; invariant; trans; property } =
+      { elo; init; invariant; trans; property; is_invar_spec } =
+ (*to remove the error/warning unused is_invar_spec*)
+    let () = match is_invar_spec with |true -> () | false -> () in
+    
     let open Fmtc in
     let module S = Iter in
     (* to gather the variables along printing in the buffer *)
@@ -535,9 +539,9 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
     (* return the number of variables *)
     S.length !variables
 
-  let pp ?(margin = 80) out { elo; init; invariant; trans; property } =
+  let pp ?(margin = 80) out { elo; init; invariant; trans; property ; is_invar_spec } =
     ignore
-      (pp_count_variables ~margin out { elo; init; invariant; trans; property })
+      (pp_count_variables ~margin out { elo; init; invariant; trans; property ; is_invar_spec})
 
   (* write in temp file *)
   let make_model_file dir infile pp_generated model =
