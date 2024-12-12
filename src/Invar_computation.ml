@@ -62,6 +62,17 @@ let add_always_to_invar (Elo.Fml { node; _ } as fml) =
   let open Elo in
   match node with LUn (G, _) -> fml | _ -> lunary always fml
 
+let  remove_eventually_from_invarspec (Elo.Fml { node; _ } as fml) =
+  let open Elo in 
+  match node with 
+  | LUn (F, subfml) -> subfml
+  | LUn (Not, Elo.Fml {node = subnode; _}) -> 
+    begin
+      match subnode with
+      | LUn (G, subfml) -> subfml
+      | _ -> fml
+    end
+  | _ -> fml 
 
 let is_const (elo : Elo.t) (name : Name.t) =
   assert (Domain.mem name elo.Elo.domain);
