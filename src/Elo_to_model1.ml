@@ -167,20 +167,24 @@ struct
 
   (* From a non-empty list f1, f2, ..., fn of elo formulas, this
      function computes the elo formula "(f1 and ... and fn-1) implies not
-     fn" *)
+     fn".*)
   let dualise_fmls fmls =
     let open Elo in
     match List.rev fmls with
     | [] -> assert false
     | (Fml { node; _ } as hd) :: tl ->
-        let premise = List.fold_left (fun x y -> lbinary x and_ y) true_ tl in
-        let rhs_fml =
-          match node with LUn (Not, subfml) -> subfml | _ -> lunary not_ hd
-        in
-        lbinary premise impl rhs_fml
+      let rhs_fml =
+        match node with LUn (Not, subfml) -> subfml | _ -> lunary not_ hd
+      in
+        match tl with 
+        | [] -> rhs_fml
+        | _ -> 
+          let premise = List.fold_left (fun x y -> lbinary x and_ y) true_ tl in
+          lbinary premise impl rhs_fml
 
   let run (elo, temporal_symmetry, symmetry_offset, single_formula) =
     let open Elo in
+    let open Invar_computation in
     (* #781 Handle instance:
 
        To handle the instance, one possibility would be to update the bound
@@ -231,15 +235,26 @@ struct
     in
 
     (* Msg.debug (fun m ->
-       m "Detected init : %a" Elo.pp_block detected_inits); *)
+       m "Detected init : %a" (Elo.pp_block 0) detected_inits); *)
 
     (* Msg.debug (fun m ->
-       m "Detected invariants : %a" Elo.pp_block detected_invars); *)
+       m "Detected invariants : %a" Elo.pp_block detected_invars);*)
 
     (* Msg.debug (fun m ->
        m "Detected trans : %a" Elo.pp_block detected_trans); *)
-    let fml_prop = dualise_fmls general_fmls in
-    (* Msg.debug (fun m -> m "Elo property : %a" Elo.pp_fml spec_fml); *)
+    let gen_fmls = 
+      if is_invar_spec then 
+      begin
+        match general_fmls with
+        |[fml] -> [remove_eventually_from_invarspec fml]
+        | _ -> assert false;
+      end
+      else general_fmls
+    in
+    Msg.debug (fun m ->
+       m "Formula to chack before dualisation : %a" (Elo.pp_block 0) gen_fmls);
+    let fml_prop = dualise_fmls gen_fmls in
+    Msg.debug (fun m -> m "Formula to check after dualisation : %a" (Elo.pp_fml 0) fml_prop); 
     let fml_prop_comment, ltl_prop =
       let comment, p = ConvertFormulas.convert elo fml_prop in
       if temporal_symmetry || symmetry_offset > 0 || single_formula then

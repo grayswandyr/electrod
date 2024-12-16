@@ -484,16 +484,32 @@ module Make_SMV_file_format (Ltl : Solver.LTL) :
           stratified_fml)
       trans;
     Format.pp_close_box out ();
+    (* INVARSPEC *)
+    if is_invar_spec then
+      begin
+      Format.pp_open_vbox out 0;
+      let prop_str, ltlspec = property in
+      let stratified_ltlspec =
+        Ltl.conj @@ Ltl.stratify ~smv_section:`Ltlspec ltlspec
+      in
+      pf out "%s@\nINVARSPEC@\n@[<hv2>%a@];@\n@\n" prop_str
+        (Ltl.pp_gather_variables bitwidth auxiliaries variables)
+        stratified_ltlspec;
+      Format.pp_close_box out ();
+      end
+    else
+      begin
     (* LTLSPEC *)
-    Format.pp_open_vbox out 0;
-    let prop_str, ltlspec = property in
-    let stratified_ltlspec =
-      Ltl.conj @@ Ltl.stratify ~smv_section:`Ltlspec ltlspec
-    in
-    pf out "%s@\nLTLSPEC@\n@[<hv2>%a@];@\n@\n" prop_str
-      (Ltl.pp_gather_variables bitwidth auxiliaries variables)
-      stratified_ltlspec;
-    Format.pp_close_box out ();
+      Format.pp_open_vbox out 0;
+      let prop_str, ltlspec = property in
+      let stratified_ltlspec =
+        Ltl.conj @@ Ltl.stratify ~smv_section:`Ltlspec ltlspec
+      in
+      pf out "%s@\nLTLSPEC@\n@[<hv2>%a@];@\n@\n" prop_str
+        (Ltl.pp_gather_variables bitwidth auxiliaries variables)
+        stratified_ltlspec;
+      Format.pp_close_box out ();
+      end;
     (* HANDLING VARIABLES *)
     (* sorting before filtering (even when sorting after again) is more
        efficient on a few tests *)
