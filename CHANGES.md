@@ -1,3 +1,6 @@
+### 1.2.2 (2024-12-17)
+- fix tagging issue
+
 ### 1.2.1 (2024-12-17)
 - improve cram tests infrastructure (and revert unwanted improvements)
 
