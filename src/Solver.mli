@@ -173,7 +173,6 @@ module type MODEL = sig
     trans : (string * ltl) Iter.t;
     (* fst: string repr of Elo formula *)
     property : string * ltl (* fst: string repr of Elo formula *);
-    is_invar_spec : bool;
   }
 
   val make :
@@ -182,7 +181,6 @@ module type MODEL = sig
     invariant:(string * ltl) Iter.t ->
     trans:(string * ltl) Iter.t ->
     property:string * ltl ->
-    is_invar_spec:bool ->
     t
 
   val analyze :

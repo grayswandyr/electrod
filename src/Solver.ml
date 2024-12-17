@@ -380,7 +380,6 @@ module type MODEL = sig
     invariant : (string * ltl) Iter.t;
     trans : (string * ltl) Iter.t;
     property : string * ltl;
-    is_invar_spec : bool;
   }
 
   val make :
@@ -389,7 +388,6 @@ module type MODEL = sig
     invariant:(string * ltl) Iter.t ->
     trans:(string * ltl) Iter.t ->
     property:string * ltl ->
-    is_invar_spec:bool ->
     t
 
   val analyze :

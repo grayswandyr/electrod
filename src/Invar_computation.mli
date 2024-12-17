@@ -33,7 +33,6 @@ type goal_color = private
   | Invar
   | Init
   | Trans
-  | Invar_spec
   | Temporal
 
 val to_string : goal_color -> string
@@ -45,9 +44,6 @@ val remove_always_from_invar : Elo.fml -> Elo.fml
 val add_always_to_invar : Elo.fml -> Elo.fml
 (** adds an always operator to an (invariant) elo formula if the
    outermost operator is not an always *)
-
-val remove_eventually_from_invarspec : Elo.fml -> Elo.fml
-(** removes evenutually or "not always" at the root of the formula if present.*)
 
 val color : Elo.t -> Elo.fml -> goal_color
 (** Computes the color of a formula *)

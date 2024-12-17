@@ -14,14 +14,7 @@
 
 open Containers
 
-type goal_color =
-  | Static_prop
-  | Primed_prop
-  | Invar
-  | Init
-  | Trans
-  | Invar_spec
-  | Temporal
+type goal_color = Static_prop | Primed_prop | Invar | Init | Trans | Temporal
 
 let to_string (gc : goal_color) =
   match gc with
@@ -30,7 +23,6 @@ let to_string (gc : goal_color) =
   | Invar -> "Invar"
   | Init -> "Init"
   | Trans -> "Trans"
-  | Invar_spec -> "Invar_spec"
   | Temporal -> "Temporal"
 
 let pp out gc = Fmtc.(pf out "%a" (styled `Yellow string) (to_string gc))
@@ -46,7 +38,7 @@ let max_color c1 c2 =
   | (Trans | Static_prop), (Trans | Static_prop) -> Trans
   | _, _ -> Temporal
 
-(* same as max_color, but without Invar, Trans nor Invar_spec*)
+(* same as max_color, but without Invar nor Trans *)
 let max_color_wiwt c1 c2 =
   match (c1, c2) with
   | Static_prop, Static_prop -> Static_prop
@@ -68,14 +60,6 @@ let rec remove_always_from_invar (Elo.Fml { node; _ } as fml) =
 let add_always_to_invar (Elo.Fml { node; _ } as fml) =
   let open Elo in
   match node with LUn (G, _) -> fml | _ -> lunary always fml
-
-let remove_eventually_from_invarspec (Elo.Fml { node; _ } as fml) =
-  let open Elo in
-  match node with
-  | LUn (F, subfml) -> subfml
-  | LUn (Not, Elo.Fml { node = subnode; _ }) -> (
-      match subnode with LUn (G, subfml) -> subfml | _ -> fml)
-  | _ -> fml
 
 let is_const (elo : Elo.t) (name : Name.t) =
   assert (Domain.mem name elo.Elo.domain);
@@ -134,8 +118,7 @@ class ['self] computer (elo : Elo.t) =
     method build_X () f' =
       match f' with Static_prop | Init -> Primed_prop | _ -> Temporal
 
-    method build_F () f' =
-      match f' with Init | Static_prop -> Invar_spec | _ -> Temporal
+    method build_F () _ = Temporal
 
     method build_G () f' =
       match f' with
@@ -146,12 +129,7 @@ class ['self] computer (elo : Elo.t) =
     method build_H () _ = Temporal
     method build_O () _ = Temporal
     method build_P () _ = Temporal
-
-    method build_Not () f' =
-      match f' with
-      | Invar -> Invar_spec
-      | Invar_spec -> Invar
-      | _ -> max_color_wiwt Static_prop f'
+    method build_Not () f' = max_color_wiwt Static_prop f'
 
     (* compo_op *)
     method build_RComp () f1' op' f2' = op' f1' f2'
