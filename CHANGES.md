@@ -1,3 +1,9 @@
+### 1.2.2 (2024-12-17)
+- fix tagging issue
+
+### 1.2.1 (2024-12-17)
+- improve cram tests infrastructure (and revert unwanted improvements)
+
 ### 1.2.0 (2024-10-03)
 - fix bug: several lassos in some SMV traces. The BMC algorithm now is now "sbmc_inc" and the complete algorithm is (for nuXmv) "ic3 -i".
 
