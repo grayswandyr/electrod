@@ -112,15 +112,30 @@ let main style_renderer verbosity tool file scriptfile keep_files no_analysis
             m "Conversion done in %a" Mtime.Span.pp conversion_time)
     | None -> Logs.app (fun m -> m "Conversion done"));
     let cmd, script =
-      match (tool, scriptfile, bmc) with
-      | NuXmv, None, None -> ("nuXmv", Solver.Default Smv.nuXmv_default_script)
-      | NuSMV, None, None -> ("NuSMV", Solver.Default Smv.nuSMV_default_script)
-      | NuXmv, None, Some _ ->
-          ("nuXmv", Solver.Default Smv.nuXmv_default_bmc_script)
-      | NuSMV, None, Some _ ->
-          ("NuSMV", Solver.Default Smv.nuSMV_default_bmc_script)
-      | NuXmv, Some s, _ -> ("nuXmv", Solver.File s)
-      | NuSMV, Some s, _ -> ("NuSMV", Solver.File s)
+      if model.is_invar_spec then
+        match (tool, scriptfile, bmc) with
+        | NuXmv, None, None ->
+            ("nuXmv", Solver.Default Scripts.nuXmv_invarspec_script)
+        | NuSMV, None, None ->
+            ("NuSMV", Solver.Default Scripts.nuSMV_invarspec_script)
+        | NuXmv, None, Some _ ->
+            ("nuXmv", Solver.Default Scripts.nuXmv_invarspec_bmc_script)
+        | NuSMV, None, Some _ ->
+            ("NuSMV", Solver.Default Scripts.nuSMV_invarspec_bmc_script)
+        | NuXmv, Some s, _ -> ("nuXmv", Solver.File s)
+        | NuSMV, Some s, _ -> ("NuSMV", Solver.File s)
+      else
+        match (tool, scriptfile, bmc) with
+        | NuXmv, None, None ->
+            ("nuXmv", Solver.Default Scripts.nuXmv_default_script)
+        | NuSMV, None, None ->
+            ("NuSMV", Solver.Default Scripts.nuSMV_default_script)
+        | NuXmv, None, Some _ ->
+            ("nuXmv", Solver.Default Scripts.nuXmv_default_bmc_script)
+        | NuSMV, None, Some _ ->
+            ("NuSMV", Solver.Default Scripts.nuSMV_default_bmc_script)
+        | NuXmv, Some s, _ -> ("nuXmv", Solver.File s)
+        | NuSMV, Some s, _ -> ("NuSMV", Solver.File s)
     in
     if print_generated then
       Logs.app (fun m ->

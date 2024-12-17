@@ -136,17 +136,34 @@ let main_info =
       `S Manpage.s_files;
       `P {|Default SCRIPT_FILE for unbounded model-checking with nuXmv:|};
       `Noblank;
-      `Pre Smv.nuXmv_default_script;
+      `Pre Scripts.nuXmv_default_script;
       `Noblank;
       `P {|Default SCRIPT_FILE for unbounded model-checking with NuSMV:|};
       `Noblank;
-      `Pre Smv.nuSMV_default_script;
+      `Pre Scripts.nuSMV_default_script;
       `P {|Default SCRIPT_FILE for bounded model-checking with NuSMV:|};
       `Noblank;
-      `Pre Smv.nuSMV_default_bmc_script;
+      `Pre Scripts.nuSMV_default_bmc_script;
       `P {|Default SCRIPT_FILE for bounded model-checking with nuXmv:|};
       `Noblank;
-      `Pre Smv.nuXmv_default_bmc_script;
+      `Pre Scripts.nuXmv_default_bmc_script;
+      `P
+        {|Default SCRIPT_FILE for unbounded invariant model-checking with nuXmv:|};
+      `Noblank;
+      `Pre Scripts.nuXmv_invarspec_script;
+      `Noblank;
+      `P
+        {|Default SCRIPT_FILE for unbounded invariant model-checking with NuSMV:|};
+      `Noblank;
+      `Pre Scripts.nuSMV_invarspec_script;
+      `P
+        {|Default SCRIPT_FILE for bounded invariant model-checking with NuSMV:|};
+      `Noblank;
+      `Pre Scripts.nuSMV_invarspec_bmc_script;
+      `P
+        {|Default SCRIPT_FILE for bounded invariant model-checking with nuXmv:|};
+      `Noblank;
+      `Pre Scripts.nuXmv_invarspec_bmc_script;
       `S Manpage.s_authors;
       `P {|Julien BRUNEL (ONERA), David CHEMOUIL (ONERA).|};
       `S "COPYRIGHT";

@@ -104,7 +104,7 @@ struct
   (* Splits a list of formulas lf into four lists and a boolean (initf, invf,
      transf, restf, isInvarSpec): the list of init formulas, invar formulas, the
      list of trans formulas and the list of the rest of the
-     formulas and a boolean saying whther restf is to check with LTLSPEC or INVARSPEC. 
+     formulas and a boolean saying whther restf is to check with LTLSPEC or INVARSPEC.
      In case restf is empty, then the last formula of transf
      is put in restf.*)
   let split_invar_noninvar_fmls elo blk =
@@ -143,15 +143,13 @@ struct
           match color with Init -> `Left fml | _ -> `Right fml)
         tmp_restf2
     in
-    (*is_invar_spec is true if restf consits of one formula of the shape "F propsitional" or "not G propositional"*)
+    (* is_invar_spec is true if restf consists of one formula of the shape "F propositional" or "not G propositional"*)
     let is_invar_spec =
       match restf with
-      | [hd] -> 
-        begin
-          match Invar_computation.color elo hd with 
+      | [ hd ] -> (
+          match Invar_computation.color elo hd with
           | Invar_spec -> true
-          | _ -> false
-        end
+          | _ -> false)
       | _ -> false
     in
     match (restf, List.rev invf, List.rev transf, List.rev initf) with
@@ -172,15 +170,17 @@ struct
     let open Elo in
     match List.rev fmls with
     | [] -> assert false
-    | (Fml { node; _ } as hd) :: tl ->
-      let rhs_fml =
-        match node with LUn (Not, subfml) -> subfml | _ -> lunary not_ hd
-      in
-        match tl with 
+    | (Fml { node; _ } as hd) :: tl -> (
+        let rhs_fml =
+          match node with LUn (Not, subfml) -> subfml | _ -> lunary not_ hd
+        in
+        match tl with
         | [] -> rhs_fml
-        | _ -> 
-          let premise = List.fold_left (fun x y -> lbinary x and_ y) true_ tl in
-          lbinary premise impl rhs_fml
+        | _ ->
+            let premise =
+              List.fold_left (fun x y -> lbinary x and_ y) true_ tl
+            in
+            lbinary premise impl rhs_fml)
 
   let run (elo, temporal_symmetry, symmetry_offset, single_formula) =
     let open Elo in
@@ -227,7 +227,11 @@ struct
     (* handling the goal *)
     let goal_blk = match elo.goal with Elo.Run (g, _) -> g in
     (* Partition the goal fmls into invars and non invars *)
-    let detected_inits, detected_invars, detected_trans, general_fmls, is_invar_spec =
+    let ( detected_inits,
+          detected_invars,
+          detected_trans,
+          general_fmls,
+          is_invar_spec ) =
       if single_formula then
         (* the user wants only a single big LTL formula as a goal *)
         ([], [], [], goal_blk, false)
@@ -242,19 +246,18 @@ struct
 
     (* Msg.debug (fun m ->
        m "Detected trans : %a" Elo.pp_block detected_trans); *)
-    let gen_fmls = 
-      if is_invar_spec then 
-      begin
+    let gen_fmls =
+      if is_invar_spec then
         match general_fmls with
-        |[fml] -> [remove_eventually_from_invarspec fml]
-        | _ -> assert false;
-      end
+        | [ fml ] -> [ remove_eventually_from_invarspec fml ]
+        | _ -> assert false
       else general_fmls
     in
     Msg.debug (fun m ->
-       m "Formula to chack before dualisation : %a" (Elo.pp_block 0) gen_fmls);
+        m "Formula to chack before dualisation : %a" (Elo.pp_block 0) gen_fmls);
     let fml_prop = dualise_fmls gen_fmls in
-    Msg.debug (fun m -> m "Formula to check after dualisation : %a" (Elo.pp_fml 0) fml_prop); 
+    Msg.debug (fun m ->
+        m "Formula to check after dualisation : %a" (Elo.pp_fml 0) fml_prop);
     let fml_prop_comment, ltl_prop =
       let comment, p = ConvertFormulas.convert elo fml_prop in
       if temporal_symmetry || symmetry_offset > 0 || single_formula then
@@ -278,5 +281,6 @@ struct
     in
     let trans = translate_formulas detected_trans in
     Model.make ~elo ~init:inits ~invariant:invars ~trans
-      ~property:(fml_prop_comment, ltl_prop) ~is_invar_spec
+      ~property:(fml_prop_comment, ltl_prop)
+      ~is_invar_spec
 end
